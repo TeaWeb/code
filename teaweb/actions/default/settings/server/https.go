@@ -1,15 +1,15 @@
-package settings
+package server
 
 import (
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo"
 )
 
-type IndexAction actions.Action
+type HttpsAction actions.Action
 
-func (this *IndexAction) Run(params struct{}) {
+func (this *HttpsAction) Run(params struct{}) {
 	this.Data["error"] = ""
 
 	reader, err := files.NewReader(Tea.ConfigFile("server.conf"))

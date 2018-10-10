@@ -4,7 +4,6 @@ import (
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/sessions"
 	"github.com/TeaWeb/code/teaweb/actions/default/logout"
-	"github.com/TeaWeb/code/teaweb/actions/default/settings"
 	"time"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/TeaWeb/code/teaweb/actions/default/install"
@@ -20,6 +19,10 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/log"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/stat"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/monitor"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/settings"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/login"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/mongo"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/server"
 	_ "github.com/TeaWeb/code/teaservices"
 	"github.com/TeaWeb/code/teaweb/helpers"
 )
@@ -38,7 +41,6 @@ func Start() {
 		Get("/logout", new(logout.IndexAction)).
 
 		Helper(new(helpers.UserMustAuth)).
-		Get("/settings", new(settings.IndexAction)).
 		GetPost("/install/mongo", new(install.MongoAction)).
 		EndAll().
 
