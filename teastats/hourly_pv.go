@@ -69,18 +69,29 @@ func (this *HourlyPVStat) SumHourPV(hours []string) int64 {
 		return 0
 	}
 	sumColl := findCollection("stats.pv.hourly", nil)
-	sumCursor, err := sumColl.Aggregate(context.Background(), bson.NewArray(bson.VC.DocumentFromElements(
-		bson.EC.SubDocumentFromElements(
-			"$match",
-			bson.EC.Interface("hour", map[string]interface{}{
-				"$in": hours,
-			}),
-		),
-	), bson.VC.DocumentFromElements(bson.EC.SubDocumentFromElements(
-		"$group",
-		bson.EC.Interface("_id", nil),
-		bson.EC.SubDocumentFromElements("total", bson.EC.String("$sum", "$count")),
-	))))
+	pipelines, err := bson.ParseExtJSONArray(`[
+	{
+		"$match": {
+			"hour": {
+				"$in": [ "` + strings.Join(hours, ", ") + `" ]
+			}
+		}
+	},
+	{
+		"$group": {
+			"_id": null,
+			"total": {
+				"$sum": "$count"
+			}
+		}
+	}
+]`)
+	if err != nil {
+		logs.Error(err)
+		return 0
+	}
+
+	sumCursor, err := sumColl.Aggregate(context.Background(), pipelines)
 	if err != nil {
 		logs.Error(err)
 		return 0
@@ -89,7 +100,7 @@ func (this *HourlyPVStat) SumHourPV(hours []string) int64 {
 
 	if sumCursor.Next(context.Background()) {
 		sumMap := map[string]interface{}{}
-		err = sumCursor.Decode(sumMap)
+		err = sumCursor.Decode(&sumMap)
 		if err == nil {
 			return types.Int64(sumMap["total"])
 		} else {
