@@ -5,7 +5,6 @@ import (
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"context"
-	"github.com/mongodb/mongo-go-driver/mongo/updateopt"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
 	"strings"
@@ -15,6 +14,8 @@ import (
 )
 
 type DailyUVStat struct {
+	Stat
+
 	ServerId string `bson:"serverId" json:"serverId"` // 服务ID
 	Day      string `bson:"day" json:"day"`           // 日期，格式为：Ymd
 	Count    int64  `bson:"count" json:"count"`       // 数量
@@ -50,24 +51,13 @@ func (this *DailyUVStat) Process(accessLog *tealogs.AccessLog) {
 	}
 
 	coll := findCollection("stats.uv.daily", this.Init)
-
-	stat := bson.NewDocument(
-		bson.EC.SubDocument("$set", bson.NewDocument(
-			bson.EC.String("serverId", accessLog.ServerId),
-			bson.EC.String("day", day),
-		)),
-		bson.EC.SubDocument("$inc", bson.NewDocument(
-			bson.EC.Int64("count", 1),
-		)),
-	)
-
-	_, err := coll.UpdateOne(context.Background(), bson.NewDocument(
-		bson.EC.String("serverId", accessLog.ServerId),
-		bson.EC.String("day", day),
-	), stat, updateopt.OptUpsert(true))
-	if err != nil {
-		logs.Error(err)
-	}
+	this.Increase(coll, map[string]interface{}{
+		"serverId": accessLog.ServerId,
+		"day":      day,
+	}, map[string]interface{}{
+		"serverId": accessLog.ServerId,
+		"day":      day,
+	}, "count")
 }
 
 func (this *DailyUVStat) ListLatestDays(days int) []map[string]interface{} {

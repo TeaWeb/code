@@ -13,6 +13,8 @@ func init() {
 			Helper(new(settings.Helper)).
 			Prefix("/settings/mongo").
 			Get("", new(IndexAction)).
+			GetPost("/update", new(UpdateAction)).
+			Get("/test", new(TestAction)).
 			EndAll()
 	})
 }

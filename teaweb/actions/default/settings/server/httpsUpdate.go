@@ -80,5 +80,5 @@ func (this *HttpsUpdateAction) Run(params struct {
 
 	settings.NotifyServerChange()
 
-	this.Refresh().Success("保存成功，重启服务后生效")
+	this.Next("/settings", nil).Success("保存成功，重启服务后生效")
 }

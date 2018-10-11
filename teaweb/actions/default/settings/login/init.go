@@ -13,6 +13,7 @@ func init() {
 			Helper(new(settings.Helper)).
 			Prefix("/settings/login").
 			Get("", new(IndexAction)).
+			GetPost("/update", new(UpdateAction)).
 			EndAll()
 	})
 }

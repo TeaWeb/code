@@ -8,13 +8,14 @@ import (
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
 	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/updateopt"
 	"github.com/iwind/TeaGo/logs"
 	"time"
 	"github.com/iwind/TeaGo/types"
 )
 
 type MonthlyUVStat struct {
+	Stat
+
 	ServerId string `bson:"serverId" json:"serverId"` // 服务ID
 	Month    string `bson:"month" json:"month"`       // 月份，格式为：Ym
 	Count    int64  `bson:"count" json:"count"`       // 数量
@@ -50,24 +51,13 @@ func (this *MonthlyUVStat) Process(accessLog *tealogs.AccessLog) {
 	}
 
 	coll := findCollection("stats.uv.monthly", this.Init)
-
-	stat := bson.NewDocument(
-		bson.EC.SubDocument("$set", bson.NewDocument(
-			bson.EC.String("serverId", accessLog.ServerId),
-			bson.EC.String("month", month),
-		)),
-		bson.EC.SubDocument("$inc", bson.NewDocument(
-			bson.EC.Int64("count", 1),
-		)),
-	)
-
-	_, err := coll.UpdateOne(context.Background(), bson.NewDocument(
-		bson.EC.String("serverId", accessLog.ServerId),
-		bson.EC.String("month", month),
-	), stat, updateopt.OptUpsert(true))
-	if err != nil {
-		logs.Error(err)
-	}
+	this.Increase(coll, map[string]interface{}{
+		"serverId": accessLog.ServerId,
+		"month":    month,
+	}, map[string]interface{}{
+		"serverId": accessLog.ServerId,
+		"month":    month,
+	}, "count")
 }
 
 func (this *MonthlyUVStat) ListLatestMonths(months int) []map[string]interface{} {
