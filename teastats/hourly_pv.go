@@ -73,7 +73,7 @@ func (this *HourlyPVStat) SumHourPV(hours []string) int64 {
 	{
 		"$match": {
 			"hour": {
-				"$in": [ "` + strings.Join(hours, ", ") + `" ]
+				"$in": [ "` + strings.Join(hours, "\", \"") + `" ]
 			}
 		}
 	},

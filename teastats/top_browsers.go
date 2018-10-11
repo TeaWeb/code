@@ -87,17 +87,24 @@ func (this *TopBrowserStat) List(size int64) (result []TopBrowserStat) {
 		},
 	}, findopt.Sort(map[string]interface{}{
 		"count": -1,
-	}), findopt.Limit(size))
+	}), findopt.Limit(size+1)) // size之所以加1，是为了方便后面把Other去掉
 	if err != nil {
 		logs.Error(err)
 		return
 	}
 	defer cursor.Close(context.Background())
 
+	count := int64(0)
 	for cursor.Next(context.Background()) {
 		one := TopBrowserStat{}
 		err := cursor.Decode(&one)
 		if err == nil {
+			if one.Family == "Other" || count >= size {
+				continue
+			}
+
+			count ++
+
 			if totalRequests > 0 {
 				one.Percent = float64(one.Count) / float64(totalRequests)
 			} else {

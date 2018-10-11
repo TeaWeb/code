@@ -86,7 +86,7 @@ func (this *DailyUVStat) SumDayUV(days []string) int64 {
 	{
 		"$match": {
 			"day": {
-				"$in": [ "` + strings.Join(days, ", ") + `" ]
+				"$in": [ "` + strings.Join(days, "\", \"") + `" ]
 			}
 		}
 	},

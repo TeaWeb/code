@@ -86,7 +86,7 @@ func (this *MonthlyUVStat) SumMonthUV(months []string) int64 {
 	{
 		"$match": {
 			"month": {
-				"$in": [ "` + strings.Join(months, ", ") + `" ]
+				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
 			}
 		}
 	},

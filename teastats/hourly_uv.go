@@ -86,7 +86,7 @@ func (this *HourlyUVStat) SumHourUV(hours []string) int64 {
 	{
 		"$match": {
 			"hour": {
-				"$in": [ "` + strings.Join(hours, ", ") + `" ]
+				"$in": [ "` + strings.Join(hours, "\", \"") + `" ]
 			}
 		}
 	},

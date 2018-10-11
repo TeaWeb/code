@@ -73,7 +73,7 @@ func (this *MonthlyPVStat) SumMonthPV(months []string) int64 {
 	{
 		"$match": {
 			"month": {
-				"$in": [ "` + strings.Join(months, ", ") + `" ]
+				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
 			}
 		}
 	},
