@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -52,6 +53,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	}
 	action.Data["teaSubMenus"] = []map[string]interface{}{}
 	action.Data["teaTabbar"] = []map[string]interface{}{}
+	action.Data["teaVersion"] = teaconst.TeaVersion
 
 	return true
 }

@@ -1,26 +1,26 @@
 package teaproxy
 
 import (
-	"net/http"
-	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/iwind/TeaGo/Tea"
-	"strings"
-	"os"
-	"github.com/iwind/TeaGo/logs"
-	"io"
-	"time"
 	"context"
-	"net"
-	"net/url"
+	"errors"
 	"fmt"
-	"github.com/iwind/TeaGo/types"
-	"regexp"
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/tealogs"
-	"path/filepath"
-	"mime"
-	"errors"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/gofcgi"
+	"io"
+	"mime"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"time"
 )
 
 var requestVarReg = regexp.MustCompile("\\${[\\w.-]+}")
@@ -657,7 +657,7 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 }
 
 func (this *Request) notFoundError(writer http.ResponseWriter) {
-	msg := "404 Page Not Found"
+	msg := "404 page not found"
 
 	writer.WriteHeader(http.StatusNotFound)
 	writer.Write([]byte(msg))

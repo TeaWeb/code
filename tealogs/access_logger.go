@@ -1,18 +1,18 @@
 package tealogs
 
 import (
-	"github.com/iwind/TeaGo/logs"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/TeaWeb/code/teamongo"
 	"context"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
-	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/lists"
-	"time"
-	"sync"
-	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
+	"github.com/iwind/TeaGo/utils/time"
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"sync"
+	"time"
 )
 
 var (
@@ -246,6 +246,24 @@ func (this *AccessLogger) ReadNewLogs(fromId string, size int64) []AccessLog {
 		lists.Reverse(result)
 	}
 	return result
+}
+
+// 查找单个日志
+func (this *AccessLogger) FindLog(logId string) *AccessLog {
+	objectId, err := objectid.FromHex(logId)
+	if err != nil {
+		logs.Error(err)
+		return nil
+	}
+	result := this.collection().FindOne(context.Background(), map[string]interface{}{
+		"_id": objectId,
+	})
+	accessLog := &AccessLog{}
+	err = result.Decode(accessLog)
+	if err == mongo.ErrNoDocuments {
+		return nil
+	}
+	return accessLog
 }
 
 func (this *AccessLogger) CountSuccessLogs(fromTimestamp int64, toTimestamp int64) int64 {

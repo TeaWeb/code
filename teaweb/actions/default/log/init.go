@@ -1,8 +1,8 @@
 package log
 
 import (
-	"github.com/iwind/TeaGo"
 	"github.com/TeaWeb/code/teaweb/helpers"
+	"github.com/iwind/TeaGo"
 )
 
 func init() {
@@ -13,6 +13,9 @@ func init() {
 			Prefix("/log").
 			Get("", new(IndexAction)).
 			Get("/get", new(GetAction)).
+			Get("/responseHeader/:logId", new(ResponseHeaderAction)).
+			Get("/requestHeader/:logId", new(RequestHeaderAction)).
+			Get("/cookies/:logId", new(CookiesAction)).
 			EndAll()
 	})
 }
