@@ -1,10 +1,12 @@
 package proxy
 
 import (
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/iwind/TeaGo/maps"
+	"github.com/TeaWeb/code/tealogs"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/maps"
+	"time"
 )
 
 type IndexAction actions.Action
@@ -17,6 +19,9 @@ func (this *IndexAction) Run(params struct {
 		servers = append(servers, maps.Map{
 			"config":   config,
 			"filename": config.Filename,
+
+			// 10分钟内是否有访问
+			"isActive": tealogs.SharedLogger().CountSuccessLogs(time.Now().Add(-10 * time.Minute).Unix(), time.Now().Unix(), config.Id) > 0,
 		})
 	}
 

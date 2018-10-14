@@ -50,6 +50,16 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 			"menuName": "监控",
 			"icon":     "bell outline",
 		},**/
+		/**{
+			"code":     "monitor",
+			"menuName": "插件",
+			"icon":     "bell outline",
+		},**/
+		/**{
+			"code":     "monitor",
+			"menuName": "实验室",
+			"icon":     "bell outline",
+		},**/
 	}
 	action.Data["teaSubMenus"] = []map[string]interface{}{}
 	action.Data["teaTabbar"] = []map[string]interface{}{}

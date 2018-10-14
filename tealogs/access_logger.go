@@ -266,12 +266,15 @@ func (this *AccessLogger) FindLog(logId string) *AccessLog {
 	return accessLog
 }
 
-func (this *AccessLogger) CountSuccessLogs(fromTimestamp int64, toTimestamp int64) int64 {
+func (this *AccessLogger) CountSuccessLogs(fromTimestamp int64, toTimestamp int64, serverId string) int64 {
 	coll := this.collection()
 	filter := bson.NewDocument(
 		bson.EC.SubDocument("status", bson.NewDocument(bson.EC.Int64("$lt", 400))),
 		bson.EC.SubDocument("timestamp", bson.NewDocument(bson.EC.Int64("$lte", toTimestamp), bson.EC.Int64("$gte", fromTimestamp))),
 	)
+	if len(serverId) > 0 {
+		filter.Append(bson.EC.String("serverId", serverId))
+	}
 	count, err := coll.CountDocuments(context.Background(), filter)
 	if err != nil {
 		logs.Error(err)

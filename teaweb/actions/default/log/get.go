@@ -49,7 +49,7 @@ func (this *GetAction) Run(params struct {
 	fromTime := time.Now().Add(-24 * time.Hour)
 	toTime := time.Now()
 
-	countSuccess := logger.CountSuccessLogs(fromTime.Unix(), toTime.Unix())
+	countSuccess := logger.CountSuccessLogs(fromTime.Unix(), toTime.Unix(), "")
 	countFail := logger.CountFailLogs(fromTime.Unix(), toTime.Unix())
 	total := countSuccess + countFail
 	this.Data["countSuccess"] = countSuccess
@@ -123,7 +123,7 @@ func (this *GetAction) Run(params struct {
 		fromTime = time.Now().Add(-1 * time.Hour).Add(- time.Duration(time.Now().Second()) * time.Second)
 		count := 0
 		for {
-			countRequest := tealogs.SharedLogger().CountSuccessLogs(fromTime.Unix(), fromTime.Unix()+60)
+			countRequest := tealogs.SharedLogger().CountSuccessLogs(fromTime.Unix(), fromTime.Unix()+60, "")
 			values = append(values, countRequest)
 			labels = append(labels, "")
 			fromTime = fromTime.Add(1 * time.Minute)
