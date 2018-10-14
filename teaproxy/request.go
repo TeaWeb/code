@@ -471,6 +471,7 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
+	this.raw.RequestURI = ""
 	resp, err := client.Do(this.raw)
 	if err != nil {
 		urlError, ok := err.(*url.Error)
@@ -485,9 +486,6 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 	}
 	defer resp.Body.Close()
 
-	// 设置响应代码
-	writer.WriteHeader(resp.StatusCode)
-
 	// 设置Header
 	for k, v := range resp.Header {
 		if k == "Connection" {
@@ -497,6 +495,9 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 			writer.Header().Add(k, subV)
 		}
 	}
+
+	// 设置响应代码
+	writer.WriteHeader(resp.StatusCode)
 
 	n, err := io.Copy(writer, resp.Body)
 	if err != nil {
@@ -684,13 +685,23 @@ func (this *Request) requestRemoteAddr() string {
 	// Real-IP
 	realIP := this.raw.Header.Get("X-Real-IP")
 	if len(realIP) > 0 {
-		return realIP
+		index := strings.LastIndex(realIP, ":")
+		if index < 0 {
+			return realIP
+		} else {
+			return realIP[:index]
+		}
 	}
 
 	// X-Forwarded-For
 	forwardedFor := this.raw.Header.Get("X-Forwarded-For")
 	if len(forwardedFor) > 0 {
-		return forwardedFor
+		index := strings.LastIndex(forwardedFor, ":")
+		if index < 0 {
+			return forwardedFor
+		} else {
+			return forwardedFor[:index]
+		}
 	}
 
 	// Remote-Addr

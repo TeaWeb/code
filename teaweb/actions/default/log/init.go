@@ -10,6 +10,7 @@ func init() {
 		server.
 			EndAll().
 			Helper(new(helpers.UserMustAuth)).
+			Helper(new(Helper)).
 			Prefix("/log").
 			Get("", new(IndexAction)).
 			Get("/get", new(GetAction)).

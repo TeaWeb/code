@@ -1,22 +1,22 @@
 package tealogs
 
 import (
-	"strings"
-	"github.com/iwind/TeaGo/utils/string"
-	"github.com/iwind/TeaGo/logs"
-	"path/filepath"
-	"sync"
-	"hash/crc32"
-	"github.com/ua-parser/uap-go/uaparser"
-	"github.com/oschwald/geoip2-golang"
-	"net"
-	"regexp"
-	"github.com/iwind/TeaGo/Tea"
-	"reflect"
 	"fmt"
 	"github.com/TeaWeb/code/teautils"
-	"github.com/pquerna/ffjson/ffjson"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/utils/string"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"github.com/oschwald/geoip2-golang"
+	"github.com/pquerna/ffjson/ffjson"
+	"github.com/ua-parser/uap-go/uaparser"
+	"hash/crc32"
+	"net"
+	"path/filepath"
+	"reflect"
+	"regexp"
+	"strings"
+	"sync"
 )
 
 var userAgentParserCache = &sync.Map{}
@@ -359,8 +359,16 @@ func (this *AccessLog) parseGeoIP() {
 		return
 	}
 
-	// 参考：https://dev.maxmind.com/geoip/geoip2/geolite2/
+	if len(this.RemoteAddr) == 0 {
+		return
+	}
+
 	ip := net.ParseIP(this.RemoteAddr)
+	if ip == nil {
+		return
+	}
+
+	// 参考：https://dev.maxmind.com/geoip/geoip2/geolite2/
 	record, err := geoDB.City(ip)
 	if err != nil {
 		logs.Error(err)

@@ -37,7 +37,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 		},
 		{
 			"code":     "log",
-			"menuName": "访问日志",
+			"menuName": "日志",
 			"icon":     "clock outline",
 		},
 		{
