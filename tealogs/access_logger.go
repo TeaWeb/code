@@ -92,7 +92,7 @@ func (this *AccessLogger) wait() {
 	var docsLocker = sync.Mutex{}
 
 	// 写入到数据库
-	timers.Loop(1*time.Second, func(looper *timers.Looper) {
+	timers.Loop(500*time.Millisecond, func(looper *timers.Looper) {
 		// 写入到本地数据库
 		if this.client() != nil {
 			docsLocker.Lock()
@@ -108,7 +108,7 @@ func (this *AccessLogger) wait() {
 
 			// 批量写入数据库
 			// 需合理控制此数值的大小，避免CPU占用太高
-			bulkSize := 512
+			bulkSize := 256
 			offset := 0
 			for {
 				end := offset + bulkSize
