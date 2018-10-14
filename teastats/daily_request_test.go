@@ -1,10 +1,10 @@
 package teastats
 
 import (
-	"testing"
 	"github.com/TeaWeb/code/tealogs"
-	"time"
 	"github.com/iwind/TeaGo/utils/time"
+	"testing"
+	"time"
 )
 
 func TestDailyRequestParse(t *testing.T) {
@@ -20,6 +20,6 @@ func TestDailyRequestParse(t *testing.T) {
 
 func TestDailyPVStat_SumDayPV(t *testing.T) {
 	stat := new(DailyRequestsStat)
-	total := stat.SumDayRequests([]string{timeutil.Format("Ymd")})
+	total := stat.SumDayRequests("123456", []string{timeutil.Format("Ymd")})
 	t.Log(total)
 }

@@ -1,12 +1,12 @@
 package teastats
 
 import (
-	"github.com/TeaWeb/code/tealogs"
-	"github.com/iwind/TeaGo/utils/time"
 	"context"
-	"time"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/utils/time"
+	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"time"
 )
 
 type TopOSStat struct {
@@ -59,7 +59,7 @@ func (this *TopOSStat) Process(accessLog *tealogs.AccessLog) {
 	}, "count")
 }
 
-func (this *TopOSStat) List(size int64) (result []TopOSStat) {
+func (this *TopOSStat) List(serverId string, size int64) (result []TopOSStat) {
 	if size <= 0 {
 		size = 10
 	}
@@ -77,11 +77,12 @@ func (this *TopOSStat) List(size int64) (result []TopOSStat) {
 	}
 
 	// 总请求数量
-	totalRequests := new(MonthlyRequestsStat).SumMonthRequests(months)
+	totalRequests := new(MonthlyRequestsStat).SumMonthRequests(serverId, months)
 
 	// 开始查找
 	coll := findCollection("stats.top.os.monthly", nil)
 	cursor, err := coll.Find(context.Background(), map[string]interface{}{
+		"serverId": serverId,
 		"month": map[string]interface{}{
 			"$in": months,
 		},

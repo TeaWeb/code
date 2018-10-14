@@ -1,15 +1,15 @@
 package teastats
 
 import (
-	"github.com/TeaWeb/code/tealogs"
-	"github.com/iwind/TeaGo/utils/time"
 	"context"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/iwind/TeaGo/types"
+	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/logs"
-	"time"
+	"github.com/iwind/TeaGo/types"
+	"github.com/iwind/TeaGo/utils/time"
 	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"time"
 )
 
 type TopCostStat struct {
@@ -83,7 +83,7 @@ func (this *TopCostStat) Process(accessLog *tealogs.AccessLog) {
 	}
 }
 
-func (this *TopCostStat) List(size int64) (result []TopCostStat) {
+func (this *TopCostStat) List(serverId string, size int64) (result []TopCostStat) {
 	if size <= 0 {
 		size = 10
 	}
@@ -103,6 +103,7 @@ func (this *TopCostStat) List(size int64) (result []TopCostStat) {
 	// 开始查找
 	coll := findCollection("stats.top.cost.monthly", nil)
 	cursor, err := coll.Find(context.Background(), map[string]interface{}{
+		"serverId": serverId,
 		"month": map[string]interface{}{
 			"$in": months,
 		},

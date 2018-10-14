@@ -1,14 +1,14 @@
 package teastats
 
 import (
-	"github.com/iwind/TeaGo/utils/time"
-	"github.com/TeaWeb/code/tealogs"
-	"github.com/mongodb/mongo-go-driver/bson"
 	"context"
-	"strings"
+	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/logs"
-	"time"
 	"github.com/iwind/TeaGo/types"
+	"github.com/iwind/TeaGo/utils/time"
+	"github.com/mongodb/mongo-go-driver/bson"
+	"strings"
+	"time"
 )
 
 type MonthlyPVStat struct {
@@ -47,7 +47,7 @@ func (this *MonthlyPVStat) Process(accessLog *tealogs.AccessLog) {
 	}, "count")
 }
 
-func (this *MonthlyPVStat) ListLatestMonths(months int) []map[string]interface{} {
+func (this *MonthlyPVStat) ListLatestMonths(serverId string, months int) []map[string]interface{} {
 	if months <= 0 {
 		months = 12
 	}
@@ -55,7 +55,7 @@ func (this *MonthlyPVStat) ListLatestMonths(months int) []map[string]interface{}
 	result := []map[string]interface{}{}
 	for i := months - 1; i >= 0; i -- {
 		month := timeutil.Format("Ym", time.Now().AddDate(0, -i, 0))
-		total := this.SumMonthPV([]string{month})
+		total := this.SumMonthPV(serverId, []string{month})
 		result = append(result, map[string]interface{}{
 			"month": month,
 			"total": total,
@@ -64,7 +64,7 @@ func (this *MonthlyPVStat) ListLatestMonths(months int) []map[string]interface{}
 	return result
 }
 
-func (this *MonthlyPVStat) SumMonthPV(months []string) int64 {
+func (this *MonthlyPVStat) SumMonthPV(serverId string, months []string) int64 {
 	if len(months) == 0 {
 		return 0
 	}
@@ -72,6 +72,7 @@ func (this *MonthlyPVStat) SumMonthPV(months []string) int64 {
 	pipelines, err := bson.ParseExtJSONArray(`[
 	{
 		"$match": {
+			"serverId": "` + serverId + `",
 			"month": {
 				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
 			}

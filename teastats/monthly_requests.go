@@ -1,14 +1,14 @@
 package teastats
 
 import (
-	"github.com/iwind/TeaGo/utils/time"
-	"github.com/TeaWeb/code/tealogs"
-	"github.com/mongodb/mongo-go-driver/bson"
 	"context"
+	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
-	"time"
+	"github.com/iwind/TeaGo/utils/time"
+	"github.com/mongodb/mongo-go-driver/bson"
 	"strings"
+	"time"
 )
 
 type MonthlyRequestsStat struct {
@@ -43,7 +43,7 @@ func (this *MonthlyRequestsStat) Process(accessLog *tealogs.AccessLog) {
 	}, "count")
 }
 
-func (this *MonthlyRequestsStat) ListLatestMonths(months int) []map[string]interface{} {
+func (this *MonthlyRequestsStat) ListLatestMonths(serverId string, months int) []map[string]interface{} {
 	if months <= 0 {
 		months = 12
 	}
@@ -51,7 +51,7 @@ func (this *MonthlyRequestsStat) ListLatestMonths(months int) []map[string]inter
 	result := []map[string]interface{}{}
 	for i := months - 1; i >= 0; i -- {
 		month := timeutil.Format("Ym", time.Now().AddDate(0, -i, 0))
-		total := this.SumMonthRequests([]string{month})
+		total := this.SumMonthRequests(serverId, []string{month})
 		result = append(result, map[string]interface{}{
 			"month": month,
 			"total": total,
@@ -60,7 +60,7 @@ func (this *MonthlyRequestsStat) ListLatestMonths(months int) []map[string]inter
 	return result
 }
 
-func (this *MonthlyRequestsStat) SumMonthRequests(months []string) int64 {
+func (this *MonthlyRequestsStat) SumMonthRequests(serverId string, months []string) int64 {
 	if len(months) == 0 {
 		return 0
 	}
@@ -68,6 +68,7 @@ func (this *MonthlyRequestsStat) SumMonthRequests(months []string) int64 {
 	pipelines, err := bson.ParseExtJSONArray(`[
 	{
 		"$match": {
+			"serverId": "` + serverId + `",
 			"month": {
 				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
 			}

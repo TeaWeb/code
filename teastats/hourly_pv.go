@@ -1,14 +1,14 @@
 package teastats
 
 import (
-	"github.com/iwind/TeaGo/utils/time"
-	"github.com/TeaWeb/code/tealogs"
-	"github.com/mongodb/mongo-go-driver/bson"
 	"context"
-	"strings"
+	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/logs"
-	"time"
 	"github.com/iwind/TeaGo/types"
+	"github.com/iwind/TeaGo/utils/time"
+	"github.com/mongodb/mongo-go-driver/bson"
+	"strings"
+	"time"
 )
 
 type HourlyPVStat struct {
@@ -47,7 +47,7 @@ func (this *HourlyPVStat) Process(accessLog *tealogs.AccessLog) {
 	}, "count")
 }
 
-func (this *HourlyPVStat) ListLatestHours(hours int) []map[string]interface{} {
+func (this *HourlyPVStat) ListLatestHours(serverId string, hours int) []map[string]interface{} {
 	if hours <= 0 {
 		hours = 24
 	}
@@ -55,7 +55,7 @@ func (this *HourlyPVStat) ListLatestHours(hours int) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	for i := hours - 1; i >= 0; i -- {
 		hour := timeutil.Format("YmdH", time.Now().Add(time.Duration(-i)*time.Hour))
-		total := this.SumHourPV([]string{hour})
+		total := this.SumHourPV(serverId, []string{hour})
 		result = append(result, map[string]interface{}{
 			"hour":  hour,
 			"total": total,
@@ -64,7 +64,7 @@ func (this *HourlyPVStat) ListLatestHours(hours int) []map[string]interface{} {
 	return result
 }
 
-func (this *HourlyPVStat) SumHourPV(hours []string) int64 {
+func (this *HourlyPVStat) SumHourPV(serverId string, hours []string) int64 {
 	if len(hours) == 0 {
 		return 0
 	}
@@ -72,6 +72,7 @@ func (this *HourlyPVStat) SumHourPV(hours []string) int64 {
 	pipelines, err := bson.ParseExtJSONArray(`[
 	{
 		"$match": {
+			"serverId": "` + serverId + `",
 			"hour": {
 				"$in": [ "` + strings.Join(hours, "\", \"") + `" ]
 			}

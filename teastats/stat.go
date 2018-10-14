@@ -1,16 +1,16 @@
 package teastats
 
 import (
-	"sync"
-	"github.com/iwind/TeaGo/timers"
-	"time"
-	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/types"
+	"context"
 	"fmt"
 	"github.com/TeaWeb/code/teamongo"
-	"context"
-	"github.com/mongodb/mongo-go-driver/mongo/updateopt"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/timers"
+	"github.com/iwind/TeaGo/types"
+	"github.com/mongodb/mongo-go-driver/mongo/updateopt"
+	"sync"
+	"time"
 )
 
 type IncrementOperation struct {
@@ -22,7 +22,7 @@ type IncrementOperation struct {
 
 func (this *IncrementOperation) uniqueId() string {
 	keys := []string{}
-	for key, _ := range this.filter {
+	for key := range this.filter {
 		keys = append(keys, key)
 	}
 	lists.Sort(keys, func(i int, j int) bool {

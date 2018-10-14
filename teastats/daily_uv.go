@@ -1,16 +1,16 @@
 package teastats
 
 import (
-	"github.com/iwind/TeaGo/utils/time"
-	"github.com/TeaWeb/code/tealogs"
-	"github.com/mongodb/mongo-go-driver/bson"
 	"context"
+	"github.com/TeaWeb/code/tealogs"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/types"
+	"github.com/iwind/TeaGo/utils/time"
+	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
 	"strings"
-	"github.com/iwind/TeaGo/logs"
 	"time"
-	"github.com/iwind/TeaGo/types"
 )
 
 type DailyUVStat struct {
@@ -60,7 +60,7 @@ func (this *DailyUVStat) Process(accessLog *tealogs.AccessLog) {
 	}, "count")
 }
 
-func (this *DailyUVStat) ListLatestDays(days int) []map[string]interface{} {
+func (this *DailyUVStat) ListLatestDays(serverId string, days int) []map[string]interface{} {
 	if days <= 0 {
 		days = 7
 	}
@@ -68,7 +68,7 @@ func (this *DailyUVStat) ListLatestDays(days int) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	for i := days - 1; i >= 0; i -- {
 		day := timeutil.Format("Ymd", time.Now().AddDate(0, 0, -i))
-		total := this.SumDayUV([]string{day})
+		total := this.SumDayUV(serverId, []string{day})
 		result = append(result, map[string]interface{}{
 			"day":   day,
 			"total": total,
@@ -77,7 +77,7 @@ func (this *DailyUVStat) ListLatestDays(days int) []map[string]interface{} {
 	return result
 }
 
-func (this *DailyUVStat) SumDayUV(days []string) int64 {
+func (this *DailyUVStat) SumDayUV(serverId string, days []string) int64 {
 	if len(days) == 0 {
 		return 0
 	}
@@ -85,6 +85,7 @@ func (this *DailyUVStat) SumDayUV(days []string) int64 {
 	pipelines, err := bson.ParseExtJSONArray(`[
 	{
 		"$match": {
+			"serverId": "` + serverId + `",
 			"day": {
 				"$in": [ "` + strings.Join(days, "\", \"") + `" ]
 			}

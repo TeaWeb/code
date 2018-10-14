@@ -1,14 +1,14 @@
 package teastats
 
 import (
+	"context"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
 	"github.com/mongodb/mongo-go-driver/bson"
-	"context"
 	"strings"
-	"github.com/iwind/TeaGo/logs"
 	"time"
-	"github.com/iwind/TeaGo/types"
 )
 
 type DailyPVStat struct {
@@ -47,7 +47,7 @@ func (this *DailyPVStat) Process(accessLog *tealogs.AccessLog) {
 	}, "count")
 }
 
-func (this *DailyPVStat) ListLatestDays(days int) []map[string]interface{} {
+func (this *DailyPVStat) ListLatestDays(serverId string, days int) []map[string]interface{} {
 	if days <= 0 {
 		days = 7
 	}
@@ -55,7 +55,7 @@ func (this *DailyPVStat) ListLatestDays(days int) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	for i := days - 1; i >= 0; i -- {
 		day := timeutil.Format("Ymd", time.Now().AddDate(0, 0, -i))
-		total := this.SumDayPV([]string{day})
+		total := this.SumDayPV(serverId, []string{day})
 		result = append(result, map[string]interface{}{
 			"day":   day,
 			"total": total,
@@ -64,7 +64,7 @@ func (this *DailyPVStat) ListLatestDays(days int) []map[string]interface{} {
 	return result
 }
 
-func (this *DailyPVStat) SumDayPV(days []string) int64 {
+func (this *DailyPVStat) SumDayPV(serverId string, days []string) int64 {
 	if len(days) == 0 {
 		return 0
 	}
@@ -73,6 +73,7 @@ func (this *DailyPVStat) SumDayPV(days []string) int64 {
 	pipelines, err := bson.ParseExtJSONArray(`[
 	{
 		"$match": {
+			"serverId": "` + serverId + `",
 			"day": {
 				"$in": [ "` + strings.Join(days, "\", \"") + `" ]
 			}

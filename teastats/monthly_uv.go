@@ -1,16 +1,16 @@
 package teastats
 
 import (
-	"github.com/iwind/TeaGo/utils/time"
-	"github.com/TeaWeb/code/tealogs"
-	"strings"
 	"context"
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/logs"
-	"time"
 	"github.com/iwind/TeaGo/types"
+	"github.com/iwind/TeaGo/utils/time"
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"strings"
+	"time"
 )
 
 type MonthlyUVStat struct {
@@ -60,7 +60,7 @@ func (this *MonthlyUVStat) Process(accessLog *tealogs.AccessLog) {
 	}, "count")
 }
 
-func (this *MonthlyUVStat) ListLatestMonths(months int) []map[string]interface{} {
+func (this *MonthlyUVStat) ListLatestMonths(serverId string, months int) []map[string]interface{} {
 	if months <= 0 {
 		months = 12
 	}
@@ -68,7 +68,7 @@ func (this *MonthlyUVStat) ListLatestMonths(months int) []map[string]interface{}
 	result := []map[string]interface{}{}
 	for i := months - 1; i >= 0; i -- {
 		month := timeutil.Format("Ym", time.Now().AddDate(0, -i, 0))
-		total := this.SumMonthUV([]string{month})
+		total := this.SumMonthUV(serverId, []string{month})
 		result = append(result, map[string]interface{}{
 			"month": month,
 			"total": total,
@@ -77,7 +77,7 @@ func (this *MonthlyUVStat) ListLatestMonths(months int) []map[string]interface{}
 	return result
 }
 
-func (this *MonthlyUVStat) SumMonthUV(months []string) int64 {
+func (this *MonthlyUVStat) SumMonthUV(serverId string, months []string) int64 {
 	if len(months) == 0 {
 		return 0
 	}
@@ -85,6 +85,7 @@ func (this *MonthlyUVStat) SumMonthUV(months []string) int64 {
 	pipelines, err := bson.ParseExtJSONArray(`[
 	{
 		"$match": {
+			"serverId": "` + serverId + `",
 			"month": {
 				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
 			}

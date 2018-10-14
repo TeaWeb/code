@@ -1,14 +1,14 @@
 package teastats
 
 import (
-	"github.com/TeaWeb/code/tealogs"
-	"github.com/iwind/TeaGo/utils/time"
 	"context"
-	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/logs"
-	"time"
 	"github.com/iwind/TeaGo/types"
+	"github.com/iwind/TeaGo/utils/time"
+	"github.com/mongodb/mongo-go-driver/bson"
 	"strings"
+	"time"
 )
 
 type DailyRequestsStat struct {
@@ -43,7 +43,7 @@ func (this *DailyRequestsStat) Process(accessLog *tealogs.AccessLog) {
 	}, "count")
 }
 
-func (this *DailyRequestsStat) ListLatestDays(days int) []map[string]interface{} {
+func (this *DailyRequestsStat) ListLatestDays(serverId string, days int) []map[string]interface{} {
 	if days <= 0 {
 		days = 7
 	}
@@ -51,7 +51,7 @@ func (this *DailyRequestsStat) ListLatestDays(days int) []map[string]interface{}
 	result := []map[string]interface{}{}
 	for i := days - 1; i >= 0; i -- {
 		day := timeutil.Format("Ymd", time.Now().AddDate(0, 0, -i))
-		total := this.SumDayRequests([]string{day})
+		total := this.SumDayRequests(serverId, []string{day})
 		result = append(result, map[string]interface{}{
 			"day":   day,
 			"total": total,
@@ -60,7 +60,7 @@ func (this *DailyRequestsStat) ListLatestDays(days int) []map[string]interface{}
 	return result
 }
 
-func (this *DailyRequestsStat) SumDayRequests(days []string) int64 {
+func (this *DailyRequestsStat) SumDayRequests(serverId string, days []string) int64 {
 	if len(days) == 0 {
 		return 0
 	}
@@ -69,6 +69,7 @@ func (this *DailyRequestsStat) SumDayRequests(days []string) int64 {
 	pipelines, err := bson.ParseExtJSONArray(`[
 	{
 		"$match": {
+			"serverId": "` + serverId + `",
 			"day": {
 				"$in": [ "` + strings.Join(days, "\", \"") + `" ]
 			}
