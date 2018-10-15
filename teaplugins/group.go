@@ -6,7 +6,7 @@ const (
 	WidgetGroupRealTime = WidgetGroup(3) // 即时
 )
 
-type WidgetGroup uint8
+type WidgetGroup = uint8
 
 type Group struct {
 	Id      WidgetGroup `json:"id"`

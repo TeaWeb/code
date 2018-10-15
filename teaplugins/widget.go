@@ -16,7 +16,7 @@ type Widget struct {
 	TopBar    bool   `json:"topBar"`    // 是否顶部工具栏可用
 	MenuBar   bool   `json:"menuBar"`   // 是否菜单栏可用
 	HelperBar bool   `json:"helperBar"` // 是否小助手栏可用
-	Dashboard bool   `json:"dashboard"` // 是否在仪表盘可用
+	Dashboard bool   `json:"dashboard"` // 是否在仪表板可用
 
 	Group WidgetGroup `json:"group"`
 

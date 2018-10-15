@@ -1,5 +1,7 @@
 package teacharts
 
+import "github.com/TeaWeb/code/teainterfaces"
+
 type ProgressBarColor string
 
 type ProgressBar struct {
@@ -14,6 +16,16 @@ func NewProgressBar() *ProgressBar {
 		Color: ColorBlue,
 	}
 	p.Type = "progressBar"
+	return p
+}
+
+func NewProgressBarFromInterface(chart teainterfaces.ProgressBarInterface) *ProgressBar {
+	p := &ProgressBar{
+		Color: ColorBlue,
+	}
+	p.Type = "progressBar"
+	p.Value = chart.Value()
+	p.Color = chart.Color()
 	return p
 }
 

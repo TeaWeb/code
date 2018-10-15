@@ -38,7 +38,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 		{
 			"code":     "log",
 			"menuName": "日志",
-			"icon":     "clock outline",
+			"icon":     "history",
 		},
 		{
 			"code":     "stat",
@@ -50,15 +50,15 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 			"menuName": "监控",
 			"icon":     "bell outline",
 		},**/
-		/**{
-			"code":     "monitor",
+		{
+			"code":     "plugins",
 			"menuName": "插件",
-			"icon":     "bell outline",
-		},**/
+			"icon":     "puzzle piece",
+		},
 		/**{
 			"code":     "monitor",
 			"menuName": "实验室",
-			"icon":     "bell outline",
+			"icon":     "medapps",
 		},**/
 	}
 	action.Data["teaSubMenus"] = []map[string]interface{}{}
