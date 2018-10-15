@@ -51,15 +51,15 @@ type PieChartInterface interface {
 }
 
 // 表格相关
-type Row interface {
+type RowInterface interface {
 	Columns() []interface{}
 }
 
-type Column interface {
+type ColumnInterface interface {
 	Text() string
 	Width() float64 // 百分比，比如 30 表示 30%
 }
 
-type Table interface {
+type TableInterface interface {
 	Rows() []interface{}
 }

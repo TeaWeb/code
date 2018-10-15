@@ -40,8 +40,27 @@ func NewWidget() *Widget {
 func (this *Widget) AddChart(chart teacharts.ChartInterface) {
 	if len(chart.UniqueId()) == 0 {
 		chart.SetUniqueId(stringutil.Rand(16))
+	} else {
+		index := this.ChartIndexWithId(chart.UniqueId())
+		if index > -1 {
+			this.Charts[index] = chart
+			return
+		}
 	}
 	this.Charts = append(this.Charts, chart)
+}
+
+// 根据ID查找图表所在位置
+func (this *Widget) ChartIndexWithId(id string) int {
+	if len(id) == 0 {
+		return -1
+	}
+	for index, chart := range this.Charts {
+		if chart.UniqueId() == id {
+			return index
+		}
+	}
+	return -1
 }
 
 func (this *Widget) ResetCharts() {

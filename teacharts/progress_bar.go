@@ -4,13 +4,6 @@ import "github.com/TeaWeb/code/teainterfaces"
 
 type ProgressBarColor string
 
-type ProgressBar struct {
-	Chart
-
-	Value float64 `json:"value"`
-	Color Color   `json:"color"`
-}
-
 func NewProgressBar() *ProgressBar {
 	p := &ProgressBar{
 		Color: ColorBlue,
@@ -24,9 +17,19 @@ func NewProgressBarFromInterface(chart teainterfaces.ProgressBarInterface) *Prog
 		Color: ColorBlue,
 	}
 	p.Type = "progressBar"
+	p.Name = chart.(teainterfaces.ChartInterface).Name()
+	p.Detail = chart.(teainterfaces.ChartInterface).Detail()
+
 	p.Value = chart.Value()
 	p.Color = chart.Color()
 	return p
+}
+
+type ProgressBar struct {
+	Chart
+
+	Value float64 `json:"value"`
+	Color Color   `json:"color"`
 }
 
 func (this *ProgressBar) UniqueId() string {

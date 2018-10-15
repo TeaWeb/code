@@ -174,32 +174,46 @@ func loadInterface(p1 teainterfaces.PluginInterface, fileName string) {
 		w2.HelperBar = w1.HelperBar()
 		w2.Dashboard = w1.Dashboard()
 		w2.OnForceReload(func() {
-			// @TODO
+			// chart
+			loadWidgetInterface(w1, w2, fileName)
+
+			w1.OnReload()
 		})
 		w2.OnReload(func() {
-			logs.Println("onreload")
-			// @TODO
+			w1.OnReload()
+
+			// chart
+			loadWidgetInterface(w1, w2, fileName)
 		})
 
 		// chart
-		for _, c := range w1.Charts() {
-			c1, ok := c.(teainterfaces.ChartInterface)
-			if !ok {
-				logs.Println("[plugin]invalid chart in", fileName)
-				continue
-			}
-
-			c2 := teacharts.ConvertInterface(c1)
-			if c2 == nil {
-				logs.Println("[plugin]invalid chart in", fileName, "chart type:", c1.Type())
-				continue
-			}
-
-			w2.AddChart(c2)
-		}
+		loadWidgetInterface(w1, w2, fileName)
 
 		p2.AddWidget(w2)
 	}
 
 	Register(p2)
+}
+
+func loadWidgetInterface(w1 teainterfaces.WidgetInterface, w2 *Widget, fileName string) {
+	for _, c := range w1.Charts() {
+		c1, ok := c.(teainterfaces.ChartInterface)
+		if !ok {
+			logs.Println("[plugin]invalid chart in", fileName)
+			continue
+		}
+
+		c2 := teacharts.ConvertInterface(c1)
+		if c2 == nil {
+			logs.Println("[plugin]invalid chart in", fileName, "chart type:", c1.Type())
+			continue
+		}
+
+		if len(c1.Id()) > 0 {
+			c2.SetUniqueId(c1.Id())
+		}
+
+		w2.AddChart(c2)
+		c1.SetId(c2.UniqueId())
+	}
 }

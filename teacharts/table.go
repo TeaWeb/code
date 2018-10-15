@@ -1,6 +1,9 @@
 package teacharts
 
-import "sync"
+import (
+	"github.com/TeaWeb/code/teainterfaces"
+	"sync"
+)
 
 type Row struct {
 	Columns []*Column `json:"columns"`
@@ -25,6 +28,39 @@ func NewTable() *Table {
 		Rows: []*Row{},
 	}
 	p.Type = "table"
+	return p
+}
+
+func NewTableFromInterface(chart teainterfaces.TableInterface) *Table {
+	p := &Table{
+		Rows: []*Row{},
+	}
+	p.Type = "table"
+	p.Name = chart.(teainterfaces.ChartInterface).Name()
+	p.Detail = chart.(teainterfaces.ChartInterface).Detail()
+
+	for _, r := range chart.Rows() {
+		r1, ok := r.(teainterfaces.RowInterface)
+		if !ok {
+			continue
+		}
+
+		texts := []string{}
+		widths := []float64{}
+		for _, c1 := range r1.Columns() {
+			c2, ok := c1.(teainterfaces.ColumnInterface)
+			if !ok {
+				continue
+			}
+
+			texts = append(texts, c2.Text())
+			widths = append(widths, c2.Width())
+		}
+
+		p.AddRow(texts ...)
+		p.SetWidth(widths ...)
+	}
+
 	return p
 }
 

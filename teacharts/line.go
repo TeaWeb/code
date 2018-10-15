@@ -1,5 +1,44 @@
 package teacharts
 
+import "github.com/TeaWeb/code/teainterfaces"
+
+func NewLineChart() *LineChart {
+	p := &LineChart{}
+	p.Type = "line"
+	p.Lines = []*Line{}
+	return p
+}
+
+func NewLineChartFromInterface(chart teainterfaces.LineChartInterface) *LineChart {
+	p := &LineChart{}
+	p.Type = "line"
+	p.Name = chart.(teainterfaces.ChartInterface).Name()
+	p.Detail = chart.(teainterfaces.ChartInterface).Detail()
+
+	p.Lines = []*Line{}
+
+	for _, line := range chart.Lines() {
+		line, ok := line.(teainterfaces.LineInterface)
+		if !ok {
+			continue
+		}
+		p.AddLine(&Line{
+			Name:      line.Name(),
+			Values:    line.Values(),
+			Color:     line.Color(),
+			Filled:    line.Filled(),
+			ShowItems: line.ShowItems(),
+		})
+	}
+
+	p.Labels = chart.Labels()
+	p.Max = chart.Max()
+	p.XShowTick = chart.XShowTick()
+	p.YTickCount = chart.YTickCount()
+	p.YShowTick = chart.YShowTick()
+	return p
+}
+
 type Line struct {
 	Name      string        `json:"name"`
 	Values    []interface{} `json:"values"`
@@ -19,13 +58,6 @@ type LineChart struct {
 
 	YTickCount uint `json:"yTickCount"` // Y轴刻度分隔数量
 	YShowTick  bool `json:"yShowTick"`  // Y轴是否显示刻度
-}
-
-func NewLineChart() *LineChart {
-	p := &LineChart{}
-	p.Type = "line"
-	p.Lines = []*Line{}
-	return p
 }
 
 func (this *LineChart) UniqueId() string {

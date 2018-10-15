@@ -1,10 +1,6 @@
 package teacharts
 
-type PieChart struct {
-	Chart
-	Values []interface{} `json:"values"`
-	Labels []string      `json:"labels"`
-}
+import "github.com/TeaWeb/code/teainterfaces"
 
 func NewPieChart() *PieChart {
 	p := &PieChart{
@@ -13,6 +9,23 @@ func NewPieChart() *PieChart {
 	}
 	p.Type = "pie"
 	return p
+}
+
+func NewPieChartFromInterface(chart teainterfaces.PieChartInterface) *PieChart {
+	p := &PieChart{
+		Values: chart.Values(),
+		Labels: chart.Labels(),
+	}
+	p.Type = "pie"
+	p.Name = chart.(teainterfaces.ChartInterface).Name()
+	p.Detail = chart.(teainterfaces.ChartInterface).Detail()
+	return p
+}
+
+type PieChart struct {
+	Chart
+	Values []interface{} `json:"values"`
+	Labels []string      `json:"labels"`
 }
 
 func (this *PieChart) UniqueId() string {
