@@ -14,6 +14,7 @@ func (this *IndexAction) Run(params struct{}) {
 		if !p.IsExternal {
 			continue
 		}
+
 		pluginArray = append(pluginArray, maps.Map{
 			"name":        p.Name,
 			"developer":   p.Developer,
@@ -21,6 +22,8 @@ func (this *IndexAction) Run(params struct{}) {
 			"site":        p.Site,
 			"date":        p.Date,
 			"description": p.Description,
+			"code":        p.Code,
+			"interfaces":  p.InterfaceNames(),
 		})
 	}
 

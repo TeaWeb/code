@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teaplugins"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
@@ -635,6 +636,15 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 		}
 	}
 
+	// 插件过滤
+	if !teaplugins.FilterResponse(resp, writer) {
+		this.responseHeader = writer.Header()
+		this.requestTime = time.Since(this.requestFromTime).Seconds()
+		this.responseStatusMessage = resp.Status
+		this.responseStatus = resp.StatusCode
+		return nil
+	}
+
 	this.responseHeader = writer.Header()
 
 	// 设置响应码
@@ -658,7 +668,7 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 }
 
 func (this *Request) notFoundError(writer http.ResponseWriter) {
-	msg := "404 page not found"
+	msg := "404 page not found: '" + this.requestURI() + "'"
 
 	writer.WriteHeader(http.StatusNotFound)
 	writer.Write([]byte(msg))

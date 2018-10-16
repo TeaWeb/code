@@ -1,12 +1,13 @@
 package teaproxy
 
 import (
-	"net/http"
-	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/Tea"
-	"github.com/TeaWeb/code/teaconfigs"
-	"strings"
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaplugins"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/logs"
+	"net/http"
+	"strings"
 )
 
 // 监听服务定义
@@ -63,6 +64,13 @@ func (this *Listener) Shutdown() error {
 
 // 处理请求
 func (this *Listener) handle(writer http.ResponseWriter, rawRequest *http.Request) {
+	// 插件过滤
+	result := teaplugins.FilterRequest(rawRequest)
+	if !result {
+		return
+	}
+
+	// 域名
 	reqHost := rawRequest.Host
 	colonIndex := strings.Index(reqHost, ":")
 	domain := ""
@@ -73,10 +81,11 @@ func (this *Listener) handle(writer http.ResponseWriter, rawRequest *http.Reques
 	}
 	server, serverName := this.config.FindNamedServer(domain)
 	if server == nil {
-		http.Error(writer, "404 page not found", http.StatusNotFound)
+		http.Error(writer, "404 page not found: '"+rawRequest.URL.String()+"'", http.StatusNotFound)
 		return
 	}
 
+	// 包装新的请求
 	req := NewRequest(rawRequest)
 	req.host = reqHost
 	req.method = rawRequest.Method

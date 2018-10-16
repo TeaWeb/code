@@ -11,6 +11,8 @@ type Plugin struct {
 	Developer   string    // 开发者
 	Description string    // 插件简介
 	Widgets     []*Widget // 小组件
+
+	interfaceNames []string
 }
 
 func NewPlugin() *Plugin {
@@ -21,4 +23,12 @@ func NewPlugin() *Plugin {
 
 func (this *Plugin) AddWidget(widget *Widget) {
 	this.Widgets = append(this.Widgets, widget)
+}
+
+func (this *Plugin) AddInterfaceName(interfaceName string) {
+	this.interfaceNames = append(this.interfaceNames, interfaceName)
+}
+
+func (this *Plugin) InterfaceNames() []string {
+	return this.interfaceNames
 }

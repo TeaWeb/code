@@ -6,6 +6,7 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
+	"net/http"
 	"plugin"
 	"reflect"
 	"sync"
@@ -13,6 +14,11 @@ import (
 
 var plugins = []*Plugin{}
 var pluginsLocker = &sync.Mutex{}
+
+var requestFilters = []teainterfaces.PluginRequestFilterInterface{}
+var hasRequestFilters = false
+var responseFilters = []teainterfaces.PluginResponseFilterInterface{}
+var hasResponseFilters = false
 
 func Register(plugin *Plugin) {
 	pluginsLocker.Lock()
@@ -82,6 +88,32 @@ func DashboardWidgets(group WidgetGroup) []*Widget {
 		}
 	}
 	return result
+}
+
+func FilterRequest(request *http.Request) bool {
+	if !hasRequestFilters {
+		return true
+	}
+	for _, filter := range requestFilters {
+		result := filter.FilterRequest(request)
+		if !result {
+			return false
+		}
+	}
+	return true
+}
+
+func FilterResponse(response *http.Response, writer http.ResponseWriter) bool {
+	if !hasResponseFilters {
+		return true
+	}
+	for _, filter := range responseFilters {
+		result := filter.FilterResponse(response, writer)
+		if !result {
+			return false
+		}
+	}
+	return true
 }
 
 func load() {
@@ -157,39 +189,59 @@ func loadInterface(p1 teainterfaces.PluginInterface, fileName string) {
 	p2.Description = p1.Description()
 
 	// widget
-	for _, w := range p1.Widgets() {
-		w1, ok := w.(teainterfaces.WidgetInterface)
-		if !ok {
-			logs.Println("[plugin]invalid widget in", fileName)
-			continue
+	_, ok := p1.(teainterfaces.PluginWidgetInterface)
+	if ok {
+		p2.AddInterfaceName("widgets")
+		for _, w := range p1.(teainterfaces.PluginWidgetInterface).Widgets() {
+			w1, ok := w.(teainterfaces.WidgetInterface)
+			if !ok {
+				logs.Println("[plugin]invalid widget in", fileName)
+				continue
+			}
+
+			w2 := NewWidget()
+			w2.Name = w1.Name()
+			w2.URL = w1.URL()
+			w2.MoreURL = w1.MoreURL()
+			w2.Group = w1.Group()
+			w2.TopBar = w1.TopBar()
+			w2.MenuBar = w1.MenuBar()
+			w2.HelperBar = w1.HelperBar()
+			w2.Dashboard = w1.Dashboard()
+			w2.OnForceReload(func() {
+				// chart
+				loadWidgetInterface(w1, w2, fileName)
+
+				w1.OnReload()
+			})
+			w2.OnReload(func() {
+				w1.OnReload()
+
+				// chart
+				loadWidgetInterface(w1, w2, fileName)
+			})
+
+			// chart
+			loadWidgetInterface(w1, w2, fileName)
+
+			p2.AddWidget(w2)
 		}
+	}
 
-		w2 := NewWidget()
-		w2.Name = w1.Name()
-		w2.URL = w1.URL()
-		w2.MoreURL = w1.MoreURL()
-		w2.Group = w1.Group()
-		w2.TopBar = w1.TopBar()
-		w2.MenuBar = w1.MenuBar()
-		w2.HelperBar = w1.HelperBar()
-		w2.Dashboard = w1.Dashboard()
-		w2.OnForceReload(func() {
-			// chart
-			loadWidgetInterface(w1, w2, fileName)
+	// request filter
+	p1RequestFilter, ok := p1.(teainterfaces.PluginRequestFilterInterface)
+	if ok {
+		p2.AddInterfaceName("requestFilter")
+		hasRequestFilters = true
+		requestFilters = append(requestFilters, p1RequestFilter)
+	}
 
-			w1.OnReload()
-		})
-		w2.OnReload(func() {
-			w1.OnReload()
-
-			// chart
-			loadWidgetInterface(w1, w2, fileName)
-		})
-
-		// chart
-		loadWidgetInterface(w1, w2, fileName)
-
-		p2.AddWidget(w2)
+	// response filter
+	p1ResponseFilter, ok := p1.(teainterfaces.PluginResponseFilterInterface)
+	if ok {
+		p2.AddInterfaceName("responseFilter")
+		hasResponseFilters = true
+		responseFilters = append(responseFilters, p1ResponseFilter)
 	}
 
 	Register(p2)

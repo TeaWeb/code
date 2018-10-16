@@ -8,6 +8,10 @@ const (
 	WidgetGroupRealTime = WidgetGroup(3) // 即时
 )
 
+type PluginWidgetInterface interface {
+	Widgets() []interface{}
+}
+
 type WidgetInterface interface {
 	Name() string
 	Icon() []byte
