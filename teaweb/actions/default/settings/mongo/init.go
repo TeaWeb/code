@@ -1,9 +1,9 @@
 package mongo
 
 import (
-	"github.com/iwind/TeaGo"
-	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/TeaWeb/code/teaweb/actions/default/settings"
+	"github.com/TeaWeb/code/teaweb/helpers"
+	"github.com/iwind/TeaGo"
 )
 
 func init() {
@@ -15,6 +15,8 @@ func init() {
 			Get("", new(IndexAction)).
 			GetPost("/update", new(UpdateAction)).
 			Get("/test", new(TestAction)).
+			GetPost("/install", new(InstallAction)).
+			Get("/installStatus", new(InstallStatusAction)).
 			EndAll()
 	})
 }
