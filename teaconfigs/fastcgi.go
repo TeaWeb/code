@@ -2,10 +2,12 @@ package teaconfigs
 
 import (
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -106,4 +108,58 @@ func (this *FastcgiConfig) Timeout() time.Duration {
 		this.timeout = 30 * time.Second
 	}
 	return this.timeout
+}
+
+// 设置Header
+func (this *FastcgiConfig) SetHeader(name string, value string) {
+	found := false
+	upperName := strings.ToUpper(name)
+	for _, header := range this.Headers {
+		if strings.ToUpper(header.Name) == upperName {
+			found = true
+			header.Value = value
+		}
+	}
+	if found {
+		return
+	}
+
+	header := NewHeaderConfig()
+	header.Name = name
+	header.Value = value
+	this.Headers = append(this.Headers, header)
+}
+
+// 删除指定位置上的Header
+func (this *FastcgiConfig) DeleteHeaderAtIndex(index int) {
+	if index >= 0 && index < len(this.Headers) {
+		this.Headers = lists.Remove(this.Headers, index).([]*HeaderConfig)
+	}
+}
+
+// 取得指定位置上的Header
+func (this *FastcgiConfig) HeaderAtIndex(index int) *HeaderConfig {
+	if index >= 0 && index < len(this.Headers) {
+		return this.Headers[index]
+	}
+	return nil
+}
+
+// 屏蔽一个Header
+func (this *FastcgiConfig) AddIgnoreHeader(name string) {
+	this.IgnoreHeaders = append(this.IgnoreHeaders, name)
+}
+
+// 移除对Header的屏蔽
+func (this *FastcgiConfig) DeleteIgnoreHeaderAtIndex(index int) {
+	if index >= 0 && index < len(this.IgnoreHeaders) {
+		this.IgnoreHeaders = lists.Remove(this.IgnoreHeaders, index).([]string)
+	}
+}
+
+// 更改Header的屏蔽
+func (this *FastcgiConfig) UpdateIgnoreHeaderAtIndex(index int, name string) {
+	if index >= 0 && index < len(this.IgnoreHeaders) {
+		this.IgnoreHeaders[index] = name
+	}
 }

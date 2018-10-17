@@ -2,6 +2,7 @@ package locations
 
 import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/headers"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo"
 )

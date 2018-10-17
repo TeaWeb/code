@@ -20,6 +20,7 @@ func (this *IndexAction) Run(params struct {
 	this.Data["filename"] = params.Filename
 	this.Data["proxy"] = proxy
 
+	// headers
 	this.Data["headers"] = proxy.Headers
 	this.Data["ignoreHeaders"] = lists.NewList(proxy.IgnoreHeaders).Map(func(k int, v interface{}) interface{} {
 		return map[string]interface{}{

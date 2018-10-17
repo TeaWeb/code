@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -83,6 +84,15 @@ func (this *DetailAction) Run(params struct {
 	// 字符集
 	this.Data["usualCharsets"] = teautils.UsualCharsets
 	this.Data["charsets"] = teautils.AllCharsets
+
+	// headers
+	this.Data["locationIndex"] = params.Index
+	this.Data["headers"] = location.Headers
+	this.Data["ignoreHeaders"] = lists.NewList(location.IgnoreHeaders).Map(func(k int, v interface{}) interface{} {
+		return map[string]interface{}{
+			"name": v,
+		}
+	}).Slice
 
 	this.Show()
 }

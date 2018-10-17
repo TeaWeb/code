@@ -131,6 +131,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	// Header
 	if len(server.Headers) > 0 {
 		this.headers = append(this.headers, server.Headers ...)
+	}
+
+	if len(server.IgnoreHeaders) > 0 {
 		this.ignoreHeaders = append(this.ignoreHeaders, server.IgnoreHeaders ...)
 	}
 
@@ -151,6 +154,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 			if len(location.Headers) > 0 {
 				this.headers = append(this.headers, location.Headers ...)
+			}
+
+			if len(this.ignoreHeaders) > 0 {
 				this.ignoreHeaders = append(this.ignoreHeaders, location.IgnoreHeaders ...)
 			}
 
@@ -169,6 +175,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 						if len(rule.Headers) > 0 {
 							this.headers = append(this.headers, rule.Headers ...)
+						}
+
+						if len(rule.IgnoreHeaders) > 0 {
 							this.ignoreHeaders = append(this.ignoreHeaders, rule.IgnoreHeaders ...)
 						}
 
@@ -216,6 +225,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 				if len(fastcgi.Headers) > 0 {
 					this.headers = append(this.headers, fastcgi.Headers ...)
+				}
+
+				if len(fastcgi.IgnoreHeaders) > 0 {
 					this.ignoreHeaders = append(this.ignoreHeaders, fastcgi.IgnoreHeaders ...)
 				}
 
@@ -244,6 +256,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 				if len(backend.Headers) > 0 {
 					this.headers = append(this.headers, backend.Headers ...)
+				}
+
+				if len(backend.IgnoreHeaders) > 0 {
 					this.ignoreHeaders = append(this.ignoreHeaders, backend.IgnoreHeaders ...)
 				}
 
@@ -271,6 +286,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 				if len(rule.Headers) > 0 {
 					this.headers = append(this.headers, rule.Headers ...)
+				}
+
+				if len(rule.IgnoreHeaders) > 0 {
 					this.ignoreHeaders = append(this.ignoreHeaders, rule.IgnoreHeaders ...)
 				}
 
@@ -317,6 +335,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 		if len(fastcgi.Headers) > 0 {
 			this.headers = append(this.headers, fastcgi.Headers ...)
+		}
+
+		if len(fastcgi.IgnoreHeaders) > 0 {
 			this.ignoreHeaders = append(this.ignoreHeaders, fastcgi.IgnoreHeaders ...)
 		}
 
@@ -347,6 +368,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	if backend != nil {
 		if len(backend.Headers) > 0 {
 			this.headers = append(this.headers, backend.Headers ...)
+		}
+
+		if len(backend.IgnoreHeaders) > 0 {
 			this.ignoreHeaders = append(this.ignoreHeaders, backend.IgnoreHeaders ...)
 		}
 	}

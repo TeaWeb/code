@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
 	"strings"
 )
@@ -45,4 +46,58 @@ func (this *ServerBackendConfig) Validate() error {
 	}
 
 	return nil
+}
+
+// 设置Header
+func (this *ServerBackendConfig) SetHeader(name string, value string) {
+	found := false
+	upperName := strings.ToUpper(name)
+	for _, header := range this.Headers {
+		if strings.ToUpper(header.Name) == upperName {
+			found = true
+			header.Value = value
+		}
+	}
+	if found {
+		return
+	}
+
+	header := NewHeaderConfig()
+	header.Name = name
+	header.Value = value
+	this.Headers = append(this.Headers, header)
+}
+
+// 删除指定位置上的Header
+func (this *ServerBackendConfig) DeleteHeaderAtIndex(index int) {
+	if index >= 0 && index < len(this.Headers) {
+		this.Headers = lists.Remove(this.Headers, index).([]*HeaderConfig)
+	}
+}
+
+// 取得指定位置上的Header
+func (this *ServerBackendConfig) HeaderAtIndex(index int) *HeaderConfig {
+	if index >= 0 && index < len(this.Headers) {
+		return this.Headers[index]
+	}
+	return nil
+}
+
+// 屏蔽一个Header
+func (this *ServerBackendConfig) AddIgnoreHeader(name string) {
+	this.IgnoreHeaders = append(this.IgnoreHeaders, name)
+}
+
+// 移除对Header的屏蔽
+func (this *ServerBackendConfig) DeleteIgnoreHeaderAtIndex(index int) {
+	if index >= 0 && index < len(this.IgnoreHeaders) {
+		this.IgnoreHeaders = lists.Remove(this.IgnoreHeaders, index).([]string)
+	}
+}
+
+// 更改Header的屏蔽
+func (this *ServerBackendConfig) UpdateIgnoreHeaderAtIndex(index int, name string) {
+	if index >= 0 && index < len(this.IgnoreHeaders) {
+		this.IgnoreHeaders[index] = name
+	}
 }

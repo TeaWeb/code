@@ -1,8 +1,8 @@
 package locations
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
 
