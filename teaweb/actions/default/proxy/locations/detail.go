@@ -1,10 +1,11 @@
 package locations
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/iwind/TeaGo/maps"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/maps"
 )
 
 type DetailAction actions.Action
@@ -76,6 +77,10 @@ func (this *DetailAction) Run(params struct {
 			"value": teaconfigs.LocationPatternTypeRegexp,
 		},
 	}
+
+	// 字符集
+	this.Data["usualCharsets"] = teautils.UsualCharsets
+	this.Data["charsets"] = teautils.AllCharsets
 
 	this.Show()
 }

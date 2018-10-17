@@ -1,9 +1,9 @@
 package locations
 
 import (
-	"github.com/iwind/TeaGo"
-	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy"
+	"github.com/TeaWeb/code/teaweb/helpers"
+	"github.com/iwind/TeaGo"
 )
 
 func init() {
@@ -24,6 +24,8 @@ func init() {
 			Post("/updatePattern", new(UpdatePatternAction)).
 			Post("/updateType", new(UpdateTypeAction)).
 			Post("/updateRoot", new(UpdateRootAction)).
+			Post("/updateCharset", new(UpdateCharsetAction)).
+			Post("/updateIndex", new(UpdateIndexAction)).
 			EndAll()
 	})
 }

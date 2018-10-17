@@ -1,14 +1,14 @@
 package teaconfigs
 
 import (
-	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo/logs"
-	"strings"
-	"math/rand"
-	"time"
-	"github.com/iwind/TeaGo/utils/string"
 	"errors"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/utils/string"
+	"math/rand"
+	"strings"
+	"time"
 )
 
 // 服务配置
@@ -107,6 +107,8 @@ func NewServerConfigFromFile(filename string) (*ServerConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	config.Filename = filename
 
 	return config, nil
 }
@@ -216,6 +218,14 @@ func (this *ServerConfig) WriteToFilename(filename string) error {
 	_, err = writer.WriteYAML(this)
 	writer.Close()
 	return err
+}
+
+func (this *ServerConfig) WriteBack() error {
+	if len(this.Filename) == 0 {
+		return errors.New("'filename' should be specified")
+	}
+
+	return this.WriteToFilename(this.Filename)
 }
 
 // 判断是否和域名匹配

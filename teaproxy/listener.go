@@ -1,6 +1,7 @@
 package teaproxy
 
 import (
+	"context"
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaplugins"
@@ -59,7 +60,10 @@ func (this *Listener) Start() {
 
 // 关闭
 func (this *Listener) Shutdown() error {
-	return this.server.Shutdown(nil)
+	if this.server != nil {
+		return this.server.Shutdown(context.Background())
+	}
+	return nil
 }
 
 // 处理请求

@@ -99,6 +99,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	path := uri.Path
 
 	this.root = server.Root
+	if len(server.Charset) > 0 {
+		this.charset = server.Charset
+	}
 
 	// location的相关配置
 	for _, location := range server.Locations {
@@ -392,7 +395,13 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 		mimeType := mime.TypeByExtension(ext)
 		if len(mimeType) > 0 {
 			if len(this.charset) > 0 {
-				writer.Header().Set("Content-Type", mimeType+"; charset="+this.charset)
+				// 去掉里面的charset设置
+				index := strings.Index(mimeType, "charset=")
+				if index > 0 {
+					writer.Header().Set("Content-Type", mimeType[:index+len("charset=")]+this.charset)
+				} else {
+					writer.Header().Set("Content-Type", mimeType+"; charset="+this.charset)
+				}
 			} else {
 				writer.Header().Set("Content-Type", mimeType)
 			}
@@ -636,16 +645,15 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 		}
 	}
 
+	this.responseHeader = writer.Header()
+
 	// 插件过滤
 	if !teaplugins.FilterResponse(resp, writer) {
-		this.responseHeader = writer.Header()
 		this.requestTime = time.Since(this.requestFromTime).Seconds()
 		this.responseStatusMessage = resp.Status
 		this.responseStatus = resp.StatusCode
 		return nil
 	}
-
-	this.responseHeader = writer.Header()
 
 	// 设置响应码
 	writer.WriteHeader(resp.StatusCode)

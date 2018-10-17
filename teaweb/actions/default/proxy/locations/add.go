@@ -46,5 +46,5 @@ func (this *AddAction) Run(params struct {
 		"index":    len(proxy.Locations) - 1,
 	})
 
-	this.Success("添加成功")
+	this.Success("添加成功，现在跳转到详情")
 }
