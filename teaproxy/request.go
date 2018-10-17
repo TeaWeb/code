@@ -10,6 +10,7 @@ import (
 	"github.com/TeaWeb/code/teaplugins"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/gofcgi"
 	"io"
@@ -26,20 +27,42 @@ import (
 
 var requestVarReg = regexp.MustCompile("\\${[\\w.-]+}")
 
+// 文本mime-type列表
+var textMimeMap = map[string]bool{
+	"application/atom+xml":                true,
+	"application/javascript":              true,
+	"application/x-javascript":            true,
+	"application/json":                    true,
+	"application/rss+xml":                 true,
+	"application/x-web-app-manifest+json": true,
+	"application/xhtml+xml":               true,
+	"application/xml":                     true,
+	"image/svg+xml":                       true,
+	"text/css":                            true,
+	"text/plain":                          true,
+	"text/javascript":                     true,
+	"text/xml":                            true,
+	"text/html":                           true,
+	"text/xhtml":                          true,
+	"text/sgml":                           true,
+}
+
 // 请求定义
 type Request struct {
 	raw    *http.Request
 	server *teaconfigs.ServerConfig
 
-	scheme     string
-	rawScheme  string // 原始的scheme
-	uri        string
-	rawURI     string // 跳转之前的uri
-	host       string
-	method     string
-	serverName string // @TODO
-	serverAddr string
-	charset    string
+	scheme        string
+	rawScheme     string // 原始的scheme
+	uri           string
+	rawURI        string // 跳转之前的uri
+	host          string
+	method        string
+	serverName    string // @TODO
+	serverAddr    string
+	charset       string
+	headers       []*teaconfigs.HeaderConfig // 自定义Header
+	ignoreHeaders []string                   // 忽略的Header
 
 	root     string   // 资源根目录
 	index    []string // 目录下默认访问的文件
@@ -99,8 +122,16 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	path := uri.Path
 
 	this.root = server.Root
+
+	// 字符集
 	if len(server.Charset) > 0 {
 		this.charset = server.Charset
+	}
+
+	// Header
+	if len(server.Headers) > 0 {
+		this.headers = append(this.headers, server.Headers ...)
+		this.ignoreHeaders = append(this.ignoreHeaders, server.IgnoreHeaders ...)
 	}
 
 	// location的相关配置
@@ -118,6 +149,10 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			if len(location.Index) > 0 {
 				this.index = location.Index
 			}
+			if len(location.Headers) > 0 {
+				this.headers = append(this.headers, location.Headers ...)
+				this.ignoreHeaders = append(this.ignoreHeaders, location.IgnoreHeaders ...)
+			}
 
 			this.location = location
 
@@ -128,9 +163,14 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 						continue
 					}
 					if rule.Apply(path, func(source string) string {
-						return source
+						return this.format(source)
 					}) {
 						this.rewrite = rule
+
+						if len(rule.Headers) > 0 {
+							this.headers = append(this.headers, rule.Headers ...)
+							this.ignoreHeaders = append(this.ignoreHeaders, rule.IgnoreHeaders ...)
+						}
 
 						// @TODO 支持带host前缀的URL，比如：http://google.com/hello/world
 						newURI, err := url.ParseRequestURI(rule.TargetURL())
@@ -173,6 +213,12 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			fastcgi := location.NextFastcgi()
 			if fastcgi != nil {
 				this.fastcgi = fastcgi
+
+				if len(fastcgi.Headers) > 0 {
+					this.headers = append(this.headers, fastcgi.Headers ...)
+					this.ignoreHeaders = append(this.ignoreHeaders, fastcgi.IgnoreHeaders ...)
+				}
+
 				return nil
 			}
 
@@ -195,6 +241,12 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					return errors.New("no backends available")
 				}
 				this.backend = backend
+
+				if len(backend.Headers) > 0 {
+					this.headers = append(this.headers, backend.Headers ...)
+					this.ignoreHeaders = append(this.ignoreHeaders, backend.IgnoreHeaders ...)
+				}
+
 				return nil
 			}
 
@@ -213,9 +265,14 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				continue
 			}
 			if rule.Apply(path, func(source string) string {
-				return source
+				return this.format(source)
 			}) {
 				this.rewrite = rule
+
+				if len(rule.Headers) > 0 {
+					this.headers = append(this.headers, rule.Headers ...)
+					this.ignoreHeaders = append(this.ignoreHeaders, rule.IgnoreHeaders ...)
+				}
 
 				// @TODO 支持带host前缀的URL，比如：http://google.com/hello/world
 				newURI, err := url.ParseRequestURI(rule.TargetURL())
@@ -257,6 +314,12 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	fastcgi := server.NextFastcgi()
 	if fastcgi != nil {
 		this.fastcgi = fastcgi
+
+		if len(fastcgi.Headers) > 0 {
+			this.headers = append(this.headers, fastcgi.Headers ...)
+			this.ignoreHeaders = append(this.ignoreHeaders, fastcgi.IgnoreHeaders ...)
+		}
+
 		return nil
 	}
 
@@ -280,6 +343,13 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		}
 	}
 	this.backend = backend
+
+	if backend != nil {
+		if len(backend.Headers) > 0 {
+			this.headers = append(this.headers, backend.Headers ...)
+			this.ignoreHeaders = append(this.ignoreHeaders, backend.IgnoreHeaders ...)
+		}
+	}
 
 	return nil
 }
@@ -389,22 +459,38 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 	}
 	defer fp.Close()
 
+	// 忽略的Header
+	ignoreHeaders := this.convertIgnoreHeaders()
+	hasIgnoreHeaders := ignoreHeaders.Len() > 0
+
 	// mime type
-	ext := filepath.Ext(requestPath)
-	if len(ext) > 0 {
-		mimeType := mime.TypeByExtension(ext)
-		if len(mimeType) > 0 {
-			if len(this.charset) > 0 {
-				// 去掉里面的charset设置
-				index := strings.Index(mimeType, "charset=")
-				if index > 0 {
-					writer.Header().Set("Content-Type", mimeType[:index+len("charset=")]+this.charset)
+	if !hasIgnoreHeaders || !ignoreHeaders.Has("CONTENT-TYPE") {
+		ext := filepath.Ext(requestPath)
+		if len(ext) > 0 {
+			mimeType := mime.TypeByExtension(ext)
+			if len(mimeType) > 0 {
+				if len(this.charset) > 0 {
+					// 去掉里面的charset设置
+					index := strings.Index(mimeType, "charset=")
+					if index > 0 {
+						writer.Header().Set("Content-Type", mimeType[:index+len("charset=")]+this.charset)
+					} else {
+						writer.Header().Set("Content-Type", mimeType+"; charset="+this.charset)
+					}
 				} else {
-					writer.Header().Set("Content-Type", mimeType+"; charset="+this.charset)
+					writer.Header().Set("Content-Type", mimeType)
 				}
-			} else {
-				writer.Header().Set("Content-Type", mimeType)
 			}
+		}
+	}
+
+	// 自定义Header
+	for _, header := range this.headers {
+		if header.Match(http.StatusOK) {
+			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
+				continue
+			}
+			writer.Header().Set(header.Name, header.Value)
 		}
 	}
 
@@ -496,13 +582,40 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 	}
 	defer resp.Body.Close()
 
+	// 忽略的Header
+	ignoreHeaders := this.convertIgnoreHeaders()
+	hasIgnoreHeaders := ignoreHeaders.Len() > 0
+
 	// 设置Header
+	hasCharset := len(this.charset) > 0
 	for k, v := range resp.Header {
 		if k == "Connection" {
 			continue
 		}
+		if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(k)) {
+			continue
+		}
 		for _, subV := range v {
+			// 字符集
+			if hasCharset && k == "Content-Type" {
+				if _, found := textMimeMap[subV]; found {
+					if !strings.Contains(subV, "charset=") {
+						subV += "; charset=" + this.charset
+					}
+				}
+			}
+
 			writer.Header().Add(k, subV)
+		}
+	}
+
+	// 自定义Header
+	for _, header := range this.headers {
+		if header.Match(resp.StatusCode) {
+			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
+				continue
+			}
+			writer.Header().Set(header.Name, header.Value)
 		}
 	}
 
@@ -635,13 +748,40 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 
 	defer resp.Body.Close()
 
+	// 忽略的Header
+	ignoreHeaders := this.convertIgnoreHeaders()
+	hasIgnoreHeaders := ignoreHeaders.Len() > 0
+
 	// 设置Header
+	var hasCharset = len(this.charset) > 0
 	for k, v := range resp.Header {
 		if k == "Connection" {
 			continue
 		}
+		if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(k)) {
+			continue
+		}
+
 		for _, subV := range v {
+			// 字符集
+			if hasCharset && k == "Content-Type" {
+				if _, found := textMimeMap[subV]; found {
+					if !strings.Contains(subV, "charset=") {
+						subV += "; charset=" + this.charset
+					}
+				}
+			}
 			writer.Header().Add(k, subV)
+		}
+	}
+
+	// 自定义Header
+	for _, header := range this.headers {
+		if header.Match(resp.StatusCode) {
+			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
+				continue
+			}
+			writer.Header().Set(header.Name, header.Value)
 		}
 	}
 
@@ -1058,4 +1198,12 @@ func (this *Request) findIndexFile(dir string) string {
 		return index
 	}
 	return ""
+}
+
+func (this *Request) convertIgnoreHeaders() maps.Map {
+	m := maps.Map{}
+	for _, h := range this.ignoreHeaders {
+		m[strings.ToUpper(h)] = true
+	}
+	return m
 }

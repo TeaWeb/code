@@ -20,6 +20,7 @@ func (this *DetailAction) Run(params struct {
 		proxy.Index = []string{}
 	}
 
+	this.Data["selectedTab"] = "basic"
 	this.Data["filename"] = params.Filename
 	this.Data["proxy"] = proxy
 

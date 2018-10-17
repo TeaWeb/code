@@ -1,11 +1,11 @@
 package teaconfigs
 
 import (
-	"strings"
-	"regexp"
-	"math/rand"
-	"time"
 	"github.com/iwind/TeaGo/utils/string"
+	"math/rand"
+	"regexp"
+	"strings"
+	"time"
 )
 
 const (
@@ -43,7 +43,8 @@ type LocationConfig struct {
 	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // @TODO
 
 	// 参考 http://nginx.org/en/docs/http/ngx_http_headers_module.html#add_header
-	Headers []HeaderConfig `yaml:"headers" json:"headers"` // 头信息 @TODO
+	Headers       []*HeaderConfig `yaml:"headers" json:"headers"`             // 头信息 @TODO
+	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` // 允许的终端地址 @TODO
@@ -168,6 +169,14 @@ func (this *LocationConfig) Validate() error {
 	// 校验Fastcgi配置
 	for _, fastcgi := range this.Fastcgi {
 		err := fastcgi.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
+	// 校验Header
+	for _, header := range this.Headers {
+		err := header.Validate()
 		if err != nil {
 			return err
 		}

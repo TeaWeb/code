@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
 	"math/rand"
@@ -40,11 +41,10 @@ type ServerConfig struct {
 	// @TODO 支持ErrorLog
 
 	// SSL
-	// @TODO
 	SSL *SSLConfig `yaml:"ssl" json:"ssl"`
 
-	// 参考 http://nginx.org/en/docs/http/ngx_http_headers_module.html#add_header
-	Headers []*HeaderConfig `yaml:"header" json:"headers"` // @TODO
+	Headers       []*HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header
+	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` //@TODO
@@ -110,6 +110,17 @@ func NewServerConfigFromFile(filename string) (*ServerConfig, error) {
 
 	config.Filename = filename
 
+	// 初始化
+	if len(config.Locations) == 0 {
+		config.Locations = []*LocationConfig{}
+	}
+	if len(config.Headers) == 0 {
+		config.Headers = []*HeaderConfig{}
+	}
+	if len(config.IgnoreHeaders) == 0 {
+		config.IgnoreHeaders = []string{}
+	}
+
 	return config, nil
 }
 
@@ -155,6 +166,14 @@ func (this *ServerConfig) Validate() error {
 		}
 	}
 
+	// headers
+	for _, header := range this.Headers {
+		err := header.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -183,6 +202,60 @@ func (this *ServerConfig) NextBackend() *ServerBackendConfig {
 	rand.Seed(time.Now().UnixNano())
 	index := rand.Int() % countBackends
 	return this.Backends[index]
+}
+
+// 设置Header
+func (this *ServerConfig) SetHeader(name string, value string) {
+	found := false
+	upperName := strings.ToUpper(name)
+	for _, header := range this.Headers {
+		if strings.ToUpper(header.Name) == upperName {
+			found = true
+			header.Value = value
+		}
+	}
+	if found {
+		return
+	}
+
+	header := NewHeaderConfig()
+	header.Name = name
+	header.Value = value
+	this.Headers = append(this.Headers, header)
+}
+
+// 删除指定位置上的Header
+func (this *ServerConfig) DeleteHeaderAtIndex(index int) {
+	if index >= 0 && index < len(this.Headers) {
+		this.Headers = lists.Remove(this.Headers, index).([]*HeaderConfig)
+	}
+}
+
+// 取得指定位置上的Header
+func (this *ServerConfig) HeaderAtIndex(index int) *HeaderConfig {
+	if index >= 0 && index < len(this.Headers) {
+		return this.Headers[index]
+	}
+	return nil
+}
+
+// 屏蔽一个Header
+func (this *ServerConfig) AddIgnoreHeader(name string) {
+	this.IgnoreHeaders = append(this.IgnoreHeaders, name)
+}
+
+// 移除对Header的屏蔽
+func (this *ServerConfig) DeleteIgnoreHeaderAtIndex(index int) {
+	if index >= 0 && index < len(this.IgnoreHeaders) {
+		this.IgnoreHeaders = lists.Remove(this.IgnoreHeaders, index).([]string)
+	}
+}
+
+// 更改Header的屏蔽
+func (this *ServerConfig) UpdateIgnoreHeaderAtIndex(index int, name string) {
+	if index >= 0 && index < len(this.IgnoreHeaders) {
+		this.IgnoreHeaders[index] = name
+	}
 }
 
 // 获取某个位置上的配置

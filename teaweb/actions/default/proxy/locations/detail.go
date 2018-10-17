@@ -28,8 +28,10 @@ func (this *DetailAction) Run(params struct {
 		location.Index = []string{}
 	}
 
+	this.Data["selectedTab"] = "location"
 	this.Data["filename"] = params.Filename
 	this.Data["locationIndex"] = params.Index
+
 	this.Data["location"] = maps.Map{
 		"on":              location.On,
 		"type":            location.PatternType(),

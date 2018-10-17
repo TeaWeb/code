@@ -1,10 +1,10 @@
 package teaconfigs
 
 import (
-	"regexp"
-	"strings"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	"regexp"
+	"strings"
 )
 
 const (
@@ -40,6 +40,10 @@ type RewriteRule struct {
 	// 支持反向引用：${0}, ${1}, ...
 	// - 如果以 proxy:// 开头，表示目标为代理，首先会尝试作为代理ID请求，如果找不到，会尝试作为代理Host请求
 	Replace string `yaml:"replace" json:"replace"`
+
+	// Headers
+	Headers       []*HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
+	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
 
 	targetType  int // RewriteTarget*
 	targetURL   string
@@ -77,6 +81,14 @@ func (this *RewriteRule) Validate() error {
 	// 校验条件
 	for _, cond := range this.Cond {
 		err := cond.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
+	// 校验Header
+	for _, header := range this.Headers {
+		err := header.Validate()
 		if err != nil {
 			return err
 		}

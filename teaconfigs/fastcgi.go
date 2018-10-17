@@ -1,11 +1,11 @@
 package teaconfigs
 
 import (
-	"github.com/iwind/TeaGo/maps"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
 	"path/filepath"
-	"github.com/iwind/TeaGo/utils/string"
 	"time"
 )
 
@@ -24,6 +24,10 @@ type FastcgiConfig struct {
 	SendTimeout string            `yaml:"sendTimeout" json:"sendTimeout"` // @TODO 发送超时时间
 	ConnTimeout string            `yaml:"connTimeout" json:"connTimeout"` // @TODO 连接超时时间
 	PoolSize    int               `yaml:"poolSize" json:"poolSize"`       // 连接池尺寸 @TODO
+
+	// Headers
+	Headers       []*HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
+	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
 
 	paramsMap maps.Map
 	timeout   time.Duration
@@ -61,6 +65,14 @@ func (this *FastcgiConfig) Validate() error {
 		this.timeout = duration
 	} else {
 		this.timeout = 3 * time.Second
+	}
+
+	// 校验Header
+	for _, header := range this.Headers {
+		err := header.Validate()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

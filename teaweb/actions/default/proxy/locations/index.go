@@ -16,6 +16,7 @@ func (this *IndexAction) Run(params struct {
 		this.Fail(err.Error())
 	}
 
+	this.Data["selectedTab"] = "location"
 	this.Data["filename"] = params.Filename
 	this.Data["proxy"] = proxy
 
