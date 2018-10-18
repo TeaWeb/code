@@ -1,12 +1,14 @@
 package teaconfigs
 
 import (
+	"errors"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -17,8 +19,9 @@ type FastcgiConfig struct {
 	On bool   `yaml:"on" json:"on"` // @TODO
 	Id string `yaml:"id" json:"id"` // @TODO
 
-	// @TODO 支持unix://...
-	Pass string `yaml:"pass" json:"pass"` // @TODO
+	// fastcgi地址配置
+	// 支持unix:/tmp/php-fpm.sock ...
+	Pass string `yaml:"pass" json:"pass"`
 
 	Index       string            `yaml:"index" json:"index"`             //@TODO
 	Params      map[string]string `yaml:"params" json:"params"`           //@TODO
@@ -30,6 +33,9 @@ type FastcgiConfig struct {
 	// Headers
 	Headers       []*HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
 	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
+
+	network string // 协议：tcp, unix
+	address string // 地址
 
 	paramsMap maps.Map
 	timeout   time.Duration
@@ -56,6 +62,34 @@ func (this *FastcgiConfig) Validate() error {
 	}
 	if !this.paramsMap.Has("GATEWAY_INTERFACE") {
 		this.paramsMap["GATEWAY_INTERFACE"] = "CGI/1.1"
+	}
+
+	// 校验地址
+	if regexp.MustCompile("^\\d+$").MatchString(this.Pass) {
+		this.network = "tcp"
+		this.address = "127.0.0.1:" + this.Pass
+	} else if regexp.MustCompile("^(.*):(\\d+)$").MatchString(this.Pass) {
+		matches := regexp.MustCompile("^(.*):(\\d+)$").FindStringSubmatch(this.Pass)
+		ip := matches[1]
+		port := matches[2]
+		if len(ip) == 0 {
+			ip = "127.0.0.1"
+		}
+		this.network = "tcp"
+		this.address = ip + ":" + port
+	} else if regexp.MustCompile("^\\d+\\.\\d+.\\d+.\\d+$").MatchString(this.Pass) {
+		this.network = "tcp"
+		this.address = this.Pass + ":9000"
+	} else if regexp.MustCompile("^unix:(.+)$").MatchString(this.Pass) {
+		matches := regexp.MustCompile("^unix:(.+)$").FindStringSubmatch(this.Pass)
+		path := matches[1]
+		this.network = "unix"
+		this.address = path
+	} else if regexp.MustCompile("^[./].+$").MatchString(this.Pass) {
+		this.network = "unix"
+		this.address = this.Pass
+	} else {
+		return errors.New("invalid 'pass' format")
 	}
 
 	// 超时时间
@@ -108,6 +142,16 @@ func (this *FastcgiConfig) Timeout() time.Duration {
 		this.timeout = 30 * time.Second
 	}
 	return this.timeout
+}
+
+//网络协议
+func (this *FastcgiConfig) Network() string {
+	return this.network
+}
+
+// 网络地址
+func (this *FastcgiConfig) Address() string {
+	return this.address
 }
 
 // 设置Header

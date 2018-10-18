@@ -1,8 +1,8 @@
 package teaconfigs
 
 import (
-	"testing"
 	"github.com/iwind/TeaGo/assert"
+	"testing"
 )
 
 func TestLocationConfig_Match(t *testing.T) {
@@ -16,31 +16,41 @@ func TestLocationConfig_Match(t *testing.T) {
 
 	location.Pattern = "/hell"
 	a.IsNotError(location.Validate())
-	a.IsTrue(location.Match("/hello"))
+
+	_, b := location.Match("/hello")
+	a.IsTrue(b)
 
 	location.Pattern = "/hello"
 	a.IsNotError(location.Validate())
-	a.IsTrue(location.Match("/hello"))
+
+	_, b = location.Match("/hello")
+	a.IsTrue(b)
 
 	location.Pattern = "~ ^/\\w+$"
 	a.IsNotError(location.Validate())
-	a.IsTrue(location.Match("/hello"))
+	_, b = location.Match("/hello")
+	a.IsTrue(b)
 
 	location.Pattern = "!~ ^/HELLO$"
 	a.IsNotError(location.Validate())
-	a.IsTrue(location.Match("/hello"))
+	_, b = location.Match("/hello")
+	a.IsTrue(b)
 
 	location.Pattern = "~* ^/HELLO$"
 	a.IsNotError(location.Validate())
-	a.IsTrue(location.Match("/hello"))
+
+	_, b = location.Match("/hello")
+	a.IsTrue(b)
 
 	location.Pattern = "!~* ^/HELLO$"
 	a.IsNotError(location.Validate())
-	a.IsFalse(location.Match("/hello"))
+	_, b = location.Match("/hello")
+	a.IsFalse(b)
 
 	location.Pattern = "= /hello"
 	a.IsNotError(location.Validate())
-	a.IsTrue(location.Match("/hello"))
+	_, b = location.Match("/hello")
+	a.IsTrue(b)
 }
 
 func TestLocationConfig_RemoveFastcgiAt(t *testing.T) {

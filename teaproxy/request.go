@@ -251,7 +251,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					this.ignoreHeaders = append(this.ignoreHeaders, fastcgi.IgnoreHeaders ...)
 				}
 
-				return nil
+				continue
 			}
 
 			// proxy
@@ -282,12 +282,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					this.ignoreHeaders = append(this.ignoreHeaders, backend.IgnoreHeaders ...)
 				}
 
-				return nil
-			}
-
-			// root
-			if len(this.root) > 0 {
-				return nil
+				continue
 			}
 		}
 	}
@@ -727,12 +722,13 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 		}
 	}
 
-	// @TODO 支持unix://...
+	// 连接池配置
 	poolSize := this.fastcgi.PoolSize
 	if poolSize <= 0 {
 		poolSize = 16
 	}
-	client, err := gofcgi.SharedPool("tcp", this.fastcgi.Pass, uint(poolSize)).Client()
+
+	client, err := gofcgi.SharedPool(this.fastcgi.Network(), this.fastcgi.Address(), uint(poolSize)).Client()
 	if err != nil {
 		this.serverError(writer)
 		logs.Error(err)
