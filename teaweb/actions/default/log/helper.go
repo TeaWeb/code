@@ -20,7 +20,13 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 			"name":    "访问日志",
 			"subName": "",
 			"url":     "/log",
-			"active":  action.Spec.HasClassPrefix("log."),
+			"active":  action.Spec.HasClassPrefix("log.IndexAction"),
+		},
+		{
+			"name":    "TeaWeb日志",
+			"subName": "",
+			"url":     "/log/runtime",
+			"active":  action.Spec.ClassName == "log.RuntimeAction",
 		},
 	}
 }

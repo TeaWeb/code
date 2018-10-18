@@ -53,13 +53,13 @@ type AccessLog struct {
 	StatusMessage string              `var:"statusMessage" bson:"statusMessage" json:"statusMessage"` // 响应的信息
 	SentHeader    map[string][]string `var:"sentHeader" bson:"sentHeader" json:"sentHeader"`          // 响应的头信息
 
-	TimeISO8601    string              `var:"timeISO8601" bson:"timeISO8601" json:"timeISO8601"` // ISO 8601格式的本地时间，比如 2018-07-16T23:52:24.839+08:00
-	TimeLocal      string              `var:"timeLocal" bson:"timeLocal" json:"timeLocal"`       // 本地时间，比如 17/Jul/2018:09:52:24 +0800
-	Msec           float64             `var:"msec" bson:"msec" json:"msec"`                      // 带有毫秒的时间，比如 1531756823.054
-	Timestamp      int64               `var:"timestamp" bson:"timestamp" json:"timestamp"`       // unix时间戳，单位为秒
-	Host           string              `var:"host" bson:"host" json:"host"`
-	Referer        string              `var:"referer" bson:"referer" json:"referer"`
-	UserAgent      string              `var:"userAgent" bson:"userAgent" json:"userAgent"`
+	TimeISO8601    string              `var:"timeISO8601" bson:"timeISO8601" json:"timeISO8601"`          // ISO 8601格式的本地时间，比如 2018-07-16T23:52:24.839+08:00
+	TimeLocal      string              `var:"timeLocal" bson:"timeLocal" json:"timeLocal"`                // 本地时间，比如 17/Jul/2018:09:52:24 +0800
+	Msec           float64             `var:"msec" bson:"msec" json:"msec"`                               // 带有毫秒的时间，比如 1531756823.054
+	Timestamp      int64               `var:"timestamp" bson:"timestamp" json:"timestamp"`                // unix时间戳，单位为秒
+	Host           string              `var:"host" bson:"host" json:"host"`                               // 主机名
+	Referer        string              `var:"referer" bson:"referer" json:"referer"`                      // 请求来源URL
+	UserAgent      string              `var:"userAgent" bson:"userAgent" json:"userAgent"`                // 客户端信息
 	Request        string              `var:"request" bson:"request" json:"request"`                      // 请求的简要说明，格式类似于 GET /hello/world HTTP/1.1
 	ContentType    string              `var:"contentType" bson:"contentType" json:"contentType"`          // 请求头部的Content-Type
 	Cookie         map[string]string   `bson:"cookie" json:"cookie"`                                      // Cookie cookie.name, cookie.sid

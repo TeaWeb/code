@@ -33,7 +33,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 		{
 			"code":     "proxy",
 			"menuName": "代理设置",
-			"icon":     "compass outline",
+			"icon":     "paper plane outline",
 		},
 		{
 			"code":     "log",
@@ -46,9 +46,9 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 			"icon":     "chart area",
 		},
 		/**{
-			"code":     "monitor",
-			"menuName": "监控",
-			"icon":     "bell outline",
+			"code":     "services",
+			"menuName": "服务",
+			"icon":     "gem outline",
 		},**/
 		{
 			"code":     "plugins",
@@ -56,7 +56,12 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 			"icon":     "puzzle piece",
 		},
 		/**{
-			"code":     "monitor",
+			"code":     "team",
+			"menuName": "团队",
+			"icon":     "users",
+		},**/
+		/**{
+			"code":     "lab",
 			"menuName": "实验室",
 			"icon":     "medapps",
 		},**/

@@ -24,12 +24,19 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/server"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/stat"
 	"github.com/TeaWeb/code/teaweb/helpers"
+	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/sessions"
 	"time"
 )
 
 func Start() {
+	// 日志
+	writer := new(utils.LogWriter)
+	writer.Init()
+	logs.SetWriter(writer)
+
 	// 启动代理
 	go func() {
 		time.Sleep(1 * time.Second)

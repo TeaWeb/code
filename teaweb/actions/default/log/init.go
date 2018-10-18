@@ -17,6 +17,7 @@ func init() {
 			Get("/responseHeader/:logId", new(ResponseHeaderAction)).
 			Get("/requestHeader/:logId", new(RequestHeaderAction)).
 			Get("/cookies/:logId", new(CookiesAction)).
+			GetPost("/runtime", new(RuntimeAction)).
 			EndAll()
 	})
 }
