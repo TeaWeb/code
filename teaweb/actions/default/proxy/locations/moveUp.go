@@ -24,7 +24,7 @@ func (this *MoveUpAction) Run(params struct {
 		proxy.Locations[params.Index] = prev
 	}
 
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 

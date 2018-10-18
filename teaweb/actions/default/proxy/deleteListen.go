@@ -24,7 +24,7 @@ func (this *DeleteListenAction) Run(params struct {
 	}
 
 	logs.Println(proxy.Listen)
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	// 重启服务
 	global.NotifyChange()

@@ -35,7 +35,7 @@ func (this *UpdatePassAction) Run(params struct {
 		this.Fail("没有fastcgi配置，请刷新后重试")
 	}
 	fastcgi.Pass = params.Pass
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 

@@ -22,7 +22,7 @@ func (this *DeleteNameAction) Run(params struct {
 		proxy.Name = lists.Delete(proxy.Name, params.Index).([]string)
 	}
 
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	// 重启服务
 	global.NotifyChange()

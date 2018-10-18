@@ -31,7 +31,7 @@ func (this *UpdateTypeAction) Run(params struct {
 	location := proxy.LocationAtIndex(params.Index)
 	if location != nil {
 		location.SetPattern(location.PatternString(), params.TypeId, location.IsCaseInsensitive(), location.IsReverse())
-		proxy.WriteToFilename(params.Filename)
+		proxy.WriteBack()
 	}
 
 	global.NotifyChange()

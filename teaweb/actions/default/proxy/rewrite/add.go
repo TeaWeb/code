@@ -58,7 +58,7 @@ func (this *AddAction) Run(params struct {
 		location.Rewrite = append(location.Rewrite, rewriteRule)
 	}
 
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 

@@ -29,5 +29,5 @@ func (this *OffAction) Run(params struct {
 
 	global.NotifyChange()
 
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 }

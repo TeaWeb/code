@@ -27,7 +27,7 @@ func (this *UpdateNameAction) Run(params struct {
 		proxy.Name[params.Index] = params.Name
 	}
 
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 

@@ -27,7 +27,7 @@ func (this *UpdateAction) Run(params struct {
 		server.Backends[params.Index].Address = params.Address
 	}
 
-	server.WriteToFilename(params.Filename)
+	server.WriteBack()
 
 	global.NotifyChange()
 

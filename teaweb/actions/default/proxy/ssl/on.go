@@ -24,7 +24,7 @@ func (this *OnAction) Run(params struct {
 		server.SSL.On = true
 	}
 
-	server.WriteToFilename(params.Filename)
+	server.WriteBack()
 
 	global.NotifyChange()
 

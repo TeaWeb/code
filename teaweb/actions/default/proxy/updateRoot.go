@@ -18,7 +18,7 @@ func (this *UpdateRootAction) Run(params struct {
 	}
 
 	proxy.Root = params.Root
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 

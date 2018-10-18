@@ -37,7 +37,7 @@ func (this *UpdateParamAction) Run(params struct {
 
 	delete(fastcgi.Params, params.OldName)
 	fastcgi.Params[params.Name] = params.Value
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 

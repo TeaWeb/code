@@ -27,7 +27,7 @@ func (this *UpdateListenAction) Run(params struct {
 		proxy.Listen[params.Index] = params.Listen
 	}
 
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 

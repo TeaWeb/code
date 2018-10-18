@@ -22,7 +22,7 @@ func (this *OffAction) Run(params struct {
 		location.On = false
 	}
 
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 

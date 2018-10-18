@@ -26,7 +26,7 @@ func (this *AddAction) Run(params struct {
 	backend.Address = params.Address
 
 	server.Backends = append(server.Backends, backend)
-	server.WriteToFilename(params.Filename)
+	server.WriteBack()
 
 	global.NotifyChange()
 

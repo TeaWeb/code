@@ -21,7 +21,7 @@ func (this *UpdateCaseInsensitiveAction) Run(params struct {
 	location := proxy.LocationAtIndex(params.Index)
 	if location != nil {
 		location.SetPattern(location.PatternString(), location.PatternType(), params.CaseInsensitive, location.IsReverse())
-		proxy.WriteToFilename(params.Filename)
+		proxy.WriteBack()
 	}
 
 	global.NotifyChange()

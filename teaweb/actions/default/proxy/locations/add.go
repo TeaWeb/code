@@ -37,7 +37,7 @@ func (this *AddAction) Run(params struct {
 	location.SetPattern(params.Pattern, params.TypeId, params.CaseInsensitive, params.Reverse)
 
 	proxy.Locations = append(proxy.Locations, location)
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 

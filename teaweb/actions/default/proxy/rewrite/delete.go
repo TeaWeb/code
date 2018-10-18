@@ -28,7 +28,7 @@ func (this *DeleteAction) Run(params struct {
 		location.Rewrite = lists.Remove(location.Rewrite, params.RewriteIndex).([]*teaconfigs.RewriteRule)
 	}
 
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 

@@ -23,7 +23,7 @@ func (this *AddNameAction) Run(params struct {
 	}
 
 	proxy.AddName(params.Name)
-	proxy.WriteToFilename(params.Filename)
+	proxy.WriteBack()
 
 	global.NotifyChange()
 
