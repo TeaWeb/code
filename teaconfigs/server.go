@@ -195,13 +195,25 @@ func (this *ServerConfig) AddBackend(config *ServerBackendConfig) {
 // 取得下一个可用的后端服务
 // @TODO 实现backend中的各种参数
 func (this *ServerConfig) NextBackend() *ServerBackendConfig {
-	countBackends := len(this.Backends)
+	if len(this.Backends) == 0 {
+		return nil
+	}
+
+	availableBackends := []*ServerBackendConfig{}
+	for _, backend := range this.Backends {
+		if backend.On && !backend.IsDown {
+			availableBackends = append(availableBackends, backend)
+		}
+	}
+
+	countBackends := len(availableBackends)
 	if countBackends == 0 {
 		return nil
 	}
+
 	rand.Seed(time.Now().UnixNano())
 	index := rand.Int() % countBackends
-	return this.Backends[index]
+	return availableBackends[index]
 }
 
 // 设置Header
@@ -237,6 +249,25 @@ func (this *ServerConfig) HeaderAtIndex(index int) *HeaderConfig {
 		return this.Headers[index]
 	}
 	return nil
+}
+
+// 格式化Header
+func (this *ServerConfig) FormatHeaders(formatter func(source string) string) []*HeaderConfig {
+	result := []*HeaderConfig{}
+	for _, header := range this.Headers {
+		result = append(result, &HeaderConfig{
+			Name:   header.Name,
+			Value:  formatter(header.Value),
+			Always: header.Always,
+			Status: header.Status,
+		})
+	}
+	return result
+}
+
+// 添加一个自定义Header
+func (this *ServerConfig) AddHeader(header *HeaderConfig) {
+	this.Headers = append(this.Headers, header)
 }
 
 // 屏蔽一个Header
@@ -356,4 +387,9 @@ func (this *ServerConfig) NextFastcgi() *FastcgiConfig {
 	rand.Seed(time.Now().UnixNano())
 	index := rand.Int() % countFastcgi
 	return this.Fastcgi[index]
+}
+
+// 添加路径规则
+func (this *ServerConfig) AddLocation(location *LocationConfig) {
+	this.Locations = append(this.Locations, location)
 }

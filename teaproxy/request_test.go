@@ -1,12 +1,12 @@
 package teaproxy
 
 import (
-	"testing"
-	"github.com/iwind/TeaGo/assert"
-	"net/http"
-	"github.com/iwind/TeaGo/Tea"
 	"bytes"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/assert"
+	"net/http"
+	"testing"
 )
 
 type testResponseWriter struct {
@@ -200,4 +200,112 @@ func TestRequest_Index(t *testing.T) {
 
 	req.index = []string{"main.*"}
 	a.Equals(req.findIndexFile(Tea.Root), "main.go")
+}
+
+func TestRequest_LocationVariables(t *testing.T) {
+	a := assert.NewAssertion(t).Quiet()
+
+	rawReq, err := http.NewRequest("GET", "http://www.example.com/hello/world?name=Lu&age=20", bytes.NewBuffer([]byte("hello=world")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	server := teaconfigs.NewServerConfig()
+	server.Root = "/home"
+
+	{
+		location := teaconfigs.NewLocationConfig()
+		location.On = true
+		location.Pattern = "~ /hello/(\\w)(\\w+)"
+		location.Root = "/hello/${1}/${host}"
+		location.Index = []string{"hello_${1}${2}"}
+		location.Charset = "${arg.charset}"
+		location.SetHeader("hello", "${1}")
+		err := location.Validate()
+		a.IsNil(err)
+
+		server.AddLocation(location)
+
+		matches, ok := location.Match("/hello/world")
+		if ok {
+			t.Log(matches)
+		}
+	}
+
+	err = server.Validate()
+	a.IsNil(err)
+
+	req := NewRequest(rawReq)
+	req.uri = "/hello/world?charset=utf-8"
+	req.host = "www.example.com"
+
+	err = req.configure(server, 0)
+	if err != nil {
+		t.Log(err.Error())
+	}
+	a.IsNil(err)
+
+	t.Log("request uri:", req.requestURI())
+	t.Log("root:", req.root)
+	t.Log("index:", req.index)
+	t.Log("charset:", req.charset)
+
+	for _, header := range req.headers {
+		t.Log("headers:", header.Name, ":", header.Value)
+	}
+}
+
+func TestRequest_RewriteVariables(t *testing.T) {
+	a := assert.NewAssertion(t).Quiet()
+
+	rawReq, err := http.NewRequest("GET", "http://www.example.com/hello/world?name=Lu&age=20", bytes.NewBuffer([]byte("hello=world")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	server := teaconfigs.NewServerConfig()
+	server.Root = "/home/${arg.charset}"
+	server.Charset = "[${arg.charset}]"
+	server.AddHeader(&teaconfigs.HeaderConfig{
+		Name:  "Charset",
+		Value: "${arg.charset}",
+	})
+
+	{
+		location := teaconfigs.NewLocationConfig()
+		location.On = true
+		location.Pattern = "/"
+
+		rewriteRule := teaconfigs.NewRewriteRule()
+		rewriteRule.Pattern = "^/hello/(\\w+)$"
+		rewriteRule.Replace = "/he/${1}${requestPath}?arg=${arg.charset}"
+		location.AddRewriteRule(rewriteRule)
+
+		err := location.Validate()
+		a.IsNil(err)
+
+		server.AddLocation(location)
+	}
+
+	err = server.Validate()
+	a.IsNil(err)
+
+	req := NewRequest(rawReq)
+	req.uri = "/hello/world?charset=utf-8"
+	req.host = "www.example.com"
+
+	err = req.configure(server, 0)
+	if err != nil {
+		t.Log(err.Error())
+	}
+	a.IsNil(err)
+
+	t.Log("request uri:", req.uri)
+	t.Log("root:", req.root)
+	t.Log("index:", req.index)
+	t.Log("charset:", req.charset)
+
+	for _, header := range req.headers {
+		t.Log("headers:", header.Name, ":", header.Value)
+	}
 }

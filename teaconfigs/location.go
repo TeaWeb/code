@@ -36,9 +36,9 @@ type LocationConfig struct {
 	Notify  []string     `yaml:"notify" json:"notify"`   // 转发请求 @TODO
 	LogOnly bool         `yaml:"logOnly" json:"logOnly"` // 是否只记录日志 @TODO
 	Cache   *CacheConfig `yaml:"cache" json:"cache"`     // 缓存设置 @TODO
-	Root    string       `yaml:"root" json:"root"`       // 资源根目录 @TODO
-	Index   []string     `yaml:"index" json:"index"`     // 默认文件 @TODO
-	Charset string       `yaml:"charset" json:"charset"` // 字符集设置 @TODO
+	Root    string       `yaml:"root" json:"root"`       // 资源根目录
+	Index   []string     `yaml:"index" json:"index"`     // 默认文件
+	Charset string       `yaml:"charset" json:"charset"` // 字符集设置
 
 	// 日志
 	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // @TODO
@@ -51,7 +51,7 @@ type LocationConfig struct {
 	Allow []string `yaml:"allow" json:"allow"` // 允许的终端地址 @TODO
 	Deny  []string `yaml:"deny" json:"deny"`   // 禁止的终端地址 @TODO
 
-	Rewrite  []*RewriteRule         `yaml:"rewrite" json:"rewrite"`   // 重写规则 @TODO
+	Rewrite  []*RewriteRule         `yaml:"rewrite" json:"rewrite"`   // 重写规则
 	Fastcgi  []*FastcgiConfig       `yaml:"fastcgi" json:"fastcgi"`   // Fastcgi配置 @TODO
 	Proxy    string                 `yaml:proxy" json:"proxy"`        //  代理配置 @TODO
 	Backends []*ServerBackendConfig `yaml:"backends" json:"backends"` // 后端服务器配置 @TODO
@@ -211,19 +211,19 @@ func (this *LocationConfig) IsCaseInsensitive() bool {
 }
 
 // 判断是否匹配路径
-func (this *LocationConfig) Match(path string) bool {
+func (this *LocationConfig) Match(path string) ([]string, bool) {
 	if this.patternType == LocationPatternTypePrefix {
 		if this.reverse {
 			if this.caseInsensitive {
-				return !strings.HasPrefix(strings.ToLower(path), strings.ToLower(this.prefix))
+				return []string{}, !strings.HasPrefix(strings.ToLower(path), strings.ToLower(this.prefix))
 			} else {
-				return !strings.HasPrefix(path, this.prefix)
+				return []string{}, !strings.HasPrefix(path, this.prefix)
 			}
 		} else {
 			if this.caseInsensitive {
-				return strings.HasPrefix(strings.ToLower(path), strings.ToLower(this.prefix))
+				return []string{}, strings.HasPrefix(strings.ToLower(path), strings.ToLower(this.prefix))
 			} else {
-				return strings.HasPrefix(path, this.prefix)
+				return []string{}, strings.HasPrefix(path, this.prefix)
 			}
 		}
 	}
@@ -231,15 +231,15 @@ func (this *LocationConfig) Match(path string) bool {
 	if this.patternType == LocationPatternTypeExact {
 		if this.reverse {
 			if this.caseInsensitive {
-				return strings.ToLower(path) != strings.ToLower(this.path)
+				return []string{}, strings.ToLower(path) != strings.ToLower(this.path)
 			} else {
-				return path != this.path
+				return []string{}, path != this.path
 			}
 		} else {
 			if this.caseInsensitive {
-				return strings.ToLower(path) == strings.ToLower(this.path)
+				return []string{}, strings.ToLower(path) == strings.ToLower(this.path)
 			} else {
-				return path == this.path
+				return []string{}, path == this.path
 			}
 		}
 	}
@@ -247,16 +247,20 @@ func (this *LocationConfig) Match(path string) bool {
 	if this.patternType == LocationPatternTypeRegexp {
 		if this.reg != nil {
 			if this.reverse {
-				return !this.reg.MatchString(path)
+				return []string{}, !this.reg.MatchString(path)
 			} else {
-				return this.reg.MatchString(path)
+				b := this.reg.MatchString(path)
+				if b {
+					return this.reg.FindStringSubmatch(path), true
+				}
+				return []string{}, b
 			}
 		}
 
-		return this.reverse
+		return []string{}, this.reverse
 	}
 
-	return false
+	return []string{}, false
 }
 
 // 组合参数为一个字符串
@@ -299,13 +303,25 @@ func (this *LocationConfig) SetPattern(pattern string, patternType int, caseInse
 // 取得下一个可用的后端服务
 // @TODO 实现backend中的各种参数
 func (this *LocationConfig) NextBackend() *ServerBackendConfig {
-	countBackends := len(this.Backends)
+	if len(this.Backends) == 0 {
+		return nil
+	}
+
+	availableBackends := []*ServerBackendConfig{}
+	for _, backend := range this.Backends {
+		if backend.On && !backend.IsDown {
+			availableBackends = append(availableBackends, backend)
+		}
+	}
+
+	countBackends := len(availableBackends)
 	if countBackends == 0 {
 		return nil
 	}
+
 	rand.Seed(time.Now().UnixNano())
 	index := rand.Int() % countBackends
-	return this.Backends[index]
+	return availableBackends[index]
 }
 
 // 取得下一个可用的fastcgi
@@ -393,6 +409,20 @@ func (this *LocationConfig) HeaderAtIndex(index int) *HeaderConfig {
 	return nil
 }
 
+// 格式化Header
+func (this *LocationConfig) FormatHeaders(formatter func(source string) string) []*HeaderConfig {
+	result := []*HeaderConfig{}
+	for _, header := range this.Headers {
+		result = append(result, &HeaderConfig{
+			Name:   header.Name,
+			Value:  formatter(header.Value),
+			Always: header.Always,
+			Status: header.Status,
+		})
+	}
+	return result
+}
+
 // 屏蔽一个Header
 func (this *LocationConfig) AddIgnoreHeader(name string) {
 	this.IgnoreHeaders = append(this.IgnoreHeaders, name)
@@ -410,4 +440,9 @@ func (this *LocationConfig) UpdateIgnoreHeaderAtIndex(index int, name string) {
 	if index >= 0 && index < len(this.IgnoreHeaders) {
 		this.IgnoreHeaders[index] = name
 	}
+}
+
+// 添加重写规则
+func (this *LocationConfig) AddRewriteRule(rewriteRule *RewriteRule) {
+	this.Rewrite = append(this.Rewrite, rewriteRule)
 }

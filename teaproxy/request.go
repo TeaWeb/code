@@ -63,14 +63,17 @@ type Request struct {
 	charset       string
 	headers       []*teaconfigs.HeaderConfig // 自定义Header
 	ignoreHeaders []string                   // 忽略的Header
+	varMapping    map[string]string          // 自定义变量
 
 	root     string   // 资源根目录
 	index    []string // 目录下默认访问的文件
 	backend  *teaconfigs.ServerBackendConfig
 	fastcgi  *teaconfigs.FastcgiConfig
 	proxy    *teaconfigs.ServerConfig
-	rewrite  *teaconfigs.RewriteRule
 	location *teaconfigs.LocationConfig
+
+	rewriteId      string // 匹配的rewrite id
+	rewriteReplace string // 经过rewrite之后的URL
 
 	// 执行请求
 	filePath string
@@ -96,6 +99,7 @@ type Request struct {
 func NewRequest(rawRequest *http.Request) *Request {
 	now := time.Now()
 	return &Request{
+		varMapping:         map[string]string{},
 		raw:                rawRequest,
 		rawURI:             rawRequest.URL.RequestURI(),
 		requestFromTime:    now,
@@ -108,6 +112,7 @@ func NewRequest(rawRequest *http.Request) *Request {
 }
 
 func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) error {
+	isChanged := this.server != server
 	this.server = server
 
 	if redirects > 8 {
@@ -121,16 +126,24 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 	path := uri.Path
 
-	this.root = server.Root
+	// root
+	if isChanged {
+		this.root = server.Root
+		if len(this.root) > 0 {
+			this.root = this.format(this.root)
+		}
+	}
 
 	// 字符集
 	if len(server.Charset) > 0 {
-		this.charset = server.Charset
+		this.charset = this.format(server.Charset)
 	}
 
 	// Header
 	if len(server.Headers) > 0 {
-		this.headers = append(this.headers, server.Headers ...)
+		this.headers = append(this.headers, server.FormatHeaders(func(source string) string {
+			return this.format(source)
+		}) ...)
 	}
 
 	if len(server.IgnoreHeaders) > 0 {
@@ -139,21 +152,25 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 	// location的相关配置
 	for _, location := range server.Locations {
-		if location.Match(path) {
-			if !location.On {
-				continue
-			}
+		if !location.On {
+			continue
+		}
+		if locationMatches, ok := location.Match(path); ok {
+			this.convertVarMapping(locationMatches)
+
 			if len(location.Root) > 0 {
-				this.root = location.Root
+				this.root = this.format(location.Root)
 			}
 			if len(location.Charset) > 0 {
-				this.charset = location.Charset
+				this.charset = this.format(location.Charset)
 			}
 			if len(location.Index) > 0 {
-				this.index = location.Index
+				this.index = this.formatAll(location.Index)
 			}
 			if len(location.Headers) > 0 {
-				this.headers = append(this.headers, location.Headers ...)
+				this.headers = append(this.headers, location.FormatHeaders(func(source string) string {
+					return this.format(source)
+				}) ...)
 			}
 
 			if len(this.ignoreHeaders) > 0 {
@@ -168,13 +185,16 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					if !rule.On {
 						continue
 					}
-					if rule.Apply(path, func(source string) string {
+
+					if replace, ok := rule.Match(path, func(source string) string {
 						return this.format(source)
-					}) {
-						this.rewrite = rule
+					}); ok {
+						this.rewriteId = rule.Id
 
 						if len(rule.Headers) > 0 {
-							this.headers = append(this.headers, rule.Headers ...)
+							this.headers = append(this.headers, rule.FormatHeaders(func(source string) string {
+								return this.format(source)
+							}) ...)
 						}
 
 						if len(rule.IgnoreHeaders) > 0 {
@@ -182,9 +202,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 						}
 
 						// @TODO 支持带host前缀的URL，比如：http://google.com/hello/world
-						newURI, err := url.ParseRequestURI(rule.TargetURL())
+						newURI, err := url.ParseRequestURI(replace)
 						if err != nil {
-							this.uri = rule.TargetURL()
+							this.uri = replace
 							return nil
 						}
 						if len(newURI.RawQuery) > 0 {
@@ -266,8 +286,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 
 			// root
-			if len(location.Root) > 0 {
-				this.root = location.Root
+			if len(this.root) > 0 {
 				return nil
 			}
 		}
@@ -279,10 +298,10 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			if !rule.On {
 				continue
 			}
-			if rule.Apply(path, func(source string) string {
+			if replace, ok := rule.Match(path, func(source string) string {
 				return this.format(source)
-			}) {
-				this.rewrite = rule
+			}); ok {
+				this.rewriteId = rule.Id
 
 				if len(rule.Headers) > 0 {
 					this.headers = append(this.headers, rule.Headers ...)
@@ -293,9 +312,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				}
 
 				// @TODO 支持带host前缀的URL，比如：http://google.com/hello/world
-				newURI, err := url.ParseRequestURI(rule.TargetURL())
+				newURI, err := url.ParseRequestURI(replace)
 				if err != nil {
-					this.uri = rule.TargetURL()
+					this.uri = replace
 					return nil
 				}
 				if len(newURI.RawQuery) > 0 {
@@ -1023,10 +1042,24 @@ func (this *Request) requestHeader(key string) string {
 
 // 利用请求参数格式化字符串
 func (this *Request) format(source string) string {
+	if len(source) == 0 {
+		return ""
+	}
+
 	var varName = ""
+	var hasVarMapping = len(this.varMapping) > 0
 	return requestVarReg.ReplaceAllStringFunc(source, func(s string) string {
 		varName = s[2 : len(s)-1]
 
+		// 自定义变量
+		if hasVarMapping {
+			value, found := this.varMapping[varName]
+			if found {
+				return value
+			}
+		}
+
+		// 请求变量
 		switch varName {
 		case "teaVersion":
 			return teaconst.TeaVersion
@@ -1116,6 +1149,15 @@ func (this *Request) format(source string) string {
 	})
 }
 
+// 格式化一组字符串
+func (this *Request) formatAll(sources []string) []string {
+	result := []string{}
+	for _, s := range sources {
+		result = append(result, this.format(s))
+	}
+	return result
+}
+
 // 记录日志
 func (this *Request) log() {
 	if !this.shouldLog {
@@ -1176,9 +1218,7 @@ func (this *Request) log() {
 		accessLog.FastcgiId = this.fastcgi.Id
 	}
 
-	if this.rewrite != nil {
-		accessLog.RewriteId = this.rewrite.Id
-	}
+	accessLog.RewriteId = this.rewriteId
 
 	if this.location != nil {
 		accessLog.LocationId = this.location.Id
@@ -1230,4 +1270,10 @@ func (this *Request) convertIgnoreHeaders() maps.Map {
 		m[strings.ToUpper(h)] = true
 	}
 	return m
+}
+
+func (this *Request) convertVarMapping(s []string) {
+	for k, v := range s {
+		this.varMapping[fmt.Sprintf("%d", k)] = v
+	}
 }

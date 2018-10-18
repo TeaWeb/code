@@ -99,22 +99,22 @@ func (this *RewriteRule) Validate() error {
 }
 
 // 对某个请求执行规则
-func (this *RewriteRule) Apply(requestPath string, formatter func(source string) string) bool {
+func (this *RewriteRule) Match(requestPath string, formatter func(source string) string) (string, bool) {
 	if this.reg == nil {
-		return false
+		return "", false
 	}
 
 	// 判断条件
 	for _, cond := range this.Cond {
 		if !cond.Match(formatter) {
-			return false
+			return "", false
 		}
 	}
 
 	replace := formatter(this.targetURL)
 	matches := this.reg.FindStringSubmatch(requestPath)
 	if len(matches) == 0 {
-		return false
+		return "", false
 	}
 	replace = regexp.MustCompile("\\${\\d+}").ReplaceAllStringFunc(replace, func(s string) string {
 		index := types.Int(s[2 : len(s)-1])
@@ -124,9 +124,7 @@ func (this *RewriteRule) Apply(requestPath string, formatter func(source string)
 		return ""
 	})
 
-	this.targetURL = replace
-
-	return true
+	return replace, true
 }
 
 func (this *RewriteRule) TargetType() int {
@@ -174,6 +172,20 @@ func (this *RewriteRule) HeaderAtIndex(index int) *HeaderConfig {
 		return this.Headers[index]
 	}
 	return nil
+}
+
+// 格式化Header
+func (this *RewriteRule) FormatHeaders(formatter func(source string) string) []*HeaderConfig {
+	result := []*HeaderConfig{}
+	for _, header := range this.Headers {
+		result = append(result, &HeaderConfig{
+			Name:   header.Name,
+			Value:  formatter(header.Value),
+			Always: header.Always,
+			Status: header.Status,
+		})
+	}
+	return result
 }
 
 // 屏蔽一个Header

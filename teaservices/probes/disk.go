@@ -1,12 +1,14 @@
 package probes
 
 import (
-	"github.com/TeaWeb/code/teaplugins"
-	"github.com/shirou/gopsutil/disk"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/TeaWeb/code/teacharts"
+	"github.com/TeaWeb/code/teaplugins"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/utils/string"
+	"github.com/shirou/gopsutil/disk"
 	"strings"
+	"time"
 )
 
 type DiskProbe struct {
@@ -22,6 +24,17 @@ func (this *DiskProbe) Run() {
 		widget.Group = teaplugins.WidgetGroupSystem
 		widget.Dashboard = true
 		widget.OnForceReload(func() {
+			this.Run()
+		})
+
+		t := time.Now()
+		widget.OnReload(func() {
+			if time.Since(t).Seconds() < 5 {
+				return
+			}
+
+			t = time.Now()
+
 			this.Run()
 		})
 		this.Plugin.AddWidget(widget)
@@ -54,6 +67,7 @@ func (this *DiskProbe) Run() {
 				}
 
 				chart := teacharts.NewProgressBar()
+				chart.SetUniqueId(stringutil.Md5(partition.Mountpoint))
 				chart.Name = partition.Mountpoint
 
 				if usage.Total == 0 {

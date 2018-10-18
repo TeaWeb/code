@@ -7,6 +7,7 @@ import (
 )
 
 type Widget struct {
+	Id    string `json:"id"`    // 唯一ID
 	Name  string `json:"name"`  // 名称
 	Icon  string `json:"icon"`  // Icon @TODO
 	Title string `json:"title"` // 标题

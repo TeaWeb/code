@@ -1,5 +1,7 @@
 package teaplugins
 
+import "github.com/iwind/TeaGo/utils/string"
+
 type Plugin struct {
 	IsExternal bool // 是否第三方开发的
 
@@ -22,6 +24,10 @@ func NewPlugin() *Plugin {
 }
 
 func (this *Plugin) AddWidget(widget *Widget) {
+	if len(widget.Id) == 0 {
+		widget.Id = stringutil.Rand(16)
+	}
+
 	this.Widgets = append(this.Widgets, widget)
 }
 
