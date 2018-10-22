@@ -69,10 +69,11 @@ func (this *Listener) Shutdown() error {
 // 处理请求
 func (this *Listener) handle(writer http.ResponseWriter, rawRequest *http.Request) {
 	// 插件过滤
-	result := teaplugins.FilterRequest(rawRequest)
-	if !result {
+	result, willContinue := teaplugins.FilterRequest(rawRequest)
+	if !willContinue {
 		return
 	}
+	rawRequest = result
 
 	// 域名
 	reqHost := rawRequest.Host

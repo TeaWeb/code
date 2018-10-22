@@ -1,7 +1,7 @@
 package teacharts
 
 import (
-	"github.com/TeaWeb/code/teainterfaces"
+	"github.com/TeaWeb/plugin/charts"
 	"sync"
 )
 
@@ -31,30 +31,20 @@ func NewTable() *Table {
 	return p
 }
 
-func NewTableFromInterface(chart teainterfaces.TableInterface) *Table {
+func NewTableFromInterface(chart *charts.Table) *Table {
 	p := &Table{
 		Rows: []*Row{},
 	}
 	p.Type = "table"
-	p.Name = chart.(teainterfaces.ChartInterface).Name()
-	p.Detail = chart.(teainterfaces.ChartInterface).Detail()
+	p.Name = chart.Name
+	p.Detail = chart.Detail
 
-	for _, r := range chart.Rows() {
-		r1, ok := r.(teainterfaces.RowInterface)
-		if !ok {
-			continue
-		}
-
+	for _, r := range chart.Rows {
 		texts := []string{}
 		widths := []float64{}
-		for _, c1 := range r1.Columns() {
-			c2, ok := c1.(teainterfaces.ColumnInterface)
-			if !ok {
-				continue
-			}
-
-			texts = append(texts, c2.Text())
-			widths = append(widths, c2.Width())
+		for _, c := range r.Columns {
+			texts = append(texts, c.Text)
+			widths = append(widths, c.Width)
 		}
 
 		p.AddRow(texts ...)
@@ -62,14 +52,6 @@ func NewTableFromInterface(chart teainterfaces.TableInterface) *Table {
 	}
 
 	return p
-}
-
-func (this *Table) UniqueId() string {
-	return this.Id
-}
-
-func (this *Table) SetUniqueId(id string) {
-	this.Id = id
 }
 
 func (this *Table) ResetRows() {

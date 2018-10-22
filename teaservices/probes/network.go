@@ -1,10 +1,10 @@
 package probes
 
 import (
-	"github.com/TeaWeb/code/teaplugins"
 	"github.com/TeaWeb/code/teacharts"
-	"github.com/shirou/gopsutil/net"
+	"github.com/TeaWeb/code/teaplugins"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/shirou/gopsutil/net"
 	"math"
 	"time"
 )

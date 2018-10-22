@@ -9,7 +9,7 @@ import (
 type Widget struct {
 	Id    string `json:"id"`    // 唯一ID
 	Name  string `json:"name"`  // 名称
-	Icon  string `json:"icon"`  // Icon @TODO
+	Icon  []byte `json:"icon"`  // Icon @TODO
 	Title string `json:"title"` // 标题
 
 	URL       string `json:"url"`       // 外部链接URL
@@ -39,10 +39,10 @@ func NewWidget() *Widget {
 }
 
 func (this *Widget) AddChart(chart teacharts.ChartInterface) {
-	if len(chart.UniqueId()) == 0 {
-		chart.SetUniqueId(stringutil.Rand(16))
+	if len(chart.ChartId()) == 0 {
+		chart.SetId(stringutil.Rand(16))
 	} else {
-		index := this.ChartIndexWithId(chart.UniqueId())
+		index := this.ChartIndexWithId(chart.ChartId())
 		if index > -1 {
 			this.Charts[index] = chart
 			return
@@ -57,7 +57,7 @@ func (this *Widget) ChartIndexWithId(id string) int {
 		return -1
 	}
 	for index, chart := range this.Charts {
-		if chart.UniqueId() == id {
+		if chart.ChartId() == id {
 			return index
 		}
 	}

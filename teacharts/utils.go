@@ -1,39 +1,53 @@
 package teacharts
 
-import "github.com/TeaWeb/code/teainterfaces"
+import (
+	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/plugin/charts"
+)
 
-func ConvertInterface(chart teainterfaces.ChartInterface) ChartInterface {
-	switch chart.Type() {
-	case "progressBar":
-		c, ok := chart.(teainterfaces.ProgressBarInterface)
-		if !ok {
-			return nil
-		}
+func ConvertInterface(chart interface{}) ChartInterface {
+	switch c := chart.(type) {
+	case *charts.ProgressBar:
 		return NewProgressBarFromInterface(c)
-	case "pie":
-		c, ok := chart.(teainterfaces.PieChartInterface)
-		if !ok {
-			return nil
-		}
+	case *charts.PieChart:
 		return NewPieChartFromInterface(c)
-	case "line":
-		c, ok := chart.(teainterfaces.LineChartInterface)
-		if !ok {
-			return nil
-		}
+	case *charts.LineChart:
 		return NewLineChartFromInterface(c)
-	case "gauge":
-		c, ok := chart.(teainterfaces.GaugeChartInterface)
-		if !ok {
-			return nil
-		}
+	case *charts.GaugeChart:
 		return NewGaugeChartFromInterface(c)
-	case "table":
-		c, ok := chart.(teainterfaces.TableInterface)
-		if !ok {
-			return nil
-		}
+	case *charts.Table:
 		return NewTableFromInterface(c)
+	case map[string]interface{}:
+		chartType, found := c["ChartType"]
+		if found {
+			switch chartType {
+			case "progressBar":
+				c2 := new(ProgressBar)
+				teautils.MapToObjectJSON(c, c2)
+				c2.Type = chartType.(string)
+				return c2
+			case "pie":
+				c2 := new(PieChart)
+				teautils.MapToObjectJSON(c, c2)
+				c2.Type = chartType.(string)
+				return c2
+			case "line":
+				c2 := new(LineChart)
+				teautils.MapToObjectJSON(c, c2)
+				c2.Type = chartType.(string)
+				return c2
+			case "gauge":
+				c2 := new(GaugeChart)
+				teautils.MapToObjectJSON(c, c2)
+				c2.Type = chartType.(string)
+				return c2
+			case "table":
+				c2 := new(Table)
+				teautils.MapToObjectJSON(c, c2)
+				c2.Type = chartType.(string)
+				return c2
+			}
+		}
 	}
 
 	return nil

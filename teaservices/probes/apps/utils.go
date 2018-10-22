@@ -2,11 +2,11 @@ package apps
 
 import (
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/types"
 	"github.com/shirou/gopsutil/process"
 	"os/exec"
-	"strings"
-	"github.com/iwind/TeaGo/types"
 	"regexp"
+	"strings"
 )
 
 func ps(lookup string, matchPatterns []string, onlyParent bool) (result []*process.Process) {

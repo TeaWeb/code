@@ -1,23 +1,22 @@
 package teaplugins
 
 import (
-	"github.com/TeaWeb/code/teacharts"
-	"github.com/TeaWeb/code/teainterfaces"
+	"bufio"
+	"bytes"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"net/http"
-	"plugin"
-	"reflect"
+	"net/http/httputil"
 	"sync"
 )
 
 var plugins = []*Plugin{}
 var pluginsLocker = &sync.Mutex{}
 
-var requestFilters = []teainterfaces.PluginRequestFilterInterface{}
+var requestFilters = []func(req []byte) (result []byte, willContinue bool){}
 var hasRequestFilters = false
-var responseFilters = []teainterfaces.PluginResponseFilterInterface{}
+var responseFilters = []interface{}{}
 var hasResponseFilters = false
 
 func Register(plugin *Plugin) {
@@ -90,28 +89,43 @@ func DashboardWidgets(group WidgetGroup) []*Widget {
 	return result
 }
 
-func FilterRequest(request *http.Request) bool {
+func FilterRequest(request *http.Request) (resultReq *http.Request, willContinue bool) {
 	if !hasRequestFilters {
-		return true
+		return request, true
 	}
-	for _, filter := range requestFilters {
-		result := filter.FilterRequest(request)
-		if !result {
-			return false
+
+	data, err := httputil.DumpRequest(request, true)
+	if err != nil {
+		logs.Error(err)
+		return request, true
+	}
+
+	defer func() {
+		req, err := http.ReadRequest(bufio.NewReader(bytes.NewBuffer(data)))
+		if err != nil {
+			logs.Error(err)
+			return
+		}
+
+		resultReq = req
+	}()
+
+	for _, f := range requestFilters {
+		result, willContinue := f(data)
+
+		data = result
+
+		if !willContinue {
+			return resultReq, false
 		}
 	}
-	return true
+
+	return resultReq, true
 }
 
 func FilterResponse(response *http.Response, writer http.ResponseWriter) bool {
 	if !hasResponseFilters {
 		return true
-	}
-	for _, filter := range responseFilters {
-		result := filter.FilterResponse(response, writer)
-		if !result {
-			return false
-		}
 	}
 	return true
 }
@@ -120,152 +134,11 @@ func load() {
 	logs.Println("[plugin]load plugins")
 	dir := Tea.Root + Tea.DS + "plugins"
 	files.NewFile(dir).Range(func(file *files.File) {
-		if file.Ext() == ".so" {
-			p, err := plugin.Open(file.Path())
-			if err != nil {
-				logs.Println("[plugin]"+file.Name()+":", err.Error())
-				return
-			}
-
-			newFunc, err := p.Lookup("New")
-			if err != nil {
-				logs.Println("[plugin]"+file.Name()+":", err.Error())
-				return
-			}
-
-			instance := reflect.ValueOf(newFunc)
-			if instance.IsNil() || !instance.IsValid() {
-				logs.Println("[plugin]" + file.Name() + ": New() not a function")
-				return
-			}
-			t := instance.Type()
-			if t.Kind() != reflect.Func {
-				logs.Println("[plugin]" + file.Name() + ": New() not a function")
-				return
-			}
-
-			if t.NumIn() > 0 {
-				logs.Println("[plugin]" + file.Name() + ": New() too many arguments")
-				return
-			}
-
-			result := instance.Call([]reflect.Value{})
-			if len(result) == 0 {
-				logs.Println("[plugin]" + file.Name() + ": New() should return a result of 'teainterfaces.PluginInterface'")
-				return
-			}
-
-			resultInstance := result[0].Interface()
-			if resultInstance == nil {
-				logs.Println("[plugin]" + file.Name() + ": New() should return a non-nil result")
-				return
-			}
-
-			p1, ok := resultInstance.(teainterfaces.PluginInterface)
-			if !ok {
-				logs.Println("[plugin]" + file.Name() + ": New() should return a result of 'teainterfaces.PluginInterface'")
-				return
-			}
-
-			loadInterface(p1, file.Name())
-
-			logs.Println("[plugin]loaded", "'"+file.Name()+"'")
+		if file.Ext() != ".tea" {
+			return
 		}
+
+		logs.Println("[plugin][loader]load plugin '" + file.Name() + "'")
+		go NewLoader(file.Path()).Load()
 	})
-}
-
-func loadInterface(p1 teainterfaces.PluginInterface, fileName string) {
-	p1.OnLoad()
-	p1.OnStart()
-
-	p2 := NewPlugin()
-	p2.IsExternal = true
-	p2.Name = p1.Name()
-	p2.Code = p1.Code()
-	p2.Date = p1.Date()
-	p2.Site = p1.Site()
-	p2.Developer = p1.Developer()
-	p2.Version = p1.Version()
-	p2.Description = p1.Description()
-
-	// widget
-	_, ok := p1.(teainterfaces.PluginWidgetInterface)
-	if ok {
-		p2.AddInterfaceName("widgets")
-		for _, w := range p1.(teainterfaces.PluginWidgetInterface).Widgets() {
-			w1, ok := w.(teainterfaces.WidgetInterface)
-			if !ok {
-				logs.Println("[plugin]invalid widget in", fileName)
-				continue
-			}
-
-			w2 := NewWidget()
-			w2.Name = w1.Name()
-			w2.URL = w1.URL()
-			w2.MoreURL = w1.MoreURL()
-			w2.Group = w1.Group()
-			w2.TopBar = w1.TopBar()
-			w2.MenuBar = w1.MenuBar()
-			w2.HelperBar = w1.HelperBar()
-			w2.Dashboard = w1.Dashboard()
-			w2.OnForceReload(func() {
-				// chart
-				loadWidgetInterface(w1, w2, fileName)
-
-				w1.OnReload()
-			})
-			w2.OnReload(func() {
-				w1.OnReload()
-
-				// chart
-				loadWidgetInterface(w1, w2, fileName)
-			})
-
-			// chart
-			loadWidgetInterface(w1, w2, fileName)
-
-			p2.AddWidget(w2)
-		}
-	}
-
-	// request filter
-	p1RequestFilter, ok := p1.(teainterfaces.PluginRequestFilterInterface)
-	if ok {
-		p2.AddInterfaceName("requestFilter")
-		hasRequestFilters = true
-		requestFilters = append(requestFilters, p1RequestFilter)
-	}
-
-	// response filter
-	p1ResponseFilter, ok := p1.(teainterfaces.PluginResponseFilterInterface)
-	if ok {
-		p2.AddInterfaceName("responseFilter")
-		hasResponseFilters = true
-		responseFilters = append(responseFilters, p1ResponseFilter)
-	}
-
-	Register(p2)
-}
-
-func loadWidgetInterface(w1 teainterfaces.WidgetInterface, w2 *Widget, fileName string) {
-	for _, c := range w1.Charts() {
-		c1, ok := c.(teainterfaces.ChartInterface)
-		if !ok {
-			logs.Println("[plugin]invalid chart in", fileName)
-			continue
-		}
-
-		c2 := teacharts.ConvertInterface(c1)
-		if c2 == nil {
-			logs.Println("[plugin]invalid chart in", fileName, "chart type:", c1.Type())
-			continue
-		}
-
-		if len(c1.Id()) > 0 {
-			c2.SetUniqueId(c1.Id())
-		}
-
-		w2.AddChart(c2)
-		c1.SetId(c2.UniqueId())
-	}
 }

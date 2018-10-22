@@ -1,6 +1,8 @@
 package teacharts
 
-import "github.com/TeaWeb/code/teainterfaces"
+import (
+	"github.com/TeaWeb/plugin/charts"
+)
 
 type ProgressBarColor string
 
@@ -12,16 +14,16 @@ func NewProgressBar() *ProgressBar {
 	return p
 }
 
-func NewProgressBarFromInterface(chart teainterfaces.ProgressBarInterface) *ProgressBar {
+func NewProgressBarFromInterface(chart *charts.ProgressBar) *ProgressBar {
 	p := &ProgressBar{
 		Color: ColorBlue,
 	}
 	p.Type = "progressBar"
-	p.Name = chart.(teainterfaces.ChartInterface).Name()
-	p.Detail = chart.(teainterfaces.ChartInterface).Detail()
+	p.Name = chart.Name
+	p.Detail = chart.Detail
 
-	p.Value = chart.Value()
-	p.Color = chart.Color()
+	p.Value = chart.Value
+	p.Color = chart.Color
 	return p
 }
 
@@ -30,12 +32,4 @@ type ProgressBar struct {
 
 	Value float64 `json:"value"`
 	Color Color   `json:"color"`
-}
-
-func (this *ProgressBar) UniqueId() string {
-	return this.Id
-}
-
-func (this *ProgressBar) SetUniqueId(id string) {
-	this.Id = id
 }

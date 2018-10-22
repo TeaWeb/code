@@ -3,8 +3,8 @@ package teacharts
 import "sync"
 
 type ChartInterface interface {
-	UniqueId() string
-	SetUniqueId(id string)
+	ChartId() string
+	SetId(id string)
 	Reload()
 }
 
@@ -16,6 +16,14 @@ type Chart struct {
 
 	onReloadFuncs []func()
 	locker        sync.Mutex
+}
+
+func (this *Chart) ChartId() string {
+	return this.Id
+}
+
+func (this *Chart) SetId(id string) {
+	this.Id = id
 }
 
 func (this *Chart) OnReload(f func()) {

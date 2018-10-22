@@ -1,6 +1,8 @@
 package teacharts
 
-import "github.com/TeaWeb/code/teainterfaces"
+import (
+	"github.com/TeaWeb/plugin/charts"
+)
 
 func NewGaugeChart() *GaugeChart {
 	p := &GaugeChart{}
@@ -8,17 +10,17 @@ func NewGaugeChart() *GaugeChart {
 	return p
 }
 
-func NewGaugeChartFromInterface(chart teainterfaces.GaugeChartInterface) *GaugeChart {
+func NewGaugeChartFromInterface(chart *charts.GaugeChart) *GaugeChart {
 	p := &GaugeChart{}
 	p.Type = "gauge"
-	p.Name = chart.(teainterfaces.ChartInterface).Name()
-	p.Detail = chart.(teainterfaces.ChartInterface).Detail()
+	p.Name = chart.Name
+	p.Detail = chart.Detail
 
-	p.Value = chart.Value()
-	p.Label = chart.Label()
-	p.Min = chart.Min()
-	p.Max = chart.Max()
-	p.Unit = chart.Unit()
+	p.Value = chart.Value
+	p.Label = chart.Label
+	p.Min = chart.Min
+	p.Max = chart.Max
+	p.Unit = chart.Unit
 	return p
 }
 
@@ -30,12 +32,4 @@ type GaugeChart struct {
 	Min   float64 `json:"min"`
 	Max   float64 `json:"max"`
 	Unit  string  `json:"unit"`
-}
-
-func (this *GaugeChart) UniqueId() string {
-	return this.Id
-}
-
-func (this *GaugeChart) SetUniqueId(id string) {
-	this.Id = id
 }

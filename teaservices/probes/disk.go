@@ -67,7 +67,7 @@ func (this *DiskProbe) Run() {
 				}
 
 				chart := teacharts.NewProgressBar()
-				chart.SetUniqueId(stringutil.Md5(partition.Mountpoint))
+				chart.SetId(stringutil.Md5(partition.Mountpoint))
 				chart.Name = partition.Mountpoint
 
 				if usage.Total == 0 {

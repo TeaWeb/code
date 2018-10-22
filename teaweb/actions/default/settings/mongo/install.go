@@ -262,7 +262,7 @@ func (this *InstallAction) start(mongodbDir string) {
 
 	// 启动
 	p := processes.NewProcess(mongodbDir+"/bin/mongod", "--dbpath="+mongodbDir+"/data", "--fork", "--logpath="+mongodbDir+"/data/fork.log")
-	p.Pwd(mongodbDir)
+	p.SetPwd(mongodbDir)
 
 	logs.Println(mongodbDir+"/bin/mongod", "--dbpath="+mongodbDir+"/data", "--fork", "--logpath="+mongodbDir+"/data/fork.log")
 
