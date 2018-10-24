@@ -17,11 +17,12 @@ func (this *IndexAction) Run(params struct {
 	}
 
 	this.Data["app"] = app
-	this.Data["cpu"] = app.SumCPUUsage()
+	this.Data["cpuPercent"] = fmt.Sprintf("%.1f", app.SumCPUUsage().Percent)
 
 	memoryUsage := app.SumMemoryUsage()
 	this.Data["memoryRSS"] = fmt.Sprintf("%.2f", float64(memoryUsage.RSS)/1024/1024)
 	this.Data["memoryVMS"] = fmt.Sprintf("%.2f", float64(memoryUsage.VMS)/1024/1024)
+	this.Data["memoryPercent"] = fmt.Sprintf("%.1f", memoryUsage.Percent)
 	this.Data["memory"] = memoryUsage
 
 	this.Data["plugin"] = plugin.Name

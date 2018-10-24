@@ -55,7 +55,7 @@ func addWidgets() {
 					c.AddRow("<strong>" + a.Name + "</strong>")
 					if a.IsRunning {
 						if len(a.Processes) > 0 {
-							c.AddRow(fmt.Sprintf("%d", a.Processes[0].Pid), "正在运行", "<i class=\"ui icon dot circle green small\"></i>")
+							c.AddRow(fmt.Sprintf("<span title=\"PID\">%d</span>", a.Processes[0].Pid), "正在运行", "<i class=\"ui icon dot circle green small\"></i>")
 						} else {
 							c.AddRow(" ", "正在运行", "<i class=\"ui icon dot circle green small\"></i>")
 						}
