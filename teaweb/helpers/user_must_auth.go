@@ -45,11 +45,11 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 			"menuName": "统计",
 			"icon":     "chart area",
 		},
-		/**{
-			"code":     "services",
+		{
+			"code":     "apps",
 			"menuName": "服务",
 			"icon":     "gem outline",
-		},**/
+		},
 		{
 			"code":     "plugins",
 			"menuName": "插件",

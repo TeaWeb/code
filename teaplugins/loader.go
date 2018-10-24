@@ -3,7 +3,9 @@ package teaplugins
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/TeaWeb/code/teaapps"
 	"github.com/TeaWeb/code/teacharts"
+	"github.com/TeaWeb/plugin/apps"
 	"github.com/TeaWeb/plugin/messages"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/processes"
@@ -251,6 +253,33 @@ func (this *Loader) ActionReloadChart(action *messages.ReloadChartAction) {
 
 func (this *Loader) ActionFilterRequest(action *messages.FilterRequestAction) {
 	messages.ActionQueue.Notify(action)
+}
+
+func (this *Loader) ActionReloadApps(action *messages.ReloadAppsAction) {
+	this.plugin.ResetApps()
+
+	for _, a := range action.Apps {
+		a2 := teaapps.NewApp()
+		a2.LoadFromInterface(a)
+		a2.OnReload(func() {
+			this.Write(&messages.ReloadAppAction{
+				App: &apps.App{
+					Id: a.Id,
+				},
+			})
+		})
+		this.plugin.AddApp(a2)
+	}
+}
+
+func (this *Loader) ActionReloadApp(action *messages.ReloadAppAction) {
+	a := action.App
+	if a != nil {
+		app := this.plugin.AppWithId(a.Id)
+		if app != nil {
+			app.LoadFromInterface(a)
+		}
+	}
 }
 
 func (this *Loader) Write(action messages.ActionInterface) error {

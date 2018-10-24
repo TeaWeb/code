@@ -3,6 +3,7 @@ package teaweb
 import (
 	"github.com/TeaWeb/code/teaproxy"
 	_ "github.com/TeaWeb/code/teaservices"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/apps"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/dashboard"
 	"github.com/TeaWeb/code/teaweb/actions/default/index"
 	"github.com/TeaWeb/code/teaweb/actions/default/install"

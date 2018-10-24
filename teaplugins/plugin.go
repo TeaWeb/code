@@ -1,6 +1,9 @@
 package teaplugins
 
-import "github.com/iwind/TeaGo/utils/string"
+import (
+	"github.com/TeaWeb/code/teaapps"
+	"github.com/iwind/TeaGo/utils/string"
+)
 
 type Plugin struct {
 	IsExternal bool // 是否第三方开发的
@@ -13,8 +16,7 @@ type Plugin struct {
 	Developer   string    // 开发者
 	Description string    // 插件简介
 	Widgets     []*Widget // 小组件
-
-	interfaceNames []string
+	Apps        []*teaapps.App
 }
 
 func NewPlugin() *Plugin {
@@ -31,10 +33,33 @@ func (this *Plugin) AddWidget(widget *Widget) {
 	this.Widgets = append(this.Widgets, widget)
 }
 
-func (this *Plugin) AddInterfaceName(interfaceName string) {
-	this.interfaceNames = append(this.interfaceNames, interfaceName)
+func (this *Plugin) ResetApps() {
+	this.Apps = []*teaapps.App{}
+}
+
+func (this *Plugin) AddApp(app *teaapps.App) {
+	if len(app.Id) == 0 {
+		app.Id = stringutil.Rand(16)
+	}
+	this.Apps = append(this.Apps, app)
+}
+
+func (this *Plugin) AppWithId(appId string) *teaapps.App {
+	for _, p := range this.Apps {
+		if p.Id == appId {
+			return p
+		}
+	}
+	return nil
 }
 
 func (this *Plugin) InterfaceNames() []string {
-	return this.interfaceNames
+	names := []string{}
+	if len(this.Widgets) > 0 {
+		names = append(names, "widget")
+	}
+	if len(this.Apps) > 0 {
+		names = append(names, "app")
+	}
+	return names
 }
