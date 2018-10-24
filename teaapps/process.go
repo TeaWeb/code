@@ -16,7 +16,9 @@ type Process struct {
 	Gid  int32  `json:"gid"`
 
 	CreateTime  int64        `json:"createTime"` // 时间戳
-	Cmdline     string       `json:"cmdline"`
+	Cmdline     string       `json:"cmdline"`    //命令行
+	File        string       `json:"file"`       // 命令行文件路径
+	Dir         string       `json:"dir"`        // 命令行文件所在目录
 	CPUUsage    *CPUUsage    `json:"cpuUsage"`
 	MemoryUsage *MemoryUsage `json:"memoryUsage"`
 

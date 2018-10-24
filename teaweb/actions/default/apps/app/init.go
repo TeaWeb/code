@@ -12,6 +12,8 @@ func init() {
 			Prefix("/apps/app").
 			Get("", new(IndexAction)).
 			Get("/reload", new(ReloadAction)).
+			Post("/favor", new(FavorAction)).
+			Post("/cancelFavor", new(CancelFavorAction)).
 			EndAll()
 	})
 }

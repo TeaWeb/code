@@ -47,7 +47,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 		},
 		{
 			"code":     "apps",
-			"menuName": "服务",
+			"menuName": "本地服务",
 			"icon":     "gem outline",
 		},
 		{

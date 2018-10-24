@@ -1,9 +1,8 @@
 package teaservices
 
 import (
-	"github.com/iwind/TeaGo/logs"
 	"github.com/TeaWeb/code/teaservices/probes"
-	_ "github.com/TeaWeb/code/teaservices/probes/apps"
+	"github.com/iwind/TeaGo/logs"
 	"time"
 )
 

@@ -29,7 +29,7 @@ func DashboardGroups() []*Group {
 
 		{
 			Id:      WidgetGroupService,
-			Name:    "服务",
+			Name:    "本地服务",
 			Widgets: DashboardWidgets(WidgetGroupService),
 		},
 	}

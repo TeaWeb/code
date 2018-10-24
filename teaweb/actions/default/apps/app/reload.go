@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/TeaWeb/code/teaweb/actions/default/apputils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -11,7 +12,7 @@ type ReloadAction actions.Action
 func (this *ReloadAction) Run(params struct {
 	AppId string
 }) {
-	plugin, app := FindApp(params.AppId)
+	plugin, app := apputils.FindApp(params.AppId)
 	if app != nil {
 		app.Reload()
 

@@ -225,6 +225,13 @@ func (this *Loader) ActionRegisterPlugin(action *messages.RegisterPluginAction) 
 			p2.AddWidget(w2)
 		}
 
+		// apps
+		for _, a := range p.Apps {
+			a2 := teaapps.NewApp()
+			a2.LoadFromInterface(a)
+			p2.AddApp(a2)
+		}
+
 		Register(p2)
 
 		this.plugin = p2

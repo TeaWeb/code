@@ -3,6 +3,7 @@ package teaapps
 import (
 	"github.com/TeaWeb/plugin/apps"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/utils/string"
 )
 
 // 接口
@@ -128,6 +129,8 @@ func (this *App) LoadFromInterface(a *apps.App) {
 		p2.Gid = p.Gid
 		p2.CreateTime = p.CreateTime
 		p2.Cmdline = p.Cmdline
+		p2.File = p.File
+		p2.Dir = p.Dir
 		if p.CPUUsage != nil {
 			p2.CPUUsage = &CPUUsage{
 				Percent: p.CPUUsage.Percent,
@@ -140,13 +143,26 @@ func (this *App) LoadFromInterface(a *apps.App) {
 				Percent: p.MemoryUsage.Percent,
 			}
 		}
-		p2.OpenFiles = p.OpenFiles
-		p2.Connections = p.Connections
-		for _, listen := range p.Listens {
-			p2.Listens = append(p2.Listens, &Listen{
-				Network: listen.Network,
-				Addr:    listen.Addr,
-			})
+		if p.OpenFiles != nil {
+			p2.OpenFiles = p.OpenFiles
+		} else {
+			p2.OpenFiles = []string{}
+		}
+		if p.Connections != nil {
+			p2.Connections = p.Connections
+		} else {
+			p2.Connections = []string{}
+		}
+
+		if len(p.Listens) > 0 {
+			for _, listen := range p.Listens {
+				p2.Listens = append(p2.Listens, &Listen{
+					Network: listen.Network,
+					Addr:    listen.Addr,
+				})
+			}
+		} else {
+			p2.Listens = []*Listen{}
 		}
 		this.AddProcess(p2)
 	}
@@ -172,4 +188,12 @@ func (this *App) Reload() {
 	if this.onReloadFunc != nil {
 		this.onReloadFunc()
 	}
+}
+
+// 获取UniqueId
+func (this *App) UniqueId() string {
+	if len(this.Processes) == 0 {
+		return stringutil.Md5(this.Name + "@" + this.Version)
+	}
+	return stringutil.Md5(this.Processes[0].File + "@" + this.Processes[0].Name)
 }

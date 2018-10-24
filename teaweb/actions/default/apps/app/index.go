@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/TeaWeb/code/teaweb/actions/default/apputils"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -10,7 +11,7 @@ type IndexAction actions.Action
 func (this *IndexAction) Run(params struct {
 	AppId string
 }) {
-	plugin, app := FindApp(params.AppId)
+	plugin, app := apputils.FindApp(params.AppId)
 	if app == nil {
 		this.Fail("找不到要查看的服务")
 	}
