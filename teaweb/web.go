@@ -91,7 +91,7 @@ func lookupArgs() bool {
 		lists.Contains(args, "-help") ||
 		lists.Contains(args, "-h") {
 		fmt.Println("TeaWeb v" + teaconst.TeaVersion)
-		fmt.Println("Usage:", "\n   ./teaweb [option]")
+		fmt.Println("Usage:", "\n   ./bin/teaweb [option]")
 		fmt.Println("")
 		fmt.Println("Options:")
 		fmt.Println("  -h", "\n     print this help")
@@ -158,7 +158,7 @@ func lookupArgs() bool {
 	}
 
 	if len(args) > 0 {
-		fmt.Println("[teaweb]unknown command option '" + strings.Join(args, " ") + "', run './teaweb -h' to see the usage.")
+		fmt.Println("[teaweb]unknown command option '" + strings.Join(args, " ") + "', run './bin/teaweb -h' to see the usage.")
 		return true
 	}
 	return false
