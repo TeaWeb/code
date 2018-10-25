@@ -70,12 +70,13 @@ func (this *DailyPVStat) SumDayPV(serverId string, days []string) int64 {
 	}
 	sumColl := findCollection("stats.pv.daily", nil)
 
-	pipelines, err := bson.ParseExtJSONArray(`[
+	pipelines := bson.NewArray()
+	err := bson.UnmarshalExtJSON([]byte(`[
 	{
 		"$match": {
-			"serverId": "` + serverId + `",
+			"serverId": "`+serverId+`",
 			"day": {
-				"$in": [ "` + strings.Join(days, "\", \"") + `" ]
+				"$in": [ "`+strings.Join(days, "\", \"")+`" ]
 			}
 		}
 	},
@@ -87,7 +88,7 @@ func (this *DailyPVStat) SumDayPV(serverId string, days []string) int64 {
 			}
 		}
 	}
-]`)
+]`), true, &pipelines)
 	if err != nil {
 		logs.Error(err)
 		return 0

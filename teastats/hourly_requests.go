@@ -65,12 +65,14 @@ func (this *HourlyRequestsStat) SumHourRequests(serverId string, hours []string)
 		return 0
 	}
 	sumColl := findCollection("stats.requests.hourly", nil)
-	pipelines, err := bson.ParseExtJSONArray(`[
+
+	pipelines := bson.NewArray()
+	err := bson.UnmarshalExtJSON([]byte(`[
 	{
 		"$match": {
-			"serverId": "` + serverId + `",
+			"serverId": "`+serverId+`",
 			"hour": {
-				"$in": [ "` + strings.Join(hours, "\", \"") + `" ]
+				"$in": [ "`+strings.Join(hours, "\", \"")+`" ]
 			}
 		}
 	},
@@ -82,7 +84,7 @@ func (this *HourlyRequestsStat) SumHourRequests(serverId string, hours []string)
 			}
 		}
 	}
-]`)
+]`), true, &pipelines)
 	if err != nil {
 		logs.Error(err)
 		return 0

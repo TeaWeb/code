@@ -82,12 +82,14 @@ func (this *HourlyUVStat) SumHourUV(serverId string, hours []string) int64 {
 		return 0
 	}
 	sumColl := findCollection("stats.uv.hourly", nil)
-	pipelines, err := bson.ParseExtJSONArray(`[
+
+	pipelines := bson.NewDocument()
+	err := bson.UnmarshalExtJSON([]byte(`[
 	{
 		"$match": {
-			"serverId": "` + serverId + `",
+			"serverId": "`+serverId+`",
 			"hour": {
-				"$in": [ "` + strings.Join(hours, "\", \"") + `" ]
+				"$in": [ "`+strings.Join(hours, "\", \"")+`" ]
 			}
 		}
 	},
@@ -99,7 +101,7 @@ func (this *HourlyUVStat) SumHourUV(serverId string, hours []string) int64 {
 			}
 		}
 	}
-]`)
+]`), true, &pipelines)
 	if err != nil {
 		logs.Error(err)
 		return 0

@@ -82,12 +82,14 @@ func (this *DailyUVStat) SumDayUV(serverId string, days []string) int64 {
 		return 0
 	}
 	sumColl := findCollection("stats.uv.daily", nil)
-	pipelines, err := bson.ParseExtJSONArray(`[
+
+	pipelines := bson.NewArray()
+	err := bson.UnmarshalExtJSON([]byte(`[
 	{
 		"$match": {
-			"serverId": "` + serverId + `",
+			"serverId": "`+serverId+`",
 			"day": {
-				"$in": [ "` + strings.Join(days, "\", \"") + `" ]
+				"$in": [ "`+strings.Join(days, "\", \"")+`" ]
 			}
 		}
 	},
@@ -99,7 +101,7 @@ func (this *DailyUVStat) SumDayUV(serverId string, days []string) int64 {
 			}
 		}
 	}
-]`)
+]`), true, &pipelines)
 	if err != nil {
 		logs.Error(err)
 		return 0

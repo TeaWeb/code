@@ -69,12 +69,14 @@ func (this *HourlyPVStat) SumHourPV(serverId string, hours []string) int64 {
 		return 0
 	}
 	sumColl := findCollection("stats.pv.hourly", nil)
-	pipelines, err := bson.ParseExtJSONArray(`[
+
+	pipelines := bson.NewArray()
+	err := bson.UnmarshalExtJSON([]byte(`[
 	{
 		"$match": {
-			"serverId": "` + serverId + `",
+			"serverId": "`+serverId+`",
 			"hour": {
-				"$in": [ "` + strings.Join(hours, "\", \"") + `" ]
+				"$in": [ "`+strings.Join(hours, "\", \"")+`" ]
 			}
 		}
 	},
@@ -86,7 +88,7 @@ func (this *HourlyPVStat) SumHourPV(serverId string, hours []string) int64 {
 			}
 		}
 	}
-]`)
+]`), true, &pipelines)
 	if err != nil {
 		logs.Error(err)
 		return 0

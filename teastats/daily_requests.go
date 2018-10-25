@@ -66,7 +66,8 @@ func (this *DailyRequestsStat) SumDayRequests(serverId string, days []string) in
 	}
 	sumColl := findCollection("stats.requests.daily", nil)
 
-	pipelines, err := bson.ParseExtJSONArray(`[
+	pipelines := bson.NewArray()
+	err := bson.UnmarshalExtJSON([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",
@@ -83,7 +84,7 @@ func (this *DailyRequestsStat) SumDayRequests(serverId string, days []string) in
 			}
 		}
 	}
-]`)
+]`), true, &pipelines)
 	if err != nil {
 		logs.Error(err)
 		return 0

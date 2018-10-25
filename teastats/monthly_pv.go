@@ -69,12 +69,14 @@ func (this *MonthlyPVStat) SumMonthPV(serverId string, months []string) int64 {
 		return 0
 	}
 	sumColl := findCollection("stats.pv.monthly", nil)
-	pipelines, err := bson.ParseExtJSONArray(`[
+
+	pipelines := bson.NewDocument()
+	err := bson.UnmarshalExtJSON([]byte(`[
 	{
 		"$match": {
-			"serverId": "` + serverId + `",
+			"serverId": "`+serverId+`",
 			"month": {
-				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
+				"$in": [ "`+strings.Join(months, "\", \"")+`" ]
 			}
 		}
 	},
@@ -86,7 +88,7 @@ func (this *MonthlyPVStat) SumMonthPV(serverId string, months []string) int64 {
 			}
 		}
 	}
-]`)
+]`), true, &pipelines)
 	if err != nil {
 		logs.Error(err)
 		return 0

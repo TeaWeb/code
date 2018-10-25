@@ -65,12 +65,14 @@ func (this *MonthlyRequestsStat) SumMonthRequests(serverId string, months []stri
 		return 0
 	}
 	sumColl := findCollection("stats.requests.monthly", nil)
-	pipelines, err := bson.ParseExtJSONArray(`[
+
+	pipelines := bson.NewArray()
+	err := bson.UnmarshalExtJSON([]byte(`[
 	{
 		"$match": {
-			"serverId": "` + serverId + `",
+			"serverId": "`+serverId+`",
 			"month": {
-				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
+				"$in": [ "`+strings.Join(months, "\", \"")+`" ]
 			}
 		}
 	},
@@ -82,7 +84,7 @@ func (this *MonthlyRequestsStat) SumMonthRequests(serverId string, months []stri
 			}
 		}
 	}
-]`)
+]`), true, &pipelines)
 	if err != nil {
 		logs.Error(err)
 		return 0
