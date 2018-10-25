@@ -3,23 +3,20 @@ package tealogs
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/uaparser"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/oschwald/geoip2-golang"
 	"github.com/pquerna/ffjson/ffjson"
-	"github.com/ua-parser/uap-go/uaparser"
-	"hash/crc32"
 	"net"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
-	"sync"
 )
 
-var userAgentParserCache = &sync.Map{}
 var userAgentParser *uaparser.Parser
 var geoDB *geoip2.Reader
 var accessLogVars = map[string]string{}
@@ -137,7 +134,7 @@ type AccessLogGeoLocation struct {
 
 func init() {
 	var err error
-	userAgentParser, err = uaparser.New(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	userAgentParser, err = uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
 	if err != nil {
 		logs.Error(err)
 	}
@@ -317,40 +314,34 @@ func (this *AccessLog) parseExtension() {
 func (this *AccessLog) parseUserAgent() {
 	// MDN上的参考：https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent
 	// 浏览器集合测试：http://www.browserscope.org/
-	// 多种变成语言识别：https://github.com/ua-parser/uap-php
 
-	userAgent := this.UserAgent
-	crc := crc32.ChecksumIEEE([]byte(userAgent))
-	item, found := userAgentParserCache.Load(crc)
+	result, found := userAgentParser.Parse(this.UserAgent)
 	if found {
-		this.Extend.Client = item.(AccessLogClient)
-		return
-	}
-
-	client := userAgentParser.Parse(this.UserAgent)
-	if client != nil {
-		this.Extend.Client = AccessLogClient{
-			OS: AccessLogClientOS{
-				Family:     client.Os.Family,
-				Major:      client.Os.Major,
-				Minor:      client.Os.Minor,
-				Patch:      client.Os.Patch,
-				PatchMinor: client.Os.PatchMinor,
-			},
-			Device: AccessLogClientDevice{
-				Family: client.Device.Family,
-				Brand:  client.Device.Brand,
-				Model:  client.Device.Model,
-			},
-			Browser: AccessLogClientBrowser{
-				Family: client.UserAgent.Family,
-				Major:  client.UserAgent.Major,
-				Minor:  client.UserAgent.Minor,
-				Patch:  client.UserAgent.Patch,
-			},
+		this.Extend.Client = AccessLogClient{}
+		if result.Browser != nil {
+			this.Extend.Client.Browser = AccessLogClientBrowser{
+				Family: result.Browser.Family,
+				Major:  result.Browser.Major,
+				Minor:  result.Browser.Minor,
+				Patch:  result.Browser.Patch,
+			}
 		}
-
-		userAgentParserCache.Store(crc, this.Extend.Client)
+		if result.OS != nil {
+			this.Extend.Client.OS = AccessLogClientOS{
+				Family:     result.OS.Family,
+				Major:      result.OS.Major,
+				Minor:      result.OS.Minor,
+				Patch:      result.OS.Patch,
+				PatchMinor: result.OS.PatchMinor,
+			}
+		}
+		if result.Device != nil {
+			this.Extend.Client.Device = AccessLogClientDevice{
+				Family: result.Device.Family,
+				Brand:  result.Device.Brand,
+				Model:  result.Device.Model,
+			}
+		}
 	}
 }
 

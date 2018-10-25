@@ -1,15 +1,16 @@
 package tealogs
 
 import (
-	"testing"
-	"github.com/ua-parser/uap-go/uaparser"
-	"log"
-	"github.com/iwind/TeaGo/Tea"
-	"time"
-	"github.com/TeaWeb/code/teamongo"
 	"context"
+	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/uaparser"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"log"
+	"testing"
+	"time"
 )
 
 func TestLogParseMimeType(t *testing.T) {
@@ -74,24 +75,28 @@ func TestLogParseExtension(t *testing.T) {
 
 func TestLogOSParser1(t *testing.T) {
 	userAgent := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.59 Safari/537.36"
-	parser, err := uaparser.New(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	parser, err := uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	now := time.Now()
-	client := parser.Parse(userAgent)
+	client, found := parser.Parse(userAgent)
+	if !found {
+		t.Log("not found")
+		return
+	}
 
-	t.Log(client.UserAgent.Family) // "Amazon Silk"
-	t.Log(client.UserAgent.Major)  // "1"
-	t.Log(client.UserAgent.Minor)  // "1"
-	t.Log(client.UserAgent.Patch)  // "0-80"
-	t.Log(client.Os.Family)        // "Android"
-	t.Log(client.Os.Major)         // ""
-	t.Log(client.Os.Minor)         // ""
-	t.Log(client.Os.Patch)         // ""
-	t.Log(client.Os.PatchMinor)    // ""
-	t.Log(client.Device.Family)    // "Kindle Fire"
+	t.Log(client.Browser.Family) // "Amazon Silk"
+	t.Log(client.Browser.Major)  // "1"
+	t.Log(client.Browser.Minor)  // "1"
+	t.Log(client.Browser.Patch)  // "0-80"
+	t.Log(client.OS.Family)      // "Android"
+	t.Log(client.OS.Major)       // ""
+	t.Log(client.OS.Minor)       // ""
+	t.Log(client.OS.Patch)       // ""
+	t.Log(client.OS.PatchMinor)  // ""
+	t.Log(client.Device.Family)  // "Kindle Fire"
 
 	cost := float64(time.Since(now).Nanoseconds()) / 1000000000
 	t.Log("cost:", cost)
@@ -100,32 +105,34 @@ func TestLogOSParser1(t *testing.T) {
 
 func TestLogOSParser2(t *testing.T) {
 	userAgent := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.59 Safari/537.36"
-	parser, err := uaparser.New(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	parser, err := uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	now := time.Now()
-	agent := parser.ParseUserAgent(userAgent)
-	t.Logf("%#v", agent)
+	parser.Parse(userAgent) // 看看是否有缓存
 
-	cost := float64(time.Since(now).Nanoseconds()) / 1000000000
-	t.Log("cost:", cost)
+	now := time.Now()
+	agent, _ := parser.Parse(userAgent)
+	cost := time.Since(now).Seconds()
+
+	t.Logf("%#v", agent)
+	t.Log("cost:", cost, "s")
 	t.Log("QPS", 1/cost)
 }
 
 func TestLogOSParser3(t *testing.T) {
 	userAgent := " Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)"
-	parser, err := uaparser.New(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	parser, err := uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	now := time.Now()
-	agent := parser.ParseUserAgent(userAgent)
+	agent, _ := parser.Parse(userAgent)
 	t.Logf("%#v", agent)
 
-	os := parser.ParseOs(userAgent)
+	os, _ := parser.ParseOS(userAgent)
 	t.Logf("%#v", os)
 
 	cost := float64(time.Since(now).Nanoseconds()) / 1000000000
@@ -135,16 +142,16 @@ func TestLogOSParser3(t *testing.T) {
 
 func TestLogOSParser4(t *testing.T) {
 	userAgent := "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36"
-	parser, err := uaparser.New(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	parser, err := uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	now := time.Now()
-	agent := parser.ParseUserAgent(userAgent)
+	agent, _ := parser.ParseBrowser(userAgent)
 	t.Logf("%#v", agent)
 
-	os := parser.ParseOs(userAgent)
+	os, _ := parser.ParseOS(userAgent)
 	t.Logf("%#v", os)
 
 	cost := float64(time.Since(now).Nanoseconds()) / 1000000000
@@ -199,8 +206,9 @@ func TestAccessLogger_DB(t *testing.T) {
 		t.Fatal("client=nil")
 	}
 
+	objectId, _ := objectid.FromHex("abc")
 	accessLog := AccessLog{
-		Id:   time.Now().UnixNano(),
+		Id:   objectId,
 		Args: "a=b",
 		Arg: map[string][]string{
 			"name": {"liu", "lu"},
