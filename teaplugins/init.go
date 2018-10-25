@@ -1,13 +1,11 @@
 package teaplugins
 
 import (
-	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo"
 )
 
 func init() {
-	if Tea.IsTesting() {
-		return
-	}
-
-	load()
+	TeaGo.BeforeStart(func(server *TeaGo.Server) {
+		load()
+	})
 }

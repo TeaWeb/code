@@ -1,6 +1,8 @@
 package teaweb
 
 import (
+	"fmt"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaproxy"
 	_ "github.com/TeaWeb/code/teaservices"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/apps"
@@ -27,12 +29,25 @@ import (
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/sessions"
+	"github.com/iwind/TeaGo/types"
+	"os"
+	"os/exec"
+	"runtime"
+	"strings"
+	"syscall"
 	"time"
 )
 
 func Start() {
+	if lookupArgs() {
+		return
+	}
+
 	// 日志
 	writer := new(utils.LogWriter)
 	writer.Init()
@@ -49,6 +64,7 @@ func Start() {
 	// 启动管理界面
 	TeaGo.NewServer().
 		AccessLog(false).
+
 		Get("/", new(index.IndexAction)).
 		Get("/logout", new(logout.IndexAction)).
 
@@ -62,4 +78,132 @@ func Start() {
 		)).
 
 		Start()
+}
+
+func lookupArgs() bool {
+	if len(os.Args) == 1 {
+		return false
+	}
+	args := os.Args[1:]
+	if lists.Contains(args, "?") ||
+		lists.Contains(args, "help") ||
+		lists.Contains(args, "h") ||
+		lists.Contains(args, "-help") ||
+		lists.Contains(args, "-h") {
+		fmt.Println("TeaWeb v" + teaconst.TeaVersion)
+		fmt.Println("Usage:", "\n   ./teaweb [option]")
+		fmt.Println("")
+		fmt.Println("Options:")
+		fmt.Println("  -h", "\n     print this help")
+		fmt.Println("  -v", "\n     print version")
+		fmt.Println("  start", "\n     start the server")
+		fmt.Println("  stop", "\n     stop the server")
+		fmt.Println("  restart", "\n     restart the server")
+		return true
+	} else if lists.Contains(args, "-v") {
+		fmt.Println("TeaWeb v"+teaconst.TeaVersion, "(build: "+runtime.Version(), runtime.GOOS, runtime.GOARCH+")")
+		return true
+	} else if lists.Contains(args, "start") {
+		proc := checkPid()
+		if proc != nil {
+			fmt.Println("[teaweb]already started, pid:", proc.Pid)
+			return true
+		}
+
+		cmd := exec.Command(os.Args[0])
+		err := cmd.Start()
+		if err != nil {
+			fmt.Println("[teaweb]start failed:", err.Error())
+			return true
+		}
+		fmt.Println("[teaweb]started ok, pid:", cmd.Process.Pid)
+
+		return true
+	} else if lists.Contains(args, "stop") {
+		proc := checkPid()
+		if proc == nil {
+			fmt.Println("[teaweb]not started")
+			return true
+		}
+
+		err := proc.Kill()
+		if err != nil {
+			fmt.Println("[teaweb]stop error:", err.Error())
+			return true
+		}
+
+		files.NewFile(Tea.Root + "/bin/pid").Delete()
+		fmt.Println("[teaweb]stopped ok, pid:", proc.Pid)
+
+		return true
+	} else if lists.Contains(args, "restart") {
+		proc := checkPid()
+		if proc != nil {
+			err := proc.Kill()
+			if err != nil {
+				fmt.Println("[teaweb]stop error:", err.Error())
+				return true
+			}
+		}
+
+		cmd := exec.Command(os.Args[0])
+		err := cmd.Start()
+		if err != nil {
+			fmt.Println("[teaweb]restart failed:", err.Error())
+			return true
+		}
+		fmt.Println("[teaweb]restarted ok, pid:", cmd.Process.Pid)
+
+		return true
+	}
+
+	if len(args) > 0 {
+		fmt.Println("[teaweb]unknown command option '" + strings.Join(args, " ") + "', run './teaweb -h' to see the usage.")
+		return true
+	}
+	return false
+}
+
+func checkPid() *os.Process {
+	// check pid file
+	pidFile := files.NewFile(Tea.Root + "/bin/pid")
+	if !pidFile.Exists() {
+		return nil
+	}
+	pidString, err := pidFile.ReadAllString()
+	if err != nil {
+		return nil
+	}
+	pid := types.Int(pidString)
+	proc, err := os.FindProcess(pid)
+	if err != nil || proc == nil {
+		return nil
+	}
+
+	err = proc.Signal(syscall.Signal(0))
+	if err != nil {
+		return nil
+	}
+
+	// ps?
+	ps, err := exec.LookPath("ps")
+	if err != nil {
+		return proc
+	}
+
+	cmd := exec.Command(ps, "-p", pidString, "-o", "command=")
+	output, err := cmd.Output()
+	if err != nil {
+		return proc
+	}
+
+	if len(output) == 0 {
+		return nil
+	}
+
+	if strings.Contains(string(output), "teaweb") {
+		return proc
+	}
+
+	return nil
 }

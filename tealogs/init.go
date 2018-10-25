@@ -1,19 +1,22 @@
 package tealogs
 
 import (
-	"github.com/TeaWeb/code/teaplugins"
+	"fmt"
 	"github.com/TeaWeb/code/teacharts"
+	"github.com/TeaWeb/code/teaplugins"
+	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/logs"
 	"math"
-	"fmt"
 )
 
 func init() {
-	logs.Println("register log plugin")
+	TeaGo.BeforeStart(func(server *TeaGo.Server) {
+		logs.Println("[log]register log plugin")
 
-	plugin := teaplugins.NewPlugin()
-	createWidget(plugin)
-	teaplugins.Register(plugin)
+		plugin := teaplugins.NewPlugin()
+		createWidget(plugin)
+		teaplugins.Register(plugin)
+	})
 }
 
 func createWidget(plugin *teaplugins.Plugin) {
