@@ -168,6 +168,8 @@ func (this *Loader) ActionRegisterPlugin(action *messages.RegisterPluginAction) 
 		p2.Developer = p.Developer
 		p2.Date = p.Date
 		p2.Version = p.Version
+		p2.HasRequestFilter = p.HasRequestFilter
+		p2.HasResponseFilter = p.HasResponseFilter
 
 		// request filter
 		if p.HasRequestFilter {
@@ -185,7 +187,26 @@ func (this *Loader) ActionRegisterPlugin(action *messages.RegisterPluginAction) 
 					return action.Data, true
 				}
 			})
-			hasRequestFilters = true
+			HasRequestFilters = true
+		}
+
+		// response filter
+		if p.HasResponseFilter {
+			responseFilters = append(responseFilters, func(data []byte) (result []byte, willContinue bool) {
+				action := &messages.FilterResponseAction{
+					Data: data,
+				}
+				this.Write(action)
+
+				respAction := messages.ActionQueue.Wait(action)
+				r, ok := respAction.(*messages.FilterResponseAction)
+				if ok {
+					return r.Data, r.Continue
+				} else {
+					return action.Data, true
+				}
+			})
+			HasResponseFilters = true
 		}
 
 		// widget
@@ -259,6 +280,10 @@ func (this *Loader) ActionReloadChart(action *messages.ReloadChartAction) {
 }
 
 func (this *Loader) ActionFilterRequest(action *messages.FilterRequestAction) {
+	messages.ActionQueue.Notify(action)
+}
+
+func (this *Loader) ActionFilterResponse(action *messages.FilterResponseAction) {
 	messages.ActionQueue.Notify(action)
 }
 

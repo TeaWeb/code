@@ -17,6 +17,9 @@ type Plugin struct {
 	Description string    // 插件简介
 	Widgets     []*Widget // 小组件
 	Apps        []*teaapps.App
+
+	HasRequestFilter  bool
+	HasResponseFilter bool
 }
 
 func NewPlugin() *Plugin {
@@ -60,6 +63,12 @@ func (this *Plugin) InterfaceNames() []string {
 	}
 	if len(this.Apps) > 0 {
 		names = append(names, "app")
+	}
+	if this.HasRequestFilter {
+		names = append(names, "request filter")
+	}
+	if this.HasResponseFilter {
+		names = append(names, "response filter")
 	}
 	return names
 }

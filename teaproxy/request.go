@@ -824,15 +824,25 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 		}
 	}
 
-	this.responseHeader = writer.Header()
-
 	// 插件过滤
-	if !teaplugins.FilterResponse(resp, writer) {
-		this.requestTime = time.Since(this.requestFromTime).Seconds()
-		this.responseStatusMessage = resp.Status
-		this.responseStatus = resp.StatusCode
-		return nil
+	if teaplugins.HasResponseFilters {
+		resp.Header = writer.Header()
+		resp = teaplugins.FilterResponse(resp)
+
+		// reset headers
+		oldHeaders := writer.Header()
+		for key := range oldHeaders {
+			oldHeaders.Del(key)
+		}
+
+		for key, value := range resp.Header {
+			for _, v := range value {
+				oldHeaders.Add(key, v)
+			}
+		}
 	}
+
+	this.responseHeader = writer.Header()
 
 	// 设置响应码
 	writer.WriteHeader(resp.StatusCode)

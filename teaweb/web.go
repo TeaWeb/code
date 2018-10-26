@@ -85,11 +85,7 @@ func lookupArgs() bool {
 		return false
 	}
 	args := os.Args[1:]
-	if lists.Contains(args, "?") ||
-		lists.Contains(args, "help") ||
-		lists.Contains(args, "h") ||
-		lists.Contains(args, "-help") ||
-		lists.Contains(args, "-h") {
+	if lists.ContainsAny(args, "?", "help", "-help", "h", "-h") {
 		fmt.Println("TeaWeb v" + teaconst.TeaVersion)
 		fmt.Println("Usage:", "\n   ./bin/teaweb [option]")
 		fmt.Println("")

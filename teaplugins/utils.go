@@ -15,9 +15,9 @@ var plugins = []*Plugin{}
 var pluginsLocker = &sync.Mutex{}
 
 var requestFilters = []func(req []byte) (result []byte, willContinue bool){}
-var hasRequestFilters = false
-var responseFilters = []interface{}{}
-var hasResponseFilters = false
+var HasRequestFilters = false
+var responseFilters = []func(resp []byte) (result []byte, willContinue bool){}
+var HasResponseFilters = false
 
 func Register(plugin *Plugin) {
 	pluginsLocker.Lock()
@@ -90,7 +90,7 @@ func DashboardWidgets(group WidgetGroup) []*Widget {
 }
 
 func FilterRequest(request *http.Request) (resultReq *http.Request, willContinue bool) {
-	if !hasRequestFilters {
+	if !HasRequestFilters {
 		return request, true
 	}
 
@@ -123,11 +123,38 @@ func FilterRequest(request *http.Request) (resultReq *http.Request, willContinue
 	return resultReq, true
 }
 
-func FilterResponse(response *http.Response, writer http.ResponseWriter) bool {
-	if !hasResponseFilters {
-		return true
+func FilterResponse(response *http.Response) (resultResp *http.Response) {
+	if !HasResponseFilters {
+		return response
 	}
-	return true
+
+	data, err := httputil.DumpResponse(response, true)
+	if err != nil {
+		logs.Error(err)
+		return response
+	}
+
+	defer func() {
+		resp, err := http.ReadResponse(bufio.NewReader(bytes.NewBuffer(data)), nil)
+		if err != nil {
+			logs.Error(err)
+			return
+		}
+
+		resultResp = resp
+	}()
+
+	for _, f := range responseFilters {
+		result, willContinue := f(data)
+
+		data = result
+
+		if !willContinue {
+			return resultResp
+		}
+	}
+
+	return resultResp
 }
 
 func load() {
