@@ -16,13 +16,23 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 
 	action.Data["serverChanged"] = serverChanged
 
-	action.Data["teaMenu"] = "settings"
+	if action.Spec.HasClassPrefix("profile") {
+		action.Data["teaMenu"] = "settings.profile"
+	} else {
+		action.Data["teaMenu"] = "settings"
+	}
 	action.Data["teaTabbar"] = []maps.Map{
 		{
 			"name":    "管理界面",
 			"subName": "",
 			"url":     "/settings",
 			"active":  action.Spec.HasClassPrefix("settings.IndexAction", "server."),
+		},
+		{
+			"name":    "个人资料",
+			"subName": "",
+			"url":     "/settings/profile",
+			"active":  action.Spec.HasClassPrefix("profile."),
 		},
 		{
 			"name":    "登录设置",

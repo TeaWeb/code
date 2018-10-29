@@ -2,10 +2,10 @@ package configs
 
 import (
 	"github.com/iwind/TeaGo/Tea"
-	"io/ioutil"
+	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"gopkg.in/yaml.v2"
-	"github.com/iwind/TeaGo/files"
+	"io/ioutil"
 	"sync"
 )
 
@@ -53,6 +53,9 @@ func SharedAdminConfig() *AdminConfig {
 
 // 写回配置文件
 func (this *AdminConfig) WriteBack() error {
+	adminConfigLocker.Lock()
+	defer adminConfigLocker.Unlock()
+
 	writer, err := files.NewWriter(Tea.ConfigFile("admin.conf"))
 	if err != nil {
 		return err
@@ -64,10 +67,26 @@ func (this *AdminConfig) WriteBack() error {
 
 // 是否包含某个用户名
 func (this *AdminConfig) ContainsUser(username string) bool {
+	adminConfigLocker.Lock()
+	defer adminConfigLocker.Unlock()
+
 	for _, user := range this.Users {
 		if user.Username == username {
 			return true
 		}
 	}
 	return false
+}
+
+// 使用用户名查找用户
+func (this *AdminConfig) FindUser(username string) *AdminUser {
+	adminConfigLocker.Lock()
+	defer adminConfigLocker.Unlock()
+
+	for _, user := range this.Users {
+		if user.Username == username {
+			return user
+		}
+	}
+	return nil
 }

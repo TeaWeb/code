@@ -1,8 +1,8 @@
 package login
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaweb/configs"
+	"github.com/iwind/TeaGo/actions"
 	"strings"
 )
 

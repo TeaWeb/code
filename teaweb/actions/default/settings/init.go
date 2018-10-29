@@ -1,8 +1,8 @@
 package settings
 
 import (
-	"github.com/iwind/TeaGo"
 	"github.com/TeaWeb/code/teaweb/helpers"
+	"github.com/iwind/TeaGo"
 )
 
 var serverChanged = false

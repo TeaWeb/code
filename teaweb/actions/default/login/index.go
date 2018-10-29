@@ -1,14 +1,13 @@
 package login
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
+	"github.com/iwind/TeaGo/actions"
+	"time"
 )
 
 type IndexAction actions.Action
-
-var countLoginTries = 0
 
 func (this *IndexAction) RunGet() {
 	this.Show()
@@ -26,20 +25,33 @@ func (this *IndexAction) RunPost(params struct {
 		Field("password", params.Password).
 		Require("请输入密码")
 
-	if countLoginTries >= 3 {
-		this.Fail("登录失败已超过3次，系统被锁定，需要重启服务后才能继续")
-	}
-
-	config := configs.SharedAdminConfig()
-	for _, user := range config.Users {
-		if user.Username == params.Username && user.Password == params.Password {
-			params.Auth.StoreUsername(user.Username)
-			this.Next("/", nil, "").Success()
-			return
+	adminConfig := configs.SharedAdminConfig()
+	user := adminConfig.FindUser(params.Username)
+	if user != nil {
+		// 错误次数
+		if user.CountLoginTries() >= 3 {
+			this.Fail("登录失败已超过3次，系统被锁定，需要重启服务后才能继续")
 		}
-	}
 
-	countLoginTries ++
+		// 密码错误
+		if user.Password != params.Password {
+			user.IncreaseLoginTries()
+			this.Fail("登录失败，请检查用户名密码")
+		}
+
+		user.ResetLoginTries()
+
+		// Session
+		params.Auth.StoreUsername(user.Username)
+
+		// 记录登录IP
+		user.LoggedAt = time.Now().Unix()
+		user.LoggedIP = this.RequestRemoteIP()
+		adminConfig.WriteBack()
+
+		this.Next("/", nil, "").Success()
+		return
+	}
 
 	this.Fail("登录失败，请检查用户名密码")
 }

@@ -24,6 +24,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/login"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/mongo"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/profile"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/server"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/stat"
 	"github.com/TeaWeb/code/teaweb/helpers"
