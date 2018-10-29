@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo"
 )
@@ -8,7 +9,9 @@ import (
 func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		server.
-			Helper(new(helpers.UserMustAuth)).
+			Helper(&helpers.UserMustAuth{
+				Grant: configs.AdminGrantApp,
+			}).
 			Prefix("/apps/app").
 			Get("", new(IndexAction)).
 			Get("/reload", new(ReloadAction)).

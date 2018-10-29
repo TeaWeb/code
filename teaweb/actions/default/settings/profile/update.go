@@ -12,7 +12,7 @@ type UpdateAction actions.Action
 
 func (this *UpdateAction) Run(params struct{}) {
 	username := this.Session().GetString("username")
-	user := configs.SharedAdminConfig().FindUser(username)
+	user := configs.SharedAdminConfig().FindActiveUser(username)
 
 	userMap := maps.Map{
 		"name": user.Name,
@@ -59,7 +59,7 @@ func (this *UpdateAction) RunPost(params struct {
 	username := this.Session().GetString("username")
 
 	adminConfig := configs.SharedAdminConfig()
-	user := adminConfig.FindUser(username)
+	user := adminConfig.FindActiveUser(username)
 	user.Name = params.Name
 	user.Tel = params.Tel
 	adminConfig.WriteBack()

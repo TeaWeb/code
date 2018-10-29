@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo"
 	"github.com/TeaWeb/code/teaweb/helpers"
 )
@@ -8,7 +9,9 @@ import (
 func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		server.
-			Helper(new(helpers.UserMustAuth)).
+			Helper(&helpers.UserMustAuth{
+				Grant: configs.AdminGrantApp,
+			}).
 			Helper(new(Helper)).
 			Prefix("/monitor").
 			Get("", new(IndexAction)).

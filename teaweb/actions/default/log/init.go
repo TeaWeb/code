@@ -1,6 +1,7 @@
 package log
 
 import (
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo"
 )
@@ -9,7 +10,9 @@ func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		server.
 			EndAll().
-			Helper(new(helpers.UserMustAuth)).
+			Helper(&helpers.UserMustAuth{
+				Grant: configs.AdminGrantLog,
+			}).
 			Helper(new(Helper)).
 			Prefix("/log").
 			Get("", new(IndexAction)).

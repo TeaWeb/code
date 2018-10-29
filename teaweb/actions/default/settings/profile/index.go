@@ -12,7 +12,7 @@ type IndexAction actions.Action
 
 func (this *IndexAction) Run(params struct{}) {
 	username := this.Session().GetString("username")
-	user := configs.SharedAdminConfig().FindUser(username)
+	user := configs.SharedAdminConfig().FindActiveUser(username)
 
 	userMap := maps.Map{
 		"name": user.Name,

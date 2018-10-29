@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo"
 )
@@ -10,7 +11,9 @@ var serverChanged = false
 func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		server.
-			Helper(new(helpers.UserMustAuth)).
+			Helper(&helpers.UserMustAuth{
+				Grant: configs.AdminGrantAll,
+			}).
 			Helper(new(Helper)).
 			Prefix("/settings").
 			Get("", new(IndexAction)).

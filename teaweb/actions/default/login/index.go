@@ -26,7 +26,7 @@ func (this *IndexAction) RunPost(params struct {
 		Require("请输入密码")
 
 	adminConfig := configs.SharedAdminConfig()
-	user := adminConfig.FindUser(params.Username)
+	user := adminConfig.FindActiveUser(params.Username)
 	if user != nil {
 		// 错误次数
 		if user.CountLoginTries() >= 3 {

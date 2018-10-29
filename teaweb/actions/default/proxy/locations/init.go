@@ -3,6 +3,7 @@ package locations
 import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/headers"
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo"
 )
@@ -10,7 +11,9 @@ import (
 func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		server.Prefix("/proxy/locations").
-			Helper(new(helpers.UserMustAuth)).
+			Helper(&helpers.UserMustAuth{
+				Grant: configs.AdminGrantProxy,
+			}).
 			Helper(new(proxy.Helper)).
 			Get("", new(IndexAction)).
 			Post("/add", new(AddAction)).

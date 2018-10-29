@@ -17,6 +17,9 @@ type AdminConfig struct {
 	// 角色
 	Roles []*AdminRole `yaml:"roles" json:"roles"`
 
+	// 权限
+	Grant []*AdminGrant `yaml:"grant" json:"grant"`
+
 	// 用户
 	Users []*AdminUser `yaml:"users" json:"users"`
 }
@@ -66,12 +69,12 @@ func (this *AdminConfig) WriteBack() error {
 }
 
 // 是否包含某个用户名
-func (this *AdminConfig) ContainsUser(username string) bool {
+func (this *AdminConfig) ContainsActiveUser(username string) bool {
 	adminConfigLocker.Lock()
 	defer adminConfigLocker.Unlock()
 
 	for _, user := range this.Users {
-		if user.Username == username {
+		if user.Username == username && !user.IsDisabled {
 			return true
 		}
 	}
@@ -79,13 +82,33 @@ func (this *AdminConfig) ContainsUser(username string) bool {
 }
 
 // 使用用户名查找用户
-func (this *AdminConfig) FindUser(username string) *AdminUser {
+func (this *AdminConfig) FindActiveUser(username string) *AdminUser {
 	adminConfigLocker.Lock()
 	defer adminConfigLocker.Unlock()
 
 	for _, user := range this.Users {
-		if user.Username == username {
+		if user.Username == username && !user.IsDisabled {
 			return user
+		}
+	}
+	return nil
+}
+
+// 根据代号查找角色
+func (this *AdminConfig) FindActiveRole(roleCode string) *AdminRole {
+	for _, role := range this.Roles {
+		if role.Code == roleCode && !role.IsDisabled {
+			return role
+		}
+	}
+	return nil
+}
+
+// 根据代号查找权限
+func (this *AdminConfig) FindActiveGrant(grantCode string) *AdminGrant {
+	for _, grant := range this.Grant {
+		if grant.Code == grantCode && !grant.IsDisabled {
+			return grant
 		}
 	}
 	return nil

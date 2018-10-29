@@ -28,7 +28,7 @@ func (this *UpdateAction) RunPost(params struct {
 	config := configs.SharedAdminConfig()
 
 	username := this.Session().GetString("username")
-	if username != params.Username && config.ContainsUser(params.Username) {
+	if username != params.Username && config.ContainsActiveUser(params.Username) {
 		this.FailField("username", "此用户名已经被使用，请换一个")
 	}
 

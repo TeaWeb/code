@@ -17,7 +17,7 @@ type UpdateAvatarAction actions.Action
 
 func (this *UpdateAvatarAction) Run(params struct{}) {
 	username := this.Session().GetString("username")
-	user := configs.SharedAdminConfig().FindUser(username)
+	user := configs.SharedAdminConfig().FindActiveUser(username)
 
 	this.Data["user"] = map[string]interface{}{
 		"avatar": user.Avatar,
@@ -60,7 +60,7 @@ func (this *UpdateAvatarAction) RunPost(params struct {
 
 	username := this.Session().GetString("username")
 	adminConfig := configs.SharedAdminConfig()
-	user := adminConfig.FindUser(username)
+	user := adminConfig.FindActiveUser(username)
 	user.Avatar = "/avatar/" + rand + params.AvatarFile.Ext
 	adminConfig.WriteBack()
 

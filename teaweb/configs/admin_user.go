@@ -1,6 +1,8 @@
 package configs
 
-import "sync"
+import (
+	"sync"
+)
 
 type AdminUser struct {
 	Username string   `yaml:"username" json:"username"` // 用户名
@@ -14,8 +16,39 @@ type AdminUser struct {
 	LoggedAt  int64  `yaml:"loggedAt" json:"loggedAt"`   // 最后登录时间
 	LoggedIP  string `yaml:"loggedIP" json:"loggedIP"`   // 最后登录IP
 
+	Grant []string `yaml:"grant" json:"grant"` // 权限，会细化到项目，比如：apis:example.com
+
+	IsDisabled bool `yaml:"isDisabled" json:"isDisabled"` // 是否禁用
+
 	countLoginTries uint // 错误登录次数
 	locker          sync.Mutex
+}
+
+// 判断用户是否已被授权
+func (this *AdminUser) Granted(grant string) bool {
+	// 角色设置
+	if len(this.Role) == 0 {
+		return false
+	}
+	for _, roleCode := range this.Role {
+		role := SharedAdminConfig().FindActiveRole(roleCode)
+		if role == nil {
+			continue
+		}
+		if role.Granted(grant) {
+			return true
+		}
+	}
+
+	// 特殊设置
+	for _, grantCode := range this.Grant {
+		grant := SharedAdminConfig().FindActiveGrant(grantCode)
+		if grant != nil {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (this *AdminUser) IncreaseLoginTries() {

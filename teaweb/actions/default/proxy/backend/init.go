@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy"
@@ -9,7 +10,9 @@ import (
 func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		server.
-			Helper(new(helpers.UserMustAuth)).
+			Helper(&helpers.UserMustAuth{
+				Grant: configs.AdminGrantProxy,
+			}).
 			Helper(new(proxy.Helper)).
 			Module("").
 			Prefix("/proxy/backend").

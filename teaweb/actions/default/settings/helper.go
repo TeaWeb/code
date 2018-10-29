@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 	"net/http"
@@ -21,30 +22,42 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 	} else {
 		action.Data["teaMenu"] = "settings"
 	}
-	action.Data["teaTabbar"] = []maps.Map{
-		{
+
+	// TabBar菜单
+	tabbar := []maps.Map{}
+
+	user := configs.SharedAdminConfig().FindActiveUser(action.Session().GetString("username"))
+	if user.Granted(configs.AdminGrantAll) {
+		tabbar = append(tabbar, map[string]interface{}{
 			"name":    "管理界面",
 			"subName": "",
 			"url":     "/settings",
 			"active":  action.Spec.HasClassPrefix("settings.IndexAction", "server."),
-		},
-		{
-			"name":    "个人资料",
-			"subName": "",
-			"url":     "/settings/profile",
-			"active":  action.Spec.HasClassPrefix("profile."),
-		},
-		{
-			"name":    "登录设置",
-			"subName": "",
-			"url":     "/settings/login",
-			"active":  action.Spec.HasClassPrefix("login."),
-		},
-		{
+		})
+	}
+
+	tabbar = append(tabbar, map[string]interface{}{
+		"name":    "个人资料",
+		"subName": "",
+		"url":     "/settings/profile",
+		"active":  action.Spec.HasClassPrefix("profile."),
+	})
+
+	tabbar = append(tabbar, map[string]interface{}{
+		"name":    "登录设置",
+		"subName": "",
+		"url":     "/settings/login",
+		"active":  action.Spec.HasClassPrefix("login."),
+	})
+
+	if user.Granted(configs.AdminGrantAll) {
+		tabbar = append(tabbar, map[string]interface{}{
 			"name":    "MongoDB",
 			"subName": "",
 			"url":     "/settings/mongo",
 			"active":  action.Spec.HasClassPrefix("mongo."),
-		},
+		})
 	}
+
+	action.Data["teaTabbar"] = tabbar
 }
