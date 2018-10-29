@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -68,7 +69,7 @@ func (this *AdminConfig) WriteBack() error {
 	return err
 }
 
-// 是否包含某个用户名
+// 是否包含某个激活的用户名
 func (this *AdminConfig) ContainsActiveUser(username string) bool {
 	adminConfigLocker.Lock()
 	defer adminConfigLocker.Unlock()
@@ -81,7 +82,20 @@ func (this *AdminConfig) ContainsActiveUser(username string) bool {
 	return false
 }
 
-// 使用用户名查找用户
+// 是否包含某个用户名
+func (this *AdminConfig) ContainsUser(username string) bool {
+	adminConfigLocker.Lock()
+	defer adminConfigLocker.Unlock()
+
+	for _, user := range this.Users {
+		if user.Username == username {
+			return true
+		}
+	}
+	return false
+}
+
+// 使用用户名查找激活的用户
 func (this *AdminConfig) FindActiveUser(username string) *AdminUser {
 	adminConfigLocker.Lock()
 	defer adminConfigLocker.Unlock()
@@ -94,7 +108,25 @@ func (this *AdminConfig) FindActiveUser(username string) *AdminUser {
 	return nil
 }
 
-// 根据代号查找角色
+// 使用用户名查找用户
+func (this *AdminConfig) FindUser(username string) *AdminUser {
+	adminConfigLocker.Lock()
+	defer adminConfigLocker.Unlock()
+
+	for _, user := range this.Users {
+		if user.Username == username {
+			return user
+		}
+	}
+	return nil
+}
+
+// 添加用户
+func (this *AdminConfig) AddUser(user *AdminUser) {
+	this.Users = append(this.Users, user)
+}
+
+// 根据代号查找激活的角色
 func (this *AdminConfig) FindActiveRole(roleCode string) *AdminRole {
 	for _, role := range this.Roles {
 		if role.Code == roleCode && !role.IsDisabled {
@@ -104,12 +136,65 @@ func (this *AdminConfig) FindActiveRole(roleCode string) *AdminRole {
 	return nil
 }
 
+// 根据代号查找角色
+func (this *AdminConfig) FindRole(roleCode string) *AdminRole {
+	for _, role := range this.Roles {
+		if role.Code == roleCode {
+			return role
+		}
+	}
+	return nil
+}
+
+// 查找激活的角色
+func (this *AdminConfig) FindAllActiveRoles() []*AdminRole {
+	result := []*AdminRole{}
+	for _, role := range this.Roles {
+		if !role.IsDisabled {
+			result = append(result, role)
+		}
+	}
+	return result
+}
+
+// 添加新角色
+func (this *AdminConfig) AddRole(role *AdminRole) {
+	this.Roles = append(this.Roles, role)
+}
+
 // 根据代号查找权限
 func (this *AdminConfig) FindActiveGrant(grantCode string) *AdminGrant {
-	for _, grant := range this.Grant {
+	for _, grant := range this.FindAllActiveGrants() {
 		if grant.Code == grantCode && !grant.IsDisabled {
 			return grant
 		}
 	}
 	return nil
+}
+
+// 取得所有内置的权限
+func (this *AdminConfig) FindAllActiveGrants() []*AdminGrant {
+	grants := []*AdminGrant{
+		NewAdminGrant("[超级权限]", AdminGrantAll),
+		NewAdminGrant("代理", AdminGrantProxy),
+		NewAdminGrant("日志", AdminGrantLog),
+		NewAdminGrant("统计", AdminGrantStatistics),
+		NewAdminGrant("本地服务", AdminGrantApp),
+		NewAdminGrant("插件", AdminGrantPlugin),
+	}
+
+	if teaconst.PlusEnabled {
+		grants = append(grants, []*AdminGrant{
+			NewAdminGrant("测试小Q", AdminGrantQ),
+			NewAdminGrant("API", AdminGrantApi),
+			NewAdminGrant("团队", AdminGrantTeam),
+		} ...)
+	}
+
+	return grants
+}
+
+// 添加授权
+func (this *AdminConfig) AddGrant(grant *AdminGrant) {
+	this.Grant = append(this.Grant, grant)
 }

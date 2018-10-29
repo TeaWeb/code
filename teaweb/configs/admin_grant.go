@@ -19,3 +19,11 @@ type AdminGrant struct {
 	Code       string `yaml:"code" json:"code"`
 	IsDisabled bool   `yaml:"isDisabled" json:"isDisabled"`
 }
+
+// 构造新权限
+func NewAdminGrant(name string, code string) *AdminGrant {
+	return &AdminGrant{
+		Name: name,
+		Code: code,
+	}
+}
