@@ -489,17 +489,12 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 		}
 	}
 
-	fp, err := os.OpenFile(filePath, os.O_RDONLY, 444)
-	if err != nil {
-		this.serverError(writer)
-		logs.Error(err)
-		return nil
-	}
-	defer fp.Close()
-
 	// 忽略的Header
 	ignoreHeaders := this.convertIgnoreHeaders()
 	hasIgnoreHeaders := ignoreHeaders.Len() > 0
+
+	// 响应header
+	respHeader := writer.Header()
 
 	// mime type
 	if !hasIgnoreHeaders || !ignoreHeaders.Has("CONTENT-TYPE") {
@@ -511,16 +506,19 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 					// 去掉里面的charset设置
 					index := strings.Index(mimeType, "charset=")
 					if index > 0 {
-						writer.Header().Set("Content-Type", mimeType[:index+len("charset=")]+this.charset)
+						respHeader.Set("Content-Type", mimeType[:index+len("charset=")]+this.charset)
 					} else {
-						writer.Header().Set("Content-Type", mimeType+"; charset="+this.charset)
+						respHeader.Set("Content-Type", mimeType+"; charset="+this.charset)
 					}
 				} else {
-					writer.Header().Set("Content-Type", mimeType)
+					respHeader.Set("Content-Type", mimeType)
 				}
 			}
 		}
 	}
+
+	// length
+	respHeader.Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
 
 	// 自定义Header
 	for _, header := range this.headers {
@@ -528,11 +526,36 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
 				continue
 			}
-			writer.Header().Set(header.Name, header.Value)
+			respHeader.Set(header.Name, header.Value)
 		}
 	}
 
+	// 发送 Last-Modified
+	modifiedTime := stat.ModTime().Format("Mon, 02 Jan 2006 15:04:05 GMT")
+	if len(respHeader.Get("Last-Modified")) == 0 {
+		respHeader.Set("Last-Modified", modifiedTime)
+	}
+
 	this.responseHeader = writer.Header()
+
+	// 支持 If-Modified-Since
+	if this.requestHeader("If-Modified-Since") == modifiedTime {
+		writer.WriteHeader(http.StatusNotModified)
+
+		this.responseStatus = http.StatusNotModified
+		this.responseStatusMessage = "304 Not Modified"
+		this.requestTime = time.Since(this.requestFromTime).Seconds()
+
+		return nil
+	}
+
+	fp, err := os.OpenFile(filePath, os.O_RDONLY, 444)
+	if err != nil {
+		this.serverError(writer)
+		logs.Error(err)
+		return nil
+	}
+	defer fp.Close()
 
 	n, err := io.Copy(writer, fp)
 
