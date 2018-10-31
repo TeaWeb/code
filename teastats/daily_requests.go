@@ -3,10 +3,10 @@ package teastats
 import (
 	"context"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/bson"
 	"strings"
 	"time"
 )
@@ -66,8 +66,8 @@ func (this *DailyRequestsStat) SumDayRequests(serverId string, days []string) in
 	}
 	sumColl := findCollection("stats.requests.daily", nil)
 
-	pipelines := bson.NewArray()
-	err := bson.UnmarshalExtJSON([]byte(`[
+	//pipelines := bson.NewArray()
+	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",
@@ -84,7 +84,7 @@ func (this *DailyRequestsStat) SumDayRequests(serverId string, days []string) in
 			}
 		}
 	}
-]`), true, &pipelines)
+]`))
 	if err != nil {
 		logs.Error(err)
 		return 0

@@ -3,10 +3,10 @@ package teastats
 import (
 	"context"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/bson"
 	"strings"
 	"time"
 )
@@ -70,13 +70,12 @@ func (this *HourlyPVStat) SumHourPV(serverId string, hours []string) int64 {
 	}
 	sumColl := findCollection("stats.pv.hourly", nil)
 
-	pipelines := bson.NewArray()
-	err := bson.UnmarshalExtJSON([]byte(`[
+	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
 	{
 		"$match": {
-			"serverId": "`+serverId+`",
+			"serverId": "` + serverId + `",
 			"hour": {
-				"$in": [ "`+strings.Join(hours, "\", \"")+`" ]
+				"$in": [ "` + strings.Join(hours, "\", \"") + `" ]
 			}
 		}
 	},
@@ -88,7 +87,7 @@ func (this *HourlyPVStat) SumHourPV(serverId string, hours []string) int64 {
 			}
 		}
 	}
-]`), true, &pipelines)
+]`))
 	if err != nil {
 		logs.Error(err)
 		return 0

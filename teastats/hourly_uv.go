@@ -3,6 +3,7 @@ package teastats
 import (
 	"context"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
@@ -83,13 +84,12 @@ func (this *HourlyUVStat) SumHourUV(serverId string, hours []string) int64 {
 	}
 	sumColl := findCollection("stats.uv.hourly", nil)
 
-	pipelines := bson.NewDocument()
-	err := bson.UnmarshalExtJSON([]byte(`[
+	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
 	{
 		"$match": {
-			"serverId": "`+serverId+`",
+			"serverId": "` + serverId + `",
 			"hour": {
-				"$in": [ "`+strings.Join(hours, "\", \"")+`" ]
+				"$in": [ "` + strings.Join(hours, "\", \"") + `" ]
 			}
 		}
 	},
@@ -101,7 +101,7 @@ func (this *HourlyUVStat) SumHourUV(serverId string, hours []string) int64 {
 			}
 		}
 	}
-]`), true, &pipelines)
+]`))
 	if err != nil {
 		logs.Error(err)
 		return 0

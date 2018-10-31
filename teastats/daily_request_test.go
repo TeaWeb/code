@@ -20,6 +20,6 @@ func TestDailyRequestParse(t *testing.T) {
 
 func TestDailyPVStat_SumDayPV(t *testing.T) {
 	stat := new(DailyRequestsStat)
-	total := stat.SumDayRequests("123456", []string{timeutil.Format("Ymd")})
+	total := stat.SumDayRequests("123456", []string{timeutil.Format("Ymd"), "20181026"})
 	t.Log(total)
 }

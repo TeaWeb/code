@@ -3,10 +3,10 @@ package teastats
 import (
 	"context"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/bson"
 	"strings"
 	"time"
 )
@@ -70,13 +70,12 @@ func (this *MonthlyPVStat) SumMonthPV(serverId string, months []string) int64 {
 	}
 	sumColl := findCollection("stats.pv.monthly", nil)
 
-	pipelines := bson.NewDocument()
-	err := bson.UnmarshalExtJSON([]byte(`[
+	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
 	{
 		"$match": {
-			"serverId": "`+serverId+`",
+			"serverId": "` + serverId + `",
 			"month": {
-				"$in": [ "`+strings.Join(months, "\", \"")+`" ]
+				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
 			}
 		}
 	},
@@ -88,7 +87,7 @@ func (this *MonthlyPVStat) SumMonthPV(serverId string, months []string) int64 {
 			}
 		}
 	}
-]`), true, &pipelines)
+]`))
 	if err != nil {
 		logs.Error(err)
 		return 0
