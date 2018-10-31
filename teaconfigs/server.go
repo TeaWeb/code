@@ -55,6 +55,11 @@ type ServerConfig struct {
 	Rewrite []*RewriteRule   `yaml:"rewrite" json:"rewrite"` // 重写规则 @TODO
 	Fastcgi []*FastcgiConfig `yaml:"fastcgi" json:"fastcgi"` // Fastcgi配置 @TODO
 	Proxy   string           `yaml:"proxy" json:"proxy"`     //  代理配置 @TODO
+
+	// API相关
+	APIOn       bool     `yaml:"apiOn" json:"apiOn"`
+	APIs        []*API   `yaml:"api" json:"api"`
+	APIVersions []string `yaml:"apiVersions" json:"apiVersions"`
 }
 
 // 从目录中加载配置
@@ -169,6 +174,14 @@ func (this *ServerConfig) Validate() error {
 	// headers
 	for _, header := range this.Headers {
 		err := header.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
+	// api
+	for _, api := range this.APIs {
+		err := api.Validate()
 		if err != nil {
 			return err
 		}
@@ -392,4 +405,9 @@ func (this *ServerConfig) NextFastcgi() *FastcgiConfig {
 // 添加路径规则
 func (this *ServerConfig) AddLocation(location *LocationConfig) {
 	this.Locations = append(this.Locations, location)
+}
+
+// 添加API
+func (this *ServerConfig) AddAPI(api *API) {
+	this.APIs = append(this.APIs, api)
 }
