@@ -60,6 +60,8 @@ type ServerConfig struct {
 	APIOn       bool     `yaml:"apiOn" json:"apiOn"`
 	APIs        []*API   `yaml:"api" json:"api"`
 	APIVersions []string `yaml:"apiVersions" json:"apiVersions"`
+	apiPathMap  map[string]*API // path => api
+	apiPatterns []*API          // regexp => api
 }
 
 // 从目录中加载配置
@@ -180,10 +182,17 @@ func (this *ServerConfig) Validate() error {
 	}
 
 	// api
+	this.apiPathMap = map[string]*API{}
+	this.apiPatterns = []*API{}
 	for _, api := range this.APIs {
 		err := api.Validate()
 		if err != nil {
 			return err
+		}
+		if api.pathReg == nil {
+			this.apiPathMap[api.Path] = api
+		} else {
+			this.apiPatterns = append(this.apiPatterns, api)
 		}
 	}
 
@@ -410,4 +419,38 @@ func (this *ServerConfig) AddLocation(location *LocationConfig) {
 // 添加API
 func (this *ServerConfig) AddAPI(api *API) {
 	this.APIs = append(this.APIs, api)
+}
+
+// 通过Path查找API
+func (this *ServerConfig) FindAPI(path string) *API {
+	for _, api := range this.APIs {
+		if api.Path == path {
+			return api
+		}
+	}
+	return nil
+}
+
+// 查找激活状态中的API
+func (this *ServerConfig) FindActiveAPI(path string, method string) (api *API, params map[string]string) {
+	api, found := this.apiPathMap[path]
+	if !found {
+		// 寻找pattern
+		for _, api := range this.apiPatterns {
+			params, found := api.Match(path)
+			if !found || api.IsDeprecated || !api.On || !api.AllowMethod(method) {
+				continue
+			}
+			return api, params
+		}
+
+		return nil, nil
+	}
+
+	// 检查是否过期或者失效
+	if api.IsDeprecated || !api.On || !api.AllowMethod(method) {
+		return nil, nil
+	}
+
+	return api, nil
 }

@@ -150,6 +150,72 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		this.ignoreHeaders = append(this.ignoreHeaders, server.IgnoreHeaders ...)
 	}
 
+	// API配置，目前只有Plus版本支持
+	if teaconst.PlusEnabled {
+		api, params := server.FindActiveAPI(uri.Path, this.method)
+		if api != nil {
+			// address
+			if len(api.Address) > 0 {
+				address := api.Address
+
+				query := uri.Query()
+
+				// 匹配的参数
+				if params != nil {
+					for key, value := range params {
+						query[key] = []string{value}
+					}
+					uri.RawQuery = query.Encode()
+				}
+
+				// 支持变量
+				address = requestVarReg.ReplaceAllStringFunc(address, func(s string) string {
+					match := s[2 : len(s)-1]
+					switch match {
+					case "path":
+						return api.Path
+					}
+
+					if strings.HasPrefix(match, "arg.") {
+						value, found := query[match[4:]]
+						if found {
+							return strings.Join(value, ",")
+						} else {
+							return ""
+						}
+					}
+
+					return s
+				})
+
+				this.uri = address
+
+				newURI, err := url.ParseRequestURI(address)
+				if err == nil {
+					path = newURI.Path
+
+					// query
+					if len(uri.RawQuery) > 0 {
+						if len(newURI.RawQuery) == 0 {
+							this.uri = address + "?" + uri.RawQuery
+						} else {
+							this.uri = address + "&" + uri.RawQuery
+						}
+					}
+				} else {
+					path = address
+				}
+			}
+
+			// headers
+			if len(api.Headers) > 0 {
+				this.headers = append(this.headers, api.FormatHeaders(func(source string) string {
+					return this.format(source)
+				}) ...)
+			}
+		}
+	}
+
 	// location的相关配置
 	for _, location := range server.Locations {
 		if !location.On {
