@@ -59,14 +59,6 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	}
 
 	if teaconst.PlusEnabled {
-		if user.Granted(configs.AdminGrantQ) {
-			modules = append(modules, map[string]interface{}{
-				"code":     "plus.q",
-				"menuName": "测试小Q+",
-				"icon":     "dog",
-			})
-		}
-
 		if user.Granted(configs.AdminGrantApi) {
 			modules = append(modules, map[string]interface{}{
 				"code":     "plus.apis",
@@ -75,11 +67,11 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 			})
 		}
 
-		if user.Granted(configs.AdminGrantTeam) {
+		if user.Granted(configs.AdminGrantQ) {
 			modules = append(modules, map[string]interface{}{
-				"code":     "plus.team",
-				"menuName": "团队+",
-				"icon":     "users",
+				"code":     "plus.q",
+				"menuName": "测试小Q+",
+				"icon":     "dog",
 			})
 		}
 	}
@@ -114,6 +106,16 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 			"menuName": "插件",
 			"icon":     "puzzle piece",
 		})
+	}
+
+	if teaconst.PlusEnabled {
+		if user.Granted(configs.AdminGrantTeam) {
+			modules = append(modules, map[string]interface{}{
+				"code":     "plus.team",
+				"menuName": "团队+",
+				"icon":     "users",
+			})
+		}
 	}
 
 	action.Data["teaTitle"] = "TeaWeb管理平台"

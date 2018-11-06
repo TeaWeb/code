@@ -59,6 +59,7 @@ type ServerConfig struct {
 	// API相关
 	APIOn       bool     `yaml:"apiOn" json:"apiOn"`
 	APIs        []*API   `yaml:"api" json:"api"`
+	APIGroups   []string `yaml:"apiGroups" json:"apiGroups"`
 	APIVersions []string `yaml:"apiVersions" json:"apiVersions"`
 	apiPathMap  map[string]*API // path => api
 	apiPatterns []*API          // regexp => api
@@ -453,4 +454,61 @@ func (this *ServerConfig) FindActiveAPI(path string, method string) (api *API, p
 	}
 
 	return api, nil
+}
+
+// 添加API分组
+func (this *ServerConfig) AddAPIGroup(name string) {
+	this.APIGroups = append(this.APIGroups, name)
+}
+
+// 删除API分组
+func (this *ServerConfig) RemoveAPIGroup(name string) {
+	result := []string{}
+	for _, groupName := range this.APIGroups {
+		if groupName != name {
+			result = append(result, groupName)
+		}
+	}
+
+	for _, api := range this.APIs {
+		api.RemoveGroup(name)
+	}
+
+	this.APIGroups = result
+}
+
+// 修改API分组
+func (this *ServerConfig) ChangeAPIGroup(oldName string, newName string) {
+	result := []string{}
+	for _, groupName := range this.APIGroups {
+		if groupName == oldName {
+			result = append(result, newName)
+		} else {
+			result = append(result, groupName)
+		}
+	}
+
+	for _, api := range this.APIs {
+		api.ChangeGroup(oldName, newName)
+	}
+
+	this.APIGroups = result
+}
+
+// 把API分组往上调整
+func (this *ServerConfig) MoveUpAPIGroup(name string) {
+	index := lists.Index(this.APIGroups, name)
+	if index <= 0 {
+		return
+	}
+	this.APIGroups[index], this.APIGroups[index-1] = this.APIGroups[index-1], this.APIGroups[index]
+}
+
+// 把API分组往下调整
+func (this *ServerConfig) MoveDownAPIGroup(name string) {
+	index := lists.Index(this.APIGroups, name)
+	if index < 0 {
+		return
+	}
+	this.APIGroups[index], this.APIGroups[index+1] = this.APIGroups[index+1], this.APIGroups[index]
 }

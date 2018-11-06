@@ -28,6 +28,7 @@ type API struct {
 	Versions       []string        `yaml:"versions" json:"versions"`             // TODO
 	ModifiedAt     int64           `yaml:"modifiedAt" json:"modifiedAt"`         // 最后修改时间
 	Username       string          `yaml:"username" json:"username"`             // 最后修改用户名
+	Groups         []string        `yaml:"groups" json:"groups"`                 // 分组
 
 	pathReg    *regexp.Regexp // 匹配模式
 	pathParams []string
@@ -107,4 +108,28 @@ func (this *API) AllowMethod(method string) bool {
 		}
 	}
 	return false
+}
+
+// 删除某个分组
+func (this *API) RemoveGroup(name string) {
+	result := []string{}
+	for _, g := range this.Groups {
+		if g != name {
+			result = append(result, g)
+		}
+	}
+	this.Groups = result
+}
+
+// 修改API某个分组名
+func (this *API) ChangeGroup(oldName string, newName string) {
+	result := []string{}
+	for _, g := range this.Groups {
+		if g == oldName {
+			result = append(result, newName)
+		} else {
+			result = append(result, g)
+		}
+	}
+	this.Groups = result
 }
