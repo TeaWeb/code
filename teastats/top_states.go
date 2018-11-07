@@ -2,10 +2,12 @@ package teastats
 
 import (
 	"context"
+	"fmt"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"strings"
 	"time"
 )
 
@@ -81,14 +83,42 @@ func (this *TopStateStat) List(serverId string, size int64) (result []TopStateSt
 
 	// 开始查找
 	coll := findCollection("stats.top.states.monthly", nil)
-	cursor, err := coll.Find(context.Background(), map[string]interface{}{
-		"serverId": serverId,
-		"month": map[string]interface{}{
-			"$in": months,
-		},
-	}, findopt.Sort(map[string]interface{}{
-		"count": -1,
-	}), findopt.Limit(size))
+	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	{
+		"$match": {
+			"serverId": "` + serverId + `",
+			"month": {
+				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
+			}
+		}
+	},
+	{
+		"$group": {
+			"_id": {  "$concat" : [ "$region", " ", "$state" ]},
+			"count": {
+				"$sum": "$count"
+			},
+			"region": {
+				"$first": "$region"
+			},
+			"state": {
+				"$first": "$state"
+			}
+		}
+	},
+	{
+		"$sort": {
+			"count": -1
+		}
+	},
+	{
+		"$limit": ` + fmt.Sprintf("%d", size+1) + `
+	}
+]`))
+	if err != nil {
+		return
+	}
+	cursor, err := coll.Aggregate(context.Background(), pipelines)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -109,6 +139,10 @@ func (this *TopStateStat) List(serverId string, size int64) (result []TopStateSt
 		} else {
 			logs.Error(err)
 		}
+	}
+
+	if len(result) > int(size) {
+		result = result[:size]
 	}
 
 	return

@@ -2,13 +2,16 @@ package teastats
 
 import (
 	"context"
+	"fmt"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"strings"
 	"time"
 )
 
@@ -102,14 +105,39 @@ func (this *TopCostStat) List(serverId string, size int64) (result []TopCostStat
 
 	// 开始查找
 	coll := findCollection("stats.top.cost.monthly", nil)
-	cursor, err := coll.Find(context.Background(), map[string]interface{}{
-		"serverId": serverId,
-		"month": map[string]interface{}{
-			"$in": months,
-		},
-	}, findopt.Sort(map[string]interface{}{
-		"cost": -1,
-	}), findopt.Limit(size))
+	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	{
+		"$match": {
+			"serverId": "` + serverId + `",
+			"month": {
+				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
+			}
+		}
+	},
+	{
+		"$group": {
+			"_id": "$url",
+			"url": {
+				"$first": "$url"
+			},
+			"cost": {
+				"$first": "$cost"
+			}
+		}
+	},
+	{
+		"$sort": {
+			"cost": -1
+		}
+	},
+	{
+		"$limit": ` + fmt.Sprintf("%d", size) + `
+	}
+]`))
+	if err != nil {
+		return
+	}
+	cursor, err := coll.Aggregate(context.Background(), pipelines)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -120,7 +148,6 @@ func (this *TopCostStat) List(serverId string, size int64) (result []TopCostStat
 		one := TopCostStat{}
 		err := cursor.Decode(&one)
 		if err == nil {
-
 			result = append(result, one)
 		} else {
 			logs.Error(err)

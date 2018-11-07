@@ -2,10 +2,12 @@ package teastats
 
 import (
 	"context"
+	"fmt"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"strings"
 	"time"
 )
 
@@ -76,14 +78,39 @@ func (this *TopRegionStat) List(serverId string, size int64) (result []TopRegion
 
 	// 开始查找
 	coll := findCollection("stats.top.regions.monthly", nil)
-	cursor, err := coll.Find(context.Background(), map[string]interface{}{
-		"serverId": serverId,
-		"month": map[string]interface{}{
-			"$in": months,
-		},
-	}, findopt.Sort(map[string]interface{}{
-		"count": -1,
-	}), findopt.Limit(size))
+	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	{
+		"$match": {
+			"serverId": "` + serverId + `",
+			"month": {
+				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
+			}
+		}
+	},
+	{
+		"$group": {
+			"_id": "$region",
+			"count": {
+				"$sum": "$count"
+			},
+			"region": {
+				"$first": "$region"
+			}
+		}
+	},
+	{
+		"$sort": {
+			"count": -1
+		}
+	},
+	{
+		"$limit": ` + fmt.Sprintf("%d", size+1) + `
+	}
+]`))
+	if err != nil {
+		return
+	}
+	cursor, err := coll.Aggregate(context.Background(), pipelines)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -94,6 +121,10 @@ func (this *TopRegionStat) List(serverId string, size int64) (result []TopRegion
 		one := TopRegionStat{}
 		err := cursor.Decode(&one)
 		if err == nil {
+			if one.Region == "Other" {
+				continue
+			}
+
 			// 地区别名
 			if one.Region == "台湾" {
 				one.Region = "中国台湾"
@@ -113,6 +144,10 @@ func (this *TopRegionStat) List(serverId string, size int64) (result []TopRegion
 		} else {
 			logs.Error(err)
 		}
+	}
+
+	if len(result) > int(size) {
+		result = result[:size]
 	}
 
 	return

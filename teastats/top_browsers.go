@@ -2,10 +2,12 @@ package teastats
 
 import (
 	"context"
+	"fmt"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"strings"
 	"time"
 )
 
@@ -81,14 +83,42 @@ func (this *TopBrowserStat) List(serverId string, size int64) (result []TopBrows
 
 	// 开始查找
 	coll := findCollection("stats.top.browsers.monthly", nil)
-	cursor, err := coll.Find(context.Background(), map[string]interface{}{
-		"serverId": serverId,
-		"month": map[string]interface{}{
-			"$in": months,
-		},
-	}, findopt.Sort(map[string]interface{}{
-		"count": -1,
-	}), findopt.Limit(size+1)) // size之所以加1，是为了方便后面把Other去掉
+	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	{
+		"$match": {
+			"serverId": "` + serverId + `",
+			"month": {
+				"$in": [ "` + strings.Join(months, "\", \"") + `" ]
+			}
+		}
+	},
+	{
+		"$group": {
+			"_id": {  "$concat" : [ "$family", " ", "$version" ]},
+			"count": {
+				"$sum": "$count"
+			},
+			"family": {
+				"$first": "$family"
+			},
+			"version": {
+				"$first": "$version"
+			}
+		}
+	},
+	{
+		"$sort": {
+			"count": -1
+		}
+	},
+	{
+		"$limit": ` + fmt.Sprintf("%d", size+1) + `
+	}
+]`))
+	if err != nil {
+		return
+	}
+	cursor, err := coll.Aggregate(context.Background(), pipelines)
 	if err != nil {
 		logs.Error(err)
 		return
