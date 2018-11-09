@@ -1,6 +1,9 @@
 package teaconfigs
 
-import "testing"
+import (
+	"github.com/iwind/TeaGo/assert"
+	"testing"
+)
 
 func TestAPIMatch(t *testing.T) {
 	api := NewAPI()
@@ -18,4 +21,17 @@ func TestAPIMatch(t *testing.T) {
 	api.Path = "/user/:id/:name"
 	api.Validate()
 	t.Log(api.Match("/user/123/liu"))
+}
+
+func TestAPI_IsWatching(t *testing.T) {
+	a := assert.NewAssertion(t).Quiet()
+
+	api := NewAPI()
+	api.Path = "/hello"
+
+	api.StartWatching()
+
+	a.IsTrue(api.IsWatching())
+	api.StopWatching()
+	a.IsFalse(api.IsWatching())
 }

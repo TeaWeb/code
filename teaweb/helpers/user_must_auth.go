@@ -67,13 +67,13 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 			})
 		}
 
-		if user.Granted(configs.AdminGrantQ) {
+		/**if user.Granted(configs.AdminGrantQ) {
 			modules = append(modules, map[string]interface{}{
 				"code":     "plus.q",
 				"menuName": "测试小Q+",
 				"icon":     "dog",
 			})
-		}
+		}**/
 	}
 
 	// 附加功能

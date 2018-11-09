@@ -29,8 +29,9 @@ type AccessLogger struct {
 	outputBandWidth int64
 	inputBandWidth  int64
 
-	collectionCacheMap map[string]*mongo.Collection
-	processors         []Processor
+	collectionCacheMap    map[string]*mongo.Collection
+	collectionCacheLocker sync.Mutex
+	processors            []Processor
 }
 
 type AccessLogItem struct {
@@ -79,8 +80,14 @@ func (this *AccessLogger) collection() *mongo.Collection {
 		Keys:    bson.NewDocument(bson.EC.Int32("remoteAddr", 1), bson.EC.Int32("serverId", 1)),
 		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
 	})
+	indexes.CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    bson.NewDocument(bson.EC.Int32("apiPath", 1), bson.EC.Int32("serverId", 1)),
+		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
+	})
 
+	this.collectionCacheLocker.Lock()
 	this.collectionCacheMap[collName] = coll
+	this.collectionCacheLocker.Unlock()
 
 	return coll
 }
@@ -318,4 +325,67 @@ func (this *AccessLogger) OutputBandWidth() int64 {
 		return this.outputBandWidth
 	}
 	return 0
+}
+
+// 读取日志
+func (this *AccessLogger) ReadNewLogsForAPI(serverId string, apiPath string, fromId string, size int64) []AccessLog {
+	if this.client() == nil {
+		return []AccessLog{}
+	}
+
+	if size <= 0 {
+		size = 10
+	}
+
+	result := []AccessLog{}
+	coll := this.collection()
+
+	filter := map[string]interface{}{
+		"serverId": serverId,
+		"apiPath":  apiPath,
+	}
+	if len(fromId) > 0 {
+		objectId, err := objectid.FromHex(fromId)
+		if err == nil {
+			filter["_id"] = map[string]interface{}{
+				"$gt": objectId,
+			}
+		} else {
+			logs.Error(err)
+		}
+	}
+
+	opts := []findopt.Find{}
+	isReverse := false
+
+	if len(fromId) == 0 {
+		opts = append(opts, findopt.Sort(bson.NewDocument(bson.EC.Int32("_id", -1))))
+		opts = append(opts, findopt.Limit(size))
+		isReverse = true
+	} else {
+		opts = append(opts, findopt.Sort(bson.NewDocument(bson.EC.Int32("_id", 1))))
+		opts = append(opts, findopt.Limit(size))
+	}
+
+	cursor, err := coll.Find(context.Background(), filter, opts ...)
+	if err != nil {
+		logs.Error(err)
+		return []AccessLog{}
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		accessLog := AccessLog{}
+		err := cursor.Decode(&accessLog)
+		if err != nil {
+			logs.Error(err)
+			return []AccessLog{}
+		}
+		result = append(result, accessLog)
+	}
+
+	if !isReverse {
+		lists.Reverse(result)
+	}
+	return result
 }

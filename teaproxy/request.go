@@ -17,6 +17,7 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -72,6 +73,8 @@ type Request struct {
 	proxy    *teaconfigs.ServerConfig
 	location *teaconfigs.LocationConfig
 
+	apiPath string // API路径
+
 	rewriteId      string // 匹配的rewrite id
 	rewriteReplace string // 经过rewrite之后的URL
 
@@ -90,6 +93,10 @@ type Request struct {
 	requestTimeLocal   string
 	requestMsec        float64
 	requestTimestamp   int64
+
+	isWatching   bool   // 是否在监控
+	requestData  []byte // 导出的request，在监控请求的时候有用
+	responseData []byte // 导出的response，在监控请求时有用
 
 	shouldLog bool
 	debug     bool
@@ -154,6 +161,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	if teaconst.PlusEnabled {
 		api, params := server.FindActiveAPI(uri.Path, this.method)
 		if api != nil {
+			this.apiPath = api.Path
+
 			// address
 			if len(api.Address) > 0 {
 				address := api.Address
@@ -212,6 +221,17 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.headers = append(this.headers, api.FormatHeaders(func(source string) string {
 					return this.format(source)
 				}) ...)
+			}
+
+			// dump
+			if api.IsWatching() {
+				this.isWatching = true
+
+				// TODO 判断如果Content-Length过长，则只dump headers
+				reqData, err := httputil.DumpRequest(this.raw, true)
+				if err == nil {
+					this.requestData = reqData
+				}
 			}
 		}
 	}
@@ -459,7 +479,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 }
 
 func (this *Request) Call(writer http.ResponseWriter) error {
-	defer this.log()
+	defer func() {
+		this.log()
+	}()
 
 	if this.backend != nil {
 		return this.callBackend(writer)
@@ -610,7 +632,6 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 
 		this.responseStatus = http.StatusNotModified
 		this.responseStatusMessage = "304 Not Modified"
-		this.requestTime = time.Since(this.requestFromTime).Seconds()
 
 		return nil
 	}
@@ -636,7 +657,6 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 	this.responseStatusMessage = "200 OK"
 	this.responseBytesSent = n
 	this.responseBodyBytesSent = n
-	this.requestTime = time.Since(this.requestFromTime).Seconds()
 
 	return nil
 }
@@ -709,6 +729,15 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 	}
 	defer resp.Body.Close()
 
+	// 打印resp
+	if this.isWatching {
+		// TODO 如果响应的内容太长，则只导出headers
+		respData, err := httputil.DumpResponse(resp, true)
+		if err == nil {
+			this.responseData = respData
+		}
+	}
+
 	// 忽略的Header
 	ignoreHeaders := this.convertIgnoreHeaders()
 	hasIgnoreHeaders := ignoreHeaders.Len() > 0
@@ -760,7 +789,6 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 	this.responseStatusMessage = resp.Status
 	this.responseBytesSent = n
 	this.responseBodyBytesSent = n
-	this.requestTime = time.Since(this.requestFromTime).Seconds()
 
 	return nil
 }
@@ -874,6 +902,15 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 		return nil
 	}
 
+	// 打印resp
+	if this.isWatching {
+		// TODO 如果响应的内容太长，则只导出headers
+		respData, err := httputil.DumpResponse(resp, true)
+		if err == nil {
+			this.responseData = respData
+		}
+	}
+
 	defer resp.Body.Close()
 
 	// 忽略的Header
@@ -948,7 +985,6 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 	this.responseStatusMessage = resp.Status
 	this.responseBytesSent = n
 	this.responseBodyBytesSent = n
-	this.requestTime = time.Since(this.requestFromTime).Seconds()
 
 	return nil
 }
@@ -1255,6 +1291,9 @@ func (this *Request) formatAll(sources []string) []string {
 
 // 记录日志
 func (this *Request) log() {
+	// 计算请求时间
+	this.requestTime = time.Since(this.requestFromTime).Seconds()
+
 	if !this.shouldLog {
 		return
 	}
@@ -1297,6 +1336,7 @@ func (this *Request) log() {
 		ServerName:      this.serverName,
 		ServerPort:      this.requestServerPort(),
 		ServerProtocol:  this.requestProto(),
+		APIPath:         this.apiPath,
 	}
 
 	if this.server != nil {
@@ -1321,6 +1361,14 @@ func (this *Request) log() {
 
 	if this.responseHeader != nil {
 		accessLog.SentHeader = this.responseHeader
+	}
+
+	if len(this.requestData) > 0 {
+		accessLog.RequestData = this.requestData
+	}
+
+	if len(this.responseData) > 0 {
+		accessLog.ResponseData = this.responseData
 	}
 
 	tealogs.SharedLogger().Push(accessLog)

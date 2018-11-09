@@ -31,12 +31,13 @@ type AccessLog struct {
 	FastcgiId  string `var:"fastcgiId" bson:"fastcgiId" json:"fastcgiId"`    // Fastcgi配置ID
 	RewriteId  string `var:"rewriteId" bson:"rewriteId" json:"rewriteId"`    // 重写规则ID
 
-	TeaVersion      string  `var:"teaVersion" bson:"teaVersion" json:"teaVersion"` // TeaWeb版本
-	RemoteAddr      string  `var:"remoteAddr" bson:"remoteAddr" json:"remoteAddr"` // 终端地址，通常是：ip:port
-	RemotePort      int     `var:"remotePort" bson:"remotePort" json:"remotePort"` // 终端端口
-	RemoteUser      string  `var:"remoteUser" bson:"remoteUser" json:"remoteUser"` // 终端用户，基于BasicAuth认证
-	RequestURI      string  `var:"requestURI" bson:"requestURI" json:"requestURI"`
-	RequestPath     string  `var:"requestPath" bson:"requestPath" json:"requestPath"`
+	TeaVersion      string  `var:"teaVersion" bson:"teaVersion" json:"teaVersion"`                // TeaWeb版本
+	RemoteAddr      string  `var:"remoteAddr" bson:"remoteAddr" json:"remoteAddr"`                // 终端地址，通常是：ip:port
+	RemotePort      int     `var:"remotePort" bson:"remotePort" json:"remotePort"`                // 终端端口
+	RemoteUser      string  `var:"remoteUser" bson:"remoteUser" json:"remoteUser"`                // 终端用户，基于BasicAuth认证
+	RequestURI      string  `var:"requestURI" bson:"requestURI" json:"requestURI"`                // 请求URI
+	RequestPath     string  `var:"requestPath" bson:"requestPath" json:"requestPath"`             // 请求URI中的路径
+	APIPath         string  `var:"apiPath" bson:"apiPath" json:"apiPath"`                         // API路径
 	RequestLength   int64   `var:"requestLength" bson:"requestLength" json:"requestLength"`       // 请求内容长度
 	RequestTime     float64 `var:"requestTime" bson:"requestTime" json:"requestTime"`             // 从请求到所有响应数据发送到请求端所花时间，单位为带有小数点的秒，精确到纳秒，比如：0.000260081
 	RequestMethod   string  `var:"requestMethod" bson:"requestMethod" json:"requestMethod"`       // 请求方法
@@ -71,6 +72,10 @@ type AccessLog struct {
 	// 代理相关
 	BackendAddress string `var:"backendAddress" bson:"backendAddress" json:"backendAddress"` // 代理的后端的地址
 	FastcgiAddress string `var:"fastcgiAddress" bson:"fastcgiAddress" json:"fastcgiAddress"` // Fastcgi后端地址
+
+	// 调试用
+	RequestData  []byte `var:"" bson:"requestData" json:"requestData"`   // 请求数据
+	ResponseData []byte `var:"" bson:"responseData" json:"responseData"` // 响应数据
 
 	// 扩展
 	Extend struct {

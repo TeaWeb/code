@@ -1,9 +1,9 @@
 package teastats
 
 import (
+	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teamongo"
 	"sync"
-	"github.com/TeaWeb/code/tealogs"
 )
 
 var collectionsMap = map[string]*teamongo.Collection{} // name => collection
@@ -27,6 +27,9 @@ var processors = []tealogs.Processor{
 	new(TopBrowserStat),
 	new(TopRequestStat),
 	new(TopCostStat),
+
+	// API相关
+	new(APIDailyRequestsStat),
 }
 
 type Processor struct {

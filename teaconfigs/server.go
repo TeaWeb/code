@@ -512,3 +512,60 @@ func (this *ServerConfig) MoveDownAPIGroup(name string) {
 	}
 	this.APIGroups[index], this.APIGroups[index+1] = this.APIGroups[index+1], this.APIGroups[index]
 }
+
+// 添加API版本
+func (this *ServerConfig) AddAPIVersion(name string) {
+	this.APIVersions = append(this.APIVersions, name)
+}
+
+// 删除API版本
+func (this *ServerConfig) RemoveAPIVersion(name string) {
+	result := []string{}
+	for _, versionName := range this.APIVersions {
+		if versionName != name {
+			result = append(result, versionName)
+		}
+	}
+
+	for _, api := range this.APIs {
+		api.RemoveVersion(name)
+	}
+
+	this.APIVersions = result
+}
+
+// 修改API版本
+func (this *ServerConfig) ChangeAPIVersion(oldName string, newName string) {
+	result := []string{}
+	for _, versionName := range this.APIVersions {
+		if versionName == oldName {
+			result = append(result, newName)
+		} else {
+			result = append(result, versionName)
+		}
+	}
+
+	for _, api := range this.APIs {
+		api.ChangeVersion(oldName, newName)
+	}
+
+	this.APIVersions = result
+}
+
+// 把API版本往上调整
+func (this *ServerConfig) MoveUpAPIVersion(name string) {
+	index := lists.Index(this.APIVersions, name)
+	if index <= 0 {
+		return
+	}
+	this.APIVersions[index], this.APIVersions[index-1] = this.APIVersions[index-1], this.APIVersions[index]
+}
+
+// 把API版本往下调整
+func (this *ServerConfig) MoveDownAPIVersion(name string) {
+	index := lists.Index(this.APIVersions, name)
+	if index < 0 {
+		return
+	}
+	this.APIVersions[index], this.APIVersions[index+1] = this.APIVersions[index+1], this.APIVersions[index]
+}
