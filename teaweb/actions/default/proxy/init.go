@@ -37,6 +37,8 @@ func init() {
 			Post("/updateCharset", new(UpdateCharsetAction)).
 			Post("/updateIndex", new(UpdateIndexAction)).
 
+			Get("/frontend", new(FrontendAction)).
+
 			Get("/restart", new(RestartAction)).
 
 			EndAll()

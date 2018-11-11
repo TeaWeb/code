@@ -63,6 +63,9 @@ type ServerConfig struct {
 	APIVersions []string `yaml:"apiVersions" json:"apiVersions"`
 	apiPathMap  map[string]*API // path => api
 	apiPatterns []*API          // regexp => api
+
+	// 全局的限制
+	APILimit *APILimit `yaml:"apiLimit" json:"apiLimit"` // TODO
 }
 
 // 从目录中加载配置
@@ -194,6 +197,14 @@ func (this *ServerConfig) Validate() error {
 			this.apiPathMap[api.Path] = api
 		} else {
 			this.apiPatterns = append(this.apiPatterns, api)
+		}
+	}
+
+	// api limit
+	if this.APILimit != nil {
+		err := this.APILimit.Validate()
+		if err != nil {
+			return err
 		}
 	}
 

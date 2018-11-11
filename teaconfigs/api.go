@@ -28,6 +28,7 @@ type API struct {
 	ModifiedAt     int64           `yaml:"modifiedAt" json:"modifiedAt"`         // 最后修改时间
 	Username       string          `yaml:"username" json:"username"`             // 最后修改用户名
 	Groups         []string        `yaml:"groups" json:"groups"`                 // 分组
+	Limit          *APILimit       `yaml:"limit" json:"limit"`                   // 限制 TODO
 
 	pathReg    *regexp.Regexp // 匹配模式
 	pathParams []string
@@ -42,6 +43,7 @@ func NewAPI() *API {
 
 // 执行校验
 func (this *API) Validate() error {
+	// path
 	this.pathParams = []string{}
 	reg := regexp.MustCompile(`:\w+`)
 	if reg.MatchString(this.Path) {
@@ -57,6 +59,15 @@ func (this *API) Validate() error {
 		}
 		this.pathReg = pathReg
 	}
+
+	// limit
+	if this.Limit != nil {
+		err := this.Limit.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

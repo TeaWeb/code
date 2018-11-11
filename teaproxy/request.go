@@ -73,7 +73,7 @@ type Request struct {
 	proxy    *teaconfigs.ServerConfig
 	location *teaconfigs.LocationConfig
 
-	apiPath string // API路径
+	api *teaconfigs.API // API
 
 	rewriteId      string // 匹配的rewrite id
 	rewriteReplace string // 经过rewrite之后的URL
@@ -161,7 +161,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	if teaconst.PlusEnabled {
 		api, params := server.FindActiveAPI(uri.Path, this.method)
 		if api != nil {
-			this.apiPath = api.Path
+			this.api = api
 
 			// address
 			if len(api.Address) > 0 {
@@ -482,6 +482,15 @@ func (this *Request) Call(writer http.ResponseWriter) error {
 	defer func() {
 		this.log()
 	}()
+
+	// API相关
+	if this.api != nil {
+		// limit
+		if this.api.Limit != nil {
+			this.api.Limit.Begin()
+			defer this.api.Limit.Done()
+		}
+	}
 
 	if this.backend != nil {
 		return this.callBackend(writer)
@@ -1336,7 +1345,10 @@ func (this *Request) log() {
 		ServerName:      this.serverName,
 		ServerPort:      this.requestServerPort(),
 		ServerProtocol:  this.requestProto(),
-		APIPath:         this.apiPath,
+	}
+
+	if this.api != nil {
+		accessLog.APIPath = this.api.Path
 	}
 
 	if this.server != nil {
