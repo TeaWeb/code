@@ -1,6 +1,9 @@
 package teaconfigs
 
 import (
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
 	"regexp"
 )
 
@@ -29,6 +32,8 @@ type API struct {
 	Username       string          `yaml:"username" json:"username"`             // 最后修改用户名
 	Groups         []string        `yaml:"groups" json:"groups"`                 // 分组
 	Limit          *APILimit       `yaml:"limit" json:"limit"`                   // 限制 TODO
+
+	TestScripts []string `yaml:"testScripts" json:"testScripts"` // 脚本文件
 
 	pathReg    *regexp.Regexp // 匹配模式
 	pathParams []string
@@ -182,4 +187,68 @@ func (this *API) StopWatching() {
 // 是否在监控
 func (this *API) IsWatching() bool {
 	return SharedApiWatching.Contains(this.Path)
+}
+
+// 添加测试脚本
+func (this *API) AddScript(script *APIScript) {
+	if lists.Contains(this.TestScripts, script.Filename) {
+		return
+	}
+	this.TestScripts = append(this.TestScripts, script.Filename)
+}
+
+// 读取所有测试脚本
+func (this *API) FindTestScripts() []*APIScript {
+	result := []*APIScript{}
+	for _, filename := range this.TestScripts {
+		reader, err := files.NewFile(Tea.ConfigFile(filename)).Reader()
+		if err != nil {
+			continue
+		}
+		script := NewAPIScript()
+		err = reader.ReadYAML(script)
+		reader.Close()
+		if err != nil {
+			continue
+		}
+		result = append([]*APIScript{script}, result ...)
+	}
+	return result
+}
+
+// 查找单个脚本
+func (this *API) FindTestScript(filename string) *APIScript {
+	if !lists.Contains(this.TestScripts, filename) {
+		return nil
+	}
+
+	reader, err := files.NewFile(Tea.ConfigFile(filename)).Reader()
+	if err != nil {
+		return nil
+	}
+
+	script := NewAPIScript()
+	err = reader.ReadYAML(script)
+	reader.Close()
+
+	if err != nil {
+		return nil
+	}
+
+	return script
+}
+
+// 删除测试脚本
+func (this *API) DeleteTestScript(filename string) error {
+	if lists.Contains(this.TestScripts, filename) {
+		script := NewAPIScript()
+		script.Filename = filename
+		err := script.Delete()
+		if err != nil {
+			return err
+		}
+	}
+
+	this.TestScripts = lists.Delete(this.TestScripts, filename).([]string)
+	return nil
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/processes"
 	"os"
+	"path/filepath"
 	"reflect"
 	"time"
 )
@@ -48,6 +49,7 @@ func (this *Loader) Debug() {
 	this.debug = true
 }
 
+// 加载插件
 func (this *Loader) Load() error {
 	reader, w /** 子进程写入器 **/, err := os.Pipe()
 	if err != nil {
@@ -69,7 +71,7 @@ func (this *Loader) Load() error {
 		msgData := []byte{}
 		for {
 			if this.debug {
-				logs.Println("[plugin][loader]try to read buf")
+				logs.Println("[plugin][" + this.shortFileName() + "]try to read buf")
 			}
 
 			n, err := reader.Read(buf)
@@ -78,7 +80,7 @@ func (this *Loader) Load() error {
 				msgData = append(msgData, buf[:n] ...)
 
 				if this.debug {
-					logs.Println("[plugin][loader]len:", len(msgData), ",", "read msg data:", string(msgData))
+					logs.Println("[plugin]["+this.shortFileName()+"]len:", len(msgData), ",", "read msg data:", string(msgData))
 				}
 
 				msgLen := uint32(len(msgData))
@@ -97,13 +99,13 @@ func (this *Loader) Load() error {
 
 						ptr, err := messages.Unmarshal(action, valueData)
 						if err != nil {
-							logs.Println("[plugin][loader]unmarshal message error:", err.Error())
+							logs.Println("[plugin]["+this.shortFileName()+"[unmarshal message error:", err.Error())
 							continue
 						}
 
 						err = this.CallAction(ptr, id)
 						if err != nil {
-							logs.Println("[plugin][loader]call action error:", err.Error())
+							logs.Println("[plugin]["+this.shortFileName()+"]call action error:", err.Error())
 							continue
 						}
 					}
@@ -111,7 +113,7 @@ func (this *Loader) Load() error {
 			}
 
 			if err != nil {
-				logs.Println(err.Error())
+				logs.Println("[plugin][" + this.shortFileName() + "]" + err.Error())
 				break
 			}
 		}
@@ -152,7 +154,7 @@ func (this *Loader) CallAction(ptr interface{}, messageId uint32) error {
 
 func (this *Loader) ActionRegisterPlugin(action *messages.RegisterPluginAction) {
 	if this.plugin != nil {
-		logs.Println("[plugin][loader]load only one plugin from one file")
+		logs.Println("[plugin][" + this.shortFileName() + "]load only one plugin from one file")
 		return
 	}
 
@@ -324,4 +326,9 @@ func (this *Loader) Write(action messages.ActionInterface) error {
 	action.SetMessageId(msg.Id)
 	_, err = this.writer.Write(data)
 	return err
+}
+
+// 插件文件短名称
+func (this *Loader) shortFileName() string {
+	return filepath.Base(this.path)
 }

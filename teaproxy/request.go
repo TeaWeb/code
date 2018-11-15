@@ -680,6 +680,13 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 	this.raw.URL.Scheme = this.scheme
 	this.raw.URL.Host = this.host
 
+	// new uri
+	u, err := url.ParseRequestURI(this.uri)
+	if err == nil {
+		this.raw.URL.Path = u.Path
+		this.raw.URL.RawQuery = u.RawQuery
+	}
+
 	// 设置代理相关的头部
 	// 参考 https://tools.ietf.org/html/rfc7239
 	this.raw.Header.Set("X-Real-IP", this.raw.RemoteAddr)
