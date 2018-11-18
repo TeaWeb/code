@@ -689,10 +689,19 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 
 	// 设置代理相关的头部
 	// 参考 https://tools.ietf.org/html/rfc7239
-	this.raw.Header.Set("X-Real-IP", this.raw.RemoteAddr)
-	this.raw.Header.Set("X-Forwarded-For", this.raw.RemoteAddr)
+	if len(this.raw.RemoteAddr) > 0 {
+		index := strings.Index(this.raw.RemoteAddr, ":")
+		ip := ""
+		if index > -1 {
+			ip = this.raw.RemoteAddr[:index]
+		} else {
+			ip = this.raw.RemoteAddr
+		}
+		this.raw.Header.Set("X-Real-IP", ip)
+		this.raw.Header.Set("X-Forwarded-For", ip)
+		this.raw.Header.Set("X-Forwarded-By", ip)
+	}
 	this.raw.Header.Set("X-Forwarded-Host", this.host)
-	this.raw.Header.Set("X-Forwarded-By", this.raw.RemoteAddr)
 	this.raw.Header.Set("X-Forwarded-Proto", this.raw.Proto)
 	//this.raw.Header.Set("Connection", "keep-alive")
 

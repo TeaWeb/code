@@ -44,28 +44,27 @@ type ServerConfig struct {
 	SSL *SSLConfig `yaml:"ssl" json:"ssl"`
 
 	Headers       []*HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header
-	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
+	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header TODO
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
-	Allow []string `yaml:"allow" json:"allow"` //@TODO
-	Deny  []string `yaml:"deny" json:"deny"`   //@TODO
+	Allow []string `yaml:"allow" json:"allow"` //TODO
+	Deny  []string `yaml:"deny" json:"deny"`   //TODO
 
 	Filename string `yaml:"filename" json:"filename"` // 配置文件名
 
-	Rewrite []*RewriteRule   `yaml:"rewrite" json:"rewrite"` // 重写规则 @TODO
-	Fastcgi []*FastcgiConfig `yaml:"fastcgi" json:"fastcgi"` // Fastcgi配置 @TODO
-	Proxy   string           `yaml:"proxy" json:"proxy"`     //  代理配置 @TODO
+	Rewrite []*RewriteRule   `yaml:"rewrite" json:"rewrite"` // 重写规则 TODO
+	Fastcgi []*FastcgiConfig `yaml:"fastcgi" json:"fastcgi"` // Fastcgi配置 TODO
+	Proxy   string           `yaml:"proxy" json:"proxy"`     //  代理配置 TODO
 
 	// API相关
-	APIOn       bool     `yaml:"apiOn" json:"apiOn"`
-	APIs        []*API   `yaml:"api" json:"api"`
-	APIGroups   []string `yaml:"apiGroups" json:"apiGroups"`
-	APIVersions []string `yaml:"apiVersions" json:"apiVersions"`
-	apiPathMap  map[string]*API // path => api
-	apiPatterns []*API          // regexp => api
-
-	// 全局的限制
-	APILimit *APILimit `yaml:"apiLimit" json:"apiLimit"` // TODO
+	APIOn        bool      `yaml:"apiOn" json:"apiOn"`               // 是否开启API功能
+	APIs         []*API    `yaml:"api" json:"api"`                   // API列表
+	APIGroups    []string  `yaml:"apiGroups" json:"apiGroups"`       // API分组
+	APIVersions  []string  `yaml:"apiVersions" json:"apiVersions"`   // API版本
+	APITestPlans []string  `yaml:"apiTestPlans" json:"apiTestPlans"` // API测试计划
+	APILimit     *APILimit `yaml:"apiLimit" json:"apiLimit"`         // API全局的限制 TODO
+	apiPathMap   map[string]*API                                     // path => api
+	apiPatterns  []*API                                              // regexp => api
 }
 
 // 从目录中加载配置
@@ -579,4 +578,40 @@ func (this *ServerConfig) MoveDownAPIVersion(name string) {
 		return
 	}
 	this.APIVersions[index], this.APIVersions[index+1] = this.APIVersions[index+1], this.APIVersions[index]
+}
+
+// 添加测试计划
+func (this *ServerConfig) AddTestPlan(filename string) {
+	this.APITestPlans = append(this.APITestPlans, filename)
+}
+
+// 查找所有测试计划
+func (this *ServerConfig) FindTestPlans() []*APITestPlan {
+	result := []*APITestPlan{}
+	for _, filename := range this.APITestPlans {
+		plan := NewAPITestPlanFromFile(filename)
+		if plan != nil {
+			result = append(result, plan)
+		}
+	}
+	return result
+}
+
+// 删除某个测试计划
+func (this *ServerConfig) DeleteTestPlan(filename string) error {
+	if len(filename) == 0 {
+		return errors.New("filename should not be empty")
+	}
+
+	plan := NewAPITestPlanFromFile(filename)
+	if plan != nil {
+		err := plan.Delete()
+		if err != nil {
+			return err
+		}
+	}
+
+	this.APITestPlans = lists.Delete(this.APITestPlans, filename).([]string)
+
+	return nil
 }
