@@ -58,7 +58,7 @@ type ServerConfig struct {
 
 	// API相关
 	APIOn        bool      `yaml:"apiOn" json:"apiOn"`               // 是否开启API功能
-	APIs         []*API    `yaml:"api" json:"api"`                   // API列表
+	APIFiles     []string  `yaml:"apiFiles" json:"apiFiles"`         // API文件列表
 	APIGroups    []string  `yaml:"apiGroups" json:"apiGroups"`       // API分组
 	APIVersions  []string  `yaml:"apiVersions" json:"apiVersions"`   // API版本
 	APITestPlans []string  `yaml:"apiTestPlans" json:"apiTestPlans"` // API测试计划
@@ -187,7 +187,11 @@ func (this *ServerConfig) Validate() error {
 	// api
 	this.apiPathMap = map[string]*API{}
 	this.apiPatterns = []*API{}
-	for _, api := range this.APIs {
+	for _, apiFilename := range this.APIFiles {
+		api := NewAPIFromFile(apiFilename)
+		if api == nil {
+			continue
+		}
 		err := api.Validate()
 		if err != nil {
 			return err
@@ -428,13 +432,29 @@ func (this *ServerConfig) AddLocation(location *LocationConfig) {
 }
 
 // 添加API
-func (this *ServerConfig) AddAPI(api *API) {
-	this.APIs = append(this.APIs, api)
+func (this *ServerConfig) AddAPI(filename string) {
+	if lists.Contains(this.APIFiles, filename) {
+		return
+	}
+	this.APIFiles = append(this.APIFiles, filename)
 }
 
-// 通过Path查找API
+// 获取所有APIs
+func (this *ServerConfig) FindAllAPIs() []*API {
+	apis := []*API{}
+	for _, filename := range this.APIFiles {
+		api := NewAPIFromFile(filename)
+		if api == nil {
+			continue
+		}
+		apis = append(apis, api)
+	}
+	return apis
+}
+
+// 获取单个API信息
 func (this *ServerConfig) FindAPI(path string) *API {
-	for _, api := range this.APIs {
+	for _, api := range this.FindAllAPIs() {
 		if api.Path == path {
 			return api
 		}
@@ -466,6 +486,11 @@ func (this *ServerConfig) FindActiveAPI(path string, method string) (api *API, p
 	return api, nil
 }
 
+// 删除API
+func (this *ServerConfig) DeleteAPI(filename string) {
+	this.APIFiles = lists.Delete(this.APIFiles, filename).([]string)
+}
+
 // 添加API分组
 func (this *ServerConfig) AddAPIGroup(name string) {
 	this.APIGroups = append(this.APIGroups, name)
@@ -480,8 +505,13 @@ func (this *ServerConfig) RemoveAPIGroup(name string) {
 		}
 	}
 
-	for _, api := range this.APIs {
+	for _, filename := range this.APIFiles {
+		api := NewAPIFromFile(filename)
+		if api == nil {
+			continue
+		}
 		api.RemoveGroup(name)
+		api.Save()
 	}
 
 	this.APIGroups = result
@@ -498,8 +528,13 @@ func (this *ServerConfig) ChangeAPIGroup(oldName string, newName string) {
 		}
 	}
 
-	for _, api := range this.APIs {
+	for _, filename := range this.APIFiles {
+		api := NewAPIFromFile(filename)
+		if api == nil {
+			continue
+		}
 		api.ChangeGroup(oldName, newName)
+		api.Save()
 	}
 
 	this.APIGroups = result
@@ -537,8 +572,13 @@ func (this *ServerConfig) RemoveAPIVersion(name string) {
 		}
 	}
 
-	for _, api := range this.APIs {
+	for _, filename := range this.APIFiles {
+		api := NewAPIFromFile(filename)
+		if api == nil {
+			continue
+		}
 		api.RemoveVersion(name)
+		api.Save()
 	}
 
 	this.APIVersions = result
@@ -555,8 +595,13 @@ func (this *ServerConfig) ChangeAPIVersion(oldName string, newName string) {
 		}
 	}
 
-	for _, api := range this.APIs {
+	for _, filename := range this.APIFiles {
+		api := NewAPIFromFile(filename)
+		if api == nil {
+			continue
+		}
 		api.ChangeVersion(oldName, newName)
+		api.Save()
 	}
 
 	this.APIVersions = result

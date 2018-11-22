@@ -4,6 +4,7 @@ import (
 	"sync"
 )
 
+// 管理员用户
 type AdminUser struct {
 	Username string   `yaml:"username" json:"username"` // 用户名
 	Password string   `yaml:"password" json:"password"` // 密码
@@ -22,6 +23,11 @@ type AdminUser struct {
 
 	countLoginTries uint // 错误登录次数
 	locker          sync.Mutex
+}
+
+// 获取新对象
+func NewAdminUser() *AdminUser {
+	return &AdminUser{}
 }
 
 // 判断用户是否已被授权

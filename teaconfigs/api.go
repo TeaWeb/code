@@ -4,11 +4,14 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/utils/string"
 	"regexp"
 )
 
 //  API定义
 type API struct {
+	Filename       string          `yaml:"filename" json:"filename"`             // 文件名
 	Path           string          `yaml:"path" json:"path"`                     // 访问路径
 	Address        string          `yaml:"address" json:"address"`               // 实际地址
 	Methods        []string        `yaml:"methods" json:"methods"`               // 方法
@@ -44,6 +47,26 @@ func NewAPI() *API {
 	return &API{
 		On: true,
 	}
+}
+
+// 从文件中读取API对象
+func NewAPIFromFile(filename string) *API {
+	if len(filename) == 0 {
+		return nil
+	}
+	reader, err := files.NewReader(Tea.ConfigFile(filename))
+	if err != nil {
+		logs.Error(err)
+		return nil
+	}
+	defer reader.Close()
+	api := NewAPI()
+	err = reader.ReadYAML(api)
+	if err != nil {
+		logs.Error(err)
+		return nil
+	}
+	return api
 }
 
 // 执行校验
@@ -174,6 +197,20 @@ func (this *API) ChangeVersion(oldName string, newName string) {
 	this.Versions = result
 }
 
+// 保存到文件
+func (this *API) Save() error {
+	if len(this.Filename) == 0 {
+		this.Filename = "api." + stringutil.Rand(16) + ".conf"
+	}
+	writer, err := files.NewWriter(Tea.ConfigFile(this.Filename))
+	if err != nil {
+		return err
+	}
+	defer writer.Close()
+	_, err = writer.WriteYAML(this)
+	return err
+}
+
 // 开始监控
 func (this *API) StartWatching() {
 	SharedApiWatching.Add(this.Path)
@@ -251,4 +288,18 @@ func (this *API) DeleteTestScript(filename string) error {
 
 	this.TestScripts = lists.Delete(this.TestScripts, filename).([]string)
 	return nil
+}
+
+// 删除API
+func (this *API) Delete() error {
+	if len(this.Filename) == 0 {
+		return nil
+	}
+
+	// 删除脚本
+	for _, scriptFile := range this.TestScripts {
+		files.NewFile(Tea.ConfigFile(scriptFile)).DeleteIfExists()
+	}
+
+	return files.NewFile(Tea.ConfigFile(this.Filename)).DeleteIfExists()
 }

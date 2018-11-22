@@ -73,7 +73,7 @@ func (this *AddAction) RunPost(params struct {
 		this.Fail("添加时有问题发生：" + err.Error())
 	}
 
-	filename := stringutil.Rand(16) + ".proxy.conf"
+	filename := "server." + stringutil.Rand(16) + ".proxy.conf"
 	configPath := Tea.ConfigFile(filename)
 	err = server.WriteToFile(configPath)
 	if err != nil {

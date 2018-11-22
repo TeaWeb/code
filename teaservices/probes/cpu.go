@@ -1,13 +1,13 @@
 package probes
 
 import (
-	"github.com/TeaWeb/code/teaplugins"
-	"time"
-	"github.com/TeaWeb/code/teacharts"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/iwind/TeaGo/logs"
-	"github.com/shirou/gopsutil/load"
 	"fmt"
+	"github.com/TeaWeb/code/teacharts"
+	"github.com/TeaWeb/code/teaplugins"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/load"
+	"time"
 )
 
 type CPUProbe struct {

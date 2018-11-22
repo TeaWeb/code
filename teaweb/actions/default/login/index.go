@@ -9,7 +9,13 @@ import (
 
 type IndexAction actions.Action
 
+// 登录
 func (this *IndexAction) RunGet() {
+	b := Notify(this)
+	if !b {
+		return
+	}
+
 	this.Show()
 }
 
@@ -19,6 +25,11 @@ func (this *IndexAction) RunPost(params struct {
 	Must     *actions.Must
 	Auth     *helpers.UserShouldAuth
 }) {
+	b := Notify(this)
+	if !b {
+		return
+	}
+
 	params.Must.
 		Field("username", params.Username).
 		Require("请输入用户名").

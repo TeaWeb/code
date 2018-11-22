@@ -1,12 +1,12 @@
 package ssl
 
 import (
-	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/utils/string"
-	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/utils/string"
 )
 
 type UploadKeyAction actions.Action
@@ -26,7 +26,7 @@ func (this *UploadKeyAction) Run(params struct {
 		this.Fail(err.Error())
 	}
 
-	keyFilename := stringutil.Rand(16) + params.KeyFile.Ext
+	keyFilename := "ssl." + stringutil.Rand(16) + params.KeyFile.Ext
 	configFile := files.NewFile(Tea.ConfigFile(keyFilename))
 	err = configFile.Write(data)
 	if err != nil {

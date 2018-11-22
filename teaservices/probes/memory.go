@@ -1,11 +1,11 @@
 package probes
 
 import (
-	"github.com/iwind/TeaGo/logs"
-	"github.com/TeaWeb/code/teaplugins"
 	"github.com/TeaWeb/code/teacharts"
-	"time"
+	"github.com/TeaWeb/code/teaplugins"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/shirou/gopsutil/mem"
+	"time"
 )
 
 type MemoryProbe struct {

@@ -4,8 +4,10 @@ import (
 	"errors"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
+	"time"
 )
 
 // API测试计划
@@ -121,4 +123,16 @@ func (this *APITestPlan) WeekdayNames() []string {
 		}
 	}
 	return result
+}
+
+// 检查时间是否匹配
+func (this *APITestPlan) MatchTime(currentTime time.Time) bool {
+	weekday := int(currentTime.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+	return currentTime.Hour() == this.Hour &&
+		currentTime.Minute() == this.Minute &&
+		currentTime.Second() == this.Second &&
+		lists.Contains(this.Weekdays, weekday)
 }
