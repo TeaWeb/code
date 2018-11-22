@@ -61,6 +61,15 @@ func Start() {
 		teaproxy.Start()
 	}()
 
+	// 启动测试服务器
+	if Tea.IsTesting() {
+		go func() {
+			time.Sleep(1 * time.Second)
+
+			startTestServer()
+		}()
+	}
+
 	// 启动管理界面
 	TeaGo.NewServer().
 		AccessLog(false).

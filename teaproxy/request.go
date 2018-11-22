@@ -1,7 +1,6 @@
 package teaproxy
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
@@ -15,7 +14,6 @@ import (
 	"github.com/iwind/gofcgi"
 	"io"
 	"mime"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -87,8 +85,8 @@ type Request struct {
 	responseStatusMessage string // @TODO
 	responseHeader        map[string][]string
 
-	requestFromTime    time.Time
-	requestTime        float64 // @TODO
+	requestFromTime    time.Time // 请求开始时间
+	requestTime        float64   // 请求耗时
 	requestTimeISO8601 string
 	requestTimeLocal   string
 	requestMsec        float64
@@ -227,9 +225,12 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			if api.IsWatching() {
 				this.isWatching = true
 
-				// TODO 判断如果Content-Length过长，则只dump headers
+				// 判断如果Content-Length过长，则截断
 				reqData, err := httputil.DumpRequest(this.raw, true)
 				if err == nil {
+					if len(reqData) > 10240 {
+						reqData = reqData[:10240]
+					}
 					this.requestData = reqData
 				}
 			}
@@ -703,41 +704,8 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 	}
 	this.raw.Header.Set("X-Forwarded-Host", this.host)
 	this.raw.Header.Set("X-Forwarded-Proto", this.raw.Proto)
-	//this.raw.Header.Set("Connection", "keep-alive")
 
-	// @TODO 使用client池
-	client := http.Client{
-		Timeout: 30 * time.Second,
-
-		// 处理跳转
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			if via[0].URL.Host == req.URL.Host {
-				http.Redirect(writer, this.raw, req.URL.RequestURI(), http.StatusTemporaryRedirect)
-			} else {
-				http.Redirect(writer, this.raw, req.URL.String(), http.StatusTemporaryRedirect)
-			}
-			return &RedirectError{}
-		},
-	}
-
-	client.Transport = &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			// 后端地址
-			addr = this.backend.Address
-
-			// 握手配置
-			return (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-				DualStack: true,
-			}).DialContext(ctx, network, addr)
-		},
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-	}
+	client := SharedClientPool.client(this.backend.Address)
 
 	this.raw.RequestURI = ""
 	resp, err := client.Do(this.raw)
@@ -745,9 +713,11 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 		urlError, ok := err.(*url.Error)
 		if ok {
 			if _, ok := urlError.Err.(*RedirectError); ok {
+				http.Redirect(writer, this.raw, resp.Header.Get("Location"), resp.StatusCode)
 				return nil
 			}
 		}
+
 		this.serverError(writer)
 		logs.Error(err)
 		return nil
@@ -756,9 +726,13 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 
 	// 打印resp
 	if this.isWatching {
-		// TODO 如果响应的内容太长，则只导出headers
+		// 如果响应的内容太长，则只导出headers
 		respData, err := httputil.DumpResponse(resp, true)
 		if err == nil {
+			// 如果响应的内容太长，则截取
+			if len(respData) > 10240 {
+				respData = respData[:10240]
+			}
 			this.responseData = respData
 		}
 	}
@@ -814,6 +788,7 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 	this.responseStatusMessage = resp.Status
 	this.responseBytesSent = n
 	this.responseBodyBytesSent = n
+	this.responseHeader = writer.Header()
 
 	return nil
 }
@@ -929,9 +904,12 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 
 	// 打印resp
 	if this.isWatching {
-		// TODO 如果响应的内容太长，则只导出headers
 		respData, err := httputil.DumpResponse(resp, true)
 		if err == nil {
+			// 如果响应的内容太长，则截断
+			if len(respData) > 10240 {
+				respData = respData[:10240]
+			}
 			this.responseData = respData
 		}
 	}

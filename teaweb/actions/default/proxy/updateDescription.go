@@ -1,10 +1,9 @@
 package proxy
 
 import (
-	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/Tea"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/actions"
 )
 
 type UpdateDescriptionAction actions.Action
@@ -25,8 +24,6 @@ func (this *UpdateDescriptionAction) Run(params struct {
 
 	proxy.Description = params.Description
 	proxy.WriteToFile(Tea.ConfigFile(params.Filename))
-
-	global.NotifyChange()
 
 	this.Refresh().Success("保存成功")
 }

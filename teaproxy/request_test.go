@@ -5,8 +5,12 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
+	"io/ioutil"
 	"net/http"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 type testResponseWriter struct {
@@ -120,6 +124,40 @@ func TestRequest_CallProxy(t *testing.T) {
 }
 
 func TestRequest_CallFastcgi(t *testing.T) {
+	a := assert.NewAssertion(t).Quiet()
+	writer := testNewResponseWriter(a)
+
+	req, err := http.NewRequest("GET", "/index.php?__ACTION__=/@wx/box/version", bytes.NewBuffer([]byte("hello=world")))
+	//req, err := http.NewRequest("GET", "/index.php", bytes.NewBuffer([]byte("hello=world")))
+	if err != nil {
+		a.Fatal(err)
+	}
+	req.RemoteAddr = "127.0.0.1"
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	request := NewRequest(req)
+	request.scheme = "http"
+	request.host = "wx.balefm.cn"
+	request.serverAddr = "127.0.0.1:80"
+
+	request.fastcgi = &teaconfigs.FastcgiConfig{
+		Params: map[string]string{
+			"SCRIPT_FILENAME": "/Users/liuxiangchao/Documents/Projects/pp/apps/baleshop.ppk/index.php",
+			//"DOCUMENT_ROOT":   "/Users/liuxiangchao/Documents/Projects/pp/apps/baleshop.ppk",
+		},
+		Pass: "127.0.0.1:9000",
+	}
+	request.fastcgi.Validate()
+	err = request.Call(writer)
+	a.IsNil(err)
+	writer.Close()
+
+	a.Log("status:", request.responseStatus, request.responseStatusMessage)
+	a.Log("requestTime:", request.requestTime)
+	a.Log("bytes send:", request.responseBytesSent, request.responseBodyBytesSent)
+}
+
+func TestRequest_CallFastcgiPerformance(t *testing.T) {
 	a := assert.NewAssertion(t).Quiet()
 	writer := testNewResponseWriter(a)
 
@@ -308,4 +346,57 @@ func TestRequest_RewriteVariables(t *testing.T) {
 	for _, header := range req.headers {
 		t.Log("headers:", header.Name, ":", header.Value)
 	}
+}
+
+func TestPerformance(t *testing.T) {
+	beforeTime := time.Now()
+
+	countSuccess := 0
+	countFail := 0
+
+	locker := sync.Mutex{}
+	wg := sync.WaitGroup{}
+	threads := 1000
+	connections := 100
+	wg.Add(threads)
+
+	for i := 0; i < threads; i ++ {
+		go func() {
+			for j := 0; j < connections; j ++ {
+				req, err := http.NewRequest("GET", "http://127.0.0.1:9991/benchmark", nil)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c := SharedClientPool.client("127.0.0.1:9992")
+				resp, err := c.Do(req)
+
+				if err != nil {
+					locker.Lock()
+					countFail ++
+					locker.Unlock()
+				} else {
+					data, err := ioutil.ReadAll(resp.Body)
+					if err != nil || len(data) == 0 || strings.Index(string(data), "benchmark") == -1 {
+						locker.Lock()
+						countFail ++
+						locker.Unlock()
+					} else {
+						locker.Lock()
+						countSuccess ++
+						locker.Unlock()
+					}
+
+					//io.Copy(ioutil.Discard, resp.Body)
+					resp.Body.Close()
+				}
+			}
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+
+	t.Log("success:", countSuccess, "fail:", countFail, "qps:", int(float64(countSuccess+countFail)/time.Since(beforeTime).Seconds()))
 }

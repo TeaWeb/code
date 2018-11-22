@@ -1,10 +1,10 @@
 package teaproxy
 
 import (
-	"testing"
+	"bufio"
 	"net/http"
 	"os"
-	"bufio"
+	"testing"
 )
 
 func TestNetClient(t *testing.T) {

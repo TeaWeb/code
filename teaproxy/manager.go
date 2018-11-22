@@ -1,12 +1,13 @@
 package teaproxy
 
 import (
-	"sync"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/TeaWeb/code/teaconfigs"
 	_ "github.com/TeaWeb/code/teastats" // 引入统计处理工具
+	"github.com/iwind/TeaGo/logs"
+	"sync"
 )
 
+// 启动
 func Start() {
 	listenerConfigs, err := teaconfigs.ParseConfigs()
 	if err != nil {
@@ -24,12 +25,14 @@ func Start() {
 	}
 }
 
+// 等待执行完毕
 func Wait() {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	wg.Wait()
 }
 
+// 关闭
 func Shutdown() {
 	for _, listener := range LISTENERS {
 		listener.Shutdown()
@@ -39,11 +42,13 @@ func Shutdown() {
 	SERVERS = map[string]*teaconfigs.ServerConfig{}
 }
 
+// 重启
 func Restart() {
 	Shutdown()
 	Start()
 }
 
+// 查找服务
 func FindServer(id string) (server *teaconfigs.ServerConfig, found bool) {
 	server, found = SERVERS[id]
 	return

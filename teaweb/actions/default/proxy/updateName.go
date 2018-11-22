@@ -1,13 +1,14 @@
 package proxy
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/iwind/TeaGo/actions"
 )
 
 type UpdateNameAction actions.Action
 
+// 更改域名
 func (this *UpdateNameAction) Run(params struct {
 	Filename string
 	Index    int

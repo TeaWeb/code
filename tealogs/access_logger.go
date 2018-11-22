@@ -11,6 +11,7 @@ import (
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -99,6 +100,7 @@ func (this *AccessLogger) wait() {
 	var docsLocker = sync.Mutex{}
 
 	// 写入到数据库
+	countCPU := runtime.NumCPU()
 	timers.Loop(500*time.Millisecond, func(looper *timers.Looper) {
 		// 写入到本地数据库
 		if this.client() != nil {
@@ -115,7 +117,7 @@ func (this *AccessLogger) wait() {
 
 			// 批量写入数据库
 			// 需合理控制此数值的大小，避免CPU占用太高
-			bulkSize := 256
+			bulkSize := countCPU * 64
 			offset := 0
 			for {
 				end := offset + bulkSize
