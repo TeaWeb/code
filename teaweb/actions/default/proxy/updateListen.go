@@ -27,7 +27,7 @@ func (this *UpdateListenAction) Run(params struct {
 		proxy.Listen[params.Index] = params.Listen
 	}
 
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

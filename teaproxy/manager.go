@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-// 启动
+// 启动服务
 func Start() {
 	listenerConfigs, err := teaconfigs.ParseConfigs()
 	if err != nil {
@@ -25,14 +25,14 @@ func Start() {
 	}
 }
 
-// 等待执行完毕
+// 等待服务执行完毕
 func Wait() {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	wg.Wait()
 }
 
-// 关闭
+// 关闭服务
 func Shutdown() {
 	for _, listener := range LISTENERS {
 		listener.Shutdown()
@@ -42,7 +42,7 @@ func Shutdown() {
 	SERVERS = map[string]*teaconfigs.ServerConfig{}
 }
 
-// 重启
+// 重启服务
 func Restart() {
 	Shutdown()
 	Start()

@@ -20,7 +20,7 @@ func (this *OffAction) Run(params struct {
 		server.SSL.On = false
 	}
 
-	server.WriteBack()
+	server.Save()
 
 	global.NotifyChange()
 

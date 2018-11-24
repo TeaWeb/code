@@ -47,7 +47,7 @@ func (this *AddAction) Run(params struct {
 	fastcgi.ReadTimeout = fmt.Sprintf("%ds", params.ReadTimeout)
 	fastcgi.Params = paramsMap
 	location.AddFastcgi(fastcgi)
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

@@ -60,7 +60,7 @@ func (this *UpdateAction) Run(params struct {
 		}
 	}
 
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

@@ -25,7 +25,7 @@ func (this *DeleteIgnoreAction) Run(params struct {
 	}
 
 	location.DeleteIgnoreHeaderAtIndex(params.Index)
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

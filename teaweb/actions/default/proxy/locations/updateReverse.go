@@ -21,7 +21,7 @@ func (this *UpdateReverseAction) Run(params struct {
 	location := proxy.LocationAtIndex(params.Index)
 	if location != nil {
 		location.SetPattern(location.PatternString(), location.PatternType(), location.IsCaseInsensitive(), params.Reverse)
-		proxy.WriteBack()
+		proxy.Save()
 	}
 
 	global.NotifyChange()

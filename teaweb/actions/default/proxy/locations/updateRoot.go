@@ -22,7 +22,7 @@ func (this *UpdateRootAction) Run(params struct {
 	location := proxy.LocationAtIndex(params.Index)
 	if location != nil {
 		location.Root = params.Root
-		proxy.WriteBack()
+		proxy.Save()
 
 		global.NotifyChange()
 	}

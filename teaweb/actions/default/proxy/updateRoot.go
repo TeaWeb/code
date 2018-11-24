@@ -18,7 +18,7 @@ func (this *UpdateRootAction) Run(params struct {
 	}
 
 	proxy.Root = params.Root
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

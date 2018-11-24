@@ -22,7 +22,7 @@ func (this *UpdateCharsetAction) Run(params struct {
 	}
 
 	proxy.Charset = params.Charset
-	err = proxy.WriteBack()
+	err = proxy.Save()
 	if err != nil {
 		this.Fail(err.Error())
 	}

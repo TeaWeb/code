@@ -23,7 +23,7 @@ func (this *AddListenAction) Run(params struct {
 	}
 
 	proxy.AddListen(params.Listen)
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

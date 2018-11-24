@@ -28,7 +28,7 @@ func (this *DeleteParamAction) Run(params struct {
 		this.Fail("没有fastcgi配置，请刷新后重试")
 	}
 	delete(fastcgi.Params, params.Name)
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

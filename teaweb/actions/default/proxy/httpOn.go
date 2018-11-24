@@ -17,7 +17,7 @@ func (this *HttpOnAction) Run(params struct {
 	}
 
 	proxy.Http = true
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

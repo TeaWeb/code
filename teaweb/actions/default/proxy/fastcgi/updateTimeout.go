@@ -30,7 +30,7 @@ func (this *UpdateTimeoutAction) Run(params struct {
 	}
 
 	fastcgi.ReadTimeout = fmt.Sprintf("%ds", params.Timeout)
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

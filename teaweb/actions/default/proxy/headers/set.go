@@ -24,7 +24,7 @@ func (this *SetAction) Run(params struct {
 	}
 
 	proxy.SetHeader(params.Name, params.Value)
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

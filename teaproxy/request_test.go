@@ -348,7 +348,7 @@ func TestRequest_RewriteVariables(t *testing.T) {
 	}
 }
 
-func TestPerformance(t *testing.T) {
+func TestPerformanceBackend(t *testing.T) {
 	beforeTime := time.Now()
 
 	countSuccess := 0
@@ -363,7 +363,7 @@ func TestPerformance(t *testing.T) {
 	for i := 0; i < threads; i ++ {
 		go func() {
 			for j := 0; j < connections; j ++ {
-				req, err := http.NewRequest("GET", "http://127.0.0.1:9991/benchmark", nil)
+				req, err := http.NewRequest("GET", "http://127.0.0.1:9992/benchmark", nil)
 
 				if err != nil {
 					t.Fatal(err)
@@ -379,6 +379,59 @@ func TestPerformance(t *testing.T) {
 				} else {
 					data, err := ioutil.ReadAll(resp.Body)
 					if err != nil || len(data) == 0 || strings.Index(string(data), "benchmark") == -1 {
+						locker.Lock()
+						countFail ++
+						locker.Unlock()
+					} else {
+						locker.Lock()
+						countSuccess ++
+						locker.Unlock()
+					}
+
+					//io.Copy(ioutil.Discard, resp.Body)
+					resp.Body.Close()
+				}
+			}
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+
+	t.Log("success:", countSuccess, "fail:", countFail, "qps:", int(float64(countSuccess+countFail)/time.Since(beforeTime).Seconds()))
+}
+
+func TestPerformanceStatic(t *testing.T) {
+	beforeTime := time.Now()
+
+	countSuccess := 0
+	countFail := 0
+
+	locker := sync.Mutex{}
+	wg := sync.WaitGroup{}
+	threads := 100
+	connections := 100
+	wg.Add(threads)
+
+	for i := 0; i < threads; i ++ {
+		go func() {
+			for j := 0; j < connections; j ++ {
+				req, err := http.NewRequest("GET", "http://127.0.0.1:9993/css/semantic.min.css", nil)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c := SharedClientPool.client("127.0.0.1:9993")
+				resp, err := c.Do(req)
+
+				if err != nil {
+					locker.Lock()
+					countFail ++
+					locker.Unlock()
+				} else {
+					data, err := ioutil.ReadAll(resp.Body)
+					if err != nil || len(data) == 0 || strings.Index(string(data), "Semantic") == -1 {
 						locker.Lock()
 						countFail ++
 						locker.Unlock()

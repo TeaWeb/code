@@ -1,11 +1,10 @@
 package proxy
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
 )
 
 type DeleteListenAction actions.Action
@@ -23,8 +22,7 @@ func (this *DeleteListenAction) Run(params struct {
 		proxy.Listen = lists.Remove(proxy.Listen, params.Index).([]string)
 	}
 
-	logs.Println(proxy.Listen)
-	proxy.WriteBack()
+	proxy.Save()
 
 	// 重启服务
 	global.NotifyChange()

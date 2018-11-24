@@ -18,7 +18,7 @@ func (this *DeleteAction) Run(params struct {
 	}
 
 	proxy.DeleteHeaderAtIndex(params.Index)
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

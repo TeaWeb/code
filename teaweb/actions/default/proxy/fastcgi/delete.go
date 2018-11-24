@@ -23,7 +23,7 @@ func (this *DeleteAction) Run(params struct {
 	}
 
 	location.RemoveFastcgiAt(0)
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

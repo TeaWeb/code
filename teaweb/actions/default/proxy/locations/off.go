@@ -22,7 +22,7 @@ func (this *OffAction) Run(params struct {
 		location.On = false
 	}
 
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

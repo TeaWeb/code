@@ -1,10 +1,10 @@
 package rewrite
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
 )
 
 type DeleteAction actions.Action
@@ -28,7 +28,7 @@ func (this *DeleteAction) Run(params struct {
 		location.Rewrite = lists.Remove(location.Rewrite, params.RewriteIndex).([]*teaconfigs.RewriteRule)
 	}
 
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

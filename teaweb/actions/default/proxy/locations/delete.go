@@ -22,7 +22,7 @@ func (this *DeleteAction) Run(params struct {
 		proxy.Locations = lists.Remove(proxy.Locations, params.Index).([]*teaconfigs.LocationConfig)
 	}
 
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

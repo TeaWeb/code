@@ -24,7 +24,7 @@ func (this *MoveDownAction) Run(params struct {
 		proxy.Locations[params.Index] = next
 	}
 
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

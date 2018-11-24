@@ -57,7 +57,7 @@ func (this *UpdateAction) RunPost(params struct {
 		return
 	}
 
-	err := config.WriteBack()
+	err := config.Save()
 	if err != nil {
 		this.Fail("文件保存失败，请检查'configs/admin.conf'文件的写入权限")
 	}

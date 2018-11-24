@@ -62,7 +62,7 @@ func (this *UpdateAction) RunPost(params struct {
 	user := adminConfig.FindActiveUser(username)
 	user.Name = params.Name
 	user.Tel = params.Tel
-	adminConfig.WriteBack()
+	adminConfig.Save()
 
 	this.Next("/settings/profile", nil).Success("保存成功")
 }

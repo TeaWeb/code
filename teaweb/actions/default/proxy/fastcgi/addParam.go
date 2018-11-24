@@ -34,7 +34,7 @@ func (this *AddParamAction) Run(params struct {
 		this.Fail("没有fastcgi配置，请刷新后重试")
 	}
 	fastcgi.Params[params.Name] = params.Value
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

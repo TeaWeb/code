@@ -34,7 +34,7 @@ func (this *UpdateAction) Run(params struct {
 	if header != nil {
 		header.Name = params.Name
 		header.Value = params.Value
-		proxy.WriteBack()
+		proxy.Save()
 
 		global.NotifyChange()
 	}

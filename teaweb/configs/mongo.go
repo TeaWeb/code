@@ -1,14 +1,14 @@
 package configs
 
 import (
+	"fmt"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
-	"sync"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/types"
 	"net/url"
 	"strings"
-	"github.com/iwind/TeaGo/types"
-	"fmt"
+	"sync"
 )
 
 // MongoDB配置
@@ -104,7 +104,7 @@ func (this *MongoConfig) URI() string {
 }
 
 // 保存修改后的MongoDB配置
-func (this *MongoConfig) WriteBack() error {
+func (this *MongoConfig) Save() error {
 	confFile := Tea.ConfigFile("mongo.conf")
 	writer, err := files.NewWriter(confFile)
 	if err != nil {

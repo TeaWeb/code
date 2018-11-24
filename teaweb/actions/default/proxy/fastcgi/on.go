@@ -27,7 +27,7 @@ func (this *OnAction) Run(params struct {
 		this.Fail("没有fastcgi配置，请刷新后重试")
 	}
 	fastcgi.On = true
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

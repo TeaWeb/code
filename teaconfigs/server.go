@@ -57,14 +57,14 @@ type ServerConfig struct {
 	Proxy   string           `yaml:"proxy" json:"proxy"`     //  代理配置 TODO
 
 	// API相关
-	APIOn        bool      `yaml:"apiOn" json:"apiOn"`               // 是否开启API功能
-	APIFiles     []string  `yaml:"apiFiles" json:"apiFiles"`         // API文件列表
-	APIGroups    []string  `yaml:"apiGroups" json:"apiGroups"`       // API分组
-	APIVersions  []string  `yaml:"apiVersions" json:"apiVersions"`   // API版本
-	APITestPlans []string  `yaml:"apiTestPlans" json:"apiTestPlans"` // API测试计划
-	APILimit     *APILimit `yaml:"apiLimit" json:"apiLimit"`         // API全局的限制 TODO
-	apiPathMap   map[string]*API                                     // path => api
-	apiPatterns  []*API                                              // regexp => api
+	APIOn         bool      `yaml:"apiOn" json:"apiOn"`               // 是否开启API功能
+	APIFiles      []string  `yaml:"apiFiles" json:"apiFiles"`         // API文件列表
+	APIGroups     []string  `yaml:"apiGroups" json:"apiGroups"`       // API分组
+	APIVersions   []string  `yaml:"apiVersions" json:"apiVersions"`   // API版本
+	APITestPlans  []string  `yaml:"apiTestPlans" json:"apiTestPlans"` // API测试计划
+	APILimit      *APILimit `yaml:"apiLimit" json:"apiLimit"`         // API全局的限制 TODO
+	apiPathMap    map[string]*API                                     // path => api
+	apiPatternMap map[string]*API                                     // path => api
 }
 
 // 从目录中加载配置
@@ -186,7 +186,7 @@ func (this *ServerConfig) Validate() error {
 
 	// api
 	this.apiPathMap = map[string]*API{}
-	this.apiPatterns = []*API{}
+	this.apiPatternMap = map[string]*API{}
 	for _, apiFilename := range this.APIFiles {
 		api := NewAPIFromFile(apiFilename)
 		if api == nil {
@@ -199,7 +199,7 @@ func (this *ServerConfig) Validate() error {
 		if api.pathReg == nil {
 			this.apiPathMap[api.Path] = api
 		} else {
-			this.apiPatterns = append(this.apiPatterns, api)
+			this.apiPatternMap[api.Path] = api
 		}
 	}
 
@@ -361,7 +361,8 @@ func (this *ServerConfig) WriteToFilename(filename string) error {
 	return err
 }
 
-func (this *ServerConfig) WriteBack() error {
+// 保存
+func (this *ServerConfig) Save() error {
 	if len(this.Filename) == 0 {
 		return errors.New("'filename' should be specified")
 	}
@@ -432,11 +433,28 @@ func (this *ServerConfig) AddLocation(location *LocationConfig) {
 }
 
 // 添加API
-func (this *ServerConfig) AddAPI(filename string) {
-	if lists.Contains(this.APIFiles, filename) {
+func (this *ServerConfig) AddAPI(api *API) {
+	if api == nil {
 		return
 	}
-	this.APIFiles = append(this.APIFiles, filename)
+
+	// 分析API
+	if this.apiPathMap != nil {
+		err := api.Validate()
+		if err == nil {
+			if api.pathReg == nil {
+				this.apiPathMap[api.Path] = api
+			} else {
+				this.apiPatternMap[api.Path] = api
+			}
+		}
+	}
+
+	// 如果已包含文件名则不重复添加
+	if lists.Contains(this.APIFiles, api.Filename) {
+		return
+	}
+	this.APIFiles = append(this.APIFiles, api.Filename)
 }
 
 // 获取所有APIs
@@ -467,7 +485,7 @@ func (this *ServerConfig) FindActiveAPI(path string, method string) (api *API, p
 	api, found := this.apiPathMap[path]
 	if !found {
 		// 寻找pattern
-		for _, api := range this.apiPatterns {
+		for _, api := range this.apiPatternMap {
 			params, found := api.Match(path)
 			if !found || api.IsDeprecated || !api.On || !api.AllowMethod(method) {
 				continue
@@ -487,8 +505,11 @@ func (this *ServerConfig) FindActiveAPI(path string, method string) (api *API, p
 }
 
 // 删除API
-func (this *ServerConfig) DeleteAPI(filename string) {
-	this.APIFiles = lists.Delete(this.APIFiles, filename).([]string)
+func (this *ServerConfig) DeleteAPI(api *API) {
+	this.APIFiles = lists.Delete(this.APIFiles, api.Filename).([]string)
+
+	delete(this.apiPathMap, api.Path)
+	delete(this.apiPatternMap, api.Path)
 }
 
 // 添加API分组

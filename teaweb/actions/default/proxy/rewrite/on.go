@@ -27,7 +27,7 @@ func (this *OnAction) Run(params struct {
 		location.Rewrite[params.RewriteIndex].On = true
 	}
 
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

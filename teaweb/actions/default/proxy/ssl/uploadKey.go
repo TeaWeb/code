@@ -44,7 +44,7 @@ func (this *UploadKeyAction) Run(params struct {
 	}
 
 	server.SSL.CertificateKey = keyFilename
-	server.WriteBack()
+	server.Save()
 
 	if server.SSL.On && len(server.SSL.Certificate) > 0 {
 		global.NotifyChange()

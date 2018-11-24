@@ -62,7 +62,7 @@ func (this *UpdateAvatarAction) RunPost(params struct {
 	adminConfig := configs.SharedAdminConfig()
 	user := adminConfig.FindActiveUser(username)
 	user.Avatar = "/avatar/" + rand + params.AvatarFile.Ext
-	adminConfig.WriteBack()
+	adminConfig.Save()
 
 	this.Refresh().Success("上传成功")
 }

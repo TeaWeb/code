@@ -58,7 +58,7 @@ func (this *IndexAction) RunPost(params struct {
 		// 记录登录IP
 		user.LoggedAt = time.Now().Unix()
 		user.LoggedIP = this.RequestRemoteIP()
-		adminConfig.WriteBack()
+		adminConfig.Save()
 
 		this.Next("/", nil, "").Success()
 		return

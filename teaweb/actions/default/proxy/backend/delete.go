@@ -22,7 +22,7 @@ func (this *DeleteAction) Run(params struct {
 		server.Backends = lists.Remove(server.Backends, params.Index).([]*teaconfigs.ServerBackendConfig)
 	}
 
-	server.WriteBack()
+	server.Save()
 	global.NotifyChange()
 
 	this.Refresh().Success()

@@ -34,7 +34,7 @@ func (this *UpdateAction) RunPost(params struct {
 	config.Port = params.Port
 	config.Username = params.Username
 	config.Password = params.Password
-	err := config.WriteBack()
+	err := config.Save()
 
 	if err != nil {
 		this.Fail("文件写入失败，请检查'configs/mongo.conf'写入权限")

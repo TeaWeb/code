@@ -28,7 +28,7 @@ func (this *UpdateNameAction) Run(params struct {
 		proxy.Name[params.Index] = params.Name
 	}
 
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

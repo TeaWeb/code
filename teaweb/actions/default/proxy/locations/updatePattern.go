@@ -21,7 +21,7 @@ func (this *UpdatePatternAction) Run(params struct {
 	location := proxy.LocationAtIndex(params.Index)
 	if location != nil {
 		location.SetPattern(params.Pattern, location.PatternType(), location.IsCaseInsensitive(), location.IsReverse())
-		proxy.WriteBack()
+		proxy.Save()
 	}
 
 	global.NotifyChange()

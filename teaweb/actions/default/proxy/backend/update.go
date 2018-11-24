@@ -27,7 +27,7 @@ func (this *UpdateAction) Run(params struct {
 		server.Backends[params.Index].Address = params.Address
 	}
 
-	server.WriteBack()
+	server.Save()
 
 	global.NotifyChange()
 

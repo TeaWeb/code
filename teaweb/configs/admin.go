@@ -56,7 +56,7 @@ func SharedAdminConfig() *AdminConfig {
 }
 
 // 写回配置文件
-func (this *AdminConfig) WriteBack() error {
+func (this *AdminConfig) Save() error {
 	adminConfigLocker.Lock()
 	defer adminConfigLocker.Unlock()
 

@@ -26,7 +26,7 @@ func (this *UpdateCharsetAction) Run(params struct {
 	location := proxy.LocationAtIndex(params.Index)
 	if location != nil {
 		location.Charset = params.Charset
-		proxy.WriteBack()
+		proxy.Save()
 
 		global.NotifyChange()
 	}

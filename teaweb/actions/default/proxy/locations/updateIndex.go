@@ -32,7 +32,7 @@ func (this *UpdateIndexAction) Run(params struct {
 		location.Index = []string{}
 	}
 
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

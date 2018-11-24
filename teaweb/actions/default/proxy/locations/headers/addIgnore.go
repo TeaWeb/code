@@ -29,7 +29,7 @@ func (this *AddIgnoreAction) Run(params struct {
 	}
 
 	location.AddIgnoreHeader(params.Name)
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 

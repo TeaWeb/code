@@ -24,7 +24,7 @@ func (this *UpdateIndexAction) Run(params struct {
 	} else {
 		proxy.Index = []string{}
 	}
-	err = proxy.WriteBack()
+	err = proxy.Save()
 	if err != nil {
 		this.Fail(err.Error())
 	}

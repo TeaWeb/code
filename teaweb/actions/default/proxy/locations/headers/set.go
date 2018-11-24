@@ -30,7 +30,7 @@ func (this *SetAction) Run(params struct {
 	}
 
 	location.SetHeader(params.Name, params.Value)
-	proxy.WriteBack()
+	proxy.Save()
 
 	global.NotifyChange()
 
