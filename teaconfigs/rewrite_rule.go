@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
@@ -43,8 +44,8 @@ type RewriteRule struct {
 	Replace string `yaml:"replace" json:"replace"`
 
 	// Headers
-	Headers       []*HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
-	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
+	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
+	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
 
 	targetType  int // RewriteTarget*
 	targetURL   string
@@ -153,7 +154,7 @@ func (this *RewriteRule) SetHeader(name string, value string) {
 		return
 	}
 
-	header := NewHeaderConfig()
+	header := shared.NewHeaderConfig()
 	header.Name = name
 	header.Value = value
 	this.Headers = append(this.Headers, header)
@@ -162,12 +163,12 @@ func (this *RewriteRule) SetHeader(name string, value string) {
 // 删除指定位置上的Header
 func (this *RewriteRule) DeleteHeaderAtIndex(index int) {
 	if index >= 0 && index < len(this.Headers) {
-		this.Headers = lists.Remove(this.Headers, index).([]*HeaderConfig)
+		this.Headers = lists.Remove(this.Headers, index).([]*shared.HeaderConfig)
 	}
 }
 
 // 取得指定位置上的Header
-func (this *RewriteRule) HeaderAtIndex(index int) *HeaderConfig {
+func (this *RewriteRule) HeaderAtIndex(index int) *shared.HeaderConfig {
 	if index >= 0 && index < len(this.Headers) {
 		return this.Headers[index]
 	}
@@ -175,10 +176,10 @@ func (this *RewriteRule) HeaderAtIndex(index int) *HeaderConfig {
 }
 
 // 格式化Header
-func (this *RewriteRule) FormatHeaders(formatter func(source string) string) []*HeaderConfig {
-	result := []*HeaderConfig{}
+func (this *RewriteRule) FormatHeaders(formatter func(source string) string) []*shared.HeaderConfig {
+	result := []*shared.HeaderConfig{}
 	for _, header := range this.Headers {
-		result = append(result, &HeaderConfig{
+		result = append(result, &shared.HeaderConfig{
 			Name:   header.Name,
 			Value:  formatter(header.Value),
 			Always: header.Always,

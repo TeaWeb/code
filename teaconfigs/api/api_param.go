@@ -1,4 +1,4 @@
-package teaconfigs
+package api
 
 // API参数定义
 type APIParam struct {

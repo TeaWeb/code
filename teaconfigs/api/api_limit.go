@@ -1,4 +1,4 @@
-package teaconfigs
+package api
 
 // API限制
 type APILimit struct {

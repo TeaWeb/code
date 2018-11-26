@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
 	"math/rand"
@@ -44,8 +45,8 @@ type LocationConfig struct {
 	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // @TODO
 
 	// 参考 http://nginx.org/en/docs/http/ngx_http_headers_module.html#add_header
-	Headers       []*HeaderConfig `yaml:"headers" json:"headers"`             // 头信息 @TODO
-	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
+	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 头信息 @TODO
+	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` // 允许的终端地址 @TODO
@@ -388,7 +389,7 @@ func (this *LocationConfig) SetHeader(name string, value string) {
 		return
 	}
 
-	header := NewHeaderConfig()
+	header := shared.NewHeaderConfig()
 	header.Name = name
 	header.Value = value
 	this.Headers = append(this.Headers, header)
@@ -397,12 +398,12 @@ func (this *LocationConfig) SetHeader(name string, value string) {
 // 删除指定位置上的Header
 func (this *LocationConfig) DeleteHeaderAtIndex(index int) {
 	if index >= 0 && index < len(this.Headers) {
-		this.Headers = lists.Remove(this.Headers, index).([]*HeaderConfig)
+		this.Headers = lists.Remove(this.Headers, index).([]*shared.HeaderConfig)
 	}
 }
 
 // 取得指定位置上的Header
-func (this *LocationConfig) HeaderAtIndex(index int) *HeaderConfig {
+func (this *LocationConfig) HeaderAtIndex(index int) *shared.HeaderConfig {
 	if index >= 0 && index < len(this.Headers) {
 		return this.Headers[index]
 	}
@@ -410,10 +411,10 @@ func (this *LocationConfig) HeaderAtIndex(index int) *HeaderConfig {
 }
 
 // 格式化Header
-func (this *LocationConfig) FormatHeaders(formatter func(source string) string) []*HeaderConfig {
-	result := []*HeaderConfig{}
+func (this *LocationConfig) FormatHeaders(formatter func(source string) string) []*shared.HeaderConfig {
+	result := []*shared.HeaderConfig{}
 	for _, header := range this.Headers {
-		result = append(result, &HeaderConfig{
+		result = append(result, &shared.HeaderConfig{
 			Name:   header.Name,
 			Value:  formatter(header.Value),
 			Always: header.Always,

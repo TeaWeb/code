@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teaplugins"
@@ -22,6 +23,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	apiconfig "github.com/TeaWeb/code/teaconfigs/api"
 )
 
 var requestVarReg = regexp.MustCompile("\\${[\\w.-]+}")
@@ -60,9 +63,9 @@ type Request struct {
 	serverName    string // @TODO
 	serverAddr    string
 	charset       string
-	headers       []*teaconfigs.HeaderConfig // 自定义Header
-	ignoreHeaders []string                   // 忽略的Header
-	varMapping    map[string]string          // 自定义变量
+	headers       []*shared.HeaderConfig // 自定义Header
+	ignoreHeaders []string               // 忽略的Header
+	varMapping    map[string]string      // 自定义变量
 
 	root     string   // 资源根目录
 	index    []string // 目录下默认访问的文件
@@ -71,7 +74,7 @@ type Request struct {
 	proxy    *teaconfigs.ServerConfig
 	location *teaconfigs.LocationConfig
 
-	api *teaconfigs.API // API
+	api *apiconfig.API // API
 
 	rewriteId      string // 匹配的rewrite id
 	rewriteReplace string // 经过rewrite之后的URL
@@ -156,8 +159,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 
 	// API配置，目前只有Plus版本支持
-	if teaconst.PlusEnabled {
-		api, params := server.FindActiveAPI(uri.Path, this.method)
+	if teaconst.PlusEnabled && server.API != nil {
+		api, params := server.API.FindActiveAPI(uri.Path, this.method)
 		if api != nil {
 			this.api = api
 

@@ -1,4 +1,4 @@
-package teaconfigs
+package api
 
 import (
 	"github.com/iwind/TeaGo/logs"

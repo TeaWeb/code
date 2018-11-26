@@ -2,6 +2,7 @@ package teaconfigs
 
 import (
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -31,8 +32,8 @@ type FastcgiConfig struct {
 	PoolSize    int               `yaml:"poolSize" json:"poolSize"`       // 连接池尺寸 @TODO
 
 	// Headers
-	Headers       []*HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
-	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
+	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
+	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
 
 	network string // 协议：tcp, unix
 	address string // 地址
@@ -168,7 +169,7 @@ func (this *FastcgiConfig) SetHeader(name string, value string) {
 		return
 	}
 
-	header := NewHeaderConfig()
+	header := shared.NewHeaderConfig()
 	header.Name = name
 	header.Value = value
 	this.Headers = append(this.Headers, header)
@@ -177,12 +178,12 @@ func (this *FastcgiConfig) SetHeader(name string, value string) {
 // 删除指定位置上的Header
 func (this *FastcgiConfig) DeleteHeaderAtIndex(index int) {
 	if index >= 0 && index < len(this.Headers) {
-		this.Headers = lists.Remove(this.Headers, index).([]*HeaderConfig)
+		this.Headers = lists.Remove(this.Headers, index).([]*shared.HeaderConfig)
 	}
 }
 
 // 取得指定位置上的Header
-func (this *FastcgiConfig) HeaderAtIndex(index int) *HeaderConfig {
+func (this *FastcgiConfig) HeaderAtIndex(index int) *shared.HeaderConfig {
 	if index >= 0 && index < len(this.Headers) {
 		return this.Headers[index]
 	}

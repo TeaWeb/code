@@ -1,4 +1,4 @@
-package teaconfigs
+package api
 
 // 单个API测试结果
 type APITestResult struct {

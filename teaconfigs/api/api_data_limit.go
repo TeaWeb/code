@@ -1,4 +1,4 @@
-package teaconfigs
+package api
 
 import "time"
 

@@ -1,4 +1,4 @@
-package teaconfigs
+package api
 
 // 单个脚本测试结果
 type APITestScriptResult struct {

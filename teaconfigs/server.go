@@ -2,6 +2,8 @@ package teaconfigs
 
 import (
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs/api"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
@@ -43,8 +45,8 @@ type ServerConfig struct {
 	// SSL
 	SSL *SSLConfig `yaml:"ssl" json:"ssl"`
 
-	Headers       []*HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header
-	IgnoreHeaders []string        `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header TODO
+	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header
+	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header TODO
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` //TODO
@@ -57,14 +59,7 @@ type ServerConfig struct {
 	Proxy   string           `yaml:"proxy" json:"proxy"`     //  代理配置 TODO
 
 	// API相关
-	APIOn         bool      `yaml:"apiOn" json:"apiOn"`               // 是否开启API功能
-	APIFiles      []string  `yaml:"apiFiles" json:"apiFiles"`         // API文件列表
-	APIGroups     []string  `yaml:"apiGroups" json:"apiGroups"`       // API分组
-	APIVersions   []string  `yaml:"apiVersions" json:"apiVersions"`   // API版本
-	APITestPlans  []string  `yaml:"apiTestPlans" json:"apiTestPlans"` // API测试计划
-	APILimit      *APILimit `yaml:"apiLimit" json:"apiLimit"`         // API全局的限制 TODO
-	apiPathMap    map[string]*API                                     // path => api
-	apiPatternMap map[string]*API                                     // path => api
+	API *api.APIConfig `yaml:"api" json:"api"` // API配置
 }
 
 // 从目录中加载配置
@@ -73,7 +68,7 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 
 	dir := files.NewFile(dirPath)
 	subFiles := dir.Glob("*.proxy.conf")
-	files.Sort(subFiles, files.SortTypeModifiedTimeReverse)
+	files.Sort(subFiles, files.SortTypeName)
 	for _, configFile := range subFiles {
 		reader, err := configFile.Reader()
 		if err != nil {
@@ -87,6 +82,12 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 			continue
 		}
 		config.Filename = configFile.Name()
+
+		// API
+		if config.API == nil {
+			config.API = api.NewAPIConfig()
+		}
+
 		servers = append(servers, config)
 	}
 
@@ -96,8 +97,9 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 // 取得一个新的服务配置
 func NewServerConfig() *ServerConfig {
 	return &ServerConfig{
-		On: true,
-		Id: stringutil.Rand(16),
+		On:  true,
+		Id:  stringutil.Rand(16),
+		API: api.NewAPIConfig(),
 	}
 }
 
@@ -125,10 +127,14 @@ func NewServerConfigFromFile(filename string) (*ServerConfig, error) {
 		config.Locations = []*LocationConfig{}
 	}
 	if len(config.Headers) == 0 {
-		config.Headers = []*HeaderConfig{}
+		config.Headers = []*shared.HeaderConfig{}
 	}
 	if len(config.IgnoreHeaders) == 0 {
 		config.IgnoreHeaders = []string{}
+	}
+
+	if config.API == nil {
+		config.API = api.NewAPIConfig()
 	}
 
 	return config, nil
@@ -185,30 +191,13 @@ func (this *ServerConfig) Validate() error {
 	}
 
 	// api
-	this.apiPathMap = map[string]*API{}
-	this.apiPatternMap = map[string]*API{}
-	for _, apiFilename := range this.APIFiles {
-		api := NewAPIFromFile(apiFilename)
-		if api == nil {
-			continue
-		}
-		err := api.Validate()
-		if err != nil {
-			return err
-		}
-		if api.pathReg == nil {
-			this.apiPathMap[api.Path] = api
-		} else {
-			this.apiPatternMap[api.Path] = api
-		}
+	if this.API == nil {
+		this.API = api.NewAPIConfig()
 	}
 
-	// api limit
-	if this.APILimit != nil {
-		err := this.APILimit.Validate()
-		if err != nil {
-			return err
-		}
+	err := this.API.Validate()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -267,7 +256,7 @@ func (this *ServerConfig) SetHeader(name string, value string) {
 		return
 	}
 
-	header := NewHeaderConfig()
+	header := shared.NewHeaderConfig()
 	header.Name = name
 	header.Value = value
 	this.Headers = append(this.Headers, header)
@@ -276,12 +265,12 @@ func (this *ServerConfig) SetHeader(name string, value string) {
 // 删除指定位置上的Header
 func (this *ServerConfig) DeleteHeaderAtIndex(index int) {
 	if index >= 0 && index < len(this.Headers) {
-		this.Headers = lists.Remove(this.Headers, index).([]*HeaderConfig)
+		this.Headers = lists.Remove(this.Headers, index).([]*shared.HeaderConfig)
 	}
 }
 
 // 取得指定位置上的Header
-func (this *ServerConfig) HeaderAtIndex(index int) *HeaderConfig {
+func (this *ServerConfig) HeaderAtIndex(index int) *shared.HeaderConfig {
 	if index >= 0 && index < len(this.Headers) {
 		return this.Headers[index]
 	}
@@ -289,10 +278,10 @@ func (this *ServerConfig) HeaderAtIndex(index int) *HeaderConfig {
 }
 
 // 格式化Header
-func (this *ServerConfig) FormatHeaders(formatter func(source string) string) []*HeaderConfig {
-	result := []*HeaderConfig{}
+func (this *ServerConfig) FormatHeaders(formatter func(source string) string) []*shared.HeaderConfig {
+	result := []*shared.HeaderConfig{}
 	for _, header := range this.Headers {
-		result = append(result, &HeaderConfig{
+		result = append(result, &shared.HeaderConfig{
 			Name:   header.Name,
 			Value:  formatter(header.Value),
 			Always: header.Always,
@@ -303,7 +292,7 @@ func (this *ServerConfig) FormatHeaders(formatter func(source string) string) []
 }
 
 // 添加一个自定义Header
-func (this *ServerConfig) AddHeader(header *HeaderConfig) {
+func (this *ServerConfig) AddHeader(header *shared.HeaderConfig) {
 	this.Headers = append(this.Headers, header)
 }
 
@@ -430,254 +419,4 @@ func (this *ServerConfig) NextFastcgi() *FastcgiConfig {
 // 添加路径规则
 func (this *ServerConfig) AddLocation(location *LocationConfig) {
 	this.Locations = append(this.Locations, location)
-}
-
-// 添加API
-func (this *ServerConfig) AddAPI(api *API) {
-	if api == nil {
-		return
-	}
-
-	// 分析API
-	if this.apiPathMap != nil {
-		err := api.Validate()
-		if err == nil {
-			if api.pathReg == nil {
-				this.apiPathMap[api.Path] = api
-			} else {
-				this.apiPatternMap[api.Path] = api
-			}
-		}
-	}
-
-	// 如果已包含文件名则不重复添加
-	if lists.Contains(this.APIFiles, api.Filename) {
-		return
-	}
-	this.APIFiles = append(this.APIFiles, api.Filename)
-}
-
-// 获取所有APIs
-func (this *ServerConfig) FindAllAPIs() []*API {
-	apis := []*API{}
-	for _, filename := range this.APIFiles {
-		api := NewAPIFromFile(filename)
-		if api == nil {
-			continue
-		}
-		apis = append(apis, api)
-	}
-	return apis
-}
-
-// 获取单个API信息
-func (this *ServerConfig) FindAPI(path string) *API {
-	for _, api := range this.FindAllAPIs() {
-		if api.Path == path {
-			return api
-		}
-	}
-	return nil
-}
-
-// 查找激活状态中的API
-func (this *ServerConfig) FindActiveAPI(path string, method string) (api *API, params map[string]string) {
-	api, found := this.apiPathMap[path]
-	if !found {
-		// 寻找pattern
-		for _, api := range this.apiPatternMap {
-			params, found := api.Match(path)
-			if !found || api.IsDeprecated || !api.On || !api.AllowMethod(method) {
-				continue
-			}
-			return api, params
-		}
-
-		return nil, nil
-	}
-
-	// 检查是否过期或者失效
-	if api.IsDeprecated || !api.On || !api.AllowMethod(method) {
-		return nil, nil
-	}
-
-	return api, nil
-}
-
-// 删除API
-func (this *ServerConfig) DeleteAPI(api *API) {
-	this.APIFiles = lists.Delete(this.APIFiles, api.Filename).([]string)
-
-	delete(this.apiPathMap, api.Path)
-	delete(this.apiPatternMap, api.Path)
-}
-
-// 添加API分组
-func (this *ServerConfig) AddAPIGroup(name string) {
-	this.APIGroups = append(this.APIGroups, name)
-}
-
-// 删除API分组
-func (this *ServerConfig) RemoveAPIGroup(name string) {
-	result := []string{}
-	for _, groupName := range this.APIGroups {
-		if groupName != name {
-			result = append(result, groupName)
-		}
-	}
-
-	for _, filename := range this.APIFiles {
-		api := NewAPIFromFile(filename)
-		if api == nil {
-			continue
-		}
-		api.RemoveGroup(name)
-		api.Save()
-	}
-
-	this.APIGroups = result
-}
-
-// 修改API分组
-func (this *ServerConfig) ChangeAPIGroup(oldName string, newName string) {
-	result := []string{}
-	for _, groupName := range this.APIGroups {
-		if groupName == oldName {
-			result = append(result, newName)
-		} else {
-			result = append(result, groupName)
-		}
-	}
-
-	for _, filename := range this.APIFiles {
-		api := NewAPIFromFile(filename)
-		if api == nil {
-			continue
-		}
-		api.ChangeGroup(oldName, newName)
-		api.Save()
-	}
-
-	this.APIGroups = result
-}
-
-// 把API分组往上调整
-func (this *ServerConfig) MoveUpAPIGroup(name string) {
-	index := lists.Index(this.APIGroups, name)
-	if index <= 0 {
-		return
-	}
-	this.APIGroups[index], this.APIGroups[index-1] = this.APIGroups[index-1], this.APIGroups[index]
-}
-
-// 把API分组往下调整
-func (this *ServerConfig) MoveDownAPIGroup(name string) {
-	index := lists.Index(this.APIGroups, name)
-	if index < 0 {
-		return
-	}
-	this.APIGroups[index], this.APIGroups[index+1] = this.APIGroups[index+1], this.APIGroups[index]
-}
-
-// 添加API版本
-func (this *ServerConfig) AddAPIVersion(name string) {
-	this.APIVersions = append(this.APIVersions, name)
-}
-
-// 删除API版本
-func (this *ServerConfig) RemoveAPIVersion(name string) {
-	result := []string{}
-	for _, versionName := range this.APIVersions {
-		if versionName != name {
-			result = append(result, versionName)
-		}
-	}
-
-	for _, filename := range this.APIFiles {
-		api := NewAPIFromFile(filename)
-		if api == nil {
-			continue
-		}
-		api.RemoveVersion(name)
-		api.Save()
-	}
-
-	this.APIVersions = result
-}
-
-// 修改API版本
-func (this *ServerConfig) ChangeAPIVersion(oldName string, newName string) {
-	result := []string{}
-	for _, versionName := range this.APIVersions {
-		if versionName == oldName {
-			result = append(result, newName)
-		} else {
-			result = append(result, versionName)
-		}
-	}
-
-	for _, filename := range this.APIFiles {
-		api := NewAPIFromFile(filename)
-		if api == nil {
-			continue
-		}
-		api.ChangeVersion(oldName, newName)
-		api.Save()
-	}
-
-	this.APIVersions = result
-}
-
-// 把API版本往上调整
-func (this *ServerConfig) MoveUpAPIVersion(name string) {
-	index := lists.Index(this.APIVersions, name)
-	if index <= 0 {
-		return
-	}
-	this.APIVersions[index], this.APIVersions[index-1] = this.APIVersions[index-1], this.APIVersions[index]
-}
-
-// 把API版本往下调整
-func (this *ServerConfig) MoveDownAPIVersion(name string) {
-	index := lists.Index(this.APIVersions, name)
-	if index < 0 {
-		return
-	}
-	this.APIVersions[index], this.APIVersions[index+1] = this.APIVersions[index+1], this.APIVersions[index]
-}
-
-// 添加测试计划
-func (this *ServerConfig) AddTestPlan(filename string) {
-	this.APITestPlans = append(this.APITestPlans, filename)
-}
-
-// 查找所有测试计划
-func (this *ServerConfig) FindTestPlans() []*APITestPlan {
-	result := []*APITestPlan{}
-	for _, filename := range this.APITestPlans {
-		plan := NewAPITestPlanFromFile(filename)
-		if plan != nil {
-			result = append(result, plan)
-		}
-	}
-	return result
-}
-
-// 删除某个测试计划
-func (this *ServerConfig) DeleteTestPlan(filename string) error {
-	if len(filename) == 0 {
-		return errors.New("filename should not be empty")
-	}
-
-	plan := NewAPITestPlanFromFile(filename)
-	if plan != nil {
-		err := plan.Delete()
-		if err != nil {
-			return err
-		}
-	}
-
-	this.APITestPlans = lists.Delete(this.APITestPlans, filename).([]string)
-
-	return nil
 }
