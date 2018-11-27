@@ -38,6 +38,7 @@ type AccessLog struct {
 	RequestURI      string  `var:"requestURI" bson:"requestURI" json:"requestURI"`                // 请求URI
 	RequestPath     string  `var:"requestPath" bson:"requestPath" json:"requestPath"`             // 请求URI中的路径
 	APIPath         string  `var:"apiPath" bson:"apiPath" json:"apiPath"`                         // API路径
+	APIStatus       string  `var:"apiStatus" bson:"apiStatus" json:"apiStatus"`                   // API状态码
 	RequestLength   int64   `var:"requestLength" bson:"requestLength" json:"requestLength"`       // 请求内容长度
 	RequestTime     float64 `var:"requestTime" bson:"requestTime" json:"requestTime"`             // 从请求到所有响应数据发送到请求端所花时间，单位为带有小数点的秒，精确到纳秒，比如：0.000260081
 	RequestMethod   string  `var:"requestMethod" bson:"requestMethod" json:"requestMethod"`       // 请求方法
@@ -74,8 +75,9 @@ type AccessLog struct {
 	FastcgiAddress string `var:"fastcgiAddress" bson:"fastcgiAddress" json:"fastcgiAddress"` // Fastcgi后端地址
 
 	// 调试用
-	RequestData  []byte `var:"" bson:"requestData" json:"requestData"`   // 请求数据
-	ResponseData []byte `var:"" bson:"responseData" json:"responseData"` // 响应数据
+	RequestData        []byte `var:"" bson:"requestData" json:"requestData"`               // 请求数据
+	ResponseHeaderData []byte `var:"" bson:"responseHeaderData" json:"responseHeaderData"` // 响应Header数据
+	ResponseBodyData   []byte `var:"" bson:"responseBodyData" json:"responseBodyData"`     // 响应Body数据
 
 	// 扩展
 	Extend struct {

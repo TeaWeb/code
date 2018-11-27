@@ -1,6 +1,7 @@
 package teaproxy
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
@@ -8,12 +9,14 @@ import (
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teaplugins"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/gofcgi"
 	"io"
+	"io/ioutil"
 	"mime"
 	"net/http"
 	"net/http/httputil"
@@ -95,9 +98,11 @@ type Request struct {
 	requestMsec        float64
 	requestTimestamp   int64
 
-	isWatching   bool   // 是否在监控
-	requestData  []byte // 导出的request，在监控请求的时候有用
-	responseData []byte // 导出的response，在监控请求时有用
+	isWatching         bool   // 是否在监控
+	requestData        []byte // 导出的request，在监控请求的时候有用
+	responseHeaderData []byte // 导出的response header，在监控请求时有用
+	responseBodyData   []byte // 导出的response body，在监控请求时有用
+	responseAPIStatus  string // API状态码
 
 	shouldLog bool
 	debug     bool
@@ -159,7 +164,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 
 	// API配置，目前只有Plus版本支持
-	if teaconst.PlusEnabled && server.API != nil {
+	if teaconst.PlusEnabled && server.API != nil && server.API.On {
 		api, params := server.API.FindActiveAPI(uri.Path, this.method)
 		if api != nil {
 			this.api = api
@@ -730,13 +735,18 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 	// 打印resp
 	if this.isWatching {
 		// 如果响应的内容太长，则只导出headers
-		respData, err := httputil.DumpResponse(resp, true)
+		respHeader, respBody, err := teautils.DumpResponse(resp)
+		this.responseHeaderData = respHeader
 		if err == nil {
 			// 如果响应的内容太长，则截取
-			if len(respData) > 10240 {
-				respData = respData[:10240]
+			if len(respBody) > 10240 {
+				this.responseBodyData = respBody[:10240]
+			} else {
+				this.responseBodyData = respBody
 			}
-			this.responseData = respData
+
+			// 还原
+			resp.Body = ioutil.NopCloser(bytes.NewReader(respBody))
 		}
 	}
 
@@ -779,6 +789,21 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 
 	// 设置响应代码
 	writer.WriteHeader(resp.StatusCode)
+
+	// 分析API中的status
+	if this.api != nil {
+		statusCode := resp.Header.Get("Tea-Status-Code")
+		if len(statusCode) == 0 && this.server.API.StatusScriptOn && len(this.server.API.StatusScript) > 0 {
+			data, err := ioutil.ReadAll(resp.Body)
+			if err == nil {
+				statusCode, _ = StatusCodeParser(resp.StatusCode, writer.Header(), data, this.server.API.StatusScript)
+				resp.Body = ioutil.NopCloser(bytes.NewReader(data))
+			}
+		}
+		if len(statusCode) > 0 {
+			this.responseAPIStatus = statusCode
+		}
+	}
 
 	n, err := io.Copy(writer, resp.Body)
 	if err != nil {
@@ -907,13 +932,20 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 
 	// 打印resp
 	if this.isWatching {
-		respData, err := httputil.DumpResponse(resp, true)
+		// 如果响应的内容太长，则只导出headers
+		respHeader, respBody, err := teautils.DumpResponse(resp)
+		this.responseHeaderData = respHeader
 		if err == nil {
-			// 如果响应的内容太长，则截断
-			if len(respData) > 10240 {
-				respData = respData[:10240]
+			// 如果响应的内容太长，则截取
+			if len(respBody) > 10240 {
+				this.responseBodyData = respBody[:10240]
+			} else {
+				this.responseBodyData = respBody
 			}
-			this.responseData = respData
+			resp.Body = ioutil.NopCloser(bytes.NewReader(respBody))
+
+			// 分析代码
+
 		}
 	}
 
@@ -1346,6 +1378,7 @@ func (this *Request) log() {
 
 	if this.api != nil {
 		accessLog.APIPath = this.api.Path
+		accessLog.APIStatus = this.responseAPIStatus
 	}
 
 	if this.server != nil {
@@ -1376,8 +1409,11 @@ func (this *Request) log() {
 		accessLog.RequestData = this.requestData
 	}
 
-	if len(this.responseData) > 0 {
-		accessLog.ResponseData = this.responseData
+	if len(this.responseHeaderData) > 0 {
+		accessLog.ResponseHeaderData = this.responseHeaderData
+	}
+	if len(this.responseBodyData) > 0 {
+		accessLog.ResponseBodyData = this.responseBodyData
 	}
 
 	tealogs.SharedLogger().Push(accessLog)

@@ -7,16 +7,20 @@ import (
 
 // 服务的API配置
 type APIConfig struct {
-	On         bool         `yaml:"apiOn" json:"apiOn"`               // 是否开启API功能
-	Files      []string     `yaml:"apiFiles" json:"apiFiles"`         // API文件列表
-	Groups     []string     `yaml:"apiGroups" json:"apiGroups"`       // API分组
-	Versions   []string     `yaml:"apiVersions" json:"apiVersions"`   // API版本
-	TestPlans  []string     `yaml:"apiTestPlans" json:"apiTestPlans"` // API测试计划
-	Limit      *APILimit    `yaml:"apiLimit" json:"apiLimit"`         // API全局的限制 TODO
-	StatusList []*APIStatus `yaml:"status" json:"status"`             // 状态码列表
+	On             bool         `yaml:"apiOn" json:"apiOn"`                   // 是否开启API功能
+	Files          []string     `yaml:"apiFiles" json:"apiFiles"`             // API文件列表
+	Groups         []string     `yaml:"apiGroups" json:"apiGroups"`           // API分组
+	Versions       []string     `yaml:"apiVersions" json:"apiVersions"`       // API版本
+	TestPlans      []string     `yaml:"apiTestPlans" json:"apiTestPlans"`     // API测试计划
+	Limit          *APILimit    `yaml:"apiLimit" json:"apiLimit"`             // API全局的限制 TODO
+	StatusList     []*APIStatus `yaml:"status" json:"status"`                 // 状态码列表
+	StatusScriptOn bool         `yaml:"statusScriptOn" json:"statusScriptOn"` // 是否开启状态码分析脚本
+	StatusScript   string       `yaml:"statusScript" json:"statusScript"`     // 状态码分析脚本
 
 	pathMap    map[string]*API // path => api
 	patternMap map[string]*API // path => api
+
+	statusMap map[string]*APIStatus // status code => status
 }
 
 // 获取新对象
@@ -28,6 +32,9 @@ func NewAPIConfig() *APIConfig {
 func (this *APIConfig) Validate() error {
 	this.pathMap = map[string]*API{}
 	this.patternMap = map[string]*API{}
+	this.statusMap = map[string]*APIStatus{}
+
+	// 文件名
 	for _, apiFilename := range this.Files {
 		api := NewAPIFromFile(apiFilename)
 		if api == nil {
@@ -50,6 +57,11 @@ func (this *APIConfig) Validate() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	// api status
+	for _, status := range this.StatusList {
+		this.statusMap[status.Code] = status
 	}
 
 	return nil
@@ -196,7 +208,7 @@ func (this *APIConfig) MoveUpAPIGroup(name string) {
 // 把API分组往下调整
 func (this *APIConfig) MoveDownAPIGroup(name string) {
 	index := lists.Index(this.Groups, name)
-	if index < 0 {
+	if index < 0 || index == len(this.Groups)-1 {
 		return
 	}
 	this.Groups[index], this.Groups[index+1] = this.Groups[index+1], this.Groups[index]
@@ -263,7 +275,7 @@ func (this *APIConfig) MoveUpAPIVersion(name string) {
 // 把API版本往下调整
 func (this *APIConfig) MoveDownAPIVersion(name string) {
 	index := lists.Index(this.Versions, name)
-	if index < 0 {
+	if index < 0 || index == len(this.Versions)-1 {
 		return
 	}
 	this.Versions[index], this.Versions[index+1] = this.Versions[index+1], this.Versions[index]
@@ -303,4 +315,105 @@ func (this *APIConfig) DeleteTestPlan(filename string) error {
 	this.TestPlans = lists.Delete(this.TestPlans, filename).([]string)
 
 	return nil
+}
+
+// 刷新状态码Map
+func (this *APIConfig) RefreshStatusMap() {
+	// api status
+	for _, status := range this.StatusList {
+		this.statusMap[status.Code] = status
+	}
+}
+
+// 判断状态代号是否存在
+func (this *APIConfig) ExistStatusCode(code string) bool {
+	for _, status := range this.StatusList {
+		if status.Code == code {
+			return true
+		}
+	}
+	return false
+}
+
+// 根据代号查找状态码
+func (this *APIConfig) FindAPIStatus(code string) *APIStatus {
+	// 从list中读取
+	if this.statusMap == nil {
+		for _, status := range this.StatusList {
+			if status.Code == code {
+				return status
+			}
+		}
+		return nil
+	}
+
+	// 从map中读取
+	status, found := this.statusMap[code]
+	if found {
+		return status
+	}
+	return nil
+}
+
+// 添加状态
+func (this *APIConfig) AddStatus(status *APIStatus) {
+	this.StatusList = append(this.StatusList, status)
+}
+
+// 把状态码往上调整
+func (this *APIConfig) MoveUpAPIStatus(code string) {
+	index := lists.IndexIf(this.StatusList, func(item interface{}) bool {
+		return item.(*APIStatus).Code == code
+	})
+	if index <= 0 {
+		return
+	}
+	this.StatusList[index], this.StatusList[index-1] = this.StatusList[index-1], this.StatusList[index]
+}
+
+// 把API分组往下调整
+func (this *APIConfig) MoveDownAPIStatus(code string) {
+	index := lists.IndexIf(this.StatusList, func(item interface{}) bool {
+		return item.(*APIStatus).Code == code
+	})
+	if index < 0 || index == len(this.StatusList)-1 {
+		return
+	}
+	this.StatusList[index], this.StatusList[index+1] = this.StatusList[index+1], this.StatusList[index]
+}
+
+// 移动位置
+func (this *APIConfig) MoveAPIStatus(fromIndex int, toIndex int) {
+	if fromIndex < 0 || fromIndex >= len(this.StatusList) {
+		return
+	}
+	if toIndex < 0 || toIndex >= len(this.StatusList) {
+		return
+	}
+	if fromIndex == toIndex {
+		return
+	}
+
+	status := this.StatusList[fromIndex]
+	newList := []*APIStatus{}
+	for i := 0; i < len(this.StatusList); i ++ {
+		if i == fromIndex {
+			continue
+		}
+		if fromIndex > toIndex && i == toIndex {
+			newList = append(newList, status)
+		}
+		newList = append(newList, this.StatusList[i])
+		if fromIndex < toIndex && i == toIndex {
+			newList = append(newList, status)
+		}
+	}
+	this.StatusList = newList
+}
+
+// 移除状态码
+func (this *APIConfig) RemoveStatus(code string) {
+	this.StatusList = lists.DeleteIf(this.StatusList, func(item interface{}) bool {
+		return item.(*APIStatus).Code == code
+	}).([]*APIStatus)
 }

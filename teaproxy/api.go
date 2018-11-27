@@ -36,3 +36,12 @@ func ReplaceAPIs(serverId string, filenames []string) {
 		server.Validate()
 	}
 }
+
+// 更新状态码设置
+func UpdateAPIStatusParser(serverId string, scriptOn bool, script string) {
+	server, found := SERVERS[serverId]
+	if found {
+		server.API.StatusScriptOn = scriptOn
+		server.API.StatusScript = script
+	}
+}
