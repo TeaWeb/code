@@ -14,6 +14,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
+	"github.com/iwind/TeaGo/utils/string"
 	"github.com/iwind/gofcgi"
 	"io"
 	"io/ioutil"
@@ -636,13 +637,29 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 		}
 	}
 
-	// 发送 Last-Modified
+	// 支持 Last-Modified
 	modifiedTime := stat.ModTime().Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	if len(respHeader.Get("Last-Modified")) == 0 {
 		respHeader.Set("Last-Modified", modifiedTime)
 	}
 
+	// 支持 ETag
+	eTag := "\"et" + stringutil.Md5(fmt.Sprintf("%d,%d", stat.ModTime().UnixNano(), stat.Size())) + "\""
+	if len(respHeader.Get("ETag")) == 0 {
+		respHeader.Set("ETag", eTag)
+	}
+
 	this.responseHeader = writer.Header()
+
+	// 支持 If-None-Match
+	if this.requestHeader("If-None-Match") == eTag {
+		writer.WriteHeader(http.StatusNotModified)
+
+		this.responseStatus = http.StatusNotModified
+		this.responseStatusMessage = "304 Not Modified"
+
+		return nil
+	}
 
 	// 支持 If-Modified-Since
 	if this.requestHeader("If-Modified-Since") == modifiedTime {
