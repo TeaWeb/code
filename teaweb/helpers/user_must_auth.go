@@ -118,7 +118,13 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 		}
 	}
 
-	action.Data["teaTitle"] = "TeaWeb管理平台"
+	if teaconst.PlusEnabled {
+		action.Data["teaTitle"] = "TeaWeb+管理平台"
+		action.Data["teaName"] = "TeaWeb+"
+	} else {
+		action.Data["teaTitle"] = "TeaWeb管理平台"
+		action.Data["teaName"] = "TeaWeb"
+	}
 
 	if len(user.Name) == 0 {
 		action.Data["teaUsername"] = username

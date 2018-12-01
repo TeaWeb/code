@@ -517,7 +517,7 @@ func (this *Request) Call(writer http.ResponseWriter) error {
 	return errors.New("unable to handle the request")
 }
 
-// @TODO 支持eTag，cache等
+// @TODO 支持cache等
 func (this *Request) callRoot(writer http.ResponseWriter) error {
 	if len(this.uri) == 0 {
 		this.notFoundError(writer)

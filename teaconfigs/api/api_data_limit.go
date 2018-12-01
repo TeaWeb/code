@@ -11,6 +11,7 @@ type APIDataLimit struct {
 	duration time.Duration
 }
 
+// 校验
 func (this *APIDataLimit) Validate() error {
 	return nil
 }

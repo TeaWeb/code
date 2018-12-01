@@ -37,7 +37,8 @@ type API struct {
 	Groups         []string               `yaml:"groups" json:"groups"`                 // 分组
 	Limit          *APILimit              `yaml:"limit" json:"limit"`                   // 限制 TODO
 
-	TestScripts []string `yaml:"testScripts" json:"testScripts"` // 脚本文件
+	TestScripts   []string `yaml:"testScripts" json:"testScripts"`     // 脚本文件
+	TestCaseFiles []string `yaml:"testCaseFiles" json:"testCaseFiles"` // 单元测试存储文件
 
 	pathReg    *regexp.Regexp // 匹配模式
 	pathParams []string
@@ -303,4 +304,32 @@ func (this *API) Delete() error {
 	}
 
 	return files.NewFile(Tea.ConfigFile(this.Filename)).DeleteIfExists()
+}
+
+// 添加测试用例
+func (this *API) AddTestCase(filename string) {
+	if len(filename) == 0 {
+		return
+	}
+	if lists.Contains(this.TestCaseFiles, filename) {
+		return
+	}
+	this.TestCaseFiles = append(this.TestCaseFiles, filename)
+}
+
+// 查找所有的测试用例
+func (this *API) FindTestCases() []*APITestCase {
+	cases := []*APITestCase{}
+	for _, filename := range this.TestCaseFiles {
+		case1 := NewAPITestCaseFromFile(filename)
+		if case1 != nil {
+			cases = append(cases, case1)
+		}
+	}
+	return cases
+}
+
+// 删除测试用例
+func (this *API) DeleteTestCase(filename string) {
+	this.TestCaseFiles = lists.Delete(this.TestCaseFiles, filename).([]string)
 }
