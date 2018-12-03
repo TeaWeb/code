@@ -7,15 +7,16 @@ import (
 
 // 服务的API配置
 type APIConfig struct {
-	On             bool         `yaml:"apiOn" json:"apiOn"`                   // 是否开启API功能
-	Files          []string     `yaml:"apiFiles" json:"apiFiles"`             // API文件列表
-	Groups         []string     `yaml:"apiGroups" json:"apiGroups"`           // API分组
-	Versions       []string     `yaml:"apiVersions" json:"apiVersions"`       // API版本
-	TestPlans      []string     `yaml:"apiTestPlans" json:"apiTestPlans"`     // API测试计划
-	Limit          *APILimit    `yaml:"apiLimit" json:"apiLimit"`             // API全局的限制 TODO
+	On             bool         `yaml:"on" json:"on"`                         // 是否开启API功能
+	Files          []string     `yaml:"files" json:"files"`                   // API文件列表
+	Groups         []string     `yaml:"groups" json:"groups"`                 // API分组
+	Versions       []string     `yaml:"versions" json:"versions"`             // API版本
+	TestPlans      []string     `yaml:"testPlans" json:"testPlans"`           // API测试计划
+	Limit          *APILimit    `yaml:"limit" json:"limit"`                   // API全局的限制 TODO
 	StatusList     []*APIStatus `yaml:"status" json:"status"`                 // 状态码列表
 	StatusScriptOn bool         `yaml:"statusScriptOn" json:"statusScriptOn"` // 是否开启状态码分析脚本
 	StatusScript   string       `yaml:"statusScript" json:"statusScript"`     // 状态码分析脚本
+	MockOn         bool         `yaml:"mockOn" json:"mockOn"`                 // 是否开启Mock
 
 	pathMap    map[string]*API // path => api
 	patternMap map[string]*API // path => api

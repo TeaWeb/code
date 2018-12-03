@@ -11,6 +11,7 @@ import (
 	"github.com/TeaWeb/code/teaplugins"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -78,7 +79,8 @@ type Request struct {
 	proxy    *teaconfigs.ServerConfig
 	location *teaconfigs.LocationConfig
 
-	api *apiconfig.API // API
+	api    *apiconfig.API // API
+	mockOn bool           // 是否开启了API Mock
 
 	rewriteId      string // 匹配的rewrite id
 	rewriteReplace string // 经过rewrite之后的URL
@@ -166,6 +168,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 	// API配置，目前只有Plus版本支持
 	if teaconst.PlusEnabled && server.API != nil && server.API.On {
+		// 查找API
 		api, params := server.API.FindActiveAPI(uri.Path, this.method)
 		if api != nil {
 			this.api = api
@@ -242,6 +245,12 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					}
 					this.requestData = reqData
 				}
+			}
+
+			// 是否有Mock
+			if server.API.MockOn && api.MockOn && len(api.MockFiles) > 0 {
+				this.mockOn = true
+				return nil
 			}
 		}
 	}
@@ -492,6 +501,11 @@ func (this *Request) Call(writer http.ResponseWriter) error {
 	defer func() {
 		this.log()
 	}()
+
+	// 是否有mock
+	if this.mockOn {
+		return this.callMock(writer)
+	}
 
 	// API相关
 	if this.api != nil {
@@ -1040,6 +1054,47 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 	this.responseStatusMessage = resp.Status
 	this.responseBytesSent = n
 	this.responseBodyBytesSent = n
+
+	return nil
+}
+
+// 调用API Mock
+func (this *Request) callMock(writer http.ResponseWriter) error {
+	n := 0
+
+	if this.api != nil && len(this.api.MockFiles) > 0 {
+		mock := this.api.RandMock()
+		if mock != nil {
+			for _, header := range mock.Headers {
+				name := header.GetString("name")
+				value := header.GetString("value")
+				if len(name) > 0 {
+					writer.Header().Set(name, value)
+				}
+			}
+
+			writer.Header().Set("Tea-API-Mock", "on")
+
+			if len(mock.File) > 0 {
+				reader, err := files.NewReader(Tea.ConfigFile(mock.File))
+				if err == nil {
+					defer reader.Close()
+					data := reader.ReadAll()
+					n, _ = writer.Write(data)
+				}
+			} else {
+				n, _ = writer.Write([]byte(mock.Text))
+			}
+		}
+	} else {
+		n, _ = writer.Write([]byte("mock data not found"))
+	}
+
+	this.responseHeader = writer.Header()
+	this.responseStatus = http.StatusOK
+	this.responseStatusMessage = "200 OK"
+	this.responseBytesSent = int64(n)
+	this.responseBodyBytesSent = int64(n)
 
 	return nil
 }

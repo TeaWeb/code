@@ -7,7 +7,9 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
+	"math/rand"
 	"regexp"
+	"time"
 )
 
 //  API定义
@@ -19,7 +21,8 @@ type API struct {
 	Params         []*APIParam            `yaml:"params" json:"params"`                 // 参数
 	Name           string                 `yaml:"name" json:"name"`                     // 名称
 	Description    string                 `yaml:"description" json:"description"`       // 描述
-	Mock           []string               `yaml:"mock" json:"mock"`                     // TODO
+	MockFiles      []string               `yaml:"mockFiles" json:"mockFiles"`           // 假数据文件（Mock）
+	MockOn         bool                   `yaml:"mockOn" json:"mockOn"`                 // 是否开启Mock
 	Author         string                 `yaml:"author" json:"author"`                 // 作者
 	Company        string                 `yaml:"company" json:"company"`               // 公司或团队
 	IsAsynchronous bool                   `yaml:"isAsynchronous" json:"isAsynchronous"` // TODO
@@ -332,4 +335,46 @@ func (this *API) FindTestCases() []*APITestCase {
 // 删除测试用例
 func (this *API) DeleteTestCase(filename string) {
 	this.TestCaseFiles = lists.Delete(this.TestCaseFiles, filename).([]string)
+}
+
+// 添加Mock文件
+func (this *API) AddMock(filename string) {
+	if len(filename) == 0 {
+		return
+	}
+	if lists.Contains(this.MockFiles, filename) {
+		return
+	}
+	this.MockFiles = append(this.MockFiles, filename)
+}
+
+// 获取所有Mock的文件
+func (this *API) MockDataFiles() []string {
+	result := []string{}
+	for _, filename := range this.MockFiles {
+		mock := NewAPIMockFromFile(filename)
+		if mock != nil && len(mock.File) > 0 {
+			result = append(result, mock.File)
+		}
+	}
+	return result
+}
+
+// 删除Mock
+func (this *API) DeleteMock(mockFile string) {
+	this.MockFiles = lists.Delete(this.MockFiles, mockFile).([]string)
+}
+
+// 随机取得一个Mock
+func (this *API) RandMock() *APIMock {
+	if len(this.MockFiles) == 0 {
+		return nil
+	}
+	rand.Seed(time.Now().UnixNano())
+	file := this.MockFiles[rand.Int()%len(this.MockFiles)]
+	if len(file) == 0 {
+		return nil
+	}
+
+	return NewAPIMockFromFile(file)
 }

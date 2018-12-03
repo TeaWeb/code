@@ -1,5 +1,5 @@
 package teaconst
 
 const (
-	TeaVersion = "0.0.4"
+	TeaVersion = "0.0.5"
 )

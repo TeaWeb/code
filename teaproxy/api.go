@@ -45,3 +45,11 @@ func UpdateAPIStatusParser(serverId string, scriptOn bool, script string) {
 		server.API.StatusScript = script
 	}
 }
+
+// 更新Mock
+func UpdateAPIMockOn(serverId string, mockOn bool) {
+	server, found := SERVERS[serverId]
+	if found {
+		server.API.MockOn = mockOn
+	}
+}
