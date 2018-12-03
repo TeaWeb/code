@@ -186,8 +186,8 @@ func (this *AccessLogger) wait() {
 }
 
 // 添加处理器
-func (this *AccessLogger) AddProcessor(processor Processor) {
-	this.processors = append(this.processors, processor)
+func (this *AccessLogger) AddProcessor(processor ... Processor) {
+	this.processors = append(this.processors, processor ...)
 }
 
 // 关闭

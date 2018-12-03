@@ -27,9 +27,6 @@ var processors = []tealogs.Processor{
 	new(TopBrowserStat),
 	new(TopRequestStat),
 	new(TopCostStat),
-
-	// API相关
-	new(APIDailyRequestsStat),
 }
 
 type Processor struct {

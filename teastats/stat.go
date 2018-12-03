@@ -2,94 +2,111 @@ package teastats
 
 import (
 	"context"
-	"fmt"
 	"github.com/TeaWeb/code/teamongo"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/timers"
-	"github.com/iwind/TeaGo/types"
 	"github.com/mongodb/mongo-go-driver/mongo/updateopt"
 	"sync"
 	"time"
 )
 
-type IncrementOperation struct {
-	coll   *teamongo.Collection
-	filter map[string]interface{}
-	init   map[string]interface{}
-	field  string
-}
-
-func (this *IncrementOperation) uniqueId() string {
-	keys := []string{}
-	for key := range this.filter {
-		keys = append(keys, key)
-	}
-	lists.Sort(keys, func(i int, j int) bool {
-		return keys[i] < keys[j]
-	})
-
-	uniqueId := fmt.Sprintf("%p", this.coll)
-	for _, key := range keys {
-		uniqueId += "@" + types.String(this.filter[key])
-	}
-	return uniqueId + "@" + this.field
-}
-
+// 统计基本定义
 type Stat struct {
-	operations []*IncrementOperation
+	incOperations []*IncrementOperation
+	avgOperations []*AvgOperation
 
 	once   sync.Once
 	locker sync.Mutex
 }
 
+// 初始化
 func (this *Stat) initOnce() {
 	this.once.Do(func() {
 		timers.Loop(1*time.Second, func(looper *timers.Looper) {
 			this.locker.Lock()
 			defer this.locker.Unlock()
 
-			lastUniqueId := ""
-			count := 0
-			end := 0
+			// 增加操作
+			{
+				lastUniqueId := ""
+				count := 0
+				end := 0
 
-			for index, op := range this.operations {
-				uniqueId := op.uniqueId()
-				if len(lastUniqueId) == 0 {
-					lastUniqueId = uniqueId
-					count ++
-					end = index
-					continue
+				for index, op := range this.incOperations {
+					uniqueId := op.uniqueId()
+					if len(lastUniqueId) == 0 {
+						lastUniqueId = uniqueId
+						count ++
+						end = index
+						continue
+					}
+
+					if lastUniqueId == uniqueId {
+						count ++
+						end = index
+						continue
+					}
+
+					// 不相同，则终止
+					break
 				}
 
-				if lastUniqueId == uniqueId {
-					count ++
-					end = index
-					continue
-				}
+				if count > 0 {
+					firstOP := this.incOperations[0]
+					_, err := firstOP.coll.UpdateOne(context.Background(), firstOP.filter, map[string]interface{}{
+						"$set": firstOP.init,
+						"$inc": map[string]interface{}{
+							firstOP.field: count,
+						},
+					}, updateopt.OptUpsert(true))
+					if err != nil {
+						logs.Error(err)
+					}
 
-				// 不相同，则终止
-				break
+					this.incOperations = this.incOperations[end+1:]
+				}
 			}
 
-			if count > 0 {
-				firstOP := this.operations[0]
-				_, err := firstOP.coll.UpdateOne(context.Background(), firstOP.filter, map[string]interface{}{
-					"$set": firstOP.init,
-					"$inc": map[string]interface{}{
-						firstOP.field: count,
-					},
-				}, updateopt.OptUpsert(true))
-				if err != nil {
-					logs.Error(err)
+			// 平均值操作
+			{
+				dataMap := map[string]maps.Map{} // uniqueId => { count, sum, op }
+				for _, op := range this.avgOperations {
+					uniqueId := op.uniqueId()
+					m, found := dataMap[uniqueId]
+					if found {
+						m["count"] = m.GetInt("count") + op.count
+						m["sum"] = m.GetFloat64("sum") + op.sum
+					} else {
+						m = maps.Map{}
+						m["count"] = op.count
+						m["sum"] = op.sum
+						m["op"] = op
+						dataMap[uniqueId] = m
+					}
 				}
-
-				this.operations = this.operations[end+1:]
+				for _, m := range dataMap {
+					op := m["op"].(*AvgOperation)
+					count := m.GetInt("count")
+					sum := m.GetFloat64("sum")
+					_, err := op.coll.UpdateOne(context.Background(), op.filter, map[string]interface{}{
+						"$set": op.init,
+						"$inc": map[string]interface{}{
+							op.countField: count,
+							op.sumField:   sum,
+						},
+					}, updateopt.OptUpsert(true))
+					if err != nil {
+						logs.Error(err)
+					}
+				}
+				this.avgOperations = []*AvgOperation{}
 			}
 		})
 	})
 }
 
+// 为某个字段做增加操作
 func (this *Stat) Increase(collection *teamongo.Collection, filter map[string]interface{}, init map[string]interface{}, field string) {
 	this.initOnce()
 
@@ -99,10 +116,31 @@ func (this *Stat) Increase(collection *teamongo.Collection, filter map[string]in
 
 	this.locker.Lock()
 	defer this.locker.Unlock()
-	this.operations = append(this.operations, &IncrementOperation{
+	this.incOperations = append(this.incOperations, &IncrementOperation{
 		coll:   collection,
 		filter: filter,
 		init:   init,
 		field:  field,
+	})
+}
+
+// 为某个字段做平均值计算操作
+func (this *Stat) Avg(collection *teamongo.Collection, filter map[string]interface{}, init map[string]interface{}, countField string, count int, sumField string, sum float64) {
+	this.initOnce()
+
+	if collection == nil {
+		return
+	}
+
+	this.locker.Lock()
+	defer this.locker.Unlock()
+	this.avgOperations = append(this.avgOperations, &AvgOperation{
+		coll:       collection,
+		filter:     filter,
+		init:       init,
+		countField: countField,
+		count:      count,
+		sumField:   sumField,
+		sum:        sum,
 	})
 }

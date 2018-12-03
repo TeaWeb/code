@@ -28,7 +28,7 @@ func (this *TopCostStat) Init() {
 	coll := findCollection("stats.top.cost.monthly", nil)
 	coll.CreateIndex(map[string]bool{
 		"serverId": true,
-		"region":   true,
+		"month":    true,
 		"url":      true,
 	})
 	coll.CreateIndex(map[string]bool{

@@ -25,7 +25,7 @@ func (this *TopRequestStat) Init() {
 	coll := findCollection("stats.top.requests.monthly", nil)
 	coll.CreateIndex(map[string]bool{
 		"serverId": true,
-		"region":   true,
+		"month":    true,
 		"url":      true,
 	})
 	coll.CreateIndex(map[string]bool{
@@ -53,6 +53,7 @@ func (this *TopRequestStat) Process(accessLog *tealogs.AccessLog) {
 	}, "count")
 }
 
+// 列出所有的排名
 func (this *TopRequestStat) List(serverId string, size int64) (result []TopRequestStat) {
 	if size <= 0 {
 		size = 10
