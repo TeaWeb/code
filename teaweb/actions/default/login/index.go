@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo/actions"
+	"net/http"
 	"time"
 )
 
@@ -11,6 +12,13 @@ type IndexAction actions.Action
 
 // 登录
 func (this *IndexAction) RunGet() {
+	// 检查IP限制
+	if !configs.SharedAdminConfig().AllowIP(this.RequestRemoteIP()) {
+		this.ResponseWriter.WriteHeader(http.StatusForbidden)
+		this.WriteString("TeaWeb Access Forbidden")
+		return
+	}
+
 	b := Notify(this)
 	if !b {
 		return
@@ -25,6 +33,13 @@ func (this *IndexAction) RunPost(params struct {
 	Must     *actions.Must
 	Auth     *helpers.UserShouldAuth
 }) {
+	// 检查IP限制
+	if !configs.SharedAdminConfig().AllowIP(this.RequestRemoteIP()) {
+		this.ResponseWriter.WriteHeader(http.StatusForbidden)
+		this.WriteString("TeaWeb Access Forbidden")
+		return
+	}
+
 	b := Notify(this)
 	if !b {
 		return

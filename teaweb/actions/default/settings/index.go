@@ -1,10 +1,11 @@
 package settings
 
 import (
-	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo/files"
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/files"
 )
 
 type IndexAction actions.Action
@@ -29,6 +30,10 @@ func (this *IndexAction) Run(params struct{}) {
 	}
 
 	this.Data["server"] = server
+
+	// admin
+	admin := configs.SharedAdminConfig()
+	this.Data["security"] = admin.Security
 
 	this.Show()
 }

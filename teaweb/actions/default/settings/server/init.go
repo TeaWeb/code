@@ -19,6 +19,7 @@ func init() {
 			Post("/httpUpdate", new(HttpUpdateAction)).
 			Get("/https", new(HttpsAction)).
 			Post("/httpsUpdate", new(HttpsUpdateAction)).
+			GetPost("/security", new(SecurityAction)).
 			EndAll()
 	})
 }

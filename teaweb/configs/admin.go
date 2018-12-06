@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -197,4 +198,19 @@ func (this *AdminConfig) FindAllActiveGrants() []*AdminGrant {
 // 添加授权
 func (this *AdminConfig) AddGrant(grant *AdminGrant) {
 	this.Grant = append(this.Grant, grant)
+}
+
+// 检查是否允许IP
+func (this *AdminConfig) AllowIP(ip string) bool {
+	// deny
+	if len(this.Security.Deny) > 0 && lists.Contains(this.Security.Deny, ip) {
+		return false
+	}
+
+	// allow
+	if lists.Contains(this.Security.Allow, "all") || lists.Contains(this.Security.Allow, ip) {
+		return true
+	}
+
+	return false
 }

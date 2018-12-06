@@ -4,8 +4,10 @@ import (
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
+	"net/http"
 )
 
+// 认证拦截
 type UserMustAuth struct {
 	Username string
 	Grant    string
@@ -13,6 +15,14 @@ type UserMustAuth struct {
 
 func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramName string) (goNext bool) {
 	var action = actionPtr.Object()
+
+	// 检查IP
+	if !configs.SharedAdminConfig().AllowIP(action.RequestRemoteIP()) {
+		action.ResponseWriter.WriteHeader(http.StatusForbidden)
+		action.WriteString("TeaWeb Access Forbidden")
+		return false
+	}
+
 	var session = action.Session()
 	var username = session.GetString("username")
 	if len(username) == 0 {
