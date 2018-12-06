@@ -31,7 +31,7 @@ type API struct {
 	Headers        []*shared.HeaderConfig `yaml:"headers" json:"headers"`               // TODO
 	TodoThings     []string               `yaml:"todo" json:"todo"`                     // 待做事宜
 	DoneThings     []string               `yaml:"done" json:"done"`                     // 已完成事宜
-	Response       []byte                 `yaml:"response" json:"response"`             // TODO
+	Response       []byte                 `yaml:"response" json:"response"`             // 响应内容 TODO
 	IsDeprecated   bool                   `yaml:"isDeprecated" json:"isDeprecated"`     // 是否过期
 	On             bool                   `yaml:"on" json:"on"`                         // 是否开启
 	Versions       []string               `yaml:"versions" json:"versions"`             // 版本信息
@@ -39,6 +39,7 @@ type API struct {
 	Username       string                 `yaml:"username" json:"username"`             // 最后修改用户名
 	Groups         []string               `yaml:"groups" json:"groups"`                 // 分组
 	Limit          *APILimit              `yaml:"limit" json:"limit"`                   // 限制 TODO
+	AuthType       string                 `yaml:"authType" json:"authType"`             // 认证方式
 
 	TestScripts   []string `yaml:"testScripts" json:"testScripts"`     // 脚本文件
 	TestCaseFiles []string `yaml:"testCaseFiles" json:"testCaseFiles"` // 单元测试存储文件

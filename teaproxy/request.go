@@ -514,6 +514,12 @@ func (this *Request) Call(writer http.ResponseWriter) error {
 			this.api.Limit.Begin()
 			defer this.api.Limit.Done()
 		}
+
+		// 检查consumer
+		goNext := this.consumeAPI(writer)
+		if !goNext {
+			return nil
+		}
 	}
 
 	if this.backend != nil {
@@ -1097,6 +1103,43 @@ func (this *Request) callMock(writer http.ResponseWriter) error {
 	this.responseBodyBytesSent = int64(n)
 
 	return nil
+}
+
+// 处理API
+func (this *Request) consumeAPI(writer http.ResponseWriter) bool {
+	if len(this.api.AuthType) == 0 {
+		this.api.AuthType = apiconfig.APIAuthTypeNone
+	}
+	consumer, authorized := this.server.API.FindConsumerForRequest(this.api.AuthType, this.raw)
+	if !authorized {
+		writer.WriteHeader(http.StatusUnauthorized)
+		writer.Write([]byte("Unauthorized Request"))
+		return false
+	}
+	if consumer == nil {
+		return true
+	}
+
+	if !consumer.AllowAPI(this.api.Path) {
+		writer.WriteHeader(http.StatusForbidden)
+		writer.Write([]byte("Forbidden Request"))
+		return false
+	}
+
+	if !consumer.Policy.AllowAccess(this.requestRemoteAddr()) {
+		writer.WriteHeader(http.StatusForbidden)
+		writer.Write([]byte("Forbidden Request"))
+		return false
+	}
+
+	reason, allowed := consumer.Policy.AllowTraffic()
+	if !allowed {
+		writer.WriteHeader(http.StatusTooManyRequests)
+		writer.Write([]byte("[" + reason + "]Request Quota Exceeded"))
+		return false
+	}
+
+	return true
 }
 
 func (this *Request) notFoundError(writer http.ResponseWriter) {

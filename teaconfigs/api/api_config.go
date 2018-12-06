@@ -3,6 +3,8 @@ package api
 import (
 	"errors"
 	"github.com/iwind/TeaGo/lists"
+	"net/http"
+	"sync"
 )
 
 // 服务的API配置
@@ -12,16 +14,19 @@ type APIConfig struct {
 	Groups         []string     `yaml:"groups" json:"groups"`                 // API分组
 	Versions       []string     `yaml:"versions" json:"versions"`             // API版本
 	TestPlans      []string     `yaml:"testPlans" json:"testPlans"`           // API测试计划
-	Limit          *APILimit    `yaml:"limit" json:"limit"`                   // API全局的限制 TODO
 	StatusList     []*APIStatus `yaml:"status" json:"status"`                 // 状态码列表
 	StatusScriptOn bool         `yaml:"statusScriptOn" json:"statusScriptOn"` // 是否开启状态码分析脚本
 	StatusScript   string       `yaml:"statusScript" json:"statusScript"`     // 状态码分析脚本
 	MockOn         bool         `yaml:"mockOn" json:"mockOn"`                 // 是否开启Mock
+	ConsumerFiles  []string     `yaml:"consumerFiles" json:"consumerFiles"`   // 消费者（调用的开发者）
 
 	pathMap    map[string]*API // path => api
 	patternMap map[string]*API // path => api
 
 	statusMap map[string]*APIStatus // status code => status
+
+	consumerLocker sync.RWMutex
+	consumersMap   map[string][]*APIConsumer // type => map[string]consumer
 }
 
 // 获取新对象
@@ -52,18 +57,13 @@ func (this *APIConfig) Validate() error {
 		}
 	}
 
-	// api limit
-	if this.Limit != nil {
-		err := this.Limit.Validate()
-		if err != nil {
-			return err
-		}
-	}
-
 	// api status
 	for _, status := range this.StatusList {
 		this.statusMap[status.Code] = status
 	}
+
+	// consumers
+	this.ReloadConsumers()
 
 	return nil
 }
@@ -417,4 +417,91 @@ func (this *APIConfig) RemoveStatus(code string) {
 	this.StatusList = lists.DeleteIf(this.StatusList, func(item interface{}) bool {
 		return item.(*APIStatus).Code == code
 	}).([]*APIStatus)
+}
+
+// 添加consumer
+func (this *APIConfig) AddConsumer(consumerFile string) {
+	if lists.Contains(this.ConsumerFiles, consumerFile) {
+		return
+	}
+	this.ConsumerFiles = append(this.ConsumerFiles, consumerFile)
+}
+
+// 删除consumer
+func (this *APIConfig) DeleteConsumer(consumerFile string) {
+	this.ConsumerFiles = lists.Delete(this.ConsumerFiles, consumerFile).([]string)
+}
+
+// 查询所有的Consumer
+func (this *APIConfig) FindAllConsumers() []*APIConsumer {
+	result := []*APIConsumer{}
+	for _, file := range this.ConsumerFiles {
+		c := NewAPIConsumerFromFile(file)
+		if c == nil {
+			continue
+		}
+		result = append(result, c)
+	}
+	return result
+}
+
+// 查询所有正在运行的Consumer
+func (this *APIConfig) FindAllRunningConsumers() []*APIConsumer {
+	result := []*APIConsumer{}
+	for _, m := range this.consumersMap {
+		result = append(result, m ...)
+	}
+	return result
+}
+
+// 查找某个认证类型的Consumer
+func (this *APIConfig) FindConsumerForRequest(authType string, req *http.Request) (consumer *APIConsumer, authorized bool) {
+	if len(authType) == 0 {
+		authType = APIAuthTypeNone
+	}
+
+	this.consumerLocker.RLock()
+	consumers, found := this.consumersMap[authType]
+	this.consumerLocker.RUnlock()
+	if !found {
+		if authType == APIAuthTypeNone {
+			return nil, true
+		}
+
+		return nil, false
+	}
+
+	// TODO 增加缓存
+	for _, consumer := range consumers {
+		auth := NewAPIAuth(consumer.Auth.Type, consumer.Auth.Options)
+		if auth == nil {
+			return nil, true
+		}
+		if auth.MatchRequest(req) {
+			return consumer, true
+		}
+	}
+
+	return nil, false
+}
+
+// 刷新Consumers
+func (this *APIConfig) ReloadConsumers() {
+	this.consumerLocker.Lock()
+	defer this.consumerLocker.Unlock()
+
+	this.consumersMap = map[string][]*APIConsumer{}
+	for _, consumerFile := range this.ConsumerFiles {
+		consumer := NewAPIConsumerFromFile(consumerFile)
+		if consumer == nil || !consumer.On {
+			continue
+		}
+		consumers, found := this.consumersMap[consumer.Auth.Type]
+		if found {
+			consumers = append(consumers, consumer)
+		} else {
+			consumers = []*APIConsumer{consumer}
+		}
+		this.consumersMap[consumer.Auth.Type] = consumers
+	}
 }
