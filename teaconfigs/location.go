@@ -17,7 +17,7 @@ const (
 )
 
 // 路径配置
-// @TODO 匹配的时候去除路径中多于的斜杠（/）
+// @TODO 匹配的时候去除路径中多余的斜杠（/）
 type LocationConfig struct {
 	On      bool   `yaml:"on" json:"on"`           // 是否开启 @TODO
 	Id      string `yaml:"id" json:"id"`           // @TODO
@@ -36,7 +36,7 @@ type LocationConfig struct {
 	Async   bool         `yaml:"async" json:"async"`     // 是否异步请求 @TODO
 	Notify  []string     `yaml:"notify" json:"notify"`   // 转发请求 @TODO
 	LogOnly bool         `yaml:"logOnly" json:"logOnly"` // 是否只记录日志 @TODO
-	Cache   *CacheConfig `yaml:"cache" json:"cache"`     // 缓存设置 @TODO
+	Cache   *CacheConfig `yaml:"cache" json:"cache"`     // 缓存设置
 	Root    string       `yaml:"root" json:"root"`       // 资源根目录
 	Index   []string     `yaml:"index" json:"index"`     // 默认文件
 	Charset string       `yaml:"charset" json:"charset"` // 字符集设置

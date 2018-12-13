@@ -68,6 +68,8 @@ func (this *Listener) Shutdown() error {
 
 // 处理请求
 func (this *Listener) handle(writer http.ResponseWriter, rawRequest *http.Request) {
+	responseWriter := NewResponseWriter(writer)
+
 	// 插件过滤
 	if teaplugins.HasRequestFilters {
 		result, willContinue := teaplugins.FilterRequest(rawRequest)
@@ -108,11 +110,11 @@ func (this *Listener) handle(writer http.ResponseWriter, rawRequest *http.Reques
 	// 查找Location
 	err := req.configure(server, 0)
 	if err != nil {
-		req.serverError(writer)
+		req.serverError(responseWriter)
 		logs.Error(errors.New(reqHost + rawRequest.URL.String() + ": " + err.Error()))
 		return
 	}
 
 	// 处理请求
-	req.Call(writer)
+	req.call(responseWriter)
 }

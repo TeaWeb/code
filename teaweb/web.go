@@ -2,6 +2,7 @@ package teaweb
 
 import (
 	"fmt"
+	_ "github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaproxy"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/apps"

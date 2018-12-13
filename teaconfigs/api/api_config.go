@@ -148,6 +148,12 @@ func (this *APIConfig) DeleteAPI(api *API) {
 	delete(this.patternMap, api.Path)
 }
 
+// 更新API
+func (this *APIConfig) UpdateAPI(api *API) {
+	this.DeleteAPI(api)
+	this.AddAPI(api)
+}
+
 // 添加API分组
 func (this *APIConfig) AddAPIGroup(name string) {
 	this.Groups = append(this.Groups, name)

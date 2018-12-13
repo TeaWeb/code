@@ -3,6 +3,7 @@ package teaproxy
 import (
 	"bytes"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
 	"io/ioutil"
@@ -18,10 +19,10 @@ type testResponseWriter struct {
 	data []byte
 }
 
-func testNewResponseWriter(a *assert.Assertion) *testResponseWriter {
-	return &testResponseWriter{
+func testNewResponseWriter(a *assert.Assertion) *ResponseWriter {
+	return NewResponseWriter(&testResponseWriter{
 		a: a,
-	}
+	})
 }
 
 func (this *testResponseWriter) Header() http.Header {
@@ -45,7 +46,7 @@ func TestRequest_Call(t *testing.T) {
 	writer := testNewResponseWriter(a)
 
 	request := NewRequest(nil)
-	err := request.Call(writer)
+	err := request.call(writer)
 	a.IsNotNil(err)
 	if err != nil {
 		a.Log(err.Error())
@@ -59,12 +60,12 @@ func TestRequest_CallRoot(t *testing.T) {
 	request := NewRequest(nil)
 	request.root = Tea.ViewsDir() + "/@default"
 	request.uri = "/layout.css"
-	err := request.Call(writer)
+	err := request.call(writer)
 	a.IsNil(err)
-	writer.Close()
 
+	a.Log("status:", writer.StatusCode())
 	a.Log("requestTime:", request.requestTime)
-	a.Log("bytes send:", request.responseBytesSent, request.responseBodyBytesSent)
+	a.Log("bytes send:", writer.SentBodyBytes())
 }
 
 func TestRequest_CallBackend(t *testing.T) {
@@ -83,13 +84,12 @@ func TestRequest_CallBackend(t *testing.T) {
 		Address: "127.0.0.1",
 	}
 	request.backend.Validate()
-	err = request.Call(writer)
+	err = request.call(writer)
 	a.IsNil(err)
-	writer.Close()
 
-	a.Log("status:", request.responseStatus, request.responseStatusMessage)
+	a.Log("status:", writer.StatusCode())
 	a.Log("requestTime:", request.requestTime)
-	a.Log("bytes send:", request.responseBytesSent, request.responseBodyBytesSent)
+	a.Log("bytes send:", writer.SentBodyBytes())
 }
 
 func TestRequest_CallProxy(t *testing.T) {
@@ -114,13 +114,12 @@ func TestRequest_CallProxy(t *testing.T) {
 	})**/
 	request.proxy = proxy
 
-	err = request.Call(writer)
+	err = request.call(writer)
 	a.IsNil(err)
-	writer.Close()
 
-	a.Log("status:", request.responseStatus, request.responseStatusMessage)
+	a.Log("status:", writer.StatusCode())
 	a.Log("requestTime:", request.requestTime)
-	a.Log("bytes send:", request.responseBytesSent, request.responseBodyBytesSent)
+	a.Log("bytes send:", writer.SentBodyBytes())
 }
 
 func TestRequest_CallFastcgi(t *testing.T) {
@@ -148,13 +147,12 @@ func TestRequest_CallFastcgi(t *testing.T) {
 		Pass: "127.0.0.1:9000",
 	}
 	request.fastcgi.Validate()
-	err = request.Call(writer)
+	err = request.call(writer)
 	a.IsNil(err)
-	writer.Close()
 
-	a.Log("status:", request.responseStatus, request.responseStatusMessage)
+	a.Log("status:", writer.StatusCode())
 	a.Log("requestTime:", request.requestTime)
-	a.Log("bytes send:", request.responseBytesSent, request.responseBodyBytesSent)
+	a.Log("bytes send:", writer.SentBodyBytes())
 }
 
 func TestRequest_CallFastcgiPerformance(t *testing.T) {
@@ -182,13 +180,12 @@ func TestRequest_CallFastcgiPerformance(t *testing.T) {
 		Pass: "127.0.0.1:9000",
 	}
 	request.fastcgi.Validate()
-	err = request.Call(writer)
+	err = request.call(writer)
 	a.IsNil(err)
-	writer.Close()
 
-	a.Log("status:", request.responseStatus, request.responseStatusMessage)
+	a.Log("status:", writer.StatusCode())
 	a.Log("requestTime:", request.requestTime)
-	a.Log("bytes send:", request.responseBytesSent, request.responseBodyBytesSent)
+	a.Log("bytes send:", writer.SentBodyBytes())
 }
 
 func TestRequest_Format(t *testing.T) {
@@ -218,7 +215,7 @@ func TestRequest_Format(t *testing.T) {
 	a.IsTrue(req.requestQueryString() == "name=Lu&age=20")
 	a.IsTrue(req.requestQueryParam("name") == "Lu")
 
-	t.Log(req.format("hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test}"))
+	t.Log(req.Format("hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test}"))
 }
 
 func TestRequest_Index(t *testing.T) {
@@ -304,7 +301,7 @@ func TestRequest_RewriteVariables(t *testing.T) {
 	server := teaconfigs.NewServerConfig()
 	server.Root = "/home/${arg.charset}"
 	server.Charset = "[${arg.charset}]"
-	server.AddHeader(&teaconfigs.HeaderConfig{
+	server.AddHeader(&shared.HeaderConfig{
 		Name:  "Charset",
 		Value: "${arg.charset}",
 	})

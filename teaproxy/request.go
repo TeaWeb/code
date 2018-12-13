@@ -9,7 +9,6 @@ import (
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teaplugins"
-	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -79,6 +78,9 @@ type Request struct {
 	proxy    *teaconfigs.ServerConfig
 	location *teaconfigs.LocationConfig
 
+	cache        *teaconfigs.CacheConfig
+	cacheEnabled bool
+
 	api    *apiconfig.API // API
 	mockOn bool           // 是否开启了API Mock
 
@@ -88,11 +90,7 @@ type Request struct {
 	// 执行请求
 	filePath string
 
-	responseBytesSent     int64  // @TODO
-	responseBodyBytesSent int64  // @TODO
-	responseStatus        int    // @TODO
-	responseStatusMessage string // @TODO
-	responseHeader        map[string][]string
+	responseWriter *ResponseWriter
 
 	requestFromTime    time.Time // 请求开始时间
 	requestTime        float64   // 请求耗时
@@ -101,11 +99,9 @@ type Request struct {
 	requestMsec        float64
 	requestTimestamp   int64
 
-	isWatching         bool   // 是否在监控
-	requestData        []byte // 导出的request，在监控请求的时候有用
-	responseHeaderData []byte // 导出的response header，在监控请求时有用
-	responseBodyData   []byte // 导出的response body，在监控请求时有用
-	responseAPIStatus  string // API状态码
+	isWatching        bool   // 是否在监控
+	requestData       []byte // 导出的request，在监控请求的时候有用
+	responseAPIStatus string // API状态码
 
 	shouldLog bool
 	debug     bool
@@ -146,19 +142,19 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	if isChanged {
 		this.root = server.Root
 		if len(this.root) > 0 {
-			this.root = this.format(this.root)
+			this.root = this.Format(this.root)
 		}
 	}
 
 	// 字符集
 	if len(server.Charset) > 0 {
-		this.charset = this.format(server.Charset)
+		this.charset = this.Format(server.Charset)
 	}
 
 	// Header
 	if len(server.Headers) > 0 {
 		this.headers = append(this.headers, server.FormatHeaders(func(source string) string {
-			return this.format(source)
+			return this.Format(source)
 		}) ...)
 	}
 
@@ -229,7 +225,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			// headers
 			if len(api.Headers) > 0 {
 				this.headers = append(this.headers, api.FormatHeaders(func(source string) string {
-					return this.format(source)
+					return this.Format(source)
 				}) ...)
 			}
 
@@ -264,17 +260,20 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			this.convertVarMapping(locationMatches)
 
 			if len(location.Root) > 0 {
-				this.root = this.format(location.Root)
+				this.root = this.Format(location.Root)
 			}
 			if len(location.Charset) > 0 {
-				this.charset = this.format(location.Charset)
+				this.charset = this.Format(location.Charset)
 			}
 			if len(location.Index) > 0 {
 				this.index = this.formatAll(location.Index)
 			}
+			if location.Cache != nil && location.Cache.On {
+				this.cache = location.Cache
+			}
 			if len(location.Headers) > 0 {
 				this.headers = append(this.headers, location.FormatHeaders(func(source string) string {
-					return this.format(source)
+					return this.Format(source)
 				}) ...)
 			}
 
@@ -292,13 +291,13 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					}
 
 					if replace, ok := rule.Match(path, func(source string) string {
-						return this.format(source)
+						return this.Format(source)
 					}); ok {
 						this.rewriteId = rule.Id
 
 						if len(rule.Headers) > 0 {
 							this.headers = append(this.headers, rule.FormatHeaders(func(source string) string {
-								return this.format(source)
+								return this.Format(source)
 							}) ...)
 						}
 
@@ -399,7 +398,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				continue
 			}
 			if replace, ok := rule.Match(path, func(source string) string {
-				return this.format(source)
+				return this.Format(source)
 			}); ok {
 				this.rewriteId = rule.Id
 
@@ -497,10 +496,20 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	return nil
 }
 
-func (this *Request) Call(writer http.ResponseWriter) error {
+func (this *Request) call(writer *ResponseWriter) error {
+	this.responseWriter = writer
+
 	defer func() {
 		this.log()
+
+		CallRequestAfterHook(this, writer)
 	}()
+
+	// hook
+	b := CallRequestBeforeHook(this, writer)
+	if !b {
+		return nil
+	}
 
 	// 是否有mock
 	if this.mockOn {
@@ -509,6 +518,11 @@ func (this *Request) Call(writer http.ResponseWriter) error {
 
 	// API相关
 	if this.api != nil {
+		// watch
+		if this.isWatching {
+			writer.SetBodyCopying(true)
+		}
+
 		// limit
 		if this.api.Limit != nil {
 			this.api.Limit.Begin()
@@ -537,8 +551,7 @@ func (this *Request) Call(writer http.ResponseWriter) error {
 	return errors.New("unable to handle the request")
 }
 
-// @TODO 支持cache等
-func (this *Request) callRoot(writer http.ResponseWriter) error {
+func (this *Request) callRoot(writer *ResponseWriter) error {
 	if len(this.uri) == 0 {
 		this.notFoundError(writer)
 		return nil
@@ -569,7 +582,7 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 				this.serverError(writer)
 				return nil
 			}
-			return this.Call(writer)
+			return this.call(writer)
 		} else {
 			this.notFoundError(writer)
 			return nil
@@ -609,7 +622,7 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 				this.serverError(writer)
 				return nil
 			}
-			return this.Call(writer)
+			return this.call(writer)
 		} else {
 			this.notFoundError(writer)
 			return nil
@@ -669,14 +682,9 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 		respHeader.Set("ETag", eTag)
 	}
 
-	this.responseHeader = writer.Header()
-
 	// 支持 If-None-Match
 	if this.requestHeader("If-None-Match") == eTag {
 		writer.WriteHeader(http.StatusNotModified)
-
-		this.responseStatus = http.StatusNotModified
-		this.responseStatusMessage = "304 Not Modified"
 
 		return nil
 	}
@@ -684,9 +692,6 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 	// 支持 If-Modified-Since
 	if this.requestHeader("If-Modified-Since") == modifiedTime {
 		writer.WriteHeader(http.StatusNotModified)
-
-		this.responseStatus = http.StatusNotModified
-		this.responseStatusMessage = "304 Not Modified"
 
 		return nil
 	}
@@ -699,7 +704,7 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 	}
 	defer fp.Close()
 
-	n, err := io.Copy(writer, fp)
+	_, err = io.Copy(writer, fp)
 
 	if err != nil {
 		if this.debug {
@@ -708,15 +713,10 @@ func (this *Request) callRoot(writer http.ResponseWriter) error {
 		return nil
 	}
 
-	this.responseStatus = http.StatusOK
-	this.responseStatusMessage = "200 OK"
-	this.responseBytesSent = n
-	this.responseBodyBytesSent = n
-
 	return nil
 }
 
-func (this *Request) callBackend(writer http.ResponseWriter) error {
+func (this *Request) callBackend(writer *ResponseWriter) error {
 	if len(this.backend.Address) == 0 {
 		this.serverError(writer)
 		logs.Error(errors.New("backend address should not be empty"))
@@ -768,24 +768,6 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 		return nil
 	}
 	defer resp.Body.Close()
-
-	// 打印resp
-	if this.isWatching {
-		// 如果响应的内容太长，则只导出headers
-		respHeader, respBody, err := teautils.DumpResponse(resp)
-		this.responseHeaderData = respHeader
-		if err == nil {
-			// 如果响应的内容太长，则截取
-			if len(respBody) > 10240 {
-				this.responseBodyData = respBody[:10240]
-			} else {
-				this.responseBodyData = respBody
-			}
-
-			// 还原
-			resp.Body = ioutil.NopCloser(bytes.NewReader(respBody))
-		}
-	}
 
 	// 忽略的Header
 	ignoreHeaders := this.convertIgnoreHeaders()
@@ -842,29 +824,22 @@ func (this *Request) callBackend(writer http.ResponseWriter) error {
 		}
 	}
 
-	n, err := io.Copy(writer, resp.Body)
+	_, err = io.Copy(writer, resp.Body)
 	if err != nil {
 		logs.Error(err)
 		return nil
 	}
 
-	// 请求信息
-	this.responseStatus = resp.StatusCode
-	this.responseStatusMessage = resp.Status
-	this.responseBytesSent = n
-	this.responseBodyBytesSent = n
-	this.responseHeader = writer.Header()
-
 	return nil
 }
 
-func (this *Request) callProxy(writer http.ResponseWriter) error {
+func (this *Request) callProxy(writer *ResponseWriter) error {
 	backend := this.proxy.NextBackend()
 	this.backend = backend
 	return this.callBackend(writer)
 }
 
-func (this *Request) callFastcgi(writer http.ResponseWriter) error {
+func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	env := this.fastcgi.FilterParams(this.raw)
 	if len(this.root) > 0 {
 		if !env.Has("DOCUMENT_ROOT") {
@@ -967,25 +942,6 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 		return nil
 	}
 
-	// 打印resp
-	if this.isWatching {
-		// 如果响应的内容太长，则只导出headers
-		respHeader, respBody, err := teautils.DumpResponse(resp)
-		this.responseHeaderData = respHeader
-		if err == nil {
-			// 如果响应的内容太长，则截取
-			if len(respBody) > 10240 {
-				this.responseBodyData = respBody[:10240]
-			} else {
-				this.responseBodyData = respBody
-			}
-			resp.Body = ioutil.NopCloser(bytes.NewReader(respBody))
-
-			// 分析代码
-
-		}
-	}
-
 	defer resp.Body.Close()
 
 	// 忽略的Header
@@ -1043,31 +999,21 @@ func (this *Request) callFastcgi(writer http.ResponseWriter) error {
 		}
 	}
 
-	this.responseHeader = writer.Header()
-
 	// 设置响应码
 	writer.WriteHeader(resp.StatusCode)
 
 	// 输出内容
-	n, err := io.Copy(writer, resp.Body)
+	_, err = io.Copy(writer, resp.Body)
 	if err != nil {
 		logs.Error(err)
 		return nil
 	}
 
-	// 请求信息
-	this.responseStatus = resp.StatusCode
-	this.responseStatusMessage = resp.Status
-	this.responseBytesSent = n
-	this.responseBodyBytesSent = n
-
 	return nil
 }
 
 // 调用API Mock
-func (this *Request) callMock(writer http.ResponseWriter) error {
-	n := 0
-
+func (this *Request) callMock(writer *ResponseWriter) error {
 	if this.api != nil && len(this.api.MockFiles) > 0 {
 		mock := this.api.RandMock()
 		if mock != nil {
@@ -1086,27 +1032,21 @@ func (this *Request) callMock(writer http.ResponseWriter) error {
 				if err == nil {
 					defer reader.Close()
 					data := reader.ReadAll()
-					n, _ = writer.Write(data)
+					writer.Write(data)
 				}
 			} else {
-				n, _ = writer.Write([]byte(mock.Text))
+				writer.Write([]byte(mock.Text))
 			}
 		}
 	} else {
-		n, _ = writer.Write([]byte("mock data not found"))
+		writer.Write([]byte("mock data not found"))
 	}
-
-	this.responseHeader = writer.Header()
-	this.responseStatus = http.StatusOK
-	this.responseStatusMessage = "200 OK"
-	this.responseBytesSent = int64(n)
-	this.responseBodyBytesSent = int64(n)
 
 	return nil
 }
 
 // 处理API
-func (this *Request) consumeAPI(writer http.ResponseWriter) bool {
+func (this *Request) consumeAPI(writer *ResponseWriter) bool {
 	if len(this.api.AuthType) == 0 {
 		this.api.AuthType = apiconfig.APIAuthTypeNone
 	}
@@ -1142,28 +1082,20 @@ func (this *Request) consumeAPI(writer http.ResponseWriter) bool {
 	return true
 }
 
-func (this *Request) notFoundError(writer http.ResponseWriter) {
+func (this *Request) notFoundError(writer *ResponseWriter) {
 	msg := "404 page not found: '" + this.requestURI() + "'"
 
 	writer.WriteHeader(http.StatusNotFound)
 	writer.Write([]byte(msg))
 
-	this.responseStatus = http.StatusNotFound
-	this.responseStatusMessage = msg
-	this.responseBodyBytesSent = int64(len(msg))
-	this.responseBytesSent = this.responseBodyBytesSent
 }
 
-func (this *Request) serverError(writer http.ResponseWriter) {
+func (this *Request) serverError(writer *ResponseWriter) {
 	msg := "500 Internal Server Error"
 
 	writer.WriteHeader(http.StatusInternalServerError)
 	writer.Write([]byte(msg))
 
-	this.responseStatus = http.StatusInternalServerError
-	this.responseStatusMessage = msg
-	this.responseBodyBytesSent = int64(len(msg))
-	this.responseBytesSent = this.responseBodyBytesSent
 }
 
 func (this *Request) requestRemoteAddr() string {
@@ -1324,8 +1256,24 @@ func (this *Request) requestHeader(key string) string {
 	return strings.Join(v, ";")
 }
 
+func (this *Request) CacheConfig() *teaconfigs.CacheConfig {
+	return this.cache
+}
+
+func (this *Request) SetCacheConfig(config *teaconfigs.CacheConfig) {
+	this.cache = config
+}
+
+func (this *Request) SetCacheEnabled() {
+	this.cacheEnabled = true
+}
+
+func (this *Request) IsCacheEnabled() bool {
+	return this.cacheEnabled
+}
+
 // 利用请求参数格式化字符串
-func (this *Request) format(source string) string {
+func (this *Request) Format(source string) string {
 	if len(source) == 0 {
 		return ""
 	}
@@ -1370,13 +1318,13 @@ func (this *Request) format(source string) string {
 		case "serverProtocol", "proto":
 			return this.requestProto()
 		case "bytesSent":
-			return fmt.Sprintf("%d", this.responseBytesSent)
+			return fmt.Sprintf("%d", this.responseWriter.SentBodyBytes()) // TODO 加上Header长度
 		case "bodyBytesSent":
-			return fmt.Sprintf("%d", this.responseBodyBytesSent)
+			return fmt.Sprintf("%d", this.responseWriter.SentBodyBytes())
 		case "status":
-			return fmt.Sprintf("%d", this.responseStatus)
+			return fmt.Sprintf("%d", this.responseWriter.StatusCode())
 		case "statusMessage":
-			return this.responseStatusMessage
+			return ""
 		case "timeISO8601":
 			return this.requestTimeISO8601
 		case "timeLocal":
@@ -1437,7 +1385,7 @@ func (this *Request) format(source string) string {
 func (this *Request) formatAll(sources []string) []string {
 	result := []string{}
 	for _, s := range sources {
-		result = append(result, this.format(s))
+		result = append(result, this.Format(s))
 	}
 	return result
 }
@@ -1469,10 +1417,10 @@ func (this *Request) log() {
 		RequestFilename: this.requestFilename(),
 		Scheme:          this.scheme,
 		Proto:           this.requestProto(),
-		BytesSent:       this.responseBytesSent,
-		BodyBytesSent:   this.responseBodyBytesSent,
-		Status:          this.responseStatus,
-		StatusMessage:   this.responseStatusMessage,
+		BytesSent:       this.responseWriter.SentBodyBytes(), // TODO 加上Header Size
+		BodyBytesSent:   this.responseWriter.SentBodyBytes(),
+		Status:          this.responseWriter.StatusCode(),
+		StatusMessage:   "",
 		TimeISO8601:     this.requestTimeISO8601,
 		TimeLocal:       this.requestTimeLocal,
 		Msec:            this.requestMsec,
@@ -1516,19 +1464,15 @@ func (this *Request) log() {
 		accessLog.LocationId = this.location.Id
 	}
 
-	if this.responseHeader != nil {
-		accessLog.SentHeader = this.responseHeader
-	}
+	accessLog.SentHeader = this.responseWriter.Header()
 
 	if len(this.requestData) > 0 {
 		accessLog.RequestData = this.requestData
 	}
 
-	if len(this.responseHeaderData) > 0 {
-		accessLog.ResponseHeaderData = this.responseHeaderData
-	}
-	if len(this.responseBodyData) > 0 {
-		accessLog.ResponseBodyData = this.responseBodyData
+	if this.responseWriter.BodyIsCopying() {
+		accessLog.ResponseHeaderData = this.responseWriter.HeaderData()
+		accessLog.ResponseBodyData = this.responseWriter.Body()
 	}
 
 	tealogs.SharedLogger().Push(accessLog)
@@ -1545,13 +1489,13 @@ func (this *Request) findIndexFile(dir string) string {
 
 		// 模糊查找
 		if strings.Contains(index, "*") {
-			files, err := filepath.Glob(dir + Tea.DS + index)
+			indexFiles, err := filepath.Glob(dir + Tea.DS + index)
 			if err != nil {
 				logs.Error(err)
 				continue
 			}
-			if len(files) > 0 {
-				return filepath.Base(files[0])
+			if len(indexFiles) > 0 {
+				return filepath.Base(indexFiles[0])
 			}
 			continue
 		}
