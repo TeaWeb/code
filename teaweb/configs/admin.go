@@ -2,11 +2,11 @@ package configs
 
 import (
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"sync"
 )

@@ -22,7 +22,7 @@ type ManagerInterface interface {
 }
 
 // 获取新的管理对象
-func NewManagerFromConfig(config *teaconfigs.CacheConfig) ManagerInterface {
+func NewManagerFromConfig(config *teaconfigs.CachePolicy) ManagerInterface {
 	switch config.Type {
 	case "memory":
 		m := NewMemoryManager()

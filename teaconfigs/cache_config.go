@@ -1,20 +1,15 @@
 package teaconfigs
 
-import "github.com/iwind/TeaGo/utils/string"
+import (
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
+)
 
-// 缓存配置
+// 缓存管理
 type CacheConfig struct {
-	On       bool   `yaml:"on" json:"on"`             // 是否开启
-	Key      string `yaml:"key" json:"key"`           // Key
-	Capacity string `yaml:"capacity" json:"capacity"` // 最大内容容量
-	Life     string `yaml:"life" json:"life"`         // 时间
-	Status   []int  `yaml:"status" json:"status"`     // 缓存的状态码列表
-	MaxSize  string `yaml:"maxSize" json:"maxSize"`   // 能够请求的最大尺寸
-
-	maxSize float64
-
-	Type    string                 `yaml:"type" json:"type"`       // 类型
-	Options map[string]interface{} `yaml:"options" json:"options"` // 选项
+	Filename    string   `yaml:"filename" json:"filename"`       // 文件名
+	PolicyFiles []string `yaml:"policyFiles" json:"policyFiles"` // 策略文件
 }
 
 // 获取新对象
@@ -22,12 +17,54 @@ func NewCacheConfig() *CacheConfig {
 	return &CacheConfig{}
 }
 
-// 校验
-func (this *CacheConfig) Validate() error {
-	this.maxSize, _ = stringutil.ParseFileSize(this.MaxSize)
-	return nil
+// 加载对象，无论如何都会返回一个对象
+func SharedCacheConfig() (*CacheConfig, error) {
+	reader, err := files.NewReader(Tea.ConfigFile("cache.conf"))
+	if err != nil {
+		return NewCacheConfig(), err
+	}
+	defer reader.Close()
+	config := NewCacheConfig()
+	err = reader.ReadYAML(config)
+	if err != nil {
+		return NewCacheConfig(), err
+	}
+	return config, nil
 }
 
-func (this *CacheConfig) MaxDataSize() float64 {
-	return this.maxSize
+// 添加缓存策略
+func (this *CacheConfig) AddPolicy(file string) {
+	this.PolicyFiles = append(this.PolicyFiles, file)
+}
+
+// 删除缓存策略
+func (this *CacheConfig) DeletePolicy(file string) {
+	this.PolicyFiles = lists.Delete(this.PolicyFiles, file).([]string)
+}
+
+// 查找所有的缓存策略
+func (this *CacheConfig) FindAllPolicies() []*CachePolicy {
+	result := []*CachePolicy{}
+	for _, file := range this.PolicyFiles {
+		policy := NewCachePolicyFromFile(file)
+		if policy == nil {
+			continue
+		}
+		result = append(result, policy)
+	}
+	return result
+}
+
+// 保存
+func (this *CacheConfig) Save() error {
+	if len(this.Filename) == 0 {
+		this.Filename = "cache.conf"
+	}
+	writer, err := files.NewWriter(Tea.ConfigFile(this.Filename))
+	if err != nil {
+		return err
+	}
+	defer writer.Close()
+	_, err = writer.WriteYAML(this)
+	return err
 }

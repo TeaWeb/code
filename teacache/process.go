@@ -12,11 +12,11 @@ import (
 	"sync"
 )
 
-var cacheMap = map[*teaconfigs.CacheConfig]ManagerInterface{}
+var cacheMap = map[*teaconfigs.CachePolicy]ManagerInterface{}
 var cacheMapLocker = sync.RWMutex{}
 
 func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter) bool {
-	cacheConfig := req.CacheConfig()
+	cacheConfig := req.CachePolicy()
 	if cacheConfig == nil || !cacheConfig.On {
 		return true
 	}
@@ -69,7 +69,7 @@ func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter)
 		return true
 	}
 
-	cacheConfig := req.CacheConfig()
+	cacheConfig := req.CachePolicy()
 	if cacheConfig == nil {
 		return true
 	}

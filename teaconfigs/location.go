@@ -36,7 +36,8 @@ type LocationConfig struct {
 	Async   bool         `yaml:"async" json:"async"`     // 是否异步请求 @TODO
 	Notify  []string     `yaml:"notify" json:"notify"`   // 转发请求 @TODO
 	LogOnly bool         `yaml:"logOnly" json:"logOnly"` // 是否只记录日志 @TODO
-	Cache   *CacheConfig `yaml:"cache" json:"cache"`     // 缓存设置
+	Cache   *CachePolicy `yaml:"cache" json:"cache"`     // 缓存设置
+	CacheOn bool         `yaml:"cacheOn" json:"cacheOn"` // 缓存是否打开
 	Root    string       `yaml:"root" json:"root"`       // 资源根目录
 	Index   []string     `yaml:"index" json:"index"`     // 默认文件
 	Charset string       `yaml:"charset" json:"charset"` // 字符集设置

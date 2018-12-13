@@ -78,7 +78,7 @@ type Request struct {
 	proxy    *teaconfigs.ServerConfig
 	location *teaconfigs.LocationConfig
 
-	cache        *teaconfigs.CacheConfig
+	cache        *teaconfigs.CachePolicy
 	cacheEnabled bool
 
 	api    *apiconfig.API // API
@@ -1256,11 +1256,11 @@ func (this *Request) requestHeader(key string) string {
 	return strings.Join(v, ";")
 }
 
-func (this *Request) CacheConfig() *teaconfigs.CacheConfig {
+func (this *Request) CachePolicy() *teaconfigs.CachePolicy {
 	return this.cache
 }
 
-func (this *Request) SetCacheConfig(config *teaconfigs.CacheConfig) {
+func (this *Request) SetCachePolicy(config *teaconfigs.CachePolicy) {
 	this.cache = config
 }
 

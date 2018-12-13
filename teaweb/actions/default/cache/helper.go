@@ -1,4 +1,4 @@
-package proxy
+package cache
 
 import (
 	"github.com/iwind/TeaGo/actions"
@@ -19,10 +19,10 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 				"name":    "已有代理",
 				"subName": "",
 				"url":     "/proxy",
-				"active":  action.Spec.ClassName != "proxy.AddAction",
+				"active":  false,
 			},
 		}
-		if lists.Contains([]string{"proxy.IndexAction", "proxy.AddAction"}, action.Spec.ClassName) {
+		if lists.Contains([]string{"proxy.IndexAction", "proxy.AddAction", "cache.IndexAction"}, action.Spec.ClassName) {
 			tabbar = append(tabbar, maps.Map{
 				"name":    "添加新代理",
 				"subName": "",
