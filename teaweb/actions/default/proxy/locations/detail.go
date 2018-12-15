@@ -1,6 +1,7 @@
 package locations
 
 import (
+	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
@@ -11,6 +12,7 @@ import (
 
 type DetailAction actions.Action
 
+// 路径规则详情
 func (this *DetailAction) Run(params struct {
 	Filename string
 	Index    int
@@ -18,6 +20,10 @@ func (this *DetailAction) Run(params struct {
 	proxy, err := teaconfigs.NewServerConfigFromFile(params.Filename)
 	if err != nil {
 		this.Fail(err.Error())
+	}
+
+	this.Data["server"] = maps.Map{
+		"filename": proxy.Filename,
 	}
 
 	location := proxy.LocationAtIndex(params.Index)
@@ -93,6 +99,26 @@ func (this *DetailAction) Run(params struct {
 			"name": v,
 		}
 	}).Slice
+
+	// 缓存策略
+	this.Data["cachePolicy"] = ""
+	if len(location.CachePolicy) > 0 {
+		policy := teaconfigs.NewCachePolicyFromFile(location.CachePolicy)
+		if policy != nil {
+			this.Data["cachePolicy"] = policy.Name + "（" + teacache.TypeName(policy.Type) + "）"
+		}
+	}
+	this.Data["cachePolicyFile"] = location.CachePolicy
+
+	cache, _ := teaconfigs.SharedCacheConfig()
+	this.Data["cachePolicyList"] = lists.Map(cache.FindAllPolicies(), func(k int, v interface{}) interface{} {
+		policy := v.(*teaconfigs.CachePolicy)
+		return maps.Map{
+			"filename": policy.Filename,
+			"name":     policy.Name,
+			"type":     teacache.TypeName(policy.Type),
+		}
+	})
 
 	this.Show()
 }

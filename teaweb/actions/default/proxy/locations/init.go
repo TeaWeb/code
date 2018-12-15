@@ -30,6 +30,7 @@ func init() {
 			Post("/updateRoot", new(UpdateRootAction)).
 			Post("/updateCharset", new(UpdateCharsetAction)).
 			Post("/updateIndex", new(UpdateIndexAction)).
+			Post("/updateCache", new(UpdateCacheAction)).
 			EndAll()
 	})
 }

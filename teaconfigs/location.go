@@ -33,14 +33,14 @@ type LocationConfig struct {
 	caseInsensitive bool // 大小写不敏感
 	reverse         bool // 是否翻转规则，比如非前缀，非路径
 
-	Async   bool         `yaml:"async" json:"async"`     // 是否异步请求 @TODO
-	Notify  []string     `yaml:"notify" json:"notify"`   // 转发请求 @TODO
-	LogOnly bool         `yaml:"logOnly" json:"logOnly"` // 是否只记录日志 @TODO
-	Cache   *CachePolicy `yaml:"cache" json:"cache"`     // 缓存设置
-	CacheOn bool         `yaml:"cacheOn" json:"cacheOn"` // 缓存是否打开
-	Root    string       `yaml:"root" json:"root"`       // 资源根目录
-	Index   []string     `yaml:"index" json:"index"`     // 默认文件
-	Charset string       `yaml:"charset" json:"charset"` // 字符集设置
+	Async       bool     `yaml:"async" json:"async"`             // 是否异步请求 @TODO
+	Notify      []string `yaml:"notify" json:"notify"`           // 转发请求 @TODO
+	LogOnly     bool     `yaml:"logOnly" json:"logOnly"`         // 是否只记录日志 @TODO
+	CachePolicy string   `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
+	CacheOn     bool     `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开
+	Root        string   `yaml:"root" json:"root"`               // 资源根目录
+	Index       []string `yaml:"index" json:"index"`             // 默认文件
+	Charset     string   `yaml:"charset" json:"charset"`         // 字符集设置
 
 	// 日志
 	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // @TODO
@@ -57,6 +57,8 @@ type LocationConfig struct {
 	Fastcgi  []*FastcgiConfig       `yaml:"fastcgi" json:"fastcgi"`   // Fastcgi配置 @TODO
 	Proxy    string                 `yaml:proxy" json:"proxy"`        //  代理配置 @TODO
 	Backends []*ServerBackendConfig `yaml:"backends" json:"backends"` // 后端服务器配置 @TODO
+
+	cachePolicy *CachePolicy
 }
 
 func NewLocationConfig() *LocationConfig {
@@ -154,10 +156,14 @@ func (this *LocationConfig) Validate() error {
 	}
 
 	// 校验缓存配置
-	if this.Cache != nil {
-		err := this.Cache.Validate()
-		if err != nil {
-			return err
+	if len(this.CachePolicy) > 0 {
+		policy := NewCachePolicyFromFile(this.CachePolicy)
+		if policy != nil {
+			err := policy.Validate()
+			if err != nil {
+				return err
+			}
+			this.cachePolicy = policy
 		}
 	}
 
@@ -447,4 +453,9 @@ func (this *LocationConfig) UpdateIgnoreHeaderAtIndex(index int, name string) {
 // 添加重写规则
 func (this *LocationConfig) AddRewriteRule(rewriteRule *RewriteRule) {
 	this.Rewrite = append(this.Rewrite, rewriteRule)
+}
+
+// 缓存策略
+func (this *LocationConfig) CachePolicyObject() *CachePolicy {
+	return this.cachePolicy
 }

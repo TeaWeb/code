@@ -56,6 +56,7 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 		return true
 	}
 	defer resp.Body.Close()
+
 	writer.WriteHeader(resp.StatusCode)
 	for k, vs := range resp.Header {
 		for _, v := range vs {
@@ -108,6 +109,9 @@ func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter)
 	if cacheConfig.MaxDataSize() > 0 && float64(len(data)) > cacheConfig.MaxDataSize() {
 		return true
 	}
-	cache.Write(key, data)
+	err := cache.Write(key, data)
+	if err != nil {
+		logs.Error(err)
+	}
 	return true
 }

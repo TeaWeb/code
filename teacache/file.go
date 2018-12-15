@@ -104,12 +104,11 @@ func (this *FileManager) Write(key string, data []byte) error {
 	this.writeLocker.Unlock()
 
 	// 头部加入有效期
-	var life = int64(this.Life)
+	var life = int64(this.Life.Seconds())
 	if life <= 0 {
 		life = 30 * 86400
 	}
 	data = append([]byte(fmt.Sprintf("%012d", time.Now().Unix()+life)), data ...)
-
 	err := newFile.Write(data)
 
 	// 解除锁定

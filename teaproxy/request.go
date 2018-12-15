@@ -78,7 +78,7 @@ type Request struct {
 	proxy    *teaconfigs.ServerConfig
 	location *teaconfigs.LocationConfig
 
-	cache        *teaconfigs.CachePolicy
+	cachePolicy  *teaconfigs.CachePolicy
 	cacheEnabled bool
 
 	api    *apiconfig.API // API
@@ -268,9 +268,12 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			if len(location.Index) > 0 {
 				this.index = this.formatAll(location.Index)
 			}
-			if location.Cache != nil && location.Cache.On {
-				this.cache = location.Cache
+
+			cachePolicy := location.CachePolicyObject()
+			if cachePolicy != nil && cachePolicy.On {
+				this.cachePolicy = cachePolicy
 			}
+
 			if len(location.Headers) > 0 {
 				this.headers = append(this.headers, location.FormatHeaders(func(source string) string {
 					return this.Format(source)
@@ -1257,11 +1260,11 @@ func (this *Request) requestHeader(key string) string {
 }
 
 func (this *Request) CachePolicy() *teaconfigs.CachePolicy {
-	return this.cache
+	return this.cachePolicy
 }
 
 func (this *Request) SetCachePolicy(config *teaconfigs.CachePolicy) {
-	this.cache = config
+	this.cachePolicy = config
 }
 
 func (this *Request) SetCacheEnabled() {

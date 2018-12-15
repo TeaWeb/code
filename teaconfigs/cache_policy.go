@@ -11,7 +11,7 @@ import (
 // 缓存策略配置
 type CachePolicy struct {
 	Filename string `yaml:"filename" json:"filename"` // 文件名
-	On       bool   `yaml:"on" json:"on"`             // 是否开启
+	On       bool   `yaml:"on" json:"on"`             // 是否开启 TODO
 	Name     string `yaml:"name" json:"name"`         // 名称
 
 	Key      string `yaml:"key" json:"key"`           // 每个缓存的Key规则，里面可以有变量

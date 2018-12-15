@@ -41,6 +41,7 @@ func (this *CreatePolicyAction) RunPost(params struct {
 		Require("请输入缓存Key")
 
 	policy := teaconfigs.NewCachePolicy()
+	policy.On = true
 	policy.Name = params.Name
 	policy.Key = params.Key
 	policy.Type = params.Type
