@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/types"
 )
@@ -40,7 +41,7 @@ func (this *CreatePolicyAction) RunPost(params struct {
 		Field("key", params.Key).
 		Require("请输入缓存Key")
 
-	policy := teaconfigs.NewCachePolicy()
+	policy := shared.NewCachePolicy()
 	policy.On = true
 	policy.Name = params.Name
 	policy.Key = params.Key

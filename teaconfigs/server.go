@@ -60,7 +60,7 @@ type ServerConfig struct {
 
 	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
 	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开 TODO
-	cachePolicy *CachePolicy
+	cachePolicy *shared.CachePolicy
 
 	// API相关
 	API *api.APIConfig `yaml:"api" json:"api"` // API配置
@@ -196,7 +196,7 @@ func (this *ServerConfig) Validate() error {
 
 	// 校验缓存配置
 	if len(this.CachePolicy) > 0 {
-		policy := NewCachePolicyFromFile(this.CachePolicy)
+		policy := shared.NewCachePolicyFromFile(this.CachePolicy)
 		if policy != nil {
 			err := policy.Validate()
 			if err != nil {
@@ -438,6 +438,6 @@ func (this *ServerConfig) AddLocation(location *LocationConfig) {
 }
 
 // 缓存策略
-func (this *ServerConfig) CachePolicyObject() *CachePolicy {
+func (this *ServerConfig) CachePolicyObject() *shared.CachePolicy {
 	return this.cachePolicy
 }

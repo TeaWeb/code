@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
@@ -43,10 +44,10 @@ func (this *CacheConfig) DeletePolicy(file string) {
 }
 
 // 查找所有的缓存策略
-func (this *CacheConfig) FindAllPolicies() []*CachePolicy {
-	result := []*CachePolicy{}
+func (this *CacheConfig) FindAllPolicies() []*shared.CachePolicy {
+	result := []*shared.CachePolicy{}
 	for _, file := range this.PolicyFiles {
-		policy := NewCachePolicyFromFile(file)
+		policy := shared.NewCachePolicyFromFile(file)
 		if policy == nil {
 			continue
 		}

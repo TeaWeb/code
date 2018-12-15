@@ -3,7 +3,7 @@ package cache
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teacache"
-	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -16,7 +16,7 @@ type UpdatePolicyAction actions.Action
 func (this *UpdatePolicyAction) Run(params struct {
 	Filename string
 }) {
-	policy := teaconfigs.NewCachePolicyFromFile(params.Filename)
+	policy := shared.NewCachePolicyFromFile(params.Filename)
 	if policy == nil {
 		this.Fail("找不到要修改的缓存策略")
 	}
@@ -58,7 +58,7 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 
 	Must *actions.Must
 }) {
-	policy := teaconfigs.NewCachePolicyFromFile(params.Filename)
+	policy := shared.NewCachePolicyFromFile(params.Filename)
 	if policy == nil {
 		this.Fail("找不到要修改的缓存策略")
 	}

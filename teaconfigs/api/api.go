@@ -44,6 +44,10 @@ type API struct {
 	TestScripts   []string `yaml:"testScripts" json:"testScripts"`     // 脚本文件
 	TestCaseFiles []string `yaml:"testCaseFiles" json:"testCaseFiles"` // 单元测试存储文件
 
+	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
+	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开 TODO
+	cachePolicy *shared.CachePolicy
+
 	pathReg    *regexp.Regexp // 匹配模式
 	pathParams []string
 }
@@ -99,6 +103,18 @@ func (this *API) Validate() error {
 		err := this.Limit.Validate()
 		if err != nil {
 			return err
+		}
+	}
+
+	// 校验缓存配置
+	if len(this.CachePolicy) > 0 {
+		policy := shared.NewCachePolicyFromFile(this.CachePolicy)
+		if policy != nil {
+			err := policy.Validate()
+			if err != nil {
+				return err
+			}
+			this.cachePolicy = policy
 		}
 	}
 
@@ -378,4 +394,9 @@ func (this *API) RandMock() *APIMock {
 	}
 
 	return NewAPIMockFromFile(file)
+}
+
+// 缓存策略
+func (this *API) CachePolicyObject() *shared.CachePolicy {
+	return this.cachePolicy
 }

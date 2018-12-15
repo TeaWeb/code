@@ -2,6 +2,7 @@ package cache
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 )
@@ -16,7 +17,7 @@ func (this *DeletePolicyAction) Run(params struct {
 		this.Fail("请指定要删除的缓存策略")
 	}
 
-	policy := teaconfigs.NewCachePolicyFromFile(params.Filename)
+	policy := shared.NewCachePolicyFromFile(params.Filename)
 	if policy == nil {
 		this.Fail("找不到要删除的缓存策略")
 	}

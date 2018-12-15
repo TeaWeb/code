@@ -3,6 +3,7 @@ package locations
 import (
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
@@ -103,7 +104,7 @@ func (this *DetailAction) Run(params struct {
 	// 缓存策略
 	this.Data["cachePolicy"] = ""
 	if len(location.CachePolicy) > 0 {
-		policy := teaconfigs.NewCachePolicyFromFile(location.CachePolicy)
+		policy := shared.NewCachePolicyFromFile(location.CachePolicy)
 		if policy != nil {
 			this.Data["cachePolicy"] = policy.Name + "（" + teacache.TypeName(policy.Type) + "）"
 		}
@@ -112,7 +113,7 @@ func (this *DetailAction) Run(params struct {
 
 	cache, _ := teaconfigs.SharedCacheConfig()
 	this.Data["cachePolicyList"] = lists.Map(cache.FindAllPolicies(), func(k int, v interface{}) interface{} {
-		policy := v.(*teaconfigs.CachePolicy)
+		policy := v.(*shared.CachePolicy)
 		return maps.Map{
 			"filename": policy.Filename,
 			"name":     policy.Name,

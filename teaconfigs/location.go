@@ -57,7 +57,7 @@ type LocationConfig struct {
 
 	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
 	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开 TODO
-	cachePolicy *CachePolicy
+	cachePolicy *shared.CachePolicy
 }
 
 func NewLocationConfig() *LocationConfig {
@@ -156,7 +156,7 @@ func (this *LocationConfig) Validate() error {
 
 	// 校验缓存配置
 	if len(this.CachePolicy) > 0 {
-		policy := NewCachePolicyFromFile(this.CachePolicy)
+		policy := shared.NewCachePolicyFromFile(this.CachePolicy)
 		if policy != nil {
 			err := policy.Validate()
 			if err != nil {
@@ -455,6 +455,6 @@ func (this *LocationConfig) AddRewriteRule(rewriteRule *RewriteRule) {
 }
 
 // 缓存策略
-func (this *LocationConfig) CachePolicyObject() *CachePolicy {
+func (this *LocationConfig) CachePolicyObject() *shared.CachePolicy {
 	return this.cachePolicy
 }

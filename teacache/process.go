@@ -3,7 +3,7 @@ package teacache
 import (
 	"bufio"
 	"bytes"
-	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-var cachePolicyMap = map[*teaconfigs.CachePolicy]ManagerInterface{}
+var cachePolicyMap = map[*shared.CachePolicy]ManagerInterface{}
 var cachePolicyMapLocker = sync.RWMutex{}
 
 func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter) bool {

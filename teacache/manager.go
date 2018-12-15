@@ -2,7 +2,7 @@ package teacache
 
 import (
 	"errors"
-	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/utils/string"
 	"time"
 )
@@ -22,7 +22,7 @@ type ManagerInterface interface {
 }
 
 // 获取新的管理对象
-func NewManagerFromConfig(config *teaconfigs.CachePolicy) ManagerInterface {
+func NewManagerFromConfig(config *shared.CachePolicy) ManagerInterface {
 	switch config.Type {
 	case "memory":
 		m := NewMemoryManager()

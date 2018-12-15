@@ -3,6 +3,7 @@ package locations
 import (
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -27,7 +28,7 @@ func (this *UpdateCacheAction) Run(params struct {
 	}
 
 	if len(params.Policy) > 0 {
-		policy := teaconfigs.NewCachePolicyFromFile(params.Policy)
+		policy := shared.NewCachePolicyFromFile(params.Policy)
 		if policy == nil {
 			this.Fail("找不到要使用的缓存策略")
 		}
