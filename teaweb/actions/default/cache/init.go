@@ -12,6 +12,9 @@ func init() {
 			Helper(new(helpers.UserMustAuth)).
 			Helper(new(Helper)).
 			Get("", new(IndexAction)).
+			GetPost("/createPolicy", new(CreatePolicyAction)).
+			Post("/deletePolicy", new(DeletePolicyAction)).
+			GetPost("/updatePolicy", new(UpdatePolicyAction)).
 			EndAll()
 	})
 }

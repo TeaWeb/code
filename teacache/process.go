@@ -12,8 +12,8 @@ import (
 	"sync"
 )
 
-var cacheMap = map[*teaconfigs.CachePolicy]ManagerInterface{}
-var cacheMapLocker = sync.RWMutex{}
+var cachePolicyMap = map[*teaconfigs.CachePolicy]ManagerInterface{}
+var cachePolicyMapLocker = sync.RWMutex{}
 
 func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter) bool {
 	cacheConfig := req.CachePolicy()
@@ -21,20 +21,23 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 		return true
 	}
 
-	cacheMapLocker.RLock()
-	cache, found := cacheMap[cacheConfig]
-	cacheMapLocker.RUnlock()
+	cachePolicyMapLocker.RLock()
+	cache, found := cachePolicyMap[cacheConfig]
+	cachePolicyMapLocker.RUnlock()
 	if !found {
 		cache = NewManagerFromConfig(cacheConfig)
 		if cache == nil {
 			return true
 		}
-		cacheMapLocker.Lock()
-		cacheMap[cacheConfig] = cache
-		cacheMapLocker.Unlock()
+		cachePolicyMapLocker.Lock()
+		cachePolicyMap[cacheConfig] = cache
+		cachePolicyMapLocker.Unlock()
 	}
 
 	// key
+	if len(cacheConfig.Key) == 0 {
+		return true
+	}
 	key := req.Format(cacheConfig.Key)
 	data, err := cache.Read(key)
 	if err != nil {
@@ -85,9 +88,9 @@ func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter)
 		return true
 	}
 
-	cacheMapLocker.RLock()
-	cache, found := cacheMap[cacheConfig]
-	cacheMapLocker.RUnlock()
+	cachePolicyMapLocker.RLock()
+	cache, found := cachePolicyMap[cacheConfig]
+	cachePolicyMapLocker.RUnlock()
 	if !found {
 		return true
 	}

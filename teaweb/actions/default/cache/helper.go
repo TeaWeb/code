@@ -22,7 +22,7 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 				"active":  false,
 			},
 		}
-		if lists.Contains([]string{"proxy.IndexAction", "proxy.AddAction", "cache.IndexAction"}, action.Spec.ClassName) {
+		if lists.Contains([]string{"proxy.IndexAction", "proxy.AddAction", "cache.IndexAction", "cache.CreatePolicyAction", "cache.UpdatePolicyAction"}, action.Spec.ClassName) {
 			tabbar = append(tabbar, maps.Map{
 				"name":    "添加新代理",
 				"subName": "",

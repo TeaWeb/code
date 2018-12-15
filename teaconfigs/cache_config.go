@@ -50,6 +50,7 @@ func (this *CacheConfig) FindAllPolicies() []*CachePolicy {
 		if policy == nil {
 			continue
 		}
+		policy.Validate()
 		result = append(result, policy)
 	}
 	return result

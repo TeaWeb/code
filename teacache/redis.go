@@ -16,6 +16,7 @@ type RedisManager struct {
 	Host     string
 	Port     int
 	Password string
+	Sock     string
 
 	client *redis.Client
 }
@@ -31,12 +32,17 @@ func (this *RedisManager) SetOptions(options map[string]interface{}) {
 	this.Host = m.GetString("host")
 	this.Port = m.GetInt("port")
 	this.Password = m.GetString("password")
+	this.Sock = m.GetString("sock")
 
 	addr := ""
-	if this.Port > 0 {
-		addr = fmt.Sprintf("%s:%d", this.Host, this.Port)
-	} else {
-		addr = this.Host + ":6379"
+	if this.Network == "tcp" {
+		if this.Port > 0 {
+			addr = fmt.Sprintf("%s:%d", this.Host, this.Port)
+		} else {
+			addr = this.Host + ":6379"
+		}
+	} else if this.Network == "sock" {
+		addr = this.Sock
 	}
 
 	this.client = redis.NewClient(&redis.Options{

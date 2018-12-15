@@ -5,6 +5,7 @@ import (
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
+	"time"
 )
 
 // 缓存策略配置
@@ -19,7 +20,9 @@ type CachePolicy struct {
 	Status   []int  `yaml:"status" json:"status"`     // 缓存的状态码列表
 	MaxSize  string `yaml:"maxSize" json:"maxSize"`   // 能够请求的最大尺寸
 
-	maxSize float64
+	life     time.Duration
+	maxSize  float64
+	capacity float64
 
 	Type    string                 `yaml:"type" json:"type"`       // 类型
 	Options map[string]interface{} `yaml:"options" json:"options"` // 选项
@@ -55,13 +58,25 @@ func NewCachePolicyFromFile(file string) *CachePolicy {
 // 校验
 func (this *CachePolicy) Validate() error {
 	var err error
-	this.maxSize, err = stringutil.ParseFileSize(this.MaxSize)
+	this.maxSize, _ = stringutil.ParseFileSize(this.MaxSize)
+	this.life, _ = time.ParseDuration(this.Life)
+	this.capacity, _ = stringutil.ParseFileSize(this.Capacity)
 	return err
 }
 
 // 最大数据尺寸
 func (this *CachePolicy) MaxDataSize() float64 {
 	return this.maxSize
+}
+
+// 容量
+func (this *CachePolicy) CapacitySize() float64 {
+	return this.capacity
+}
+
+// 生命周期
+func (this *CachePolicy) LifeDuration() time.Duration {
+	return this.life
 }
 
 // 保存
@@ -76,4 +91,12 @@ func (this *CachePolicy) Save() error {
 	defer writer.Close()
 	_, err = writer.WriteYAML(this)
 	return err
+}
+
+// 删除
+func (this *CachePolicy) Delete() error {
+	if len(this.Filename) > 0 {
+		return files.NewFile(Tea.ConfigFile(this.Filename)).Delete()
+	}
+	return nil
 }
