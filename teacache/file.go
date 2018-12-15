@@ -107,6 +107,8 @@ func (this *FileManager) Write(key string, data []byte) error {
 	var life = int64(this.Life.Seconds())
 	if life <= 0 {
 		life = 30 * 86400
+	} else if life >= 365*86400 { // 最大值限制
+		life = 365 * 86400
 	}
 	data = append([]byte(fmt.Sprintf("%012d", time.Now().Unix()+life)), data ...)
 	err := newFile.Write(data)

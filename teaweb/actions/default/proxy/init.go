@@ -43,6 +43,9 @@ func init() {
 
 			Get("/restart", new(RestartAction)).
 
+			Get("/cache", new(CacheAction)).
+			Post("/updateCache", new(UpdateCacheAction)).
+
 			EndAll()
 	})
 }

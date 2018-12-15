@@ -162,6 +162,14 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		this.ignoreHeaders = append(this.ignoreHeaders, server.IgnoreHeaders ...)
 	}
 
+	// cache
+	if server.CacheOn {
+		cachePolicy := server.CachePolicyObject()
+		if cachePolicy != nil && cachePolicy.On {
+			this.cachePolicy = cachePolicy
+		}
+	}
+
 	// API配置，目前只有Plus版本支持
 	if teaconst.PlusEnabled && server.API != nil && server.API.On {
 		// 查找API
@@ -269,9 +277,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.index = this.formatAll(location.Index)
 			}
 
-			cachePolicy := location.CachePolicyObject()
-			if cachePolicy != nil && cachePolicy.On {
-				this.cachePolicy = cachePolicy
+			if location.CacheOn {
+				cachePolicy := location.CachePolicyObject()
+				if cachePolicy != nil && cachePolicy.On {
+					this.cachePolicy = cachePolicy
+				}
 			}
 
 			if len(location.Headers) > 0 {

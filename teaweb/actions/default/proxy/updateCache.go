@@ -1,4 +1,4 @@
-package locations
+package proxy
 
 import (
 	"github.com/TeaWeb/code/teacache"
@@ -12,18 +12,12 @@ type UpdateCacheAction actions.Action
 
 // 更新缓存设置
 func (this *UpdateCacheAction) Run(params struct {
-	Server        string
-	LocationIndex int
-	Policy        string
+	Server string
+	Policy string
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail("找不到要操作的代理服务")
-	}
-
-	location := server.LocationAtIndex(params.LocationIndex)
-	if location == nil {
-		this.Fail("找不到要操作的路径规则")
 	}
 
 	if len(params.Policy) > 0 {
@@ -42,8 +36,8 @@ func (this *UpdateCacheAction) Run(params struct {
 		}
 	}
 
-	location.CacheOn = true
-	location.CachePolicy = params.Policy
+	server.CacheOn = true
+	server.CachePolicy = params.Policy
 	err = server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())

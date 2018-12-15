@@ -45,8 +45,8 @@ type ServerConfig struct {
 	// SSL
 	SSL *SSLConfig `yaml:"ssl" json:"ssl"`
 
-	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header
-	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header TODO
+	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 添加的自定义Header
+	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` //TODO
@@ -57,6 +57,10 @@ type ServerConfig struct {
 	Rewrite []*RewriteRule   `yaml:"rewrite" json:"rewrite"` // 重写规则 TODO
 	Fastcgi []*FastcgiConfig `yaml:"fastcgi" json:"fastcgi"` // Fastcgi配置 TODO
 	Proxy   string           `yaml:"proxy" json:"proxy"`     //  代理配置 TODO
+
+	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
+	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开 TODO
+	cachePolicy *CachePolicy
 
 	// API相关
 	API *api.APIConfig `yaml:"api" json:"api"` // API配置
@@ -187,6 +191,18 @@ func (this *ServerConfig) Validate() error {
 		err := header.Validate()
 		if err != nil {
 			return err
+		}
+	}
+
+	// 校验缓存配置
+	if len(this.CachePolicy) > 0 {
+		policy := NewCachePolicyFromFile(this.CachePolicy)
+		if policy != nil {
+			err := policy.Validate()
+			if err != nil {
+				return err
+			}
+			this.cachePolicy = policy
 		}
 	}
 
@@ -419,4 +435,9 @@ func (this *ServerConfig) NextFastcgi() *FastcgiConfig {
 // 添加路径规则
 func (this *ServerConfig) AddLocation(location *LocationConfig) {
 	this.Locations = append(this.Locations, location)
+}
+
+// 缓存策略
+func (this *ServerConfig) CachePolicyObject() *CachePolicy {
+	return this.cachePolicy
 }

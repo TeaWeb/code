@@ -33,21 +33,18 @@ type LocationConfig struct {
 	caseInsensitive bool // 大小写不敏感
 	reverse         bool // 是否翻转规则，比如非前缀，非路径
 
-	Async       bool     `yaml:"async" json:"async"`             // 是否异步请求 @TODO
-	Notify      []string `yaml:"notify" json:"notify"`           // 转发请求 @TODO
-	LogOnly     bool     `yaml:"logOnly" json:"logOnly"`         // 是否只记录日志 @TODO
-	CachePolicy string   `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
-	CacheOn     bool     `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开
-	Root        string   `yaml:"root" json:"root"`               // 资源根目录
-	Index       []string `yaml:"index" json:"index"`             // 默认文件
-	Charset     string   `yaml:"charset" json:"charset"`         // 字符集设置
+	Async   bool     `yaml:"async" json:"async"`     // 是否异步请求 @TODO
+	Notify  []string `yaml:"notify" json:"notify"`   // 转发请求 @TODO
+	LogOnly bool     `yaml:"logOnly" json:"logOnly"` // 是否只记录日志 @TODO
+	Root    string   `yaml:"root" json:"root"`       // 资源根目录
+	Index   []string `yaml:"index" json:"index"`     // 默认文件
+	Charset string   `yaml:"charset" json:"charset"` // 字符集设置
 
 	// 日志
 	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // @TODO
 
-	// 参考 http://nginx.org/en/docs/http/ngx_http_headers_module.html#add_header
-	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 头信息 @TODO
-	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
+	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 添加的头信息
+	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` // 允许的终端地址 @TODO
@@ -58,6 +55,8 @@ type LocationConfig struct {
 	Proxy    string                 `yaml:proxy" json:"proxy"`        //  代理配置 @TODO
 	Backends []*ServerBackendConfig `yaml:"backends" json:"backends"` // 后端服务器配置 @TODO
 
+	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
+	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开 TODO
 	cachePolicy *CachePolicy
 }
 
