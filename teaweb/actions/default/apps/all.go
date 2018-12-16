@@ -7,12 +7,25 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/apputils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
+	"os/exec"
+	"strings"
 )
 
 type AllAction actions.Action
 
+// 所有App列表
 func (this *AllAction) Run(params struct{}) {
 	allApps := []maps.Map{}
+
+	// 检查命令 ps, pgrep, lsof
+	messages := []string{}
+	for _, cmd := range []string{"ps", "pgrep", "lsof"} {
+		_, err := exec.LookPath(cmd)
+		if err != nil {
+			messages = append(messages, "需要先安装命令\""+cmd+"\"，<a href=\"https://github.com/TeaWeb/build/blob/master/docs/apps/Install"+strings.ToUpper(cmd[0:1])+cmd[1:]+".md\" target=\"_blank\">如何安装？</a>")
+		}
+	}
+	this.Data["messages"] = messages
 
 	for _, plugin := range teaplugins.Plugins() {
 		apps := plugin.Apps
