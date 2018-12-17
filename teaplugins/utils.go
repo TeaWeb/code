@@ -3,6 +3,7 @@ package teaplugins
 import (
 	"bufio"
 	"bytes"
+	"github.com/TeaWeb/plugin/messages"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -157,6 +158,17 @@ func FilterResponse(response *http.Response) (resultResp *http.Response) {
 	return resultResp
 }
 
+// 刷新所有插件的App
+func ReloadAllApps() {
+	for _, loader := range loaders {
+		message := new(messages.ReloadAppsAction)
+		loader.Write(message)
+	}
+}
+
+// 加载插件
+var loaders = []*Loader{}
+
 func load() {
 	logs.Println("[plugin]load plugins")
 	dir := Tea.Root + Tea.DS + "plugins"
@@ -166,6 +178,9 @@ func load() {
 		}
 
 		logs.Println("[plugin][loader]load plugin '" + file.Name() + "'")
-		go NewLoader(file.Path()).Load()
+
+		loader := NewLoader(file.Path())
+		go loader.Load()
+		loaders = append(loaders, loader)
 	})
 }

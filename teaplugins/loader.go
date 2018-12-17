@@ -145,7 +145,7 @@ func (this *Loader) CallAction(ptr interface{}, messageId uint32) error {
 
 	method, found := this.methods["Action"+action.Name()]
 	if !found {
-		return errors.New("[plugin]handler for '" + action.Name() + "' not found")
+		return errors.New("handler for '" + action.Name() + "' not found")
 
 	}
 	method.Func.Call([]reflect.Value{this.thisValue, reflect.ValueOf(action)})
@@ -302,13 +302,13 @@ func (this *Loader) ActionReloadApps(action *messages.ReloadAppsAction) {
 	for _, a := range action.Apps {
 		a2 := teaapps.NewApp()
 		a2.LoadFromInterface(a)
-		a2.OnReload(func() {
-			this.Write(&messages.ReloadAppAction{
-				App: &apps.App{
-					Id: a.Id,
-				},
+		func(a *apps.App) {
+			a2.OnReload(func() {
+				action := new(messages.ReloadAppAction)
+				action.App = a
+				this.Write(action)
 			})
-		})
+		}(a)
 		this.plugin.AddApp(a2)
 	}
 }

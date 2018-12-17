@@ -2,7 +2,6 @@ package apps
 
 import (
 	"fmt"
-	"github.com/TeaWeb/code/teaapps"
 	"github.com/TeaWeb/code/teaplugins"
 	"github.com/TeaWeb/code/teaweb/actions/default/apputils"
 	"github.com/iwind/TeaGo/actions"
@@ -27,6 +26,9 @@ func (this *AllAction) Run(params struct{}) {
 	}
 	this.Data["messages"] = messages
 
+	// 刷新
+	teaplugins.ReloadAllApps()
+
 	for _, plugin := range teaplugins.Plugins() {
 		apps := plugin.Apps
 		if len(apps) == 0 {
@@ -35,10 +37,6 @@ func (this *AllAction) Run(params struct{}) {
 
 		for _, app := range apps {
 			memory := app.SumMemoryUsage()
-
-			func(app *teaapps.App) {
-				go app.Reload()
-			}(app)
 
 			isFavored := apputils.FavorAppContains(app.UniqueId())
 			allApps = append(allApps, maps.Map{
