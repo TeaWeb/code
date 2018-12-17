@@ -252,6 +252,13 @@ func (this *Loader) ActionRegisterPlugin(action *messages.RegisterPluginAction) 
 		for _, a := range p.Apps {
 			a2 := teaapps.NewApp()
 			a2.LoadFromInterface(a)
+			func(a *apps.App) {
+				a2.OnReload(func() {
+					action := new(messages.ReloadAppAction)
+					action.App = a
+					this.Write(action)
+				})
+			}(a)
 			p2.AddApp(a2)
 		}
 
@@ -306,6 +313,7 @@ func (this *Loader) ActionReloadApps(action *messages.ReloadAppsAction) {
 	}
 }
 
+// 接收到刷新App消息
 func (this *Loader) ActionReloadApp(action *messages.ReloadAppAction) {
 	a := action.App
 	if a != nil {

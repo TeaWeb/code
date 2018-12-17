@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 )
 
+// 通过ID查找App
 func FindApp(appId string) (*teaplugins.Plugin, *teaapps.App) {
 	for _, p := range teaplugins.Plugins() {
 		for _, a := range p.Apps {
@@ -20,6 +21,7 @@ func FindApp(appId string) (*teaplugins.Plugin, *teaapps.App) {
 	return nil, nil
 }
 
+// 收藏App
 func FavorApp(appId string) error {
 	_, app := FindApp(appId)
 	if app == nil {
@@ -61,6 +63,7 @@ func FavorApp(appId string) error {
 	return err
 }
 
+// 取消收藏App
 func CancelFavorApp(appId string) error {
 	_, app := FindApp(appId)
 	if app == nil {
@@ -104,6 +107,7 @@ func CancelFavorApp(appId string) error {
 	return err
 }
 
+// 判断是否已收藏App
 func FavorAppContains(uniqueId string) bool {
 	confFile := files.NewFile(Tea.ConfigFile("apps_favor.conf"))
 	if !confFile.Exists() {

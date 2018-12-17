@@ -9,6 +9,7 @@ import (
 
 type ReloadAction actions.Action
 
+// 刷新App状态
 func (this *ReloadAction) Run(params struct {
 	AppId string
 }) {
@@ -33,6 +34,7 @@ func (this *ReloadAction) Run(params struct {
 			"countConnections": app.CountAllConnections(),
 			"countOpenFiles":   app.CountAllOpenFiles(),
 			"countListens":     app.CountAllListens(),
+			"isFavored":        apputils.FavorAppContains(app.UniqueId()),
 		}
 		this.Success()
 	}
