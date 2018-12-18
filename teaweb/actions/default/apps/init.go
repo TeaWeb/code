@@ -23,9 +23,11 @@ func init() {
 			Get("/all", new(AllAction)).
 			Post("/watch", new(WatchAction)).
 			Get("/probes", new(ProbesAction)).
+			Get("/square", new(SquareAction)).
 			GetPost("/addProbe", new(AddProbeAction)).
 			Post("/deleteProbe", new(DeleteProbeAction)).
 			GetPost("/probeScript", new(ProbeScriptAction)).
+			Post("/copyProbe", new(CopyProbeAction)).
 			EndAll()
 	})
 

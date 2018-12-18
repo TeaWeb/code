@@ -60,6 +60,8 @@ func (this *AddProbeAction) RunPost(params struct {
 				"site":      app.Site,
 				"docSite":   app.DocSite,
 				"version":   app.Version,
+				"file":      app.Processes[0].File,
+				"dir":       app.Processes[0].Dir,
 				"processes": lists.Map(app.Processes, func(k int, v interface{}) interface{} {
 					var process = v.(*apps.Process)
 					return maps.Map{

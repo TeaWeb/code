@@ -27,8 +27,8 @@ func (this *ReloadAction) Run(params struct {
 			"site":             app.Site,
 			"docSite":          app.DocSite,
 			"isRunning":        app.IsRunning,
-			"cpuPercent":       app.SumCPUUsage().Percent * 100,
-			"memoryPercent":    memory.Percent * 100,
+			"cpuPercent":       fmt.Sprintf("%.1f", app.SumCPUUsage().Percent),
+			"memoryPercent":    fmt.Sprintf("%.1f", memory.Percent),
 			"memoryRSS":        fmt.Sprintf("%.2f", float64(memory.RSS)/1024/1024), // 单位：M
 			"countProcesses":   len(app.Processes),
 			"countConnections": app.CountAllConnections(),

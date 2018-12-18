@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaplugins"
 	"github.com/TeaWeb/code/teaweb/actions/default/apputils"
+	"github.com/TeaWeb/jsapps/probes"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 	"os/exec"
@@ -25,6 +27,15 @@ func (this *AllAction) Run(params struct{}) {
 		}
 	}
 	this.Data["messages"] = messages
+
+	// 探针
+	parser := probes.NewParser(Tea.Root + Tea.DS + "plugins" + "jsapps.js")
+	_, f, err := parser.LoadFunctions()
+	if err != nil {
+		this.Data["countProbes"] = 0
+	} else {
+		this.Data["countProbes"] = len(f.Keys())
+	}
 
 	// 刷新
 	teaplugins.ReloadAllApps()

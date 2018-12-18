@@ -4,6 +4,8 @@ import (
 	"github.com/TeaWeb/jsapps/probes"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/types"
+	"strings"
 )
 
 type ProbesAction actions.Action
@@ -17,6 +19,9 @@ func (this *ProbesAction) Run(params struct{}) {
 		this.Data["probes"] = []map[string]interface{}{}
 	} else {
 		this.Data["error"] = ""
+		for _, m := range result {
+			m["isLocal"] = strings.HasPrefix(types.String(m["id"]), "local_")
+		}
 		this.Data["probes"] = result
 	}
 

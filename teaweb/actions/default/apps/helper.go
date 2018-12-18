@@ -47,7 +47,7 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 				"name":    "探针",
 				"subName": "",
 				"url":     "/apps/probes",
-				"active":  action.Spec.HasClassPrefix("apps.ProbesAction", "apps.AddProbeAction", "apps.ProbeScriptAction"),
+				"active":  action.Spec.HasClassPrefix("apps.ProbesAction", "apps.SquareAction", "apps.AddProbeAction", "apps.ProbeScriptAction"),
 			},
 		}
 
