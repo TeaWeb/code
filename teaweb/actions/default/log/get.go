@@ -1,20 +1,27 @@
 package log
 
 import (
+	"fmt"
 	"github.com/TeaWeb/code/teacharts"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"math"
+	"net/http"
 	"time"
 )
 
 type GetAction actions.Action
 
+// 获取日志
 func (this *GetAction) Run(params struct {
-	FromId string
-	Size   int64 `default:"10"`
+	FromId       string
+	Size         int64 `default:"10"`
+	BodyFetching bool
 }) {
+	requestBodyFetching = params.BodyFetching
+	requestBodyTime = time.Now()
+
 	logger := tealogs.SharedLogger()
 	accessLogs := lists.NewList(logger.ReadNewLogs(params.FromId, params.Size))
 	result := accessLogs.Map(func(k int, v interface{}) interface{} {
@@ -30,7 +37,7 @@ func (this *GetAction) Run(params struct {
 			"userAgent":      accessLog.UserAgent,
 			"host":           accessLog.Host,
 			"status":         accessLog.Status,
-			"statusMessage":  accessLog.StatusMessage,
+			"statusMessage":  fmt.Sprintf("%d", accessLog.Status) + " " + http.StatusText(accessLog.Status),
 			"timeISO8601":    accessLog.TimeISO8601,
 			"timeLocal":      accessLog.TimeLocal,
 			"requestScheme":  accessLog.Scheme,
@@ -138,7 +145,7 @@ func (this *GetAction) Run(params struct {
 			Values: values,
 			Color:  teacharts.ColorBlue,
 			Filled: true,
-			Name:"",
+			Name:   "",
 		})
 		requestChart.Labels = labels
 		this.Data["requestChart"] = requestChart

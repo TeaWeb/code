@@ -537,13 +537,22 @@ func (this *Request) call(writer *ResponseWriter) error {
 		return this.callMock(writer)
 	}
 
-	// API相关
-	if this.api != nil {
-		// watch
-		if this.isWatching {
-			writer.SetBodyCopying(true)
+	// watch
+	if this.isWatching {
+		// 判断如果Content-Length过长，则截断
+		reqData, err := httputil.DumpRequest(this.raw, true)
+		if err == nil {
+			if len(reqData) > 10240 {
+				reqData = reqData[:10240]
+			}
+			this.requestData = reqData
 		}
 
+		writer.SetBodyCopying(true)
+	}
+
+	// API相关
+	if this.api != nil {
 		// limit
 		if this.api.Limit != nil {
 			this.api.Limit.Begin()
@@ -1289,8 +1298,19 @@ func (this *Request) SetCacheEnabled() {
 	this.cacheEnabled = true
 }
 
+// 判断缓存策略是否有效
 func (this *Request) IsCacheEnabled() bool {
 	return this.cacheEnabled
+}
+
+// 设置监控状态
+func (this *Request) SetIsWatching(isWatching bool) {
+	this.isWatching = isWatching
+}
+
+// 判断是否在监控
+func (this *Request) IsWatching() bool {
+	return this.isWatching
 }
 
 // 利用请求参数格式化字符串

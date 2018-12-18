@@ -7,6 +7,7 @@ import (
 
 type ResponseHeaderAction actions.Action
 
+// 响应Header
 func (this *ResponseHeaderAction) Run(params struct {
 	LogId string
 }) {
@@ -16,6 +17,8 @@ func (this *ResponseHeaderAction) Run(params struct {
 	} else {
 		this.Data["headers"] = map[string][]string{}
 	}
+
+	this.Data["body"] = string(accessLog.ResponseBodyData)
 
 	this.Success()
 }
