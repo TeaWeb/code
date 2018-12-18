@@ -8,6 +8,7 @@ import (
 
 type IndexAction actions.Action
 
+// 服务详情
 func (this *IndexAction) Run(params struct {
 	AppId string
 }) {

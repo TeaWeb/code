@@ -29,6 +29,7 @@ func (this *AllAction) Run(params struct{}) {
 	// 刷新
 	teaplugins.ReloadAllApps()
 
+	// 所有Apps
 	for _, plugin := range teaplugins.Plugins() {
 		apps := plugin.Apps
 		if len(apps) == 0 {

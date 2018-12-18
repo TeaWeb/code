@@ -21,9 +21,11 @@ func init() {
 			Prefix("/apps").
 			Get("", new(IndexAction)).
 			Get("/all", new(AllAction)).
+			Post("/watch", new(WatchAction)).
 			Get("/probes", new(ProbesAction)).
 			GetPost("/addProbe", new(AddProbeAction)).
 			Post("/deleteProbe", new(DeleteProbeAction)).
+			GetPost("/probeScript", new(ProbeScriptAction)).
 			EndAll()
 	})
 
