@@ -45,6 +45,7 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 	if requestBodyFetching && time.Since(requestBodyTime).Seconds() < 5 {
 		req.SetIsWatching(true)
 	} else {
+		requestBodyFetching = false
 		req.SetIsWatching(false)
 	}
 	return true
