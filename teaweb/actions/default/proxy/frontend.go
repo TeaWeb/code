@@ -7,13 +7,14 @@ import (
 
 type FrontendAction actions.Action
 
+// 前端设置
 func (this *FrontendAction) Run(params struct {
-	Filename string
+	Server string
 }) {
 	this.Data["selectedTab"] = "frontend"
-	this.Data["filename"] = params.Filename
+	this.Data["filename"] = params.Server
 
-	server, err := teaconfigs.NewServerConfigFromFile(params.Filename)
+	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
 	}

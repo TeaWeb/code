@@ -61,7 +61,7 @@ func createWidget(plugin *teaplugins.Plugin) {
 	chart.Name = "即时日志"
 	chart.OnReload(func() {
 		// 日志
-		accessLogs := SharedLogger().ReadNewLogs("", 5)
+		accessLogs := SharedLogger().ReadNewLogs("", "", 5)
 		chart.ResetRows()
 		for _, accessLog := range accessLogs {
 			chart.AddRow("<em>" + accessLog.TimeLocal + " @" + accessLog.Host + "</em><br/> <span>\"" + accessLog.Request + "\"</span>")

@@ -85,6 +85,21 @@ func (this *AccessLogger) collection() *mongo.Collection {
 		Keys:    bson.NewDocument(bson.EC.Int32("apiPath", 1), bson.EC.Int32("serverId", 1)),
 		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
 	})
+	indexes.CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    bson.NewDocument(bson.EC.Int32("apiPath", 1), bson.EC.Int32("serverId", 1)),
+		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
+	})
+	indexes.CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    bson.NewDocument(bson.EC.Int32("apiPath", 1), bson.EC.Int32("serverId", 1)),
+		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
+	})
+
+	for _, field := range []string{"timeFormat.hour", "timeFormat.minute", "timeFormat.second"} {
+		indexes.CreateOne(context.Background(), mongo.IndexModel{
+			Keys:    bson.NewDocument(bson.EC.Int32(field, 1), bson.EC.Int32("serverId", 1)),
+			Options: bson.NewDocument(bson.EC.Boolean("background", true)),
+		})
+	}
 
 	this.collectionCacheLocker.Lock()
 	this.collectionCacheMap[collName] = coll
@@ -165,6 +180,22 @@ func (this *AccessLogger) wait() {
 	for {
 		item := <-this.queue
 		log := item.log
+		t := time.Unix(log.Timestamp, 0)
+		log.TimeFormat = struct {
+			Year   string `var:"year" bson:"year" json:"year"`
+			Month  string `var:"month" bson:"month" json:"month"`
+			Day    string `var:"day" bson:"day" json:"day"`
+			Hour   string `var:"hour" bson:"hour" json:"hour"`
+			Minute string `var:"minute" bson:"minute" json:"minute"`
+			Second string `var:"second" bson:"second" json:"second"`
+		}{
+			Year:   timeutil.Format("Y", t),
+			Month:  timeutil.Format("Ym", t),
+			Day:    timeutil.Format("Ymd", t),
+			Hour:   timeutil.Format("YmdH", t),
+			Minute: timeutil.Format("YmdHi", t),
+			Second: timeutil.Format("YmdHis", t),
+		}
 
 		// 计算QPS和BandWidth
 		this.timestamp = log.Timestamp
@@ -198,7 +229,7 @@ func (this *AccessLogger) Close() {
 }
 
 // 读取日志
-func (this *AccessLogger) ReadNewLogs(fromId string, size int64) []AccessLog {
+func (this *AccessLogger) ReadNewLogs(serverId string, fromId string, size int64) []AccessLog {
 	if this.client() == nil {
 		return []AccessLog{}
 	}
@@ -211,6 +242,9 @@ func (this *AccessLogger) ReadNewLogs(fromId string, size int64) []AccessLog {
 	coll := this.collection()
 
 	filter := map[string]interface{}{}
+	if len(serverId) > 0 {
+		filter["serverId"] = serverId
+	}
 	if len(fromId) > 0 {
 		objectId, err := objectid.FromHex(fromId)
 		if err == nil {
@@ -293,12 +327,15 @@ func (this *AccessLogger) CountSuccessLogs(fromTimestamp int64, toTimestamp int6
 	return count
 }
 
-func (this *AccessLogger) CountFailLogs(fromTimestamp int64, toTimestamp int64) int64 {
+func (this *AccessLogger) CountFailLogs(fromTimestamp int64, toTimestamp int64, serverId string) int64 {
 	coll := this.collection()
 	filter := bson.NewDocument(
 		bson.EC.SubDocument("status", bson.NewDocument(bson.EC.Int64("$gte", 400))),
 		bson.EC.SubDocument("timestamp", bson.NewDocument(bson.EC.Int64("$lte", toTimestamp), bson.EC.Int64("$gte", fromTimestamp))),
 	)
+	if len(serverId) > 0 {
+		filter.Append(bson.EC.String("serverId", serverId))
+	}
 	count, err := coll.CountDocuments(context.Background(), filter)
 	if err != nil {
 		logs.Error(err)

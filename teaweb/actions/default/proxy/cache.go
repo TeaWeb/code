@@ -11,20 +11,21 @@ import (
 
 type CacheAction actions.Action
 
+// 缓存设置
 func (this *CacheAction) Run(params struct {
-	Filename string
+	Server string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Filename)
+	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
 	}
 
 	this.Data["server"] = maps.Map{
-		"filename": params.Filename,
+		"filename": params.Server,
 	}
 
 	this.Data["selectedTab"] = "cache"
-	this.Data["filename"] = params.Filename
+	this.Data["filename"] = params.Server
 	this.Data["proxy"] = server
 
 	// 缓存策略

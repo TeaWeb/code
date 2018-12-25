@@ -1,22 +1,23 @@
 package backend
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/iwind/TeaGo/actions"
 )
 
 type IndexAction actions.Action
 
+// 后端列表
 func (this *IndexAction) Run(params struct {
-	Filename string
+	Server string
 }) {
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Filename)
+	proxy, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
 	}
 
 	this.Data["selectedTab"] = "backend"
-	this.Data["filename"] = params.Filename
+	this.Data["filename"] = params.Server
 	this.Data["proxy"] = proxy
 
 	this.Show()

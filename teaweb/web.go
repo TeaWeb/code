@@ -17,6 +17,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/plugins"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/backend"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/board"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/fastcgi"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/headers"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/locations"

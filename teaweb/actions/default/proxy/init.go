@@ -19,7 +19,7 @@ func init() {
 			Get("/status", new(StatusAction)).
 
 			GetPost("/add", new(AddAction)).
-			Post("/delete", new(DeleteAction)).
+			GetPost("/delete", new(DeleteAction)).
 			GetPost("/update", new(UpdateAction)).
 			Get("/detail", new(DetailAction)).
 			Get("/httpOn", new(HttpOnAction)).

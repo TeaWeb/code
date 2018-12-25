@@ -45,6 +45,7 @@ func (this *ProbeScriptAction) Run(params struct {
 	} else {
 		parser := probes.NewParser(Tea.Root + Tea.DS + "plugins" + Tea.DS + "jsapps.js")
 		f, _ := parser.FindProbeFunction(params.ProbeId)
+
 		this.Data["func"] = f
 		this.Data["isLocal"] = false
 	}

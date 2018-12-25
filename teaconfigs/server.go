@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
+	"github.com/mozillazg/go-pinyin"
 	"math/rand"
 	"strings"
 	"time"
@@ -72,7 +73,6 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 
 	dir := files.NewFile(dirPath)
 	subFiles := dir.Glob("*.proxy.conf")
-	files.Sort(subFiles, files.SortTypeName)
 	for _, configFile := range subFiles {
 		reader, err := configFile.Reader()
 		if err != nil {
@@ -94,6 +94,12 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 
 		servers = append(servers, config)
 	}
+
+	lists.Sort(servers, func(i int, j int) bool {
+		s1 := servers[i].convertPinYin(servers[i].Description)
+		s2 := servers[j].convertPinYin(servers[j].Description)
+		return strings.Compare(s1, s2) < 0
+	})
 
 	return servers
 }
@@ -440,4 +446,24 @@ func (this *ServerConfig) AddLocation(location *LocationConfig) {
 // 缓存策略
 func (this *ServerConfig) CachePolicyObject() *shared.CachePolicy {
 	return this.cachePolicy
+}
+
+// 拼音转换，用户转换代理描述中的中文
+func (this *ServerConfig) convertPinYin(s string) string {
+	a := pinyin.NewArgs()
+
+	result := []string{}
+	for _, rune1 := range []rune(s) {
+		r := string(rune1)
+		if len(r) == 1 {
+			result = append(result, r)
+		} else {
+			for _, s := range pinyin.Convert(r, &a) {
+				if len(s) > 0 {
+					result = append(result, s[0]+" ")
+				}
+			}
+		}
+	}
+	return strings.Join(result, "")
 }

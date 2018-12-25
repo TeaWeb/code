@@ -1,8 +1,8 @@
 package log
 
 import (
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/maps"
 	"net/http"
 )
 
@@ -14,19 +14,5 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 		return
 	}
 
-	action.Data["teaMenu"] = "log"
-	action.Data["teaTabbar"] = []maps.Map{
-		{
-			"name":    "访问日志",
-			"subName": "",
-			"url":     "/log",
-			"active":  action.Spec.HasClassPrefix("log.IndexAction"),
-		},
-		{
-			"name":    "TeaWeb日志",
-			"subName": "",
-			"url":     "/log/runtime",
-			"active":  action.Spec.ClassName == "log.RuntimeAction",
-		},
-	}
+	proxyutils.AddServerMenu(action)
 }

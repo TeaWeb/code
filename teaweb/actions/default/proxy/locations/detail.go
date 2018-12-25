@@ -15,10 +15,10 @@ type DetailAction actions.Action
 
 // 路径规则详情
 func (this *DetailAction) Run(params struct {
-	Filename string
-	Index    int
+	Server string
+	Index  int
 }) {
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Filename)
+	proxy, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
 	}
@@ -37,7 +37,7 @@ func (this *DetailAction) Run(params struct {
 	}
 
 	this.Data["selectedTab"] = "location"
-	this.Data["filename"] = params.Filename
+	this.Data["filename"] = params.Server
 	this.Data["locationIndex"] = params.Index
 
 	this.Data["location"] = maps.Map{

@@ -1,9 +1,9 @@
 package locations
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/iwind/TeaGo/actions"
 )
 
 type AddAction actions.Action
@@ -42,8 +42,8 @@ func (this *AddAction) Run(params struct {
 	global.NotifyChange()
 
 	this.Next("/proxy/locations/detail", map[string]interface{}{
-		"filename": params.Filename,
-		"index":    len(proxy.Locations) - 1,
+		"server": params.Filename,
+		"index":  len(proxy.Locations) - 1,
 	})
 
 	this.Success("添加成功，现在跳转到详情")

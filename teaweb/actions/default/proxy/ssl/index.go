@@ -7,16 +7,17 @@ import (
 
 type IndexAction actions.Action
 
+// SSL设置
 func (this *IndexAction) Run(params struct {
-	Filename string
+	Server string
 }) {
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Filename)
+	proxy, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
 	}
 
 	this.Data["selectedTab"] = "https"
-	this.Data["filename"] = params.Filename
+	this.Data["filename"] = params.Server
 	this.Data["proxy"] = proxy
 
 	this.Show()

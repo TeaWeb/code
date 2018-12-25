@@ -9,9 +9,9 @@ import (
 type DetailAction actions.Action
 
 func (this *DetailAction) Run(params struct {
-	Filename string
+	Server string
 }) {
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Filename)
+	proxy, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
 	}
@@ -21,7 +21,7 @@ func (this *DetailAction) Run(params struct {
 	}
 
 	this.Data["selectedTab"] = "basic"
-	this.Data["filename"] = params.Filename
+	this.Data["filename"] = params.Server
 	this.Data["proxy"] = proxy
 
 	// 字符集

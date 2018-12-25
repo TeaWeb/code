@@ -1,19 +1,31 @@
 package proxy
 
 import (
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/iwind/TeaGo/maps"
 )
 
 type DeleteAction actions.Action
 
+// 删除
 func (this *DeleteAction) Run(params struct {
-	Filename string
+	Server string
 }) {
-	configFile := files.NewFile(Tea.ConfigFile(params.Filename))
+	this.Data["server"] = maps.Map{
+		"filename": params.Server,
+	}
+
+	this.Show()
+}
+
+func (this *DeleteAction) RunPost(params struct {
+	Server string
+}) {
+	configFile := files.NewFile(Tea.ConfigFile(params.Server))
 	if !configFile.Exists() {
 		this.Fail("要删除的配置文件不存在")
 	}
@@ -29,5 +41,5 @@ func (this *DeleteAction) Run(params struct {
 	// 重启
 	global.NotifyChange()
 
-	this.Refresh().Success()
+	this.Success()
 }

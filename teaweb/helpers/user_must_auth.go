@@ -63,7 +63,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	if user.Granted(configs.AdminGrantProxy) {
 		modules = append(modules, map[string]interface{}{
 			"code":     "proxy",
-			"menuName": "代理设置",
+			"menuName": "代理",
 			"icon":     "paper plane outline",
 		})
 	}
@@ -87,21 +87,6 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	}
 
 	// 附加功能
-	if user.Granted(configs.AdminGrantLog) {
-		modules = append(modules, map[string]interface{}{
-			"code":     "log",
-			"menuName": "日志",
-			"icon":     "history",
-		})
-	}
-	if user.Granted(configs.AdminGrantStatistics) {
-		modules = append(modules, map[string]interface{}{
-			"code":     "stat",
-			"menuName": "统计",
-			"icon":     "chart area",
-		})
-	}
-
 	if user.Granted(configs.AdminGrantApp) {
 		modules = append(modules, map[string]interface{}{
 			"code":     "apps",
@@ -150,6 +135,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	action.Data["teaTabbar"] = []map[string]interface{}{}
 	action.Data["teaVersion"] = teaconst.TeaVersion
 	action.Data["teaIsSuper"] = user.Granted(configs.AdminGrantAll)
+	action.Data["teaSubHeader"] = ""
 
 	return true
 }
