@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
@@ -25,7 +26,8 @@ type Engine struct {
 
 func NewEngine() *Engine {
 	engine := &Engine{
-		widgetCodes: map[string]maps.Map{},
+		chartOptions: []maps.Map{},
+		widgetCodes:  map[string]maps.Map{},
 	}
 	engine.init()
 	return engine
@@ -83,6 +85,13 @@ func (this *Engine) SetContext(context *Context) {
 		}
 		this.vm.Run(`context.server = new http.Server(` + this.jsonEncode(options) + `);`)
 	}
+
+	// 可供使用的特性
+	features := []string{}
+	if teamongo.Test() == nil {
+		features = append(features, "mongo")
+	}
+	this.vm.Run(`context.features=` + this.jsonEncode(features) + `;`)
 }
 
 func (this *Engine) init() {
@@ -93,6 +102,7 @@ func (this *Engine) init() {
 	this.loadLib("libs/logs.js")
 	this.loadLib("libs/http.js")
 	this.loadLib("libs/colors.js")
+	this.loadLib("libs/widgets.js")
 	this.loadLib("libs/charts.js")
 	this.loadLib("libs/charts.gauge.js")
 	this.loadLib("libs/charts.html.js")
@@ -103,8 +113,8 @@ func (this *Engine) init() {
 
 	this.loadWidgets()
 
-	this.vm.Set("renderChart", this.renderChart)
-	this.vm.Set("executeQuery", this.executeQuery)
+	this.vm.Set("callChartRender", this.renderChart)
+	this.vm.Set("callExecuteQuery", this.executeQuery)
 }
 
 func (this *Engine) RunConfig(configFile string, options maps.Map) error {
@@ -154,7 +164,8 @@ func (this *Engine) RunConfig(configFile string, options maps.Map) error {
 
 func (this *Engine) RunCode(code string) error {
 	_, err := this.vm.Run(`(function () {` + code + `
-	widget.run();
+	
+	widget.callRun();
 })();`)
 	return err
 }
