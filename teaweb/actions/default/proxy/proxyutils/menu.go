@@ -58,7 +58,7 @@ func AddServerMenu(action *actions.ActionObject) {
 		"proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "board",
 		"stat.",
 		"log.",
-	) && !action.Spec.HasClassPrefix("proxy.AddAction") {
+	) && !action.Spec.HasClassPrefix("proxy.AddAction", "log.RuntimeAction") {
 		serverFilename := action.ParamString("server")
 		tabbar := []maps.Map{
 			{

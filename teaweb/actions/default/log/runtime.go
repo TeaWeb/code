@@ -14,6 +14,8 @@ var runtimeLogOffset = int64(0)
 var runtimeLogLocker = sync.Mutex{}
 
 func (this *RuntimeAction) Run(params struct{}) {
+	this.Data["teaMenu"] = "log.runtime"
+
 	runtimeLogLocker.Lock()
 	runtimeLogOffset = 0
 	runtimeLogLocker.Unlock()

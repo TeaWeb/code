@@ -14,5 +14,7 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 		return
 	}
 
-	proxyutils.AddServerMenu(action)
+	if !action.HasPrefix("/log/runtime") {
+		proxyutils.AddServerMenu(action)
+	}
 }

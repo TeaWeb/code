@@ -90,7 +90,8 @@ type Request struct {
 	// 执行请求
 	filePath string
 
-	responseWriter *ResponseWriter
+	responseWriter   *ResponseWriter
+	responseCallback func(http.ResponseWriter)
 
 	requestFromTime    time.Time // 请求开始时间
 	requestTime        float64   // 请求耗时
@@ -496,10 +497,21 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 
 	// 转发到后端
-	backend := server.NextBackend()
+	options := maps.Map{
+		"request":   this.raw,
+		"formatter": this.Format,
+	}
+	backend := server.NextBackend(options)
 	if backend == nil {
 		if len(this.root) == 0 {
 			return errors.New("no backends available")
+		}
+	}
+	responseCallback := options.Get("responseCallback")
+	if responseCallback != nil {
+		f, ok := responseCallback.(func(http.ResponseWriter))
+		if ok {
+			this.responseCallback = f
 		}
 	}
 	this.backend = backend
@@ -521,8 +533,10 @@ func (this *Request) call(writer *ResponseWriter) error {
 	this.responseWriter = writer
 
 	defer func() {
+		// log
 		this.log()
 
+		// call hook
 		CallRequestAfterHook(this, writer)
 	}()
 
@@ -712,6 +726,11 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 		respHeader.Set("ETag", eTag)
 	}
 
+	// proxy callback
+	if this.responseCallback != nil {
+		this.responseCallback(writer)
+	}
+
 	// 支持 If-None-Match
 	if this.requestHeader("If-None-Match") == eTag {
 		writer.WriteHeader(http.StatusNotModified)
@@ -836,6 +855,11 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		}
 	}
 
+	// proxy callback
+	if this.responseCallback != nil {
+		this.responseCallback(writer)
+	}
+
 	// 设置响应代码
 	writer.WriteHeader(resp.StatusCode)
 
@@ -864,7 +888,20 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 }
 
 func (this *Request) callProxy(writer *ResponseWriter) error {
-	backend := this.proxy.NextBackend()
+	options := maps.Map{
+		"request":   this.raw,
+		"formatter": this.Format,
+	}
+	backend := this.proxy.NextBackend(options)
+
+	responseCallback := options.Get("responseCallback")
+	if responseCallback != nil {
+		f, ok := responseCallback.(func(http.ResponseWriter))
+		if ok {
+			this.responseCallback = f
+		}
+	}
+
 	this.backend = backend
 	return this.callBackend(writer)
 }

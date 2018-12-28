@@ -113,6 +113,14 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 		}
 	}
 
+	if user.Granted(configs.AdminGrantLog) {
+		modules = append(modules, map[string]interface{}{
+			"code":     "log.runtime",
+			"menuName": "系统日志",
+			"icon":     "history",
+		})
+	}
+
 	if teaconst.PlusEnabled {
 		action.Data["teaTitle"] = "TeaWeb+管理平台"
 		action.Data["teaName"] = "TeaWeb+"

@@ -3,15 +3,18 @@ package teaconfigs
 import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/api"
+	"github.com/TeaWeb/code/teaconfigs/scheduling"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/mozillazg/go-pinyin"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -28,11 +31,12 @@ type ServerConfig struct {
 	// @TODO 支持参数，比如：127.0.01:1234?ssl=off
 	Listen []string `yaml:"listen" json:"listen"`
 
-	Root      string                 `yaml:"root" json:"root"`           // 资源根目录 @TODO
-	Index     []string               `yaml:"index" json:"index"`         // 默认文件 @TODO
-	Charset   string                 `yaml:"charset" json:"charset"`     // 字符集 @TODO
-	Backends  []*ServerBackendConfig `yaml:"backends" json:"backends"`   // 后端服务器配置
-	Locations []*LocationConfig      `yaml:"locations" json:"locations"` // 地址配置
+	Root       string                 `yaml:"root" json:"root"`             // 资源根目录 @TODO
+	Index      []string               `yaml:"index" json:"index"`           // 默认文件 @TODO
+	Charset    string                 `yaml:"charset" json:"charset"`       // 字符集 @TODO
+	Backends   []*ServerBackendConfig `yaml:"backends" json:"backends"`     // 后端服务器配置
+	Scheduling *SchedulingConfig      `yaml:"scheduling" json:"scheduling"` // 调度算法选项
+	Locations  []*LocationConfig      `yaml:"locations" json:"locations"`   // 地址配置
 
 	Async   bool     `yaml:"async" json:"async"`     // 请求是否异步处理 @TODO
 	Notify  []string `yaml:"notify" json:"notify"`   // 请求转发地址 @TODO
@@ -65,6 +69,10 @@ type ServerConfig struct {
 
 	// API相关
 	API *api.APIConfig `yaml:"api" json:"api"` // API配置
+
+	schedulingIsBackup bool
+	schedulingObject   scheduling.SchedulingInterface
+	schedulingLocker   sync.Mutex
 }
 
 // 从目录中加载配置
@@ -168,6 +176,9 @@ func (this *ServerConfig) Validate() error {
 		}
 	}
 
+	// scheduling
+	this.setupScheduling(false)
+
 	// locations
 	for _, location := range this.Locations {
 		err := location.Validate()
@@ -241,27 +252,60 @@ func (this *ServerConfig) AddBackend(config *ServerBackendConfig) {
 }
 
 // 取得下一个可用的后端服务
-// @TODO 实现backend中的各种参数
-func (this *ServerConfig) NextBackend() *ServerBackendConfig {
-	if len(this.Backends) == 0 {
+func (this *ServerConfig) NextBackend(options maps.Map) *ServerBackendConfig {
+	this.schedulingLocker.Lock()
+	defer this.schedulingLocker.Unlock()
+
+	if this.schedulingObject == nil {
 		return nil
 	}
 
-	availableBackends := []*ServerBackendConfig{}
-	for _, backend := range this.Backends {
-		if backend.On && !backend.IsDown {
-			availableBackends = append(availableBackends, backend)
+	if this.Scheduling != nil {
+		for k, v := range this.Scheduling.Options {
+			options[k] = v
 		}
 	}
 
-	countBackends := len(availableBackends)
-	if countBackends == 0 {
-		return nil
+	candidate := this.schedulingObject.Next(options)
+	if candidate == nil {
+		// 启用备用服务器
+		if !this.schedulingIsBackup {
+			this.setupScheduling(true)
+
+			candidate = this.schedulingObject.Next(options)
+			if candidate == nil {
+				return nil
+			}
+		}
+
+		if candidate == nil {
+			return nil
+		}
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	index := rand.Int() % countBackends
-	return availableBackends[index]
+	return candidate.(*ServerBackendConfig)
+}
+
+// 根据ID查找后端服务器
+func (this *ServerConfig) FindBackend(backendId string) *ServerBackendConfig {
+	for _, backend := range this.Backends {
+		if backend.Id == backendId {
+			return backend
+		}
+	}
+	return nil
+}
+
+// 删除后端服务器
+func (this *ServerConfig) DeleteBackend(backendId string) {
+	result := []*ServerBackendConfig{}
+	for _, backend := range this.Backends {
+		if backend.Id == backendId {
+			continue
+		}
+		result = append(result, backend)
+	}
+	this.Backends = result
 }
 
 // 设置Header
@@ -466,4 +510,38 @@ func (this *ServerConfig) convertPinYin(s string) string {
 		}
 	}
 	return strings.Join(result, "")
+}
+
+// 设置调度算法
+func (this *ServerConfig) setupScheduling(isBackup bool) {
+	if !isBackup {
+		this.schedulingLocker.Lock()
+		defer this.schedulingLocker.Unlock()
+	}
+	this.schedulingIsBackup = isBackup
+
+	if this.Scheduling == nil {
+		this.schedulingObject = &scheduling.RandomScheduling{}
+	} else {
+		typeCode := this.Scheduling.Code
+		s := scheduling.FindSchedulingType(typeCode)
+		if s == nil {
+			this.Scheduling = nil
+			this.schedulingObject = &scheduling.RandomScheduling{}
+		} else {
+			this.schedulingObject = s["instance"].(scheduling.SchedulingInterface)
+		}
+	}
+
+	for _, backend := range this.Backends {
+		if backend.On && !backend.IsDown {
+			if isBackup && backend.IsBackup {
+				this.schedulingObject.Add(backend)
+			} else if !isBackup && !backend.IsBackup {
+				this.schedulingObject.Add(backend)
+			}
+		}
+	}
+
+	this.schedulingObject.Start()
 }
