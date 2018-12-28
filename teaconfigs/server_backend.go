@@ -5,6 +5,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type ServerBackendConfig struct {
 	IsBackup      bool                   `yaml:"backup" json:"isBackup"`             // 超时时间
 	FailTimeout   string                 `yaml:"failTimeout" json:"failTimeout"`     // 失败超时
 	MaxFails      uint                   `yaml:"maxFails" json:"maxFails"`           // 最多失败次数
+	CurrentFails  uint                   `yaml:"currentFails" json:"currentFails"`   // 当前已失败
 	SlowStart     string                 `yaml:"slowStart" json:"slowStart"`         // 恢复时间
 	MaxConns      uint                   `yaml:"maxConns" json:"maxConns"`           // 并发连接数
 	IsDown        bool                   `yaml:"down" json:"isDown"`                 // 是否下线
@@ -26,7 +28,9 @@ type ServerBackendConfig struct {
 	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
 
 	failTimeoutDuration time.Duration
-	slowStartDuration   time.Duration
+	failsLocker         sync.Mutex
+
+	slowStartDuration time.Duration
 }
 
 // 获取新对象
@@ -142,4 +146,14 @@ func (this *ServerBackendConfig) CandidateCodes() []string {
 // 候选对象权重
 func (this *ServerBackendConfig) CandidateWeight() uint {
 	return this.Weight
+}
+
+// 增加错误次数
+func (this *ServerBackendConfig) IncreaseFails() uint {
+	this.failsLocker.Lock()
+	defer this.failsLocker.Unlock()
+
+	this.CurrentFails ++
+
+	return this.CurrentFails
 }

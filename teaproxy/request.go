@@ -799,7 +799,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	this.raw.Header.Set("X-Forwarded-Host", this.host)
 	this.raw.Header.Set("X-Forwarded-Proto", this.raw.Proto)
 
-	client := SharedClientPool.client(this.backend.Address)
+	client := SharedClientPool.client(this.backend.Address, this.backend.FailTimeoutDuration())
 
 	this.raw.RequestURI = ""
 	resp, err := client.Do(this.raw)
@@ -812,11 +812,23 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 			}
 		}
 
+		// 如果超过最大失败次数，则下线
+		currentFails := this.backend.IncreaseFails()
+		if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
+			this.backend.IsDown = true
+			this.server.SetupScheduling(false)
+		}
+
 		this.serverError(writer)
 		logs.Error(err)
 		return nil
 	}
 	defer resp.Body.Close()
+
+	// 清除错误次数
+	if !this.backend.IsDown && this.backend.CurrentFails > 0 {
+		this.backend.CurrentFails = 0
+	}
 
 	// 忽略的Header
 	ignoreHeaders := this.convertIgnoreHeaders()
@@ -855,7 +867,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		}
 	}
 
-	// proxy callback
+	// 响应回调
 	if this.responseCallback != nil {
 		this.responseCallback(writer)
 	}

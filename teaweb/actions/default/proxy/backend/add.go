@@ -34,7 +34,6 @@ func (this *AddAction) RunPost(params struct {
 	Address     string
 	Weight      uint
 	On          bool
-	IsDown      bool
 	Code        string
 	FailTimeout uint
 	MaxFails    uint
@@ -56,7 +55,7 @@ func (this *AddAction) RunPost(params struct {
 	backend.Address = params.Address
 	backend.Weight = params.Weight
 	backend.On = params.On
-	backend.IsDown = params.IsDown
+	backend.IsDown = false
 	backend.Code = params.Code
 	backend.FailTimeout = fmt.Sprintf("%d", params.FailTimeout) + "s"
 	backend.MaxFails = params.MaxFails

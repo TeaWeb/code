@@ -3,6 +3,7 @@ package backend
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/scheduling"
+	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -23,7 +24,17 @@ func (this *IndexAction) Run(params struct {
 
 	normalBackends := []*teaconfigs.ServerBackendConfig{}
 	backupBackends := []*teaconfigs.ServerBackendConfig{}
+	runningServer, _ := teaproxy.FindServer(server.Id)
 	for _, backend := range server.Backends {
+		// 是否下线
+		if runningServer != nil {
+			runningBackend := runningServer.FindBackend(backend.Id)
+			if runningBackend != nil {
+				backend.IsDown = runningBackend.IsDown
+				backend.CurrentFails = runningBackend.CurrentFails
+			}
+		}
+
 		if backend.IsBackup {
 			backupBackends = append(backupBackends, backend)
 		} else {

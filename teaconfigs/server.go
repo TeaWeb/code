@@ -177,7 +177,7 @@ func (this *ServerConfig) Validate() error {
 	}
 
 	// scheduling
-	this.setupScheduling(false)
+	this.SetupScheduling(false)
 
 	// locations
 	for _, location := range this.Locations {
@@ -270,7 +270,7 @@ func (this *ServerConfig) NextBackend(options maps.Map) *ServerBackendConfig {
 	if candidate == nil {
 		// 启用备用服务器
 		if !this.schedulingIsBackup {
-			this.setupScheduling(true)
+			this.SetupScheduling(true)
 
 			candidate = this.schedulingObject.Next(options)
 			if candidate == nil {
@@ -513,7 +513,7 @@ func (this *ServerConfig) convertPinYin(s string) string {
 }
 
 // 设置调度算法
-func (this *ServerConfig) setupScheduling(isBackup bool) {
+func (this *ServerConfig) SetupScheduling(isBackup bool) {
 	if !isBackup {
 		this.schedulingLocker.Lock()
 		defer this.schedulingLocker.Unlock()

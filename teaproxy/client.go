@@ -25,7 +25,7 @@ func NewClientPool() *ClientPool {
 }
 
 // 根据地址获取客户端
-func (this *ClientPool) client(address string) *http.Client {
+func (this *ClientPool) client(address string, connectionTimeout time.Duration) *http.Client {
 	this.locker.Lock()
 	defer this.locker.Unlock()
 
@@ -34,11 +34,16 @@ func (this *ClientPool) client(address string) *http.Client {
 		return client
 	}
 
+	// 超时时间
+	if connectionTimeout <= 0 {
+		connectionTimeout = 15 * time.Second
+	}
+
 	tr := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			// 握手配置
 			return (&net.Dialer{
-				Timeout:   15 * time.Second,
+				Timeout:   connectionTimeout,
 				KeepAlive: 120 * time.Second,
 				DualStack: true,
 			}).DialContext(ctx, network, address)

@@ -21,6 +21,8 @@ func init() {
 			GetPost("/update", new(UpdateAction)).
 			Post("/delete", new(DeleteAction)).
 			GetPost("/scheduling", new(SchedulingAction)).
+			Post("/online", new(OnlineAction)).
+			Post("/clearFails", new(ClearFailsAction)).
 			Prefix("").
 			EndAll()
 	})
