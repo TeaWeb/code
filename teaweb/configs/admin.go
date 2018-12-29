@@ -208,7 +208,7 @@ func (this *AdminConfig) AllowIP(ip string) bool {
 	}
 
 	// allow
-	if lists.Contains(this.Security.Allow, "all") || lists.Contains(this.Security.Allow, ip) {
+	if lists.Contains(this.Security.Allow, "all") || lists.Contains(this.Security.Allow, "0.0.0.0") || lists.Contains(this.Security.Allow, ip) {
 		return true
 	}
 
