@@ -11,21 +11,21 @@ import (
 
 // 服务后端配置
 type ServerBackendConfig struct {
-	On            bool                   `yaml:"on" json:"on"`                       // 是否启用
-	Id            string                 `yaml:"id" json:"id"`                       // ID
-	Code          string                 `yaml:"code" json:"code"`                   // 代号
-	Name          []string               `yaml:"name" json:"name"`                   // 域名 TODO
-	Address       string                 `yaml:"address" json:"address"`             // 地址
-	Weight        uint                   `yaml:"weight" json:"weight"`               // 是否为备份
-	IsBackup      bool                   `yaml:"backup" json:"isBackup"`             // 超时时间
-	FailTimeout   string                 `yaml:"failTimeout" json:"failTimeout"`     // 失败超时
-	MaxFails      uint                   `yaml:"maxFails" json:"maxFails"`           // 最多失败次数
-	CurrentFails  uint                   `yaml:"currentFails" json:"currentFails"`   // 当前已失败
-	SlowStart     string                 `yaml:"slowStart" json:"slowStart"`         // 恢复时间
-	MaxConns      uint                   `yaml:"maxConns" json:"maxConns"`           // 并发连接数
-	IsDown        bool                   `yaml:"down" json:"isDown"`                 // 是否下线
-	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
-	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
+	On            bool                   `yaml:"on" json:"on"`                                 // 是否启用
+	Id            string                 `yaml:"id" json:"id"`                                 // ID
+	Code          string                 `yaml:"code" json:"code"`                             // 代号
+	Name          []string               `yaml:"name" json:"name"`                             // 域名 TODO
+	Address       string                 `yaml:"address" json:"address"`                       // 地址
+	Weight        uint                   `yaml:"weight" json:"weight"`                         // 是否为备份
+	IsBackup      bool                   `yaml:"backup" json:"isBackup"`                       // 超时时间
+	FailTimeout   string                 `yaml:"failTimeout" json:"failTimeout"`               // 失败超时
+	MaxFails      uint                   `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
+	CurrentFails  uint                   `yaml:"currentFails" json:"currentFails"`             // 当前已失败
+	MaxConns      uint                   `yaml:"maxConns" json:"maxConns"`                     // 并发连接数
+	IsDown        bool                   `yaml:"down" json:"isDown"`                           // 是否下线
+	DownTime      time.Time              `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
+	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`                       // 自定义Header @TODO
+	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"`           // 忽略的Header @TODO
 
 	failTimeoutDuration time.Duration
 	failsLocker         sync.Mutex
@@ -46,11 +46,6 @@ func (this *ServerBackendConfig) Validate() error {
 	// failTimeout
 	if len(this.FailTimeout) > 0 {
 		this.failTimeoutDuration, _ = time.ParseDuration(this.FailTimeout)
-	}
-
-	// slowStart
-	if len(this.SlowStart) > 0 {
-		this.slowStartDuration, _ = time.ParseDuration(this.SlowStart)
 	}
 
 	// 是否有端口

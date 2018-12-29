@@ -25,7 +25,7 @@ func NewClientPool() *ClientPool {
 }
 
 // 根据地址获取客户端
-func (this *ClientPool) client(address string, connectionTimeout time.Duration) *http.Client {
+func (this *ClientPool) client(address string, connectionTimeout time.Duration, maxConnections uint) *http.Client {
 	this.locker.Lock()
 	defer this.locker.Unlock()
 
@@ -48,7 +48,7 @@ func (this *ClientPool) client(address string, connectionTimeout time.Duration) 
 				DualStack: true,
 			}).DialContext(ctx, network, address)
 		},
-		MaxIdleConns:          0, // 不限
+		MaxIdleConns:          int(maxConnections), // 不限
 		MaxIdleConnsPerHost:   1024,
 		IdleConnTimeout:       0, // 不限
 		TLSHandshakeTimeout:   0, // 不限

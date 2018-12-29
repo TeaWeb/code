@@ -31,6 +31,7 @@ func (this *IndexAction) Run(params struct {
 			runningBackend := runningServer.FindBackend(backend.Id)
 			if runningBackend != nil {
 				backend.IsDown = runningBackend.IsDown
+				backend.DownTime = runningBackend.DownTime
 				backend.CurrentFails = runningBackend.CurrentFails
 			}
 		}

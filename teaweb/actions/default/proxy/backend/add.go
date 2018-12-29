@@ -38,7 +38,6 @@ func (this *AddAction) RunPost(params struct {
 	FailTimeout uint
 	MaxFails    uint
 	MaxConns    uint
-	SlowStart   uint
 	IsBackup    bool
 	Must        *actions.Must
 }) {
@@ -60,7 +59,6 @@ func (this *AddAction) RunPost(params struct {
 	backend.FailTimeout = fmt.Sprintf("%d", params.FailTimeout) + "s"
 	backend.MaxFails = params.MaxFails
 	backend.MaxConns = params.MaxConns
-	backend.SlowStart = fmt.Sprintf("%d", params.SlowStart) + "s"
 	backend.IsBackup = params.IsBackup
 
 	server.Backends = append(server.Backends, backend)

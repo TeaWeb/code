@@ -799,7 +799,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	this.raw.Header.Set("X-Forwarded-Host", this.host)
 	this.raw.Header.Set("X-Forwarded-Proto", this.raw.Proto)
 
-	client := SharedClientPool.client(this.backend.Address, this.backend.FailTimeoutDuration())
+	client := SharedClientPool.client(this.backend.Address, this.backend.FailTimeoutDuration(), this.backend.MaxConns)
 
 	this.raw.RequestURI = ""
 	resp, err := client.Do(this.raw)
@@ -816,6 +816,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		currentFails := this.backend.IncreaseFails()
 		if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
 			this.backend.IsDown = true
+			this.backend.DownTime = time.Now()
 			this.server.SetupScheduling(false)
 		}
 

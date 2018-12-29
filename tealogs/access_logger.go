@@ -140,7 +140,7 @@ func (this *AccessLogger) wait() {
 					end = total
 				}
 
-				logs.Println("dump", end-offset, "docs ...")
+				logs.Println("dump", end-offset, "logs ...")
 				docSlice := newDocs[offset:end]
 
 				// 分析
