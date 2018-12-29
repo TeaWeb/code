@@ -84,8 +84,10 @@ type Request struct {
 	api    *apiconfig.API // API
 	mockOn bool           // 是否开启了API Mock
 
-	rewriteId      string // 匹配的rewrite id
-	rewriteReplace string // 经过rewrite之后的URL
+	rewriteId             string // 匹配的rewrite id
+	rewriteReplace        string // 经过rewrite之后的URL
+	rewriteRedirectMethod string // 跳转方式
+	rewriteIsExternal     bool   // 是否为外部URL
 
 	// 执行请求
 	filePath string
@@ -327,7 +329,22 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 							this.ignoreHeaders = append(this.ignoreHeaders, rule.IgnoreHeaders ...)
 						}
 
-						// @TODO 支持带host前缀的URL，比如：http://google.com/hello/world
+						// 外部URL
+						if rule.IsExternalURL(replace) {
+							this.rewriteReplace = replace
+							this.rewriteIsExternal = true
+							this.rewriteRedirectMethod = rule.RedirectMethod()
+							return nil
+						}
+
+						// 内部URL
+						if rule.RedirectMethod() == teaconfigs.RewriteFlagRedirect {
+							this.rewriteReplace = replace
+							this.rewriteIsExternal = false
+							this.rewriteRedirectMethod = teaconfigs.RewriteFlagRedirect
+							return nil
+						}
+
 						newURI, err := url.ParseRequestURI(replace)
 						if err != nil {
 							this.uri = replace
@@ -432,7 +449,22 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					this.ignoreHeaders = append(this.ignoreHeaders, rule.IgnoreHeaders ...)
 				}
 
-				// @TODO 支持带host前缀的URL，比如：http://google.com/hello/world
+				// 外部URL
+				if rule.IsExternalURL(replace) {
+					this.rewriteReplace = replace
+					this.rewriteIsExternal = true
+					this.rewriteRedirectMethod = rule.RedirectMethod()
+					return nil
+				}
+
+				// 内部URL
+				if rule.RedirectMethod() == teaconfigs.RewriteFlagRedirect {
+					this.rewriteReplace = replace
+					this.rewriteIsExternal = false
+					this.rewriteRedirectMethod = teaconfigs.RewriteFlagRedirect
+					return nil
+				}
+
 				newURI, err := url.ParseRequestURI(replace)
 				if err != nil {
 					this.uri = replace
@@ -588,6 +620,9 @@ func (this *Request) call(writer *ResponseWriter) error {
 	}
 	if this.fastcgi != nil {
 		return this.callFastcgi(writer)
+	}
+	if len(this.rewriteId) > 0 && (this.rewriteIsExternal || this.rewriteRedirectMethod == teaconfigs.RewriteFlagRedirect) {
+		return this.callRewrite(writer)
 	}
 	if len(this.root) > 0 {
 		return this.callRoot(writer)
@@ -1013,13 +1048,17 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	fcgiReq.SetParams(params)
 	fcgiReq.SetBody(this.raw.Body, uint32(this.requestLength()))
 
-	resp, err := client.Call(fcgiReq)
+	resp, stderr, err := client.Call(fcgiReq)
 	if err != nil {
 		this.serverError(writer)
 		//if this.debug {
 		logs.Error(err)
 		//}
 		return nil
+	}
+
+	if len(stderr) > 0 {
+		logs.Println("Fastcgi Error: " + string(stderr))
 	}
 
 	defer resp.Body.Close()
@@ -1086,6 +1125,63 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	_, err = io.Copy(writer, resp.Body)
 	if err != nil {
 		logs.Error(err)
+		return nil
+	}
+
+	return nil
+}
+
+// 调用Rewrite
+func (this *Request) callRewrite(writer *ResponseWriter) error {
+	query := this.requestQueryString()
+	target := this.rewriteReplace
+	if len(query) > 0 {
+		if strings.Index(target, "?") > 0 {
+			target += "&" + query
+		} else {
+			target += "?" + query
+		}
+	}
+
+	if this.rewriteRedirectMethod == teaconfigs.RewriteFlagRedirect {
+		// 跳转
+		http.Redirect(writer, this.raw, target, http.StatusTemporaryRedirect)
+		return nil
+	}
+
+	if this.rewriteRedirectMethod == teaconfigs.RewriteFlagProxy {
+		req, err := http.NewRequest("GET", target, nil)
+		if err != nil {
+			return err
+		}
+
+		// user-agent
+		req.Header.Set("User-Agent", this.requestUserAgent())
+
+		// ip
+		remoteAddr := this.requestRemoteAddr()
+		if len(remoteAddr) > 0 {
+			index := strings.Index(this.raw.RemoteAddr, ":")
+			ip := ""
+			if index > -1 {
+				ip = this.raw.RemoteAddr[:index]
+			} else {
+				ip = this.raw.RemoteAddr
+			}
+			req.Header.Set("X-Real-IP", ip)
+			req.Header.Set("X-Forwarded-For", ip)
+			req.Header.Set("X-Forwarded-By", ip)
+		}
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		io.Copy(writer, resp.Body)
+
 		return nil
 	}
 

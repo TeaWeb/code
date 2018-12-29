@@ -47,10 +47,22 @@ func (this *DetailAction) Run(params struct {
 		"caseInsensitive": location.IsCaseInsensitive(),
 		"reverse":         location.IsReverse(),
 		"root":            location.Root,
-		"rewrite":         location.Rewrite,
-		"fastcgi":         location.FastcgiAtIndex(0),
-		"charset":         location.Charset,
-		"index":           location.Index,
+		"rewrite": lists.Map(location.Rewrite, func(k int, v interface{}) interface{} {
+			r := v.(*teaconfigs.RewriteRule)
+			return maps.Map{
+				"id":             r.Id,
+				"on":             r.On,
+				"headers":        r.Headers,
+				"ignoreHeaders":  r.IgnoreHeaders,
+				"replace":        r.Replace,
+				"pattern":        r.Pattern,
+				"cond":           r.Cond,
+				"redirectMethod": r.RedirectMethod(),
+			}
+		}),
+		"fastcgi": location.FastcgiAtIndex(0),
+		"charset": location.Charset,
+		"index":   location.Index,
 	}
 	this.Data["proxy"] = proxy
 

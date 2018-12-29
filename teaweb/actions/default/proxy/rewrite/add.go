@@ -1,21 +1,24 @@
 package rewrite
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/iwind/TeaGo/actions"
+	"regexp"
 )
 
 type AddAction actions.Action
 
+// 添加重写规则
 func (this *AddAction) Run(params struct {
-	Filename   string
-	Index      int
-	Pattern    string
-	Replace    string
-	ProxyId    string
-	TargetType string
-	Must       *actions.Must
+	Filename       string
+	Index          int
+	Pattern        string
+	Replace        string
+	ProxyId        string
+	TargetType     string
+	RedirectMethod string
+	Must           *actions.Must
 }) {
 	//@TODO proxyId 支持一个Host
 
@@ -41,7 +44,9 @@ func (this *AddAction) Run(params struct {
 		this.Fail(err.Error())
 	}
 
-	if len(params.Replace) == 0 || params.Replace[0] != '/' {
+	if len(params.Replace) == 0 {
+		params.Replace = "/"
+	} else if params.Replace[0] != '/' && !regexp.MustCompile("(?i)^(http|https|ftp)://").MatchString(params.Replace) {
 		params.Replace = "/" + params.Replace
 	}
 
@@ -55,10 +60,16 @@ func (this *AddAction) Run(params struct {
 		} else {
 			rewriteRule.Replace = "proxy://" + params.ProxyId + params.Replace
 		}
+		if len(params.RedirectMethod) > 0 {
+			rewriteRule.AddFlag(params.RedirectMethod, nil)
+		}
 		location.Rewrite = append(location.Rewrite, rewriteRule)
 	}
 
-	proxy.Save()
+	err = proxy.Save()
+	if err != nil {
+		this.Fail("保存失败：" + err.Error())
+	}
 
 	global.NotifyChange()
 

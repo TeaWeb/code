@@ -3,6 +3,7 @@ package teaconfigs
 import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"regexp"
@@ -12,6 +13,11 @@ import (
 const (
 	RewriteTargetProxy = 1
 	RewriteTargetURL   = 2
+)
+
+const (
+	RewriteFlagRedirect = "r" // 跳转，TODO: 实现 302, 305
+	RewriteFlagProxy    = "p" // 代理
 )
 
 // 重写规则定义
@@ -43,6 +49,10 @@ type RewriteRule struct {
 	// - 如果以 proxy:// 开头，表示目标为代理，首先会尝试作为代理ID请求，如果找不到，会尝试作为代理Host请求
 	Replace string `yaml:"replace" json:"replace"`
 
+	// 选项
+	Flags       []string `yaml:"flags" json:"flags"`
+	FlagOptions maps.Map `yaml:"flagOptions" json:"flagOptions"` // flag => options map
+
 	// Headers
 	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
 	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
@@ -54,8 +64,9 @@ type RewriteRule struct {
 
 func NewRewriteRule() *RewriteRule {
 	return &RewriteRule{
-		On: true,
-		Id: stringutil.Rand(16),
+		On:          true,
+		Id:          stringutil.Rand(16),
+		FlagOptions: maps.Map{},
 	}
 }
 
@@ -206,4 +217,34 @@ func (this *RewriteRule) UpdateIgnoreHeaderAtIndex(index int, name string) {
 	if index >= 0 && index < len(this.IgnoreHeaders) {
 		this.IgnoreHeaders[index] = name
 	}
+}
+
+// 判断是否是外部URL
+func (this *RewriteRule) IsExternalURL(url string) bool {
+	return regexp.MustCompile("(?i)^(http|https|ftp)://").MatchString(url)
+}
+
+// 添加Flag
+func (this *RewriteRule) AddFlag(flag string, options maps.Map) {
+	this.Flags = append(this.Flags, flag)
+	if options != nil {
+		this.FlagOptions[flag] = options
+	}
+}
+
+// 重置模式
+func (this *RewriteRule) ResetFlags() {
+	this.Flags = []string{}
+	this.FlagOptions = maps.Map{}
+}
+
+// 跳转模式
+func (this *RewriteRule) RedirectMethod() string {
+	if lists.Contains(this.Flags, RewriteFlagProxy) {
+		return RewriteFlagProxy
+	}
+	if lists.Contains(this.Flags, RewriteFlagRedirect) {
+		return RewriteFlagRedirect
+	}
+	return RewriteFlagProxy
 }
