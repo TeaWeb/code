@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
@@ -35,6 +36,8 @@ func NewEngine() *Engine {
 
 func (this *Engine) SetContext(context *Context) {
 	if context.Server != nil {
+		runningServer, _ := teaproxy.FindServer(context.Server.Id)
+
 		options := map[string]interface{}{
 			"isOn":        context.Server.On,
 			"id":          context.Server.Id,
@@ -44,6 +47,14 @@ func (this *Engine) SetContext(context *Context) {
 			"listen":      context.Server.Listen,
 			"backends": lists.Map(context.Server.Backends, func(k int, v interface{}) interface{} {
 				backend := v.(*teaconfigs.ServerBackendConfig)
+
+				if runningServer != nil {
+					runningBackend := runningServer.FindBackend(backend.Id)
+					if runningBackend != nil {
+						backend.IsDown = runningBackend.IsDown
+					}
+				}
+
 				return map[string]interface{}{
 					"on":       backend.On,
 					"weight":   backend.Weight,

@@ -6,7 +6,9 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"io/ioutil"
 )
 
 type IndexAction actions.Action
@@ -26,11 +28,33 @@ func (this *IndexAction) Run(params struct {
 	}
 
 	configFile := "board." + server.Id + ".conf"
-	if files.NewFile(Tea.ConfigFile(configFile)).Exists() {
-		this.Data["config"] = configFile
-	} else {
-		this.Data["config"] = "board.default.conf"
+	if !files.NewFile(Tea.ConfigFile(configFile)).Exists() {
+		configFile = "board.default.conf"
+
+		// 如果配置文件不存在，则尝试创建
+		if !files.NewFile(Tea.ConfigFile(configFile)).Exists() {
+			err := ioutil.WriteFile(Tea.ConfigFile(configFile), []byte(`widgets:
+- id: "1545562554961080824"
+  code: "proxy_status@tea"
+- id: "1545562554961080825"
+  code: "locations@tea"
+- id: "1545562554961080826"
+  code: "bandwidth_realtime@tea"
+- id: "1545562554961080827"
+  code: "request_realtime@tea"
+- id: "1545562554961080828"
+  code: "request_time@tea"
+- id: "1545562554961080829"
+  code: "status_stat@tea"
+- id: "1545562554961080830"
+  code: "latest_error_log@tea"`), 0777)
+			if err != nil {
+				logs.Println("failed to create '" + configFile + "'")
+			}
+		}
 	}
+
+	this.Data["config"] = configFile
 
 	this.Show()
 }

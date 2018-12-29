@@ -59,5 +59,12 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 		})
 	}
 
+	tabbar = append(tabbar, map[string]interface{}{
+		"name":    "检查版本更新",
+		"subName": "",
+		"url":     "/settings/update",
+		"active":  action.Spec.HasClassPrefix("update."),
+	})
+
 	action.Data["teaTabbar"] = tabbar
 }

@@ -9,7 +9,6 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/cache"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/dashboard"
 	"github.com/TeaWeb/code/teaweb/actions/default/index"
-	"github.com/TeaWeb/code/teaweb/actions/default/install"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/log"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/login"
 	"github.com/TeaWeb/code/teaweb/actions/default/logout"
@@ -28,8 +27,8 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/mongo"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/profile"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/server"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/update"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/stat"
-	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
@@ -46,6 +45,7 @@ import (
 	"time"
 )
 
+// 启动
 func Start() {
 	if lookupArgs() {
 		return
@@ -80,8 +80,6 @@ func Start() {
 		Get("/", new(index.IndexAction)).
 		Get("/logout", new(logout.IndexAction)).
 
-		Helper(new(helpers.UserMustAuth)).
-		GetPost("/install/mongo", new(install.MongoAction)).
 		EndAll().
 
 		Session(sessions.NewFileSessionManager(
@@ -92,6 +90,7 @@ func Start() {
 		Start()
 }
 
+// 检查命令行参数
 func lookupArgs() bool {
 	if len(os.Args) == 1 {
 		return false
@@ -172,6 +171,7 @@ func lookupArgs() bool {
 	return false
 }
 
+// 检查PID
 func checkPid() *os.Process {
 	// check pid file
 	pidFile := files.NewFile(Tea.Root + "/bin/pid")
