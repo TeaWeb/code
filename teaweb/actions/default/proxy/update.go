@@ -1,15 +1,15 @@
 package proxy
 
 import (
+	"fmt"
+	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo/files"
-	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/logs"
 	"strings"
-	"fmt"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
 )
 
 type UpdateAction actions.Action
@@ -126,7 +126,7 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 
 	// 重启
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Next("/proxy", nil, "").Success("服务保存成功")
 }

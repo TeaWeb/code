@@ -2,7 +2,7 @@ package proxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -27,7 +27,7 @@ func (this *UpdateCharsetAction) Run(params struct {
 		this.Fail(err.Error())
 	}
 
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Success()
 }

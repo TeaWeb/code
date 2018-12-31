@@ -1,10 +1,10 @@
 package proxy
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
 )
 
 type DeleteNameAction actions.Action
@@ -25,7 +25,7 @@ func (this *DeleteNameAction) Run(params struct {
 	proxy.Save()
 
 	// 重启服务
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Refresh().Success()
 }

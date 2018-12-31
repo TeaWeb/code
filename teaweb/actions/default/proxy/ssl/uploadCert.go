@@ -2,7 +2,7 @@ package ssl
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
@@ -44,10 +44,13 @@ func (this *UploadCertAction) Run(params struct {
 	}
 
 	server.SSL.Certificate = certFilename
-	server.Save()
+	err = server.Save()
+	if err != nil {
+		this.Fail("保存失败：" + err.Error())
+	}
 
 	if server.SSL.On && len(server.SSL.CertificateKey) > 0 {
-		global.NotifyChange()
+		proxyutils.NotifyChange()
 	}
 
 	this.Refresh().Success("保存成功")

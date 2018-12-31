@@ -8,14 +8,42 @@ import (
 	"github.com/iwind/TeaGo/maps"
 )
 
-type AddAction actions.Action
+type UpdateAction actions.Action
 
-// 添加
-func (this *AddAction) Run(params struct {
+// 修改
+func (this *UpdateAction) Run(params struct {
 	From       string
 	Server     string
 	LocationId string
+	FastcgiId  string
 }) {
+	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
+	if err != nil {
+		this.Fail(err.Error())
+	}
+	fastcgiList, err := server.FindFastcgiList(params.LocationId)
+	if err != nil {
+		this.Fail(err.Error())
+	}
+	fastcgi := fastcgiList.FindFastcgi(params.FastcgiId)
+	if fastcgi == nil {
+		this.Fail("找不到要修改的Fastcgi")
+	}
+
+	m := maps.Map{
+		"on":       fastcgi.On,
+		"id":       fastcgi.Id,
+		"pass":     fastcgi.Pass,
+		"poolSize": fastcgi.PoolSize,
+		"params":   fastcgi.Params,
+	}
+	if fastcgi.ReadTimeout != "0s" {
+		m["readTimeoutSeconds"] = int(fastcgi.ReadTimeoutDuration().Seconds())
+	} else {
+		m["readTimeoutSeconds"] = 0
+	}
+	this.Data["fastcgi"] = m
+
 	this.Data["from"] = params.From
 	this.Data["server"] = maps.Map{
 		"filename": params.Server,
@@ -25,8 +53,8 @@ func (this *AddAction) Run(params struct {
 	this.Show()
 }
 
-// 提交保存
-func (this *AddAction) RunPost(params struct {
+// 修改
+func (this *UpdateAction) RunPost(params struct {
 	Server      string
 	LocationId  string
 	On          bool
@@ -35,7 +63,10 @@ func (this *AddAction) RunPost(params struct {
 	ParamNames  []string
 	ParamValues []string
 	PoolSize    int
-	Must        *actions.Must
+
+	FastcgiId string
+
+	Must *actions.Must
 }) {
 	params.Must.
 		Field("pass", params.Pass).
@@ -60,13 +91,16 @@ func (this *AddAction) RunPost(params struct {
 		this.Fail(err.Error())
 	}
 
-	fastcgi := teaconfigs.NewFastcgiConfig()
+	fastcgi := fastcgiList.FindFastcgi(params.FastcgiId)
+	if fastcgi == nil {
+		this.Fail("找不到要修改的Fastcgi")
+	}
+
 	fastcgi.On = params.On
 	fastcgi.Pass = params.Pass
 	fastcgi.ReadTimeout = fmt.Sprintf("%ds", params.ReadTimeout)
 	fastcgi.Params = paramsMap
 	fastcgi.PoolSize = params.PoolSize
-	fastcgiList.AddFastcgi(fastcgi)
 	err = server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())

@@ -2,7 +2,6 @@ package locations
 
 import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy"
-	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/headers"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo"
@@ -16,20 +15,16 @@ func init() {
 			}).
 			Helper(new(proxy.Helper)).
 			Get("", new(IndexAction)).
-			Post("/add", new(AddAction)).
+			GetPost("/add", new(AddAction)).
+			GetPost("/update", new(UpdateAction)).
 			Post("/delete", new(DeleteAction)).
 			Post("/moveUp", new(MoveUpAction)).
 			Post("/moveDown", new(MoveDownAction)).
 			Get("/detail", new(DetailAction)).
-			Post("/on", new(OnAction)).
-			Post("/off", new(OffAction)).
-			Post("/updateReverse", new(UpdateReverseAction)).
-			Post("/updateCaseInsensitive", new(UpdateCaseInsensitiveAction)).
-			Post("/updatePattern", new(UpdatePatternAction)).
-			Post("/updateType", new(UpdateTypeAction)).
-			Post("/updateRoot", new(UpdateRootAction)).
-			Post("/updateCharset", new(UpdateCharsetAction)).
-			Post("/updateIndex", new(UpdateIndexAction)).
+			Get("/headers", new(HeadersAction)).
+			Get("/rewrite", new(RewriteAction)).
+			Get("/fastcgi", new(FastcgiAction)).
+			Get("/cache", new(CacheAction)).
 			Post("/updateCache", new(UpdateCacheAction)).
 			EndAll()
 	})

@@ -3,7 +3,7 @@ package backend
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/scheduling"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -84,7 +84,7 @@ func (this *SchedulingAction) RunPost(params struct {
 	}
 
 	if len(server.Backends) > 0 {
-		global.NotifyChange()
+		proxyutils.NotifyChange()
 	}
 
 	this.Success()

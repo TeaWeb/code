@@ -2,35 +2,34 @@ package rewrite
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/lists"
 )
 
 type DeleteAction actions.Action
 
+// 删除重写规则
 func (this *DeleteAction) Run(params struct {
-	Filename     string
-	Index        int
-	RewriteIndex int
+	Server     string
+	LocationId string
+	RewriteId  string
 }) {
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Filename)
+	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
+	if err != nil {
+		this.Fail(err.Error())
+	}
+	rewriteList, err := server.FindRewriteList(params.LocationId)
 	if err != nil {
 		this.Fail(err.Error())
 	}
 
-	location := proxy.LocationAtIndex(params.Index)
-	if location == nil {
-		this.Fail("找不到要修改的路径规则")
+	rewriteList.RemoveRewriteRule(params.RewriteId)
+	err = server.Save()
+	if err != nil {
+		this.Fail("保存失败：" + err.Error())
 	}
 
-	if params.RewriteIndex >= 0 && params.RewriteIndex < len(location.Rewrite) {
-		location.Rewrite = lists.Remove(location.Rewrite, params.RewriteIndex).([]*teaconfigs.RewriteRule)
-	}
+	proxyutils.NotifyChange()
 
-	proxy.Save()
-
-	global.NotifyChange()
-
-	this.Refresh().Success()
+	this.Success()
 }

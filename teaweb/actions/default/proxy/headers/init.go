@@ -16,11 +16,12 @@ func init() {
 			Helper(new(proxy.Helper)).
 			Prefix("/proxy/headers").
 			Get("", new(IndexAction)).
-			Post("/set", new(SetAction)).
+			Get("/data", new(DataAction)).
+			GetPost("/add", new(AddAction)).
 			Post("/delete", new(DeleteAction)).
-			Post("/update", new(UpdateAction)).
-			Post("/addIgnore", new(AddIgnoreAction)).
-			Post("/updateIgnore", new(UpdateIgnoreAction)).
+			GetPost("/update", new(UpdateAction)).
+			GetPost("/addIgnore", new(AddIgnoreAction)).
+			GetPost("/updateIgnore", new(UpdateIgnoreAction)).
 			Post("/deleteIgnore", new(DeleteIgnoreAction)).
 			EndAll()
 	})

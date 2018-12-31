@@ -2,7 +2,6 @@ package teaconfigs
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
 	"math/rand"
 	"regexp"
@@ -10,63 +9,56 @@ import (
 	"time"
 )
 
-const (
-	LocationPatternTypePrefix = 1
-	LocationPatternTypeExact  = 2
-	LocationPatternTypeRegexp = 3
-)
-
 // 路径配置
 // @TODO 匹配的时候去除路径中多余的斜杠（/）
 type LocationConfig struct {
-	On      bool   `yaml:"on" json:"on"`           // 是否开启 @TODO
-	Id      string `yaml:"id" json:"id"`           // @TODO
-	Pattern string `yaml:"pattern" json:"pattern"` // 匹配规则  @TODO
+	shared.HeaderList `yaml:",inline"`
+	FastcgiList       `yaml:",inline"`
+	RewriteList       `yaml:",inline"`
 
-	patternType int // 规则类型：LocationPattern*
+	On      bool   `yaml:"on" json:"on"`           // 是否开启
+	Id      string `yaml:"id" json:"id"`           // ID
+	Pattern string `yaml:"pattern" json:"pattern"` // 匹配规则
 
-	prefix string // 前缀
-	path   string // 精确的路径
-
-	reg *regexp.Regexp // 匹配规则
-
-	caseInsensitive bool // 大小写不敏感
-	reverse         bool // 是否翻转规则，比如非前缀，非路径
-
-	Async   bool     `yaml:"async" json:"async"`     // 是否异步请求 @TODO
-	Notify  []string `yaml:"notify" json:"notify"`   // 转发请求 @TODO
-	LogOnly bool     `yaml:"logOnly" json:"logOnly"` // 是否只记录日志 @TODO
-	Root    string   `yaml:"root" json:"root"`       // 资源根目录
-	Index   []string `yaml:"index" json:"index"`     // 默认文件
-	Charset string   `yaml:"charset" json:"charset"` // 字符集设置
+	Async   bool          `yaml:"async" json:"async"`     // 是否异步请求 @TODO
+	Notify  []interface{} `yaml:"notify" json:"notify"`   // 转发请求，可以配置转发策略 @TODO
+	LogOnly bool          `yaml:"logOnly" json:"logOnly"` // 是否只记录日志 @TODO
+	Root    string        `yaml:"root" json:"root"`       // 资源根目录
+	Index   []string      `yaml:"index" json:"index"`     // 默认文件
+	Charset string        `yaml:"charset" json:"charset"` // 字符集设置
 
 	// 日志
 	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // @TODO
-
-	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 添加的头信息
-	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` // 允许的终端地址 @TODO
 	Deny  []string `yaml:"deny" json:"deny"`   // 禁止的终端地址 @TODO
 
-	Rewrite  []*RewriteRule         `yaml:"rewrite" json:"rewrite"`   // 重写规则
-	Fastcgi  []*FastcgiConfig       `yaml:"fastcgi" json:"fastcgi"`   // Fastcgi配置 @TODO
 	Proxy    string                 `yaml:proxy" json:"proxy"`        //  代理配置 @TODO
 	Backends []*ServerBackendConfig `yaml:"backends" json:"backends"` // 后端服务器配置 @TODO
 
 	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
 	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开 TODO
 	cachePolicy *shared.CachePolicy
+
+	patternType LocationPatternType // 规则类型：LocationPattern*
+	prefix      string              // 前缀
+	path        string              // 精确的路径
+
+	reg             *regexp.Regexp // 匹配规则
+	caseInsensitive bool           // 大小写不敏感
+	reverse         bool           // 是否翻转规则，比如非前缀，非路径
 }
 
-func NewLocationConfig() *LocationConfig {
+// 获取新对象
+func NewLocation() *LocationConfig {
 	return &LocationConfig{
 		On: true,
 		Id: stringutil.Rand(16),
 	}
 }
 
+// 校验
 func (this *LocationConfig) Validate() error {
 	// 分析pattern
 	this.reverse = false
@@ -167,27 +159,21 @@ func (this *LocationConfig) Validate() error {
 	}
 
 	// 校验RewriteRule配置
-	for _, rewriteRule := range this.Rewrite {
-		err := rewriteRule.Validate()
-		if err != nil {
-			return err
-		}
+	err := this.ValidateRewriteRules()
+	if err != nil {
+		return err
 	}
 
 	// 校验Fastcgi配置
-	for _, fastcgi := range this.Fastcgi {
-		err := fastcgi.Validate()
-		if err != nil {
-			return err
-		}
+	err = this.ValidateFastcgi()
+	if err != nil {
+		return err
 	}
 
 	// 校验Header
-	for _, header := range this.Headers {
-		err := header.Validate()
-		if err != nil {
-			return err
-		}
+	err = this.ValidateHeaders()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -331,130 +317,17 @@ func (this *LocationConfig) NextBackend() *ServerBackendConfig {
 	return availableBackends[index]
 }
 
-// 取得下一个可用的fastcgi
-// @TODO 实现fastcgi中的各种参数
-func (this *LocationConfig) NextFastcgi() *FastcgiConfig {
-	if len(this.Fastcgi) == 0 {
-		return nil
-	}
-
-	availableServers := []*FastcgiConfig{}
-	for _, f := range this.Fastcgi {
-		if !f.On {
-			continue
-		}
-		availableServers = append(availableServers, f)
-	}
-	if len(availableServers) == 0 {
-		return nil
-	}
-
-	rand.Seed(time.Now().UnixNano())
-	index := rand.Int() % len(availableServers)
-	return this.Fastcgi[index]
-}
-
-// 添加fastcgi配置
-func (this *LocationConfig) AddFastcgi(fastcgi *FastcgiConfig) {
-	this.Fastcgi = append(this.Fastcgi, fastcgi)
-}
-
-// 取得在某个的fastcgi配置
-func (this *LocationConfig) FastcgiAtIndex(index int) *FastcgiConfig {
-	if index < 0 || index >= len(this.Fastcgi) {
-		return nil
-	}
-	return this.Fastcgi[index]
-}
-
-// 移除某个fastcgi配置
-func (this *LocationConfig) RemoveFastcgiAt(index int) {
-	if index < 0 || index >= len(this.Fastcgi) {
-		return
-	}
-	if index == 0 {
-		this.Fastcgi = this.Fastcgi[1:]
-	} else if index == len(this.Fastcgi)-1 {
-		this.Fastcgi = this.Fastcgi[:index]
-	} else {
-		this.Fastcgi = append(this.Fastcgi[:index], this.Fastcgi[index+1:] ...)
-	}
-}
-
-// 设置Header
-func (this *LocationConfig) SetHeader(name string, value string) {
-	found := false
-	upperName := strings.ToUpper(name)
-	for _, header := range this.Headers {
-		if strings.ToUpper(header.Name) == upperName {
-			found = true
-			header.Value = value
-		}
-	}
-	if found {
-		return
-	}
-
-	header := shared.NewHeaderConfig()
-	header.Name = name
-	header.Value = value
-	this.Headers = append(this.Headers, header)
-}
-
-// 删除指定位置上的Header
-func (this *LocationConfig) DeleteHeaderAtIndex(index int) {
-	if index >= 0 && index < len(this.Headers) {
-		this.Headers = lists.Remove(this.Headers, index).([]*shared.HeaderConfig)
-	}
-}
-
-// 取得指定位置上的Header
-func (this *LocationConfig) HeaderAtIndex(index int) *shared.HeaderConfig {
-	if index >= 0 && index < len(this.Headers) {
-		return this.Headers[index]
-	}
-	return nil
-}
-
-// 格式化Header
-func (this *LocationConfig) FormatHeaders(formatter func(source string) string) []*shared.HeaderConfig {
-	result := []*shared.HeaderConfig{}
-	for _, header := range this.Headers {
-		result = append(result, &shared.HeaderConfig{
-			Name:   header.Name,
-			Value:  formatter(header.Value),
-			Always: header.Always,
-			Status: header.Status,
-		})
-	}
-	return result
-}
-
-// 屏蔽一个Header
-func (this *LocationConfig) AddIgnoreHeader(name string) {
-	this.IgnoreHeaders = append(this.IgnoreHeaders, name)
-}
-
-// 移除对Header的屏蔽
-func (this *LocationConfig) DeleteIgnoreHeaderAtIndex(index int) {
-	if index >= 0 && index < len(this.IgnoreHeaders) {
-		this.IgnoreHeaders = lists.Remove(this.IgnoreHeaders, index).([]string)
-	}
-}
-
-// 更改Header的屏蔽
-func (this *LocationConfig) UpdateIgnoreHeaderAtIndex(index int, name string) {
-	if index >= 0 && index < len(this.IgnoreHeaders) {
-		this.IgnoreHeaders[index] = name
-	}
-}
-
-// 添加重写规则
-func (this *LocationConfig) AddRewriteRule(rewriteRule *RewriteRule) {
-	this.Rewrite = append(this.Rewrite, rewriteRule)
-}
-
 // 缓存策略
 func (this *LocationConfig) CachePolicyObject() *shared.CachePolicy {
 	return this.cachePolicy
+}
+
+// 根据ID查找后端服务器
+func (this *LocationConfig) FindBackend(backendId string) *ServerBackendConfig {
+	for _, backend := range this.Backends {
+		if backend.Id == backendId {
+			return backend
+		}
+	}
+	return nil
 }

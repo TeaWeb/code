@@ -4,7 +4,7 @@ import (
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -50,7 +50,7 @@ func (this *UpdateCacheAction) Run(params struct {
 		this.Fail("保存失败：" + err.Error())
 	}
 
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Success()
 }

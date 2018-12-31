@@ -2,7 +2,7 @@ package backend
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -25,7 +25,7 @@ func (this *DeleteAction) Run(params struct {
 		this.Fail("保存失败：" + err.Error())
 	}
 
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Refresh().Success()
 }

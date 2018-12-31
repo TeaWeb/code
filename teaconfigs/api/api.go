@@ -14,32 +14,33 @@ import (
 
 //  API定义
 type API struct {
-	Filename       string                 `yaml:"filename" json:"filename"`             // 文件名
-	Path           string                 `yaml:"path" json:"path"`                     // 访问路径
-	Address        string                 `yaml:"address" json:"address"`               // 实际地址
-	Methods        []string               `yaml:"methods" json:"methods"`               // 方法
-	Params         []*APIParam            `yaml:"params" json:"params"`                 // 参数
-	Name           string                 `yaml:"name" json:"name"`                     // 名称
-	Description    string                 `yaml:"description" json:"description"`       // 描述
-	MockFiles      []string               `yaml:"mockFiles" json:"mockFiles"`           // 假数据文件（Mock）
-	MockOn         bool                   `yaml:"mockOn" json:"mockOn"`                 // 是否开启Mock
-	Author         string                 `yaml:"author" json:"author"`                 // 作者
-	Company        string                 `yaml:"company" json:"company"`               // 公司或团队
-	IsAsynchronous bool                   `yaml:"isAsynchronous" json:"isAsynchronous"` // TODO
-	Timeout        float64                `yaml:"timeout" json:"timeout"`               // TODO
-	MaxSize        uint                   `yaml:"maxSize" json:"maxSize"`               // TODO
-	Headers        []*shared.HeaderConfig `yaml:"headers" json:"headers"`               // TODO
-	TodoThings     []string               `yaml:"todo" json:"todo"`                     // 待做事宜
-	DoneThings     []string               `yaml:"done" json:"done"`                     // 已完成事宜
-	Response       []byte                 `yaml:"response" json:"response"`             // 响应内容 TODO
-	IsDeprecated   bool                   `yaml:"isDeprecated" json:"isDeprecated"`     // 是否过期
-	On             bool                   `yaml:"on" json:"on"`                         // 是否开启
-	Versions       []string               `yaml:"versions" json:"versions"`             // 版本信息
-	ModifiedAt     int64                  `yaml:"modifiedAt" json:"modifiedAt"`         // 最后修改时间
-	Username       string                 `yaml:"username" json:"username"`             // 最后修改用户名
-	Groups         []string               `yaml:"groups" json:"groups"`                 // 分组
-	Limit          *APILimit              `yaml:"limit" json:"limit"`                   // 限制 TODO
-	AuthType       string                 `yaml:"authType" json:"authType"`             // 认证方式
+	shared.HeaderList
+
+	Filename       string      `yaml:"filename" json:"filename"`             // 文件名
+	Path           string      `yaml:"path" json:"path"`                     // 访问路径
+	Address        string      `yaml:"address" json:"address"`               // 实际地址
+	Methods        []string    `yaml:"methods" json:"methods"`               // 方法
+	Params         []*APIParam `yaml:"params" json:"params"`                 // 参数
+	Name           string      `yaml:"name" json:"name"`                     // 名称
+	Description    string      `yaml:"description" json:"description"`       // 描述
+	MockFiles      []string    `yaml:"mockFiles" json:"mockFiles"`           // 假数据文件（Mock）
+	MockOn         bool        `yaml:"mockOn" json:"mockOn"`                 // 是否开启Mock
+	Author         string      `yaml:"author" json:"author"`                 // 作者
+	Company        string      `yaml:"company" json:"company"`               // 公司或团队
+	IsAsynchronous bool        `yaml:"isAsynchronous" json:"isAsynchronous"` // TODO
+	Timeout        float64     `yaml:"timeout" json:"timeout"`               // TODO
+	MaxSize        uint        `yaml:"maxSize" json:"maxSize"`               // TODO
+	TodoThings     []string    `yaml:"todo" json:"todo"`                     // 待做事宜
+	DoneThings     []string    `yaml:"done" json:"done"`                     // 已完成事宜
+	Response       []byte      `yaml:"response" json:"response"`             // 响应内容 TODO
+	IsDeprecated   bool        `yaml:"isDeprecated" json:"isDeprecated"`     // 是否过期
+	On             bool        `yaml:"on" json:"on"`                         // 是否开启
+	Versions       []string    `yaml:"versions" json:"versions"`             // 版本信息
+	ModifiedAt     int64       `yaml:"modifiedAt" json:"modifiedAt"`         // 最后修改时间
+	Username       string      `yaml:"username" json:"username"`             // 最后修改用户名
+	Groups         []string    `yaml:"groups" json:"groups"`                 // 分组
+	Limit          *APILimit   `yaml:"limit" json:"limit"`                   // 限制 TODO
+	AuthType       string      `yaml:"authType" json:"authType"`             // 认证方式
 
 	TestScripts   []string `yaml:"testScripts" json:"testScripts"`     // 脚本文件
 	TestCaseFiles []string `yaml:"testCaseFiles" json:"testCaseFiles"` // 单元测试存储文件
@@ -118,26 +119,18 @@ func (this *API) Validate() error {
 		}
 	}
 
+	// headers
+	err := this.ValidateHeaders()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // 添加参数
 func (this *API) AddParam(param *APIParam) {
 	this.Params = append(this.Params, param)
-}
-
-// 格式化Header
-func (this *API) FormatHeaders(formatter func(source string) string) []*shared.HeaderConfig {
-	result := []*shared.HeaderConfig{}
-	for _, header := range this.Headers {
-		result = append(result, &shared.HeaderConfig{
-			Name:   header.Name,
-			Value:  formatter(header.Value),
-			Always: header.Always,
-			Status: header.Status,
-		})
-	}
-	return result
 }
 
 // 使用正则匹配路径

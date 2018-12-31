@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
@@ -39,7 +39,7 @@ func (this *DeleteAction) RunPost(params struct {
 	// @TODO 删除对应的certificate file和certificate key file
 
 	// 重启
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Success()
 }

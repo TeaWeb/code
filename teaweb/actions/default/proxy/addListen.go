@@ -1,13 +1,14 @@
 package proxy
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/iwind/TeaGo/actions"
 )
 
 type AddListenAction actions.Action
 
+// 添加监听地址
 func (this *AddListenAction) Run(params struct {
 	Filename string
 	Listen   string
@@ -25,7 +26,7 @@ func (this *AddListenAction) Run(params struct {
 	proxy.AddListen(params.Listen)
 	proxy.Save()
 
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Refresh().Success("保存成功")
 }

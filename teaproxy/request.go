@@ -84,10 +84,10 @@ type Request struct {
 	api    *apiconfig.API // API
 	mockOn bool           // 是否开启了API Mock
 
-	rewriteId             string // 匹配的rewrite id
-	rewriteReplace        string // 经过rewrite之后的URL
-	rewriteRedirectMethod string // 跳转方式
-	rewriteIsExternal     bool   // 是否为外部URL
+	rewriteId           string // 匹配的rewrite id
+	rewriteReplace      string // 经过rewrite之后的URL
+	rewriteRedirectMode string // 跳转方式
+	rewriteIsExternal   bool   // 是否为外部URL
 
 	// 执行请求
 	filePath string
@@ -271,6 +271,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 
 	// location的相关配置
+	var locationConfigured = false
 	for _, location := range server.Locations {
 		if !location.On {
 			continue
@@ -280,6 +281,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 			if len(location.Root) > 0 {
 				this.root = this.Format(location.Root)
+				locationConfigured = true
 			}
 			if len(location.Charset) > 0 {
 				this.charset = this.Format(location.Charset)
@@ -301,7 +303,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				}) ...)
 			}
 
-			if len(this.ignoreHeaders) > 0 {
+			if len(location.IgnoreHeaders) > 0 {
 				this.ignoreHeaders = append(this.ignoreHeaders, location.IgnoreHeaders ...)
 			}
 
@@ -333,15 +335,15 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 						if rule.IsExternalURL(replace) {
 							this.rewriteReplace = replace
 							this.rewriteIsExternal = true
-							this.rewriteRedirectMethod = rule.RedirectMethod()
+							this.rewriteRedirectMode = rule.RedirectMode()
 							return nil
 						}
 
 						// 内部URL
-						if rule.RedirectMethod() == teaconfigs.RewriteFlagRedirect {
+						if rule.RedirectMode() == teaconfigs.RewriteFlagRedirect {
 							this.rewriteReplace = replace
 							this.rewriteIsExternal = false
-							this.rewriteRedirectMethod = teaconfigs.RewriteFlagRedirect
+							this.rewriteRedirectMode = teaconfigs.RewriteFlagRedirect
 							return nil
 						}
 
@@ -385,6 +387,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			fastcgi := location.NextFastcgi()
 			if fastcgi != nil {
 				this.fastcgi = fastcgi
+				this.backend = nil // 防止冲突
+				locationConfigured = true
 
 				if len(fastcgi.Headers) > 0 {
 					this.headers = append(this.headers, fastcgi.Headers ...)
@@ -416,6 +420,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					return errors.New("no backends available")
 				}
 				this.backend = backend
+				locationConfigured = true
 
 				if len(backend.Headers) > 0 {
 					this.headers = append(this.headers, backend.Headers ...)
@@ -428,6 +433,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				continue
 			}
 		}
+	}
+
+	// 如果经过location找到了相关配置，就终止
+	if locationConfigured {
+		return nil
 	}
 
 	// server的相关配置
@@ -453,15 +463,15 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				if rule.IsExternalURL(replace) {
 					this.rewriteReplace = replace
 					this.rewriteIsExternal = true
-					this.rewriteRedirectMethod = rule.RedirectMethod()
+					this.rewriteRedirectMode = rule.RedirectMode()
 					return nil
 				}
 
 				// 内部URL
-				if rule.RedirectMethod() == teaconfigs.RewriteFlagRedirect {
+				if rule.RedirectMode() == teaconfigs.RewriteFlagRedirect {
 					this.rewriteReplace = replace
 					this.rewriteIsExternal = false
-					this.rewriteRedirectMethod = teaconfigs.RewriteFlagRedirect
+					this.rewriteRedirectMode = teaconfigs.RewriteFlagRedirect
 					return nil
 				}
 
@@ -504,6 +514,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	fastcgi := server.NextFastcgi()
 	if fastcgi != nil {
 		this.fastcgi = fastcgi
+		this.backend = nil // 防止冲突
 
 		if len(fastcgi.Headers) > 0 {
 			this.headers = append(this.headers, fastcgi.Headers ...)
@@ -621,7 +632,7 @@ func (this *Request) call(writer *ResponseWriter) error {
 	if this.fastcgi != nil {
 		return this.callFastcgi(writer)
 	}
-	if len(this.rewriteId) > 0 && (this.rewriteIsExternal || this.rewriteRedirectMethod == teaconfigs.RewriteFlagRedirect) {
+	if len(this.rewriteId) > 0 && (this.rewriteIsExternal || this.rewriteRedirectMode == teaconfigs.RewriteFlagRedirect) {
 		return this.callRewrite(writer)
 	}
 	if len(this.root) > 0 {
@@ -1044,7 +1055,7 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	}
 
 	fcgiReq := gofcgi.NewRequest()
-	fcgiReq.SetTimeout(this.fastcgi.Timeout())
+	fcgiReq.SetTimeout(this.fastcgi.ReadTimeoutDuration())
 	fcgiReq.SetParams(params)
 	fcgiReq.SetBody(this.raw.Body, uint32(this.requestLength()))
 
@@ -1143,13 +1154,13 @@ func (this *Request) callRewrite(writer *ResponseWriter) error {
 		}
 	}
 
-	if this.rewriteRedirectMethod == teaconfigs.RewriteFlagRedirect {
+	if this.rewriteRedirectMode == teaconfigs.RewriteFlagRedirect {
 		// 跳转
 		http.Redirect(writer, this.raw, target, http.StatusTemporaryRedirect)
 		return nil
 	}
 
-	if this.rewriteRedirectMethod == teaconfigs.RewriteFlagProxy {
+	if this.rewriteRedirectMode == teaconfigs.RewriteFlagProxy {
 		req, err := http.NewRequest("GET", target, nil)
 		if err != nil {
 			return err
@@ -1267,10 +1278,24 @@ func (this *Request) notFoundError(writer *ResponseWriter) {
 }
 
 func (this *Request) serverError(writer *ResponseWriter) {
-	msg := "500 Internal Server Error"
+	statusCode := http.StatusInternalServerError
 
-	writer.WriteHeader(http.StatusInternalServerError)
-	writer.Write([]byte(msg))
+	// 忽略的Header
+	ignoreHeaders := this.convertIgnoreHeaders()
+	hasIgnoreHeaders := ignoreHeaders.Len() > 0
+
+	// 自定义Header
+	for _, header := range this.headers {
+		if header.Match(statusCode) {
+			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
+				continue
+			}
+			writer.Header().Set(header.Name, header.Value)
+		}
+	}
+
+	writer.WriteHeader(statusCode)
+	writer.Write([]byte(http.StatusText(statusCode)))
 
 }
 

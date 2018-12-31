@@ -2,30 +2,70 @@ package headers
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/maps"
 )
 
 type AddIgnoreAction actions.Action
 
+// 添加屏蔽的Header
 func (this *AddIgnoreAction) Run(params struct {
-	Filename string
-	Name     string
-	Must     *actions.Must
+	From       string
+	Server     string
+	LocationId string
+	RewriteId  string
+	FastcgiId  string
+	BackendId  string
 }) {
-	params.Must.
-		Field("name", params.Name).
-		Require("请输入Name")
+	this.Data["from"] = params.From
+	this.Data["server"] = maps.Map{
+		"filename": params.Server,
+	}
+	this.Data["locationId"] = params.LocationId
+	this.Data["rewriteId"] = params.RewriteId
+	this.Data["fastcgiId"] = params.FastcgiId
+	this.Data["backendId"] = params.BackendId
 
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Filename)
+	this.Show()
+}
+
+// 提交保存
+func (this *AddIgnoreAction) RunPost(params struct {
+	Server     string
+	LocationId string
+	RewriteId  string
+	FastcgiId  string
+	BackendId  string
+	Name       string
+	Must       *actions.Must
+}) {
+	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
 	}
 
-	proxy.AddIgnoreHeader(params.Name)
-	proxy.Save()
+	params.Must.
+		Field("name", params.Name).
+		Require("请输入Name")
 
-	global.NotifyChange()
+	headerList, err := server.FindHeaderList(params.LocationId, params.BackendId, params.RewriteId, params.FastcgiId)
+	if err != nil {
+		this.Fail(err.Error())
+	}
 
-	this.Refresh().Success()
+	if headerList.ContainsIgnoreHeader(params.Name) {
+		this.Fail("已经存在，不需要重复添加")
+	}
+
+	headerList.AddIgnoreHeader(params.Name)
+
+	err = server.Save()
+	if err != nil {
+		this.Fail("保存失败：" + err.Error())
+	}
+
+	proxyutils.NotifyChange()
+
+	this.Success()
 }

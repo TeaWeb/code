@@ -1,9 +1,9 @@
 package proxy
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaproxy"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/iwind/TeaGo/actions"
 )
 
 type RestartAction actions.Action
@@ -11,7 +11,7 @@ type RestartAction actions.Action
 func (this *RestartAction) Run(params struct{}) {
 	teaproxy.Restart()
 
-	global.FinishChange()
+	proxyutils.FinishChange()
 
 	this.Success()
 }

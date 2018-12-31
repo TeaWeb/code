@@ -1,9 +1,9 @@
 package proxy
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/iwind/TeaGo/actions"
 )
 
 type UpdateListenAction actions.Action
@@ -29,7 +29,7 @@ func (this *UpdateListenAction) Run(params struct {
 
 	proxy.Save()
 
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Refresh().Success("保存成功")
 }

@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/assert"
 	"github.com/iwind/TeaGo/maps"
 	"testing"
@@ -49,4 +50,15 @@ func TestServerConfig_NextBackend(t *testing.T) {
 	t.Log(s.NextBackend(maps.Map{}))
 	t.Log(s.NextBackend(maps.Map{}))
 	t.Log(s.NextBackend(maps.Map{}))
+}
+
+func TestServerConfig_Encode(t *testing.T) {
+	s := NewServerConfig()
+	s.IgnoreHeaders = []string{"Server", "Content-Type"}
+	data, err := yaml.Marshal(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(string(data))
 }

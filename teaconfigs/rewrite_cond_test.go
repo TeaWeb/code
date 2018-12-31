@@ -1,17 +1,18 @@
 package teaconfigs
 
 import (
-	"testing"
 	"github.com/iwind/TeaGo/assert"
+	"testing"
 )
 
 func TestRewriteCond(t *testing.T) {
-	a := assert.NewAssertion(t).Quiet()
+	a := assert.NewAssertion(t)
 
 	{
 		cond := RewriteCond{
-			Test:    "/hello",
-			Pattern: "abc",
+			Param:    "/hello",
+			Operator: RewriteOperatorRegexp,
+			Value:    "abc",
 		}
 		a.IsNil(cond.Validate())
 		a.IsFalse(cond.Match(func(format string) string {
@@ -21,8 +22,9 @@ func TestRewriteCond(t *testing.T) {
 
 	{
 		cond := RewriteCond{
-			Test:    "/hello",
-			Pattern: "/\\w+",
+			Param:    "/hello",
+			Operator: RewriteOperatorRegexp,
+			Value:    "/\\w+",
 		}
 		a.IsNil(cond.Validate())
 		a.IsTrue(cond.Match(func(format string) string {
@@ -32,8 +34,9 @@ func TestRewriteCond(t *testing.T) {
 
 	{
 		cond := RewriteCond{
-			Test:    "/article/123.html",
-			Pattern: `^/article/\d+\.html$`,
+			Param:    "/article/123.html",
+			Operator: RewriteOperatorRegexp,
+			Value:    `^/article/\d+\.html$`,
 		}
 		a.IsNil(cond.Validate())
 		a.IsTrue(cond.Match(func(format string) string {
@@ -43,12 +46,109 @@ func TestRewriteCond(t *testing.T) {
 
 	{
 		cond := RewriteCond{
-			Test:    "/hello",
-			Pattern: "[",
+			Param:    "/hello",
+			Operator: RewriteOperatorRegexp,
+			Value:    "[",
 		}
 		a.IsNotNil(cond.Validate())
 		a.IsFalse(cond.Match(func(format string) string {
 			return format
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "123",
+			Operator: RewriteOperatorGt,
+			Value:    "1",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "123",
+			Operator: RewriteOperatorGt,
+			Value:    "125",
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "125",
+			Operator: RewriteOperatorGte,
+			Value:    "125",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "125",
+			Operator: RewriteOperatorLt,
+			Value:    "127",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "125",
+			Operator: RewriteOperatorLte,
+			Value:    "127",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "125",
+			Operator: RewriteOperatorEq,
+			Value:    "125",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "125",
+			Operator: RewriteOperatorNot,
+			Value:    "125",
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "125",
+			Operator: RewriteOperatorNot,
+			Value:    "127",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
 		}))
 	}
 }

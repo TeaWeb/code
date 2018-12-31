@@ -12,39 +12,29 @@ type IndexAction actions.Action
 func (this *IndexAction) Run(params struct {
 	Server string
 }) {
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Server)
+	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
 	}
 
 	this.Data["selectedTab"] = "location"
 	this.Data["filename"] = params.Server
-	this.Data["proxy"] = proxy
-
-	this.Data["typeOptions"] = []maps.Map{
-		{
-			"name":  "匹配前缀",
-			"value": teaconfigs.LocationPatternTypePrefix,
-		},
-		{
-			"name":  "精准匹配",
-			"value": teaconfigs.LocationPatternTypeExact,
-		},
-		{
-			"name":  "正则表达式匹配",
-			"value": teaconfigs.LocationPatternTypeRegexp,
-		},
+	this.Data["proxy"] = server
+	this.Data["server"] = maps.Map{
+		"filename": server.Filename,
 	}
 
 	locations := []maps.Map{}
-	for _, location := range proxy.Locations {
+	for _, location := range server.Locations {
 		location.Validate()
 		locations = append(locations, maps.Map{
-			"on":              location.On,
-			"type":            location.PatternType(),
-			"pattern":         location.PatternString(),
-			"caseInsensitive": location.IsCaseInsensitive(),
-			"reverse":         location.IsReverse(),
+			"on":                location.On,
+			"id":                location.Id,
+			"type":              location.PatternType(),
+			"pattern":           location.PatternString(),
+			"patternTypeName":   teaconfigs.FindLocationPatternTypeName(location.PatternType()),
+			"isCaseInsensitive": location.IsCaseInsensitive(),
+			"isReverse":         location.IsReverse(),
 		})
 	}
 

@@ -1,9 +1,9 @@
 package proxy
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/iwind/TeaGo/actions"
 )
 
 type HttpOffAction actions.Action
@@ -19,7 +19,7 @@ func (this *HttpOffAction) Run(params struct {
 	proxy.Http = false
 	proxy.Save()
 
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Success()
 }

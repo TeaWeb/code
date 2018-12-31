@@ -27,16 +27,17 @@ const (
 // - https://httpd.apache.org/docs/current/mod/mod_rewrite.html
 // - https://httpd.apache.org/docs/2.4/rewrite/flags.html
 type RewriteRule struct {
+	shared.HeaderList `yaml:",inline"`
+
 	On bool   `yaml:"on" json:"on"` // 是否开启
 	Id string `yaml:"id" json:"id"` // ID
 
 	// 开启的条件
-	// 语法为：cond testString condPattern 比如：
-	// - cond ${status} 200
-	// - cond ${arg.name} lily
-	// - cond ${requestPath} *.png
-	// @TODO 需要实现
-	Cond []RewriteCond `yaml:"cond" json:"cond"`
+	// 语法为：cond param operator value 比如：
+	// - cond ${status} gte 200
+	// - cond ${arg.name} eq lily
+	// - cond ${requestPath} regexp .*\.png
+	Cond []*RewriteCond `yaml:"cond" json:"cond"`
 
 	// 规则
 	// 语法为：pattern regexp 比如：
@@ -53,15 +54,12 @@ type RewriteRule struct {
 	Flags       []string `yaml:"flags" json:"flags"`
 	FlagOptions maps.Map `yaml:"flagOptions" json:"flagOptions"` // flag => options map
 
-	// Headers
-	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
-	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
-
 	targetType  int // RewriteTarget*
 	targetURL   string
 	targetProxy string
 }
 
+// 获取新对象
 func NewRewriteRule() *RewriteRule {
 	return &RewriteRule{
 		On:          true,
@@ -70,6 +68,7 @@ func NewRewriteRule() *RewriteRule {
 	}
 }
 
+// 校验
 func (this *RewriteRule) Validate() error {
 	reg, err := regexp.Compile(this.Pattern)
 	if err != nil {
@@ -100,11 +99,9 @@ func (this *RewriteRule) Validate() error {
 	}
 
 	// 校验Header
-	for _, header := range this.Headers {
-		err := header.Validate()
-		if err != nil {
-			return err
-		}
+	err = this.ValidateHeaders()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -139,84 +136,19 @@ func (this *RewriteRule) Match(requestPath string, formatter func(source string)
 	return replace, true
 }
 
+// 获取目标类型
 func (this *RewriteRule) TargetType() int {
 	return this.targetType
 }
 
+// 获取目标类型
 func (this *RewriteRule) TargetProxy() string {
 	return this.targetProxy
 }
 
+// 获取目标URL
 func (this *RewriteRule) TargetURL() string {
 	return this.targetURL
-}
-
-// 设置Header
-func (this *RewriteRule) SetHeader(name string, value string) {
-	found := false
-	upperName := strings.ToUpper(name)
-	for _, header := range this.Headers {
-		if strings.ToUpper(header.Name) == upperName {
-			found = true
-			header.Value = value
-		}
-	}
-	if found {
-		return
-	}
-
-	header := shared.NewHeaderConfig()
-	header.Name = name
-	header.Value = value
-	this.Headers = append(this.Headers, header)
-}
-
-// 删除指定位置上的Header
-func (this *RewriteRule) DeleteHeaderAtIndex(index int) {
-	if index >= 0 && index < len(this.Headers) {
-		this.Headers = lists.Remove(this.Headers, index).([]*shared.HeaderConfig)
-	}
-}
-
-// 取得指定位置上的Header
-func (this *RewriteRule) HeaderAtIndex(index int) *shared.HeaderConfig {
-	if index >= 0 && index < len(this.Headers) {
-		return this.Headers[index]
-	}
-	return nil
-}
-
-// 格式化Header
-func (this *RewriteRule) FormatHeaders(formatter func(source string) string) []*shared.HeaderConfig {
-	result := []*shared.HeaderConfig{}
-	for _, header := range this.Headers {
-		result = append(result, &shared.HeaderConfig{
-			Name:   header.Name,
-			Value:  formatter(header.Value),
-			Always: header.Always,
-			Status: header.Status,
-		})
-	}
-	return result
-}
-
-// 屏蔽一个Header
-func (this *RewriteRule) AddIgnoreHeader(name string) {
-	this.IgnoreHeaders = append(this.IgnoreHeaders, name)
-}
-
-// 移除对Header的屏蔽
-func (this *RewriteRule) DeleteIgnoreHeaderAtIndex(index int) {
-	if index >= 0 && index < len(this.IgnoreHeaders) {
-		this.IgnoreHeaders = lists.Remove(this.IgnoreHeaders, index).([]string)
-	}
-}
-
-// 更改Header的屏蔽
-func (this *RewriteRule) UpdateIgnoreHeaderAtIndex(index int, name string) {
-	if index >= 0 && index < len(this.IgnoreHeaders) {
-		this.IgnoreHeaders[index] = name
-	}
 }
 
 // 判断是否是外部URL
@@ -239,7 +171,7 @@ func (this *RewriteRule) ResetFlags() {
 }
 
 // 跳转模式
-func (this *RewriteRule) RedirectMethod() string {
+func (this *RewriteRule) RedirectMode() string {
 	if lists.Contains(this.Flags, RewriteFlagProxy) {
 		return RewriteFlagProxy
 	}
@@ -247,4 +179,9 @@ func (this *RewriteRule) RedirectMethod() string {
 		return RewriteFlagRedirect
 	}
 	return RewriteFlagProxy
+}
+
+// 添加过滤条件
+func (this *RewriteRule) AddCond(cond *RewriteCond) {
+	this.Cond = append(this.Cond, cond)
 }

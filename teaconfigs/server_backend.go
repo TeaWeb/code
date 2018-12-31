@@ -2,7 +2,6 @@ package teaconfigs
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
 	"strings"
 	"sync"
@@ -11,21 +10,21 @@ import (
 
 // 服务后端配置
 type ServerBackendConfig struct {
-	On            bool                   `yaml:"on" json:"on"`                                 // 是否启用
-	Id            string                 `yaml:"id" json:"id"`                                 // ID
-	Code          string                 `yaml:"code" json:"code"`                             // 代号
-	Name          []string               `yaml:"name" json:"name"`                             // 域名 TODO
-	Address       string                 `yaml:"address" json:"address"`                       // 地址
-	Weight        uint                   `yaml:"weight" json:"weight"`                         // 是否为备份
-	IsBackup      bool                   `yaml:"backup" json:"isBackup"`                       // 超时时间
-	FailTimeout   string                 `yaml:"failTimeout" json:"failTimeout"`               // 失败超时
-	MaxFails      uint                   `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
-	CurrentFails  uint                   `yaml:"currentFails" json:"currentFails"`             // 当前已失败
-	MaxConns      uint                   `yaml:"maxConns" json:"maxConns"`                     // 并发连接数
-	IsDown        bool                   `yaml:"down" json:"isDown"`                           // 是否下线
-	DownTime      time.Time              `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
-	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`                       // 自定义Header @TODO
-	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"`           // 忽略的Header @TODO
+	shared.HeaderList `yaml:",inline"`
+
+	On           bool      `yaml:"on" json:"on"`                                 // 是否启用
+	Id           string    `yaml:"id" json:"id"`                                 // ID
+	Code         string    `yaml:"code" json:"code"`                             // 代号
+	Name         []string  `yaml:"name" json:"name"`                             // 域名 TODO
+	Address      string    `yaml:"address" json:"address"`                       // 地址
+	Weight       uint      `yaml:"weight" json:"weight"`                         // 是否为备份
+	IsBackup     bool      `yaml:"backup" json:"isBackup"`                       // 超时时间
+	FailTimeout  string    `yaml:"failTimeout" json:"failTimeout"`               // 失败超时
+	MaxFails     uint      `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
+	CurrentFails uint      `yaml:"currentFails" json:"currentFails"`             // 当前已失败
+	MaxConns     uint      `yaml:"maxConns" json:"maxConns"`                     // 并发连接数
+	IsDown       bool      `yaml:"down" json:"isDown"`                           // 是否下线
+	DownTime     time.Time `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
 
 	failTimeoutDuration time.Duration
 	failsLocker         sync.Mutex
@@ -55,68 +54,12 @@ func (this *ServerBackendConfig) Validate() error {
 	}
 
 	// Headers
-	for _, header := range this.Headers {
-		err := header.Validate()
-		if err != nil {
-			return err
-		}
+	err := this.ValidateHeaders()
+	if err != nil {
+		return err
 	}
 
 	return nil
-}
-
-// 设置Header
-func (this *ServerBackendConfig) SetHeader(name string, value string) {
-	found := false
-	upperName := strings.ToUpper(name)
-	for _, header := range this.Headers {
-		if strings.ToUpper(header.Name) == upperName {
-			found = true
-			header.Value = value
-		}
-	}
-	if found {
-		return
-	}
-
-	header := shared.NewHeaderConfig()
-	header.Name = name
-	header.Value = value
-	this.Headers = append(this.Headers, header)
-}
-
-// 删除指定位置上的Header
-func (this *ServerBackendConfig) DeleteHeaderAtIndex(index int) {
-	if index >= 0 && index < len(this.Headers) {
-		this.Headers = lists.Remove(this.Headers, index).([]*shared.HeaderConfig)
-	}
-}
-
-// 取得指定位置上的Header
-func (this *ServerBackendConfig) HeaderAtIndex(index int) *shared.HeaderConfig {
-	if index >= 0 && index < len(this.Headers) {
-		return this.Headers[index]
-	}
-	return nil
-}
-
-// 屏蔽一个Header
-func (this *ServerBackendConfig) AddIgnoreHeader(name string) {
-	this.IgnoreHeaders = append(this.IgnoreHeaders, name)
-}
-
-// 移除对Header的屏蔽
-func (this *ServerBackendConfig) DeleteIgnoreHeaderAtIndex(index int) {
-	if index >= 0 && index < len(this.IgnoreHeaders) {
-		this.IgnoreHeaders = lists.Remove(this.IgnoreHeaders, index).([]string)
-	}
-}
-
-// 更改Header的屏蔽
-func (this *ServerBackendConfig) UpdateIgnoreHeaderAtIndex(index int, name string) {
-	if index >= 0 && index < len(this.IgnoreHeaders) {
-		this.IgnoreHeaders[index] = name
-	}
 }
 
 // 超时时间

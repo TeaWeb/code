@@ -9,13 +9,14 @@ import (
 	"github.com/iwind/TeaGo/maps"
 )
 
-type AddAction actions.Action
+type UpdateAction actions.Action
 
-// 添加路径规则
-func (this *AddAction) Run(params struct {
-	Server string
-	From   string
-	Must   *actions.Must
+// 修改
+func (this *UpdateAction) Run(params struct {
+	Server      string
+	LocationId  string
+	From        string
+	ShowSpecial bool
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
@@ -30,17 +31,42 @@ func (this *AddAction) Run(params struct {
 	this.Data["selectedTab"] = "location"
 	this.Data["selectedSubTab"] = "detail"
 	this.Data["from"] = params.From
+	this.Data["showSpecial"] = params.ShowSpecial
+
+	location := server.FindLocation(params.LocationId)
+	if location == nil {
+		this.Fail("找不到要修改的Location")
+	}
 
 	this.Data["patternTypes"] = teaconfigs.AllLocationPatternTypes()
 	this.Data["usualCharsets"] = teautils.UsualCharsets
 	this.Data["charsets"] = teautils.AllCharsets
 
+	this.Data["location"] = maps.Map{
+		"id":                location.Id,
+		"on":                location.On,
+		"pattern":           location.PatternString(),
+		"type":              location.PatternType(),
+		"isReverse":         location.IsReverse(),
+		"isCaseInsensitive": location.IsCaseInsensitive(),
+		"root":              location.Root,
+		"index":             location.Index,
+		"charset":           location.Charset,
+
+		// 菜单用
+		"rewrite":     location.Rewrite,
+		"headers":     location.Headers,
+		"fastcgi":     location.Fastcgi,
+		"cachePolicy": location.CachePolicy,
+	}
+
 	this.Show()
 }
 
-// 保存提交
-func (this *AddAction) RunPost(params struct {
+// 保存修改
+func (this *UpdateAction) RunPost(params struct {
 	Server            string
+	LocationId        string
 	Pattern           string
 	PatternType       int
 	Root              string
@@ -55,7 +81,10 @@ func (this *AddAction) RunPost(params struct {
 		this.Fail(err.Error())
 	}
 
-	location := teaconfigs.NewLocation()
+	location := server.FindLocation(params.LocationId)
+	if location == nil {
+		this.Fail("找不到要修改的Location")
+	}
 	location.SetPattern(params.Pattern, params.PatternType, params.IsCaseInsensitive, params.IsReverse)
 	location.On = params.On
 	location.Root = params.Root
@@ -68,7 +97,6 @@ func (this *AddAction) RunPost(params struct {
 		}
 	}
 	location.Index = index
-	server.AddLocation(location)
 
 	err = server.Save()
 	if err != nil {

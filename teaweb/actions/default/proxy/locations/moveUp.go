@@ -1,9 +1,9 @@
 package locations
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/iwind/TeaGo/actions"
 )
 
 type MoveUpAction actions.Action
@@ -26,7 +26,7 @@ func (this *MoveUpAction) Run(params struct {
 
 	proxy.Save()
 
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Refresh().Success()
 }

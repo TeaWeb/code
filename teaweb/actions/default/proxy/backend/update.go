@@ -3,7 +3,7 @@ package backend
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/global"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -90,7 +90,7 @@ func (this *UpdateAction) RunPost(params struct {
 		this.Fail("保存失败：" + err.Error())
 	}
 
-	global.NotifyChange()
+	proxyutils.NotifyChange()
 
 	this.Success()
 }

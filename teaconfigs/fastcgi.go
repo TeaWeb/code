@@ -4,21 +4,21 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 )
 
 // Fastcgi配置
 // 参考：http://nginx.org/en/docs/http/ngx_http_fastcgi_module.html
 type FastcgiConfig struct {
-	On bool   `yaml:"on" json:"on"` // @TODO
-	Id string `yaml:"id" json:"id"` // @TODO
+	shared.HeaderList `yaml:",inline"`
+
+	On bool   `yaml:"on" json:"on"`
+	Id string `yaml:"id" json:"id"`
 
 	// fastcgi地址配置
 	// 支持unix:/tmp/php-fpm.sock ...
@@ -29,19 +29,16 @@ type FastcgiConfig struct {
 	ReadTimeout string            `yaml:"readTimeout" json:"readTimeout"` // @TODO 读取超时时间
 	SendTimeout string            `yaml:"sendTimeout" json:"sendTimeout"` // @TODO 发送超时时间
 	ConnTimeout string            `yaml:"connTimeout" json:"connTimeout"` // @TODO 连接超时时间
-	PoolSize    int               `yaml:"poolSize" json:"poolSize"`       // 连接池尺寸 @TODO
-
-	// Headers
-	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 自定义Header @TODO
-	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header @TODO
+	PoolSize    int               `yaml:"poolSize" json:"poolSize"`       // 连接池尺寸
 
 	network string // 协议：tcp, unix
 	address string // 地址
 
-	paramsMap maps.Map
-	timeout   time.Duration
+	paramsMap   maps.Map
+	readTimeout time.Duration
 }
 
+// 获取新对象
 func NewFastcgiConfig() *FastcgiConfig {
 	return &FastcgiConfig{
 		On: true,
@@ -99,22 +96,21 @@ func (this *FastcgiConfig) Validate() error {
 		if err != nil {
 			return err
 		}
-		this.timeout = duration
+		this.readTimeout = duration
 	} else {
-		this.timeout = 3 * time.Second
+		this.readTimeout = 3 * time.Second
 	}
 
 	// 校验Header
-	for _, header := range this.Headers {
-		err := header.Validate()
-		if err != nil {
-			return err
-		}
+	err := this.ValidateHeaders()
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
+// 过滤参数
 func (this *FastcgiConfig) FilterParams(req *http.Request) maps.Map {
 	params := maps.NewMap(this.paramsMap)
 
@@ -138,11 +134,11 @@ func (this *FastcgiConfig) FilterParams(req *http.Request) maps.Map {
 }
 
 // 超时时间
-func (this *FastcgiConfig) Timeout() time.Duration {
-	if this.timeout <= 0 {
-		this.timeout = 30 * time.Second
+func (this *FastcgiConfig) ReadTimeoutDuration() time.Duration {
+	if this.readTimeout <= 0 {
+		this.readTimeout = 30 * time.Second
 	}
-	return this.timeout
+	return this.readTimeout
 }
 
 //网络协议
@@ -155,56 +151,8 @@ func (this *FastcgiConfig) Address() string {
 	return this.address
 }
 
-// 设置Header
-func (this *FastcgiConfig) SetHeader(name string, value string) {
-	found := false
-	upperName := strings.ToUpper(name)
-	for _, header := range this.Headers {
-		if strings.ToUpper(header.Name) == upperName {
-			found = true
-			header.Value = value
-		}
-	}
-	if found {
-		return
-	}
-
-	header := shared.NewHeaderConfig()
-	header.Name = name
-	header.Value = value
-	this.Headers = append(this.Headers, header)
-}
-
-// 删除指定位置上的Header
-func (this *FastcgiConfig) DeleteHeaderAtIndex(index int) {
-	if index >= 0 && index < len(this.Headers) {
-		this.Headers = lists.Remove(this.Headers, index).([]*shared.HeaderConfig)
-	}
-}
-
-// 取得指定位置上的Header
-func (this *FastcgiConfig) HeaderAtIndex(index int) *shared.HeaderConfig {
-	if index >= 0 && index < len(this.Headers) {
-		return this.Headers[index]
-	}
-	return nil
-}
-
-// 屏蔽一个Header
-func (this *FastcgiConfig) AddIgnoreHeader(name string) {
-	this.IgnoreHeaders = append(this.IgnoreHeaders, name)
-}
-
-// 移除对Header的屏蔽
-func (this *FastcgiConfig) DeleteIgnoreHeaderAtIndex(index int) {
-	if index >= 0 && index < len(this.IgnoreHeaders) {
-		this.IgnoreHeaders = lists.Remove(this.IgnoreHeaders, index).([]string)
-	}
-}
-
-// 更改Header的屏蔽
-func (this *FastcgiConfig) UpdateIgnoreHeaderAtIndex(index int, name string) {
-	if index >= 0 && index < len(this.IgnoreHeaders) {
-		this.IgnoreHeaders[index] = name
-	}
+// 读取参数
+func (this *FastcgiConfig) Param(paramName string) string {
+	v, _ := this.Params[paramName]
+	return v
 }

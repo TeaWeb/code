@@ -15,11 +15,10 @@ func init() {
 				Grant: configs.AdminGrantProxy,
 			}).
 			Helper(new(proxy.Helper)).
-			Post("/add", new(AddAction)).
+			Get("/data", new(DataAction)).
+			GetPost("/add", new(AddAction)).
 			Post("/delete", new(DeleteAction)).
-			Post("/update", new(UpdateAction)).
-			Post("/on", new(OnAction)).
-			Post("/off", new(OffAction)).
+			GetPost("/update", new(UpdateAction)).
 			EndAll()
 	})
 }

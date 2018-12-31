@@ -1,32 +1,71 @@
 package shared
 
-import "github.com/iwind/TeaGo/lists"
+import (
+	"github.com/iwind/TeaGo/utils/string"
+)
 
 // 头部信息定义
-// 参考 http://nginx.org/en/docs/http/ngx_http_headers_module.html#add_header
 type HeaderConfig struct {
+	On     bool   `yaml:"on" json:"on"`         // 是否开启
+	Id     string `yaml:"id" json:"id"`         // ID
 	Name   string `yaml:"name" json:"name"`     // Name
 	Value  string `yaml:"value" json:"value"`   // Value
-	Always bool   `yaml:"always" json:"always"` // 是否忽略状态码 @TODO
-	Status []int  `yaml:"code" json:"code"`     // 支持的状态码 @TODO
+	Always bool   `yaml:"always" json:"always"` // 是否忽略状态码
+	Status []int  `yaml:"status" json:"status"` // 支持的状态码
+
+	statusMap map[int]bool
 }
 
+// 获取新Header对象
 func NewHeaderConfig() *HeaderConfig {
-	return &HeaderConfig{}
+	return &HeaderConfig{
+		On: true,
+		Id: stringutil.Rand(16),
+	}
 }
 
+// 校验
 func (this *HeaderConfig) Validate() error {
+	this.statusMap = map[int]bool{}
+
+	if this.Status == nil {
+		this.Status = []int{}
+	}
+
+	for _, status := range this.Status {
+		this.statusMap[status] = true
+	}
+
 	return nil
 }
 
+// 判断是否匹配状态码
 func (this *HeaderConfig) Match(statusCode int) bool {
+	if !this.On {
+		return false
+	}
+
 	if this.Always {
 		return true
 	}
 
-	if len(this.Status) > 0 {
-		return lists.Contains(this.Status, statusCode)
+	if this.statusMap != nil {
+		_, found := this.statusMap[statusCode]
+		return found
 	}
 
-	return lists.Contains([]int{200, 201, 204, 206, 301, 302, 303, 304, 307, 308}, statusCode)
+	return false
+}
+
+// 设置StatusMap
+func (this *HeaderConfig) Copy() *HeaderConfig {
+	newHeader := NewHeaderConfig()
+	newHeader.Id = this.Id
+	newHeader.On = this.On
+	newHeader.Always = this.Always
+	newHeader.Status = this.Status
+	newHeader.statusMap = this.statusMap
+	newHeader.Name = this.Name
+	newHeader.Value = this.Value
+	return newHeader
 }

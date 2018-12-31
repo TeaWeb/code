@@ -12,14 +12,16 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/mozillazg/go-pinyin"
-	"math/rand"
 	"strings"
 	"sync"
-	"time"
 )
 
 // 服务配置
 type ServerConfig struct {
+	shared.HeaderList `yaml:",inline"`
+	FastcgiList       `yaml:",inline"`
+	RewriteList       `yaml:",inline"`
+
 	On bool `yaml:"on" json:"on"` // 是否开启 @TODO
 
 	Id          string   `yaml:"id" json:"id"`                   // ID
@@ -50,18 +52,13 @@ type ServerConfig struct {
 	// SSL
 	SSL *SSLConfig `yaml:"ssl" json:"ssl"`
 
-	Headers       []*shared.HeaderConfig `yaml:"headers" json:"headers"`             // 添加的自定义Header
-	IgnoreHeaders []string               `yaml:"ignoreHeaders" json:"ignoreHeaders"` // 忽略的Header
-
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` //TODO
 	Deny  []string `yaml:"deny" json:"deny"`   //TODO
 
 	Filename string `yaml:"filename" json:"filename"` // 配置文件名
 
-	Rewrite []*RewriteRule   `yaml:"rewrite" json:"rewrite"` // 重写规则 TODO
-	Fastcgi []*FastcgiConfig `yaml:"fastcgi" json:"fastcgi"` // Fastcgi配置 TODO
-	Proxy   string           `yaml:"proxy" json:"proxy"`     //  代理配置 TODO
+	Proxy string `yaml:"proxy" json:"proxy"` //  代理配置 TODO
 
 	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
 	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开 TODO
@@ -144,15 +141,14 @@ func NewServerConfigFromFile(filename string) (*ServerConfig, error) {
 	if len(config.Locations) == 0 {
 		config.Locations = []*LocationConfig{}
 	}
-	if len(config.Headers) == 0 {
-		config.Headers = []*shared.HeaderConfig{}
-	}
-	if len(config.IgnoreHeaders) == 0 {
-		config.IgnoreHeaders = []string{}
-	}
-
 	if config.API == nil {
 		config.API = api.NewAPIConfig()
+	}
+	if config.Headers == nil {
+		config.Headers = []*shared.HeaderConfig{}
+	}
+	if config.IgnoreHeaders == nil {
+		config.IgnoreHeaders = []string{}
 	}
 
 	return config, nil
@@ -188,27 +184,21 @@ func (this *ServerConfig) Validate() error {
 	}
 
 	// fastcgi
-	for _, fastcgi := range this.Fastcgi {
-		err := fastcgi.Validate()
-		if err != nil {
-			return err
-		}
+	err := this.ValidateFastcgi()
+	if err != nil {
+		return err
 	}
 
 	// rewrite rules
-	for _, rewriteRule := range this.Rewrite {
-		err := rewriteRule.Validate()
-		if err != nil {
-			return err
-		}
+	err = this.ValidateRewriteRules()
+	if err != nil {
+		return err
 	}
 
 	// headers
-	for _, header := range this.Headers {
-		err := header.Validate()
-		if err != nil {
-			return err
-		}
+	err = this.ValidateHeaders()
+	if err != nil {
+		return err
 	}
 
 	// 校验缓存配置
@@ -228,7 +218,7 @@ func (this *ServerConfig) Validate() error {
 		this.API = api.NewAPIConfig()
 	}
 
-	err := this.API.Validate()
+	err = this.API.Validate()
 	if err != nil {
 		return err
 	}
@@ -306,79 +296,6 @@ func (this *ServerConfig) DeleteBackend(backendId string) {
 		result = append(result, backend)
 	}
 	this.Backends = result
-}
-
-// 设置Header
-func (this *ServerConfig) SetHeader(name string, value string) {
-	found := false
-	upperName := strings.ToUpper(name)
-	for _, header := range this.Headers {
-		if strings.ToUpper(header.Name) == upperName {
-			found = true
-			header.Value = value
-		}
-	}
-	if found {
-		return
-	}
-
-	header := shared.NewHeaderConfig()
-	header.Name = name
-	header.Value = value
-	this.Headers = append(this.Headers, header)
-}
-
-// 删除指定位置上的Header
-func (this *ServerConfig) DeleteHeaderAtIndex(index int) {
-	if index >= 0 && index < len(this.Headers) {
-		this.Headers = lists.Remove(this.Headers, index).([]*shared.HeaderConfig)
-	}
-}
-
-// 取得指定位置上的Header
-func (this *ServerConfig) HeaderAtIndex(index int) *shared.HeaderConfig {
-	if index >= 0 && index < len(this.Headers) {
-		return this.Headers[index]
-	}
-	return nil
-}
-
-// 格式化Header
-func (this *ServerConfig) FormatHeaders(formatter func(source string) string) []*shared.HeaderConfig {
-	result := []*shared.HeaderConfig{}
-	for _, header := range this.Headers {
-		result = append(result, &shared.HeaderConfig{
-			Name:   header.Name,
-			Value:  formatter(header.Value),
-			Always: header.Always,
-			Status: header.Status,
-		})
-	}
-	return result
-}
-
-// 添加一个自定义Header
-func (this *ServerConfig) AddHeader(header *shared.HeaderConfig) {
-	this.Headers = append(this.Headers, header)
-}
-
-// 屏蔽一个Header
-func (this *ServerConfig) AddIgnoreHeader(name string) {
-	this.IgnoreHeaders = append(this.IgnoreHeaders, name)
-}
-
-// 移除对Header的屏蔽
-func (this *ServerConfig) DeleteIgnoreHeaderAtIndex(index int) {
-	if index >= 0 && index < len(this.IgnoreHeaders) {
-		this.IgnoreHeaders = lists.Remove(this.IgnoreHeaders, index).([]string)
-	}
-}
-
-// 更改Header的屏蔽
-func (this *ServerConfig) UpdateIgnoreHeaderAtIndex(index int, name string) {
-	if index >= 0 && index < len(this.IgnoreHeaders) {
-		this.IgnoreHeaders[index] = name
-	}
 }
 
 // 获取某个位置上的配置
@@ -470,18 +387,6 @@ func (this *ServerConfig) FirstName() string {
 	return ""
 }
 
-// 取得下一个可用的fastcgi
-// @TODO 实现fastcgi中的各种参数
-func (this *ServerConfig) NextFastcgi() *FastcgiConfig {
-	countFastcgi := len(this.Fastcgi)
-	if countFastcgi == 0 {
-		return nil
-	}
-	rand.Seed(time.Now().UnixNano())
-	index := rand.Int() % countFastcgi
-	return this.Fastcgi[index]
-}
-
 // 添加路径规则
 func (this *ServerConfig) AddLocation(location *LocationConfig) {
 	this.Locations = append(this.Locations, location)
@@ -544,4 +449,139 @@ func (this *ServerConfig) SetupScheduling(isBackup bool) {
 	}
 
 	this.schedulingObject.Start()
+}
+
+// 根据Id查找Location
+func (this *ServerConfig) FindLocation(locationId string) *LocationConfig {
+	for _, location := range this.Locations {
+		if location.Id == locationId {
+			location.Validate()
+			return location
+		}
+	}
+	return nil
+}
+
+// 删除Location
+func (this *ServerConfig) RemoveLocation(locationId string) {
+	result := []*LocationConfig{}
+	for _, location := range this.Locations {
+		if location.Id == locationId {
+			continue
+		}
+		result = append(result, location)
+	}
+	this.Locations = result
+}
+
+// 查找HeaderList
+func (this *ServerConfig) FindHeaderList(locationId string, backendId string, rewriteId string, fastcgiId string) (headerList shared.HeaderListInterface, err error) {
+	if len(rewriteId) > 0 { // Rewrite
+		if len(locationId) > 0 { // Server > Location > Rewrite
+			location := this.FindLocation(locationId)
+			if location == nil {
+				err = errors.New("找不到要修改的location")
+				return
+			}
+
+			rewrite := location.FindRewriteRule(rewriteId)
+			if rewrite == nil {
+				err = errors.New("找不到要修改的rewrite")
+				return
+			}
+			headerList = rewrite
+		} else { // Server > Rewrite
+			rewrite := this.FindRewriteRule(rewriteId)
+			if rewrite == nil {
+				err = errors.New("找不到要修改的rewrite")
+				return
+			}
+			headerList = rewrite
+		}
+	} else if len(fastcgiId) > 0 { // Fastcgi
+		if len(locationId) > 0 { // Server > Location > Fastcgi
+			location := this.FindLocation(locationId)
+			if location == nil {
+				err = errors.New("找不到要修改的location")
+				return
+			}
+
+			fastcgi := location.FindFastcgi(fastcgiId)
+			if fastcgi == nil {
+				err = errors.New("找不到要修改的Fastcgi")
+				return
+			}
+			headerList = fastcgi
+		} else { // Server > Fastcgi
+			fastcgi := this.FindFastcgi(fastcgiId)
+			if fastcgi == nil {
+				err = errors.New("找不到要修改的Fastcgi")
+				return
+			}
+			headerList = fastcgi
+		}
+	} else if len(backendId) > 0 { // Backend
+		if len(locationId) > 0 { // Server > Location > Backend
+			location := this.FindLocation(locationId)
+			if location == nil {
+				err = errors.New("找不到要修改的location")
+				return
+			}
+
+			backend := location.FindBackend(backendId)
+			if backend == nil {
+				err = errors.New("找不到要修改的Backend")
+				return
+			}
+			headerList = backend
+		} else { // Server > Backend
+			backend := this.FindBackend(backendId)
+			if backend == nil {
+				err = errors.New("找不到要修改的Backend")
+				return
+			}
+			headerList = backend
+		}
+	} else if len(locationId) > 0 { // Location
+		location := this.FindLocation(locationId)
+		if location == nil {
+			err = errors.New("找不到要修改的location")
+			return
+		}
+		headerList = location
+	} else { // Server
+		headerList = this
+	}
+
+	return
+}
+
+// 查找FastcgiList
+func (this *ServerConfig) FindFastcgiList(locationId string) (fastcgiList FastcgiListInterface, err error) {
+	if len(locationId) > 0 {
+		location := this.FindLocation(locationId)
+		if location == nil {
+			err = errors.New("找不到要修改的location")
+			return
+		}
+		fastcgiList = location
+		return
+	}
+	fastcgiList = this
+	return
+}
+
+// 查找重写规则
+func (this *ServerConfig) FindRewriteList(locationId string) (rewriteList RewriteListInterface, err error) {
+	if len(locationId) > 0 {
+		location := this.FindLocation(locationId)
+		if location == nil {
+			err = errors.New("找不到要修改的location")
+			return
+		}
+		rewriteList = location
+		return
+	}
+	rewriteList = this
+	return
 }
