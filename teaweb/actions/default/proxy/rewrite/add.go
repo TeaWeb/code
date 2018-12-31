@@ -113,8 +113,6 @@ func (this *AddAction) RunPost(params struct {
 
 	if len(params.Replace) == 0 {
 		params.Replace = "/"
-	} else if params.Replace[0] != '/' && !regexp.MustCompile("(?i)^(http|https|ftp)://").MatchString(params.Replace) {
-		params.Replace = "/" + params.Replace
 	}
 
 	rewriteList, err := server.FindRewriteList(params.LocationId)

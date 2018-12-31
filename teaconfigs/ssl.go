@@ -9,6 +9,11 @@ type SSLConfig struct {
 	CertificateKey string `yaml:"certificateKey" json:"certificateKey"`
 }
 
+// 获取新对象
+func NewSSLConfig() *SSLConfig {
+	return &SSLConfig{}
+}
+
 // 校验配置
 func (this *SSLConfig) Validate() error {
 	if !this.On {

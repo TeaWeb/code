@@ -67,10 +67,11 @@ func (this *Engine) SetContext(context *Context) {
 			}),
 			"locations": lists.Map(context.Server.Locations, func(k int, v interface{}) interface{} {
 				location := v.(*teaconfigs.LocationConfig)
+				location.Validate()
 				return map[string]interface{}{
 					"id":          location.Id,
 					"on":          location.On,
-					"pattern":     location.Pattern,
+					"pattern":     location.PatternString(),
 					"cachePolicy": location.CachePolicy,
 					"fastcgi": lists.Map(location.Fastcgi, func(k int, v interface{}) interface{} {
 						fastcgi := v.(*teaconfigs.FastcgiConfig)
@@ -89,8 +90,9 @@ func (this *Engine) SetContext(context *Context) {
 							"replace": rewrite.Replace,
 						}
 					}),
-					"root":  location.Root,
-					"index": location.Index,
+					"root":    location.Root,
+					"index":   location.Index,
+					"headers": location.Headers,
 				}
 			}),
 		}

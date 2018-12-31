@@ -136,8 +136,6 @@ func (this *UpdateAction) RunPost(params struct {
 
 	if len(params.Replace) == 0 {
 		params.Replace = "/"
-	} else if params.Replace[0] != '/' && !regexp.MustCompile("(?i)^(http|https|ftp)://").MatchString(params.Replace) {
-		params.Replace = "/" + params.Replace
 	}
 
 	rewriteList, err := server.FindRewriteList(params.LocationId)
@@ -155,12 +153,15 @@ func (this *UpdateAction) RunPost(params struct {
 	if params.TargetType == "url" {
 		rewriteRule.Replace = params.Replace
 	} else {
-		rewriteRule.Replace = "proxy://" + params.ProxyId + params.Replace
+		rewriteRule.Replace = "proxy://" + params.ProxyId + "/" + params.Replace
 	}
+	rewriteRule.Flags = []string{}
+	rewriteRule.FlagOptions = maps.Map{}
 	if len(params.RedirectMode) > 0 {
 		rewriteRule.AddFlag(params.RedirectMode, nil)
 	}
 
+	rewriteRule.Cond = []*teaconfigs.RewriteCond{}
 	if len(params.CondParams) > 0 {
 		for index, param := range params.CondParams {
 			if index < len(params.CondOps) && index < len(params.CondValues) {

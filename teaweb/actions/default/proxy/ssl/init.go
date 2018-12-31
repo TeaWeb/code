@@ -17,10 +17,7 @@ func init() {
 			Module("").
 			Prefix("/proxy/ssl").
 			Get("", new(IndexAction)).
-			Post("/uploadCert", new(UploadCertAction)).
-			Post("/uploadKey", new(UploadKeyAction)).
-			Post("/on", new(OnAction)).
-			Post("/off", new(OffAction)).
+			GetPost("/update", new(UpdateAction)).
 			Prefix("").
 			EndAll()
 	})

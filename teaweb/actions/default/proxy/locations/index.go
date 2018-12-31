@@ -35,6 +35,11 @@ func (this *IndexAction) Run(params struct {
 			"patternTypeName":   teaconfigs.FindLocationPatternTypeName(location.PatternType()),
 			"isCaseInsensitive": location.IsCaseInsensitive(),
 			"isReverse":         location.IsReverse(),
+			"rewrite":           location.Rewrite,
+			"headers":           location.Headers,
+			"fastcgi":           location.Fastcgi,
+			"root":              location.Root,
+			"cachePolicy":       location.CachePolicyObject(),
 		})
 	}
 

@@ -5,7 +5,6 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -59,8 +58,6 @@ func (this *DataAction) Run(params struct {
 			"targetURL":           r.TargetURL(),
 		}
 	})
-
-	logs.PrintAsJSON(this.Data["rewriteList"])
 
 	this.Success()
 }
