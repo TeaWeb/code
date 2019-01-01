@@ -6,7 +6,7 @@ import (
 )
 
 func TestLocationConfig_Match(t *testing.T) {
-	location := NewLocationConfig()
+	location := NewLocation()
 	err := location.Validate()
 	if err != nil {
 		t.Fatal(err)

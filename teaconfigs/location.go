@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/utils/string"
 	"math/rand"
@@ -204,19 +205,19 @@ func (this *LocationConfig) IsCaseInsensitive() bool {
 }
 
 // 判断是否匹配路径
-func (this *LocationConfig) Match(path string) ([]string, bool) {
+func (this *LocationConfig) Match(path string) (map[string]string, bool) {
 	if this.patternType == LocationPatternTypePrefix {
 		if this.reverse {
 			if this.caseInsensitive {
-				return []string{}, !strings.HasPrefix(strings.ToLower(path), strings.ToLower(this.prefix))
+				return nil, !strings.HasPrefix(strings.ToLower(path), strings.ToLower(this.prefix))
 			} else {
-				return []string{}, !strings.HasPrefix(path, this.prefix)
+				return nil, !strings.HasPrefix(path, this.prefix)
 			}
 		} else {
 			if this.caseInsensitive {
-				return []string{}, strings.HasPrefix(strings.ToLower(path), strings.ToLower(this.prefix))
+				return nil, strings.HasPrefix(strings.ToLower(path), strings.ToLower(this.prefix))
 			} else {
-				return []string{}, strings.HasPrefix(path, this.prefix)
+				return nil, strings.HasPrefix(path, this.prefix)
 			}
 		}
 	}
@@ -224,15 +225,15 @@ func (this *LocationConfig) Match(path string) ([]string, bool) {
 	if this.patternType == LocationPatternTypeExact {
 		if this.reverse {
 			if this.caseInsensitive {
-				return []string{}, strings.ToLower(path) != strings.ToLower(this.path)
+				return nil, strings.ToLower(path) != strings.ToLower(this.path)
 			} else {
-				return []string{}, path != this.path
+				return nil, path != this.path
 			}
 		} else {
 			if this.caseInsensitive {
-				return []string{}, strings.ToLower(path) == strings.ToLower(this.path)
+				return nil, strings.ToLower(path) == strings.ToLower(this.path)
 			} else {
-				return []string{}, path == this.path
+				return nil, path == this.path
 			}
 		}
 	}
@@ -240,20 +241,30 @@ func (this *LocationConfig) Match(path string) ([]string, bool) {
 	if this.patternType == LocationPatternTypeRegexp {
 		if this.reg != nil {
 			if this.reverse {
-				return []string{}, !this.reg.MatchString(path)
+				return nil, !this.reg.MatchString(path)
 			} else {
 				b := this.reg.MatchString(path)
 				if b {
-					return this.reg.FindStringSubmatch(path), true
+					result := map[string]string{}
+					matches := this.reg.FindStringSubmatch(path)
+					subNames := this.reg.SubexpNames()
+					for index, value := range matches {
+						result[fmt.Sprintf("%d", index)] = value
+						subName := subNames[index]
+						if len(subName) > 0 {
+							result[subName] = value
+						}
+					}
+					return result, true
 				}
-				return []string{}, b
+				return nil, b
 			}
 		}
 
-		return []string{}, this.reverse
+		return nil, this.reverse
 	}
 
-	return []string{}, false
+	return nil, false
 }
 
 // 组合参数为一个字符串

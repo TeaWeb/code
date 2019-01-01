@@ -56,6 +56,7 @@ func (this *DataAction) Run(params struct {
 			"targetProxyName":     targetProxyName,
 			"targetProxyFilename": targetProxyFilename,
 			"targetURL":           r.TargetURL(),
+			"conds":               r.Cond,
 		}
 	})
 

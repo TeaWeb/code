@@ -1,10 +1,10 @@
 package teaconfigs
 
 import (
+	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"regexp"
 	"strings"
@@ -46,7 +46,7 @@ type RewriteRule struct {
 	reg     *regexp.Regexp
 
 	// 要替换成的URL
-	// 支持反向引用：${0}, ${1}, ...
+	// 支持反向引用：${0}, ${1}, ...，也支持?P<NAME>语法
 	// - 如果以 proxy:// 开头，表示目标为代理，首先会尝试作为代理ID请求，如果找不到，会尝试作为代理Host请求
 	Replace string `yaml:"replace" json:"replace"`
 
@@ -108,32 +108,47 @@ func (this *RewriteRule) Validate() error {
 }
 
 // 对某个请求执行规则
-func (this *RewriteRule) Match(requestPath string, formatter func(source string) string) (string, bool) {
+func (this *RewriteRule) Match(requestPath string, formatter func(source string) string) (replace string, varMapping map[string]string, matched bool) {
 	if this.reg == nil {
-		return "", false
+		return "", nil, false
+	}
+
+	matches := this.reg.FindStringSubmatch(requestPath)
+	if len(matches) == 0 {
+		return "", nil, false
 	}
 
 	// 判断条件
-	for _, cond := range this.Cond {
-		if !cond.Match(formatter) {
-			return "", false
+	if len(this.Cond) > 0 {
+		for _, cond := range this.Cond {
+			if !cond.Match(formatter) {
+				return "", nil, false
+			}
 		}
 	}
 
-	replace := formatter(this.targetURL)
-	matches := this.reg.FindStringSubmatch(requestPath)
-	if len(matches) == 0 {
-		return "", false
-	}
-	replace = regexp.MustCompile("\\${\\d+}").ReplaceAllStringFunc(replace, func(s string) string {
-		index := types.Int(s[2 : len(s)-1])
-		if index < len(matches) {
-			return matches[index]
+	varMapping = map[string]string{}
+	subNames := this.reg.SubexpNames()
+	for index, match := range matches {
+		varMapping[fmt.Sprintf("%d", index)] = match
+		subName := subNames[index]
+		if len(subName) > 0 {
+			varMapping[subName] = match
 		}
-		return ""
+	}
+
+	replace = RegexpNamedVariable.ReplaceAllStringFunc(this.targetURL, func(s string) string {
+		varName := s[2 : len(s)-1]
+		v, ok := varMapping[varName]
+		if ok {
+			return v
+		}
+		return s
 	})
 
-	return replace, true
+	replace = formatter(replace)
+
+	return replace, varMapping, true
 }
 
 // 获取目标类型
@@ -153,7 +168,7 @@ func (this *RewriteRule) TargetURL() string {
 
 // 判断是否是外部URL
 func (this *RewriteRule) IsExternalURL(url string) bool {
-	return regexp.MustCompile("(?i)^(http|https|ftp)://").MatchString(url)
+	return RegexpExternalURL.MatchString(url)
 }
 
 // 添加Flag

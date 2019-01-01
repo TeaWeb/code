@@ -28,6 +28,15 @@ func (this *ResponseWriter) Header() http.Header {
 	return this.writer.Header()
 }
 
+// 添加一组Header
+func (this *ResponseWriter) AddHeaders(header http.Header) {
+	for key, value := range header {
+		for _, v := range value {
+			this.writer.Header().Add(key, v)
+		}
+	}
+}
+
 // 写入数据
 func (this *ResponseWriter) Write(data []byte) (n int, err error) {
 	n, err = this.writer.Write(data)

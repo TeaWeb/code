@@ -24,14 +24,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
 	apiconfig "github.com/TeaWeb/code/teaconfigs/api"
 )
-
-var requestVarReg = regexp.MustCompile("\\${[\\w.-]+}")
 
 // 文本mime-type列表
 var textMimeMap = map[string]bool{
@@ -203,7 +200,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				}
 
 				// 支持变量
-				address = requestVarReg.ReplaceAllStringFunc(address, func(s string) string {
+				address = teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(address, func(s string) string {
 					match := s[2 : len(s)-1]
 					switch match {
 					case "path":
@@ -277,7 +274,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			continue
 		}
 		if locationMatches, ok := location.Match(path); ok {
-			this.convertVarMapping(locationMatches)
+			this.addVarMapping(locationMatches)
 
 			if len(location.Root) > 0 {
 				this.root = this.Format(location.Root)
@@ -316,9 +313,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 						continue
 					}
 
-					if replace, ok := rule.Match(path, func(source string) string {
-						return this.Format(source)
-					}); ok {
+					if replace, varMapping, ok := rule.Match(path, this.Format); ok {
+						this.addVarMapping(varMapping)
 						this.rewriteId = rule.Id
 
 						if len(rule.Headers) > 0 {
@@ -446,9 +442,10 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			if !rule.On {
 				continue
 			}
-			if replace, ok := rule.Match(path, func(source string) string {
+			if replace, varMapping, ok := rule.Match(path, func(source string) string {
 				return this.Format(source)
 			}); ok {
+				this.addVarMapping(varMapping)
 				this.rewriteId = rule.Id
 
 				if len(rule.Headers) > 0 {
@@ -1161,13 +1158,10 @@ func (this *Request) callRewrite(writer *ResponseWriter) error {
 	}
 
 	if this.rewriteRedirectMode == teaconfigs.RewriteFlagProxy {
-		req, err := http.NewRequest("GET", target, nil)
+		req, err := http.NewRequest(this.requestMethod(), target, this.raw.Body)
 		if err != nil {
 			return err
 		}
-
-		// user-agent
-		req.Header.Set("User-Agent", this.requestUserAgent())
 
 		// ip
 		remoteAddr := this.requestRemoteAddr()
@@ -1184,16 +1178,33 @@ func (this *Request) callRewrite(writer *ResponseWriter) error {
 			req.Header.Set("X-Forwarded-By", ip)
 		}
 
-		client := &http.Client{}
+		// headers
+		for _, h := range this.headers {
+			req.Header.Add(h.Name, h.Value)
+		}
+
+		// TODO 使用连接池处理
+		client := &http.Client{
+			Timeout: 30 * time.Second,
+		}
 		resp, err := client.Do(req)
 		if err != nil {
+			logs.Error(err)
+			this.serverError(writer)
 			return err
 		}
 		defer resp.Body.Close()
 
-		io.Copy(writer, resp.Body)
+		// Header
+		writer.AddHeaders(resp.Header)
 
-		return nil
+		// 设置响应代码
+		writer.WriteHeader(resp.StatusCode)
+
+		// 输出内容
+		_, err = io.Copy(writer, resp.Body)
+
+		return err
 	}
 
 	return nil
@@ -1492,7 +1503,7 @@ func (this *Request) Format(source string) string {
 
 	var varName = ""
 	var hasVarMapping = len(this.varMapping) > 0
-	return requestVarReg.ReplaceAllStringFunc(source, func(s string) string {
+	return teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(source, func(s string) string {
 		varName = s[2 : len(s)-1]
 
 		// 自定义变量
@@ -1731,8 +1742,8 @@ func (this *Request) convertIgnoreHeaders() maps.Map {
 	return m
 }
 
-func (this *Request) convertVarMapping(s []string) {
-	for k, v := range s {
-		this.varMapping[fmt.Sprintf("%d", k)] = v
+func (this *Request) addVarMapping(varMapping map[string]string) {
+	for k, v := range varMapping {
+		this.varMapping[k] = v
 	}
 }

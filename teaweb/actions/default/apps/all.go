@@ -29,7 +29,7 @@ func (this *AllAction) Run(params struct{}) {
 	this.Data["messages"] = messages
 
 	// 探针
-	parser := probes.NewParser(Tea.Root + Tea.DS + "plugins" + "jsapps.js")
+	parser := probes.NewParser(Tea.Root + Tea.DS + "plugins" + Tea.DS + "jsapps.js")
 	_, f, err := parser.LoadFunctions()
 	if err != nil {
 		this.Data["countProbes"] = 0
