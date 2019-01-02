@@ -151,4 +151,76 @@ func TestRewriteCond(t *testing.T) {
 			return source
 		}))
 	}
+
+	{
+		cond := RewriteCond{
+			Param:    "/hello/world",
+			Operator: RewriteOperatorPrefix,
+			Value:    "/hello",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "/hello/world",
+			Operator: RewriteOperatorPrefix,
+			Value:    "/hello2",
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "/hello/world",
+			Operator: RewriteOperatorSuffix,
+			Value:    "world",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "/hello/world",
+			Operator: RewriteOperatorSuffix,
+			Value:    "world/",
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "/hello/world",
+			Operator: RewriteOperatorContains,
+			Value:    "wo",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "/hello/world",
+			Operator: RewriteOperatorContains,
+			Value:    "wr",
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
 }

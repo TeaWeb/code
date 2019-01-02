@@ -4,6 +4,7 @@ import (
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"regexp"
+	"strings"
 )
 
 // 重写条件定义
@@ -67,6 +68,12 @@ func (this *RewriteCond) Match(formatter func(source string) string) bool {
 		return paramValue == this.Value
 	case RewriteOperatorNot:
 		return paramValue != this.Value
+	case RewriteOperatorPrefix:
+		return strings.HasPrefix(paramValue, this.Value)
+	case RewriteOperatorSuffix:
+		return strings.HasSuffix(paramValue, this.Value)
+	case RewriteOperatorContains:
+		return strings.Contains(paramValue, this.Value)
 	}
 	return false
 }

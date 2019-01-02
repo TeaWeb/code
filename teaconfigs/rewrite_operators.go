@@ -6,13 +6,16 @@ import "github.com/iwind/TeaGo/maps"
 type RewriteOperator = string
 
 const (
-	RewriteOperatorRegexp = "regexp"
-	RewriteOperatorGt     = "gt"
-	RewriteOperatorGte    = "gte"
-	RewriteOperatorLt     = "lt"
-	RewriteOperatorLte    = "lte"
-	RewriteOperatorEq     = "eq"
-	RewriteOperatorNot    = "not"
+	RewriteOperatorRegexp   = "regexp"
+	RewriteOperatorGt       = "gt"
+	RewriteOperatorGte      = "gte"
+	RewriteOperatorLt       = "lt"
+	RewriteOperatorLte      = "lte"
+	RewriteOperatorEq       = "eq"
+	RewriteOperatorNot      = "not"
+	RewriteOperatorPrefix   = "prefix"
+	RewriteOperatorSuffix   = "suffix"
+	RewriteOperatorContains = "contains"
 )
 
 // 所有的运算符
@@ -22,6 +25,31 @@ func AllRewriteOperators() []maps.Map {
 			"name":        "正则表达式匹配",
 			"op":          RewriteOperatorRegexp,
 			"description": "使用正则表达式匹配",
+		},
+		{
+			"name":        "等于",
+			"op":          RewriteOperatorEq,
+			"description": "使用字符串对比参数值是否相等于某个值",
+		},
+		{
+			"name":        "前缀",
+			"op":          RewriteOperatorPrefix,
+			"description": "参数值包含某个前缀",
+		},
+		{
+			"name":        "后缀",
+			"op":          RewriteOperatorSuffix,
+			"description": "参数值包含某个后缀",
+		},
+		{
+			"name":        "包含",
+			"op":          RewriteOperatorContains,
+			"description": "参数值包含另外一个字符串",
+		},
+		{
+			"name":        "不等于",
+			"op":          RewriteOperatorNot,
+			"description": "使用字符串对比参数值是否不相等于某个值",
 		},
 		{
 			"name":        "大于",
@@ -42,16 +70,6 @@ func AllRewriteOperators() []maps.Map {
 			"name":        "小于等于",
 			"op":          RewriteOperatorLte,
 			"description": "将参数转换为数字进行对比",
-		},
-		{
-			"name":        "等于",
-			"op":          RewriteOperatorEq,
-			"description": "使用字符串对比参数值是否相等于某个值",
-		},
-		{
-			"name":        "不等于",
-			"op":          RewriteOperatorNot,
-			"description": "使用字符串对比参数值是否不相等于某个值",
 		},
 	}
 }
