@@ -8,6 +8,7 @@ import (
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/caches"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -18,6 +19,8 @@ import (
 	"time"
 )
 
+var engineCache = caches.NewFactory()
+
 // 脚本引擎
 type Engine struct {
 	vm           *otto.Otto
@@ -25,6 +28,7 @@ type Engine struct {
 	widgetCodes  map[string]maps.Map // "code" => { name, ..., definition:FUNCTION CODE }
 }
 
+// 获取新引擎
 func NewEngine() *Engine {
 	engine := &Engine{
 		chartOptions: []maps.Map{},
@@ -34,6 +38,7 @@ func NewEngine() *Engine {
 	return engine
 }
 
+// 设置上下文信息
 func (this *Engine) SetContext(context *Context) {
 	if context.Server != nil {
 		runningServer, _ := teaproxy.FindServer(context.Server.Id)
@@ -107,10 +112,12 @@ func (this *Engine) SetContext(context *Context) {
 	this.vm.Run(`context.features=` + this.jsonEncode(features) + `;`)
 }
 
+// 初始化
 func (this *Engine) init() {
 	this.vm = otto.New()
 	this.loadLib("libs/array.js")
 	this.loadLib("libs/times.js")
+	this.loadLib("libs/caches.js")
 	this.loadLib("libs/mutex.js")
 	this.loadLib("libs/logs.js")
 	this.loadLib("libs/http.js")
@@ -126,10 +133,13 @@ func (this *Engine) init() {
 
 	this.loadWidgets()
 
-	this.vm.Set("callChartRender", this.renderChart)
-	this.vm.Set("callExecuteQuery", this.executeQuery)
+	this.vm.Set("callSetCache", this.callSetCache)
+	this.vm.Set("callGetCache", this.callGetCache)
+	this.vm.Set("callChartRender", this.callRenderChart)
+	this.vm.Set("callExecuteQuery", this.callExecuteQuery)
 }
 
+// 运行widget配置文件
 func (this *Engine) RunConfig(configFile string, options maps.Map) error {
 	reader, err := files.NewReader(configFile)
 	if err != nil {
@@ -175,6 +185,7 @@ func (this *Engine) RunConfig(configFile string, options maps.Map) error {
 	return nil
 }
 
+// 运行Widget代码
 func (this *Engine) RunCode(code string) error {
 	_, err := this.vm.Run(`(function () {` + code + `
 	
@@ -183,11 +194,12 @@ func (this *Engine) RunCode(code string) error {
 	return err
 }
 
+// 获取Widget中的图表对象
 func (this *Engine) Charts() []maps.Map {
 	return this.chartOptions
 }
 
-func (this *Engine) renderChart(call otto.FunctionCall) otto.Value {
+func (this *Engine) callRenderChart(call otto.FunctionCall) otto.Value {
 	obj := call.Argument(0)
 	v, err := obj.Export()
 	if err != nil {
@@ -212,7 +224,7 @@ func (this *Engine) renderChart(call otto.FunctionCall) otto.Value {
 	return otto.UndefinedValue()
 }
 
-func (this *Engine) executeQuery(call otto.FunctionCall) otto.Value {
+func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 	arg, err := call.Argument(0).Export()
 	if err != nil {
 		this.throw(err)
@@ -312,12 +324,55 @@ func (this *Engine) executeQuery(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 
-	jsValue, err := this.vm.ToValue(v)
+	jsValue, err := this.toValue(v)
 	if err != nil {
 		this.throw(err)
 		return otto.UndefinedValue()
 	}
 	return jsValue
+}
+
+func (this *Engine) callSetCache(call otto.FunctionCall) otto.Value {
+	key, err := call.Argument(0).ToString()
+	if err != nil {
+		this.throw(err)
+		return otto.UndefinedValue()
+	}
+
+	value, err := call.Argument(1).Export()
+	if err != nil {
+		this.throw(err)
+		return otto.UndefinedValue()
+	}
+
+	life, err := call.Argument(2).Export()
+	if err != nil {
+		this.throw(err)
+		return otto.UndefinedValue()
+	}
+	lifeSeconds := types.Int64(life)
+	engineCache.Set(key, value, time.Duration(lifeSeconds)*time.Second)
+
+	return otto.UndefinedValue()
+}
+
+func (this *Engine) callGetCache(call otto.FunctionCall) otto.Value {
+	key, err := call.Argument(0).ToString()
+	if err != nil {
+		this.throw(err)
+		return otto.UndefinedValue()
+	}
+
+	value, found := engineCache.Get(key)
+	if !found {
+		return otto.UndefinedValue()
+	}
+	v, err := this.vm.ToValue(value)
+	if err != nil {
+		this.throw(err)
+		return otto.UndefinedValue()
+	}
+	return v
 }
 
 // 加载widgets
@@ -356,12 +411,19 @@ func (this *Engine) loadWidgets() {
 // 加载JS库文件
 func (this *Engine) loadLib(file string) {
 	path := Tea.Root + Tea.DS + file
-	s, err := files.NewFile(path).ReadAllString()
-	if err != nil {
-		logs.Error(err)
-		return
+	cacheKey := "libfile://" + path
+	code, found := engineCache.Get(cacheKey)
+	if !found {
+		var err error = nil
+		code, err = files.NewFile(path).ReadAllString()
+		if err != nil {
+			logs.Error(err)
+			return
+		}
+		engineCache.Set(cacheKey, code)
 	}
-	_, err = this.vm.Run(s)
+
+	_, err := this.vm.Run(code)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -376,6 +438,44 @@ func (this *Engine) jsonEncode(v interface{}) string {
 	}
 
 	return string(data)
+}
+
+func (this *Engine) toValue(data interface{}) (v otto.Value, err error) {
+	if data == nil {
+		return this.vm.ToValue(data)
+	}
+
+	// *AccessLog
+	if _, ok := data.(*tealogs.AccessLog); ok {
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			return this.vm.ToValue(data)
+		}
+		m := map[string]interface{}{}
+		err = json.Unmarshal(jsonData, &m)
+		if err != nil {
+			logs.Error(err)
+			return this.vm.ToValue(data)
+		}
+		return this.vm.ToValue(m)
+	}
+
+	// []*AccessLog
+	if _, ok := data.([]*tealogs.AccessLog); ok {
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			return this.vm.ToValue(data)
+		}
+		m := []map[string]interface{}{}
+		err = json.Unmarshal(jsonData, &m)
+		if err != nil {
+			logs.Error(err)
+			return this.vm.ToValue(data)
+		}
+		return this.vm.ToValue(m)
+	}
+
+	return this.vm.ToValue(data)
 }
 
 func (this *Engine) throw(err error) {

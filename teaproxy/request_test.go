@@ -7,6 +7,7 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
@@ -204,7 +205,7 @@ func TestRequest_Format(t *testing.T) {
 	req.filePath = "hello.go"
 	req.scheme = "http"
 
-	a.IsTrue(req.requestRemoteAddr() == "127.0.0.1:1234")
+	a.IsTrue(req.requestRemoteAddr() == "127.0.0.1")
 	a.IsTrue(req.requestRemotePort() == 1234)
 	a.IsTrue(req.requestURI() == req.uri)
 	a.IsTrue(req.requestPath() == "/hello/world")
@@ -216,6 +217,34 @@ func TestRequest_Format(t *testing.T) {
 	a.IsTrue(req.requestQueryParam("name") == "Lu")
 
 	t.Log(req.Format("hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test}"))
+}
+
+func TestRequest_FormatPerformance(t *testing.T) {
+	rawReq, err := http.NewRequest("GET", "http://www.example.com/hello/world?name=Lu&age=20", bytes.NewBuffer([]byte("hello=world")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rawReq.RemoteAddr = "127.0.0.1:1234"
+	rawReq.Header.Add("Content-Type", "text/plain")
+
+	req := NewRequest(rawReq)
+	req.uri = "/hello/world?name=Lu&age=20"
+	req.method = "GET"
+	req.filePath = "hello.go"
+	req.scheme = "http"
+
+	count := 10000
+	rand.Seed(time.Now().UnixNano())
+	before := time.Now()
+	result := ""
+	for i := 0; i < count; i ++ {
+		source := "hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test} /hello"
+		result = req.Format(source)
+	}
+
+	cost := int(float64(count) / time.Since(before).Seconds())
+	t.Log(cost)
+	t.Log(result)
 }
 
 func TestRequest_Index(t *testing.T) {
@@ -249,13 +278,15 @@ func TestRequest_LocationVariables(t *testing.T) {
 	server.Root = "/home"
 
 	{
-		location := teaconfigs.NewLocationConfig()
+		location := teaconfigs.NewLocation()
 		location.On = true
 		location.Pattern = "~ /hello/(\\w)(\\w+)"
 		location.Root = "/hello/${1}/${host}"
 		location.Index = []string{"hello_${1}${2}"}
 		location.Charset = "${arg.charset}"
-		location.SetHeader("hello", "${1}")
+		location.AddHeader(&shared.HeaderConfig{
+			On: true, Name: "hello", Value: "${1}",
+		})
 		err := location.Validate()
 		a.IsNil(err)
 
@@ -307,7 +338,7 @@ func TestRequest_RewriteVariables(t *testing.T) {
 	})
 
 	{
-		location := teaconfigs.NewLocationConfig()
+		location := teaconfigs.NewLocation()
 		location.On = true
 		location.Pattern = "/"
 

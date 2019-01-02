@@ -74,19 +74,15 @@ func (this *AccessLogger) collection() *mongo.Collection {
 	coll = this.client().Database("teaweb").Collection(collName)
 	indexes := coll.Indexes()
 	indexes.CreateOne(context.Background(), mongo.IndexModel{
-		Keys:    bson.NewDocument(bson.EC.Int32("status", 1), bson.EC.Int32("timestamp", 1)),
+		Keys:    bson.NewDocument(bson.EC.Int32("serverId", 1)),
+		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
+	})
+	indexes.CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    bson.NewDocument(bson.EC.Int32("status", 1), bson.EC.Int32("serverId", 1)),
 		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
 	})
 	indexes.CreateOne(context.Background(), mongo.IndexModel{
 		Keys:    bson.NewDocument(bson.EC.Int32("remoteAddr", 1), bson.EC.Int32("serverId", 1)),
-		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
-	})
-	indexes.CreateOne(context.Background(), mongo.IndexModel{
-		Keys:    bson.NewDocument(bson.EC.Int32("apiPath", 1), bson.EC.Int32("serverId", 1)),
-		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
-	})
-	indexes.CreateOne(context.Background(), mongo.IndexModel{
-		Keys:    bson.NewDocument(bson.EC.Int32("apiPath", 1), bson.EC.Int32("serverId", 1)),
 		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
 	})
 	indexes.CreateOne(context.Background(), mongo.IndexModel{
@@ -289,60 +285,6 @@ func (this *AccessLogger) ReadNewLogs(serverId string, fromId string, size int64
 		lists.Reverse(result)
 	}
 	return result
-}
-
-// 查找单个日志
-func (this *AccessLogger) FindLog(logId string) *AccessLog {
-	objectId, err := objectid.FromHex(logId)
-	if err != nil {
-		logs.Error(err)
-		return nil
-	}
-	result := this.collection().FindOne(context.Background(), map[string]interface{}{
-		"_id": objectId,
-	})
-	accessLog := &AccessLog{}
-	err = result.Decode(accessLog)
-	if err == mongo.ErrNoDocuments {
-		return nil
-	}
-	return accessLog
-}
-
-func (this *AccessLogger) CountSuccessLogs(fromTimestamp int64, toTimestamp int64, serverId string) int64 {
-	coll := this.collection()
-	filter := bson.NewDocument(
-		bson.EC.SubDocument("status", bson.NewDocument(bson.EC.Int64("$lt", 400))),
-		bson.EC.SubDocument("timestamp", bson.NewDocument(bson.EC.Int64("$lte", toTimestamp), bson.EC.Int64("$gte", fromTimestamp))),
-	)
-	if len(serverId) > 0 {
-		filter.Append(bson.EC.String("serverId", serverId))
-	}
-	count, err := coll.CountDocuments(context.Background(), filter)
-	if err != nil {
-		logs.Error(err)
-		return 0
-	}
-
-	return count
-}
-
-func (this *AccessLogger) CountFailLogs(fromTimestamp int64, toTimestamp int64, serverId string) int64 {
-	coll := this.collection()
-	filter := bson.NewDocument(
-		bson.EC.SubDocument("status", bson.NewDocument(bson.EC.Int64("$gte", 400))),
-		bson.EC.SubDocument("timestamp", bson.NewDocument(bson.EC.Int64("$lte", toTimestamp), bson.EC.Int64("$gte", fromTimestamp))),
-	)
-	if len(serverId) > 0 {
-		filter.Append(bson.EC.String("serverId", serverId))
-	}
-	count, err := coll.CountDocuments(context.Background(), filter)
-	if err != nil {
-		logs.Error(err)
-		return 0
-	}
-
-	return count
 }
 
 func (this *AccessLogger) QPS() int {

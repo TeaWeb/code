@@ -9,6 +9,7 @@ import (
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teaplugins"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -1183,13 +1184,17 @@ func (this *Request) callRewrite(writer *ResponseWriter) error {
 			req.Header.Add(h.Name, h.Value)
 		}
 
-		// TODO 使用连接池处理
-		client := &http.Client{
-			Timeout: 30 * time.Second,
+		var client *http.Client = nil
+		if len(req.Host) > 0 {
+			client = SharedClientPool.client(req.Host, 30*time.Second, 0)
+		} else {
+			client = &http.Client{
+				Timeout: 30 * time.Second,
+			}
 		}
 		resp, err := client.Do(req)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(errors.New(req.URL.String() + ": " + err.Error()))
 			this.serverError(writer)
 			return err
 		}
@@ -1501,11 +1506,9 @@ func (this *Request) Format(source string) string {
 		return ""
 	}
 
-	var varName = ""
 	var hasVarMapping = len(this.varMapping) > 0
-	return teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(source, func(s string) string {
-		varName = s[2 : len(s)-1]
 
+	return teautils.ParseVariables(source, func(varName string) string {
 		// 自定义变量
 		if hasVarMapping {
 			value, found := this.varMapping[varName]
@@ -1547,7 +1550,7 @@ func (this *Request) Format(source string) string {
 		case "status":
 			return fmt.Sprintf("%d", this.responseWriter.StatusCode())
 		case "statusMessage":
-			return ""
+			return http.StatusText(this.responseWriter.StatusCode())
 		case "timeISO8601":
 			return this.requestTimeISO8601
 		case "timeLocal":
@@ -1580,7 +1583,7 @@ func (this *Request) Format(source string) string {
 
 		dotIndex := strings.Index(varName, ".")
 		if dotIndex < 0 {
-			return s
+			return "${" + varName + "}"
 		}
 		prefix := varName[:dotIndex]
 		suffix := varName[dotIndex+1:]
@@ -1600,7 +1603,7 @@ func (this *Request) Format(source string) string {
 			return this.requestHeader(suffix)
 		}
 
-		return s
+		return "${" + varName + "}"
 	})
 }
 

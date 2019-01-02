@@ -74,8 +74,9 @@ func TestQuery_Duration(t *testing.T) {
 
 func TestQuery_Group(t *testing.T) {
 	query := NewQuery()
-	query.From(time.Date(2018, 11, 22, 0, 0, 0, 0, time.Local))
-	query.To(time.Date(2018, 11, 22, 23, 59, 59, 0, time.Local))
+	query.From(time.Date(2019, 1, 2, 0, 0, 0, 0, time.Local))
+	query.To(time.Date(2019, 1, 2, 23, 59, 59, 0, time.Local))
+	query.Attr("serverId", "VEQ6mBKq7w7lFUzj")
 	query.Gt("status", 0)
 	v, err := query.Action(QueryActionCount).Group([]string{"status"}).Execute()
 	if err != nil {

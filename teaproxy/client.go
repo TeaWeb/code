@@ -48,7 +48,7 @@ func (this *ClientPool) client(address string, connectionTimeout time.Duration, 
 				DualStack: true,
 			}).DialContext(ctx, network, address)
 		},
-		MaxIdleConns:          int(maxConnections), // 不限
+		MaxIdleConns:          int(maxConnections), // 0表示不限
 		MaxIdleConnsPerHost:   1024,
 		IdleConnTimeout:       0, // 不限
 		TLSHandshakeTimeout:   0, // 不限

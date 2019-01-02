@@ -3,6 +3,7 @@ package log
 import (
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/actions"
+	"time"
 )
 
 type ResponseHeaderAction actions.Action
@@ -11,7 +12,14 @@ type ResponseHeaderAction actions.Action
 func (this *ResponseHeaderAction) Run(params struct {
 	LogId string
 }) {
-	accessLog := tealogs.SharedLogger().FindLog(params.LogId)
+	query := tealogs.NewQuery()
+	query.From(time.Now())
+	query.Id(params.LogId)
+	accessLog, err := query.Find()
+	if err != nil {
+		this.Fail(err.Error())
+	}
+
 	if accessLog != nil {
 		this.Data["headers"] = accessLog.SentHeader
 	} else {

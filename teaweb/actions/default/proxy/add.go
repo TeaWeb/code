@@ -82,7 +82,7 @@ func (this *AddAction) RunPost(params struct {
 
 	proxyutils.NotifyChange()
 
-	this.Next("/proxy/board", map[string]interface{}{
+	this.Next("/proxy/detail", map[string]interface{}{
 		"server": filename,
 	}, "").Success("添加成功，现在去查看详细信息")
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
+	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
 	"reflect"
 	"time"
@@ -33,7 +34,7 @@ const (
 	QueryActionAvg     = "avg"
 	QueryActionMin     = "min"
 	QueryActionMax     = "max"
-	QueryActionFind    = "find" // TODO
+	QueryActionFind    = "find"
 	QueryActionFindAll = "findAll"
 )
 
@@ -121,6 +122,17 @@ func (this *Query) Attr(field string, value interface{}) *Query {
 	return this
 }
 
+// 设置日志ID
+func (this *Query) Id(idString string) *Query {
+	objectId, err := objectid.FromHex(idString)
+	if err != nil {
+		logs.Error(err)
+		return this.Attr("_id", idString)
+	}
+	this.Attr("_id", objectId)
+	return this
+}
+
 func (this *Query) Op(op string, field string, value interface{}) {
 	_, found := this.cond[field]
 	if found {
@@ -205,7 +217,7 @@ func (this *Query) Execute() (interface{}, error) {
 	}
 
 	if this.action == QueryActionFindAll {
-		result := []map[string]interface{}{}
+		result := []*AccessLog{}
 		for _, collectionName := range collectionNames {
 			ones, err := this.findAll(collectionName)
 			if err != nil {
@@ -214,6 +226,19 @@ func (this *Query) Execute() (interface{}, error) {
 			result = append(result, ones ...)
 		}
 		return result, nil
+	} else if this.action == QueryActionFind {
+		result := []*AccessLog{}
+		for _, collectionName := range collectionNames {
+			ones, err := this.findAll(collectionName)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, ones ...)
+		}
+		if len(result) == 0 {
+			return nil, nil
+		}
+		return result[0], nil
 	} else if len(this.group) > 0 { // 按某个字段分组
 		result := map[string]map[string]interface{}{}
 		for _, collectionName := range collectionNames {
@@ -261,6 +286,18 @@ func (this *Query) Execute() (interface{}, error) {
 	}
 
 	return nil, nil
+}
+
+// 查找单个数据
+func (this *Query) Find() (*AccessLog, error) {
+	result, err := this.Action(QueryActionFind).Execute()
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, nil
+	}
+	return result.(*AccessLog), nil
 }
 
 func (this *Query) queryNumber(collectionName string) (float64, error) {
@@ -492,7 +529,7 @@ func (this *Query) queryGroup(collectionName string) (result map[string]map[stri
 	return
 }
 
-func (this *Query) findAll(collectionName string) (result []map[string]interface{}, err error) {
+func (this *Query) findAll(collectionName string) (result []*AccessLog, err error) {
 	coll := teamongo.FindCollection(collectionName)
 	opts := []findopt.Find{}
 	if this.offset > -1 {
@@ -516,10 +553,10 @@ func (this *Query) findAll(collectionName string) (result []map[string]interface
 	}
 	defer cursor.Close(context.Background())
 
-	result = []map[string]interface{}{}
+	result = []*AccessLog{}
 	for cursor.Next(context.Background()) {
-		m := map[string]interface{}{}
-		err := cursor.Decode(&m)
+		m := &AccessLog{}
+		err := cursor.Decode(m)
 		if err != nil {
 			return nil, err
 		}
