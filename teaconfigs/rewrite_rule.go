@@ -3,6 +3,7 @@ package teaconfigs
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
@@ -137,13 +138,12 @@ func (this *RewriteRule) Match(requestPath string, formatter func(source string)
 		}
 	}
 
-	replace = RegexpNamedVariable.ReplaceAllStringFunc(this.targetURL, func(s string) string {
-		varName := s[2 : len(s)-1]
+	replace = teautils.ParseVariables(this.targetURL, func(varName string) string {
 		v, ok := varMapping[varName]
 		if ok {
 			return v
 		}
-		return s
+		return "${" + varName + "}"
 	})
 
 	replace = formatter(replace)

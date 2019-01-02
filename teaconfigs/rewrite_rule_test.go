@@ -133,6 +133,20 @@ func TestRewriteRule_CaseInsensitive(t *testing.T) {
 	a.IsTrue(ok)
 }
 
+func TestRewriteRule_Slashes(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	r := NewRewriteRule()
+	r.Replace = "http://127.0.0.1/${0}"
+	r.Pattern = "(?i)/index.php"
+	r.Validate()
+	replace, _, ok := r.Match("/index.php", func(source string) string {
+		return source
+	})
+	a.IsTrue(ok)
+	t.Log(replace)
+}
+
 func TestRewriteRuleProxy(t *testing.T) {
 	a := assert.NewAssertion(t).Quiet()
 
