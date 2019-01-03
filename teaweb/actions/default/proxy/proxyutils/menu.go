@@ -54,56 +54,58 @@ func AddServerMenu(action *actions.ActionObject) {
 	action.Data["teaSubMenus"] = subMenus
 
 	// Tabbar
-	if action.Spec.HasClassPrefix(
-		"proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "board",
-		"stat.",
-		"log.",
-	) && !action.Spec.HasClassPrefix("proxy.AddAction", "log.RuntimeAction") {
-		serverFilename := action.ParamString("server")
-		tabbar := []maps.Map{
-			{
-				"name":    "看板",
-				"subName": "",
-				"url":     "/proxy/board?server=" + serverFilename,
-				"active":  action.Spec.HasClassPrefix("board."),
-				"icon":    "dashboard",
-			},
-			{
-				"name":    "日志",
-				"subName": "",
-				"url":     "/log?server=" + serverFilename,
-				"active":  action.Spec.HasClassPrefix("log."),
-				"icon":    "history",
-			},
-			{
-				"name":    "统计",
-				"subName": "",
-				"url":     "/stat?server=" + serverFilename,
-				"active":  action.Spec.HasClassPrefix("stat."),
-				"icon":    "chart area",
-			},
-			/**{
+	if hasServer {
+		if action.Spec.HasClassPrefix(
+			"proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "board",
+			"stat.",
+			"log.",
+		) && !action.Spec.HasClassPrefix("proxy.AddAction", "log.RuntimeAction") {
+			serverFilename := action.ParamString("server")
+			tabbar := []maps.Map{
+				{
+					"name":    "看板",
+					"subName": "",
+					"url":     "/proxy/board?server=" + serverFilename,
+					"active":  action.Spec.HasClassPrefix("board."),
+					"icon":    "dashboard",
+				},
+				{
+					"name":    "日志",
+					"subName": "",
+					"url":     "/log?server=" + serverFilename,
+					"active":  action.Spec.HasClassPrefix("log."),
+					"icon":    "history",
+				},
+				{
+					"name":    "统计",
+					"subName": "",
+					"url":     "/stat?server=" + serverFilename,
+					"active":  action.Spec.HasClassPrefix("stat."),
+					"icon":    "chart area",
+				},
+				/**{
 				"name":    "测试",
 				"subName": "",
 				"url":     "/test?server=" + serverFilename,
 				"active":  false,
 				"icon":    "stethoscope",
 			},**/
-			{
-				"name":    "设置",
-				"subName": "",
-				"url":     "/proxy/detail?server=" + serverFilename,
-				"icon":    "setting",
-				"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend") && !action.HasPrefix("/proxy/delete"),
-			},
-			{
-				"name":    "删除",
-				"subName": "",
-				"url":     "/proxy/delete?server=" + serverFilename,
-				"icon":    "trash",
-				"active":  action.HasPrefix("/proxy/delete"),
-			},
+				{
+					"name":    "设置",
+					"subName": "",
+					"url":     "/proxy/detail?server=" + serverFilename,
+					"icon":    "setting",
+					"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend") && !action.HasPrefix("/proxy/delete"),
+				},
+				{
+					"name":    "删除",
+					"subName": "",
+					"url":     "/proxy/delete?server=" + serverFilename,
+					"icon":    "trash",
+					"active":  action.HasPrefix("/proxy/delete"),
+				},
+			}
+			action.Data["teaTabbar"] = tabbar
 		}
-		action.Data["teaTabbar"] = tabbar
 	}
 }

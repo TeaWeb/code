@@ -28,8 +28,6 @@ type ServerBackendConfig struct {
 
 	failTimeoutDuration time.Duration
 	failsLocker         sync.Mutex
-
-	slowStartDuration time.Duration
 }
 
 // 获取新对象
@@ -65,11 +63,6 @@ func (this *ServerBackendConfig) Validate() error {
 // 超时时间
 func (this *ServerBackendConfig) FailTimeoutDuration() time.Duration {
 	return this.failTimeoutDuration
-}
-
-// 启动时间
-func (this *ServerBackendConfig) SlowStartDuration() time.Duration {
-	return this.slowStartDuration
 }
 
 // 候选对象代号

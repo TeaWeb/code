@@ -1,6 +1,7 @@
 package login
 
 import (
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo/actions"
@@ -23,6 +24,8 @@ func (this *IndexAction) RunGet() {
 	if !b {
 		return
 	}
+
+	this.Data["teaDemoEnabled"] = teaconst.DemoEnabled
 
 	this.Show()
 }

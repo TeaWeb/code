@@ -149,6 +149,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	action.Data["teaVersion"] = teaconst.TeaVersion
 	action.Data["teaIsSuper"] = user.Granted(configs.AdminGrantAll)
 	action.Data["teaSubHeader"] = ""
+	action.Data["teaDemoEnabled"] = teaconst.DemoEnabled
 
 	return true
 }

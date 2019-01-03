@@ -4,5 +4,7 @@ package scheduling
 type CandidateInterface interface {
 	// 权重
 	CandidateWeight() uint
+
+	// 代号
 	CandidateCodes() []string
 }
