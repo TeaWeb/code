@@ -1,7 +1,6 @@
 package teaconfigs
 
 import (
-	"errors"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/lists"
@@ -14,6 +13,7 @@ import (
 
 // 本地监听服务配置
 type ListenerConfig struct {
+	Key     string // 区分用的Key
 	Address string
 	Http    bool
 	SSL     *SSLConfig
@@ -44,11 +44,6 @@ func ParseConfigs() ([]*ListenerConfig, error) {
 			continue
 		}
 
-		if len(serverConfig.Listen) == 0 {
-			logs.Error(errors.New("'listen' in config should not be empty"))
-			continue
-		}
-
 		err = serverConfig.Validate()
 		if err != nil {
 			logs.Error(err)
@@ -59,32 +54,53 @@ func ParseConfigs() ([]*ListenerConfig, error) {
 			continue
 		}
 
-		for _, address := range serverConfig.Listen {
-			// 是否有端口
-			if strings.Index(address, ":") == -1 {
-				if serverConfig.SSL != nil && serverConfig.SSL.On {
-					address += ":443"
-				} else {
+		// HTTP
+		if serverConfig.Http {
+			for _, address := range serverConfig.Listen {
+				// 是否有端口
+				if strings.Index(address, ":") < 0 {
 					address += ":80"
 				}
-			}
 
-			listenerConfig, found := listenerConfigMap[address]
-			if !found {
-				listenerConfig = &ListenerConfig{
-					Address: address,
-					Servers: []*ServerConfig{serverConfig},
+				key := "http://" + address
+				listenerConfig, found := listenerConfigMap[key]
+				if !found {
+					listenerConfig = &ListenerConfig{
+						Key:     key,
+						Address: address,
+						Servers: []*ServerConfig{serverConfig},
+					}
+					listenerConfigMap[key] = listenerConfig
+				} else {
+					listenerConfig.Servers = append(listenerConfig.Servers, serverConfig)
 				}
-				listenerConfigMap[address] = listenerConfig
-			} else {
-				listenerConfig.Servers = append(listenerConfig.Servers, serverConfig)
-			}
-
-			if serverConfig.SSL != nil {
-				listenerConfig.SSL = serverConfig.SSL
-			}
-			if serverConfig.Http {
 				listenerConfig.Http = true
+			}
+		}
+
+		// HTTPS
+		if serverConfig.SSL != nil && serverConfig.SSL.On {
+			serverConfig.SSL.Validate()
+			for _, address := range serverConfig.SSL.Listen {
+				// 是否有端口
+				if strings.Index(address, ":") < 0 {
+					address += ":443"
+				}
+
+				key := "https://" + address
+				listenerConfig, found := listenerConfigMap[key]
+				if !found {
+					listenerConfig = &ListenerConfig{
+						Key:     key,
+						Address: address,
+						Servers: []*ServerConfig{serverConfig},
+					}
+					listenerConfigMap[key] = listenerConfig
+				} else {
+					listenerConfig.Servers = append(listenerConfig.Servers, serverConfig)
+				}
+				listenerConfig.Http = false
+				listenerConfig.SSL = serverConfig.SSL
 			}
 		}
 	}

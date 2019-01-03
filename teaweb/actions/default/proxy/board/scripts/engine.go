@@ -101,6 +101,19 @@ func (this *Engine) SetContext(context *Context) {
 				}
 			}),
 		}
+
+		if context.Server.SSL != nil {
+			options["ssl"] = maps.Map{
+				"on":     context.Server.SSL.On,
+				"listen": context.Server.SSL.Listen,
+			}
+		} else {
+			options["ssl"] = maps.Map{
+				"on":     false,
+				"listen": []string{},
+			}
+		}
+
 		this.vm.Run(`context.server = new http.Server(` + this.jsonEncode(options) + `);`)
 	}
 

@@ -30,7 +30,6 @@ type ServerConfig struct {
 	Http        bool     `yaml:"http" json:"http"`               // 是否支持HTTP
 
 	// 监听地址
-	// @TODO 支持参数，比如：127.0.01:1234?ssl=off
 	Listen []string `yaml:"listen" json:"listen"`
 
 	Root       string                 `yaml:"root" json:"root"`             // 资源根目录 @TODO

@@ -40,21 +40,23 @@ func (this *Listener) Start() {
 		Addr:    this.config.Address,
 		Handler: httpHandler,
 	}
-	if this.config.SSL != nil && this.config.SSL.On {
-		logs.Println("start ssl listener on", this.config.Address)
-		this.scheme = "https"
-		err = this.server.ListenAndServeTLS(Tea.ConfigFile(this.config.SSL.Certificate), Tea.ConfigFile(this.config.SSL.CertificateKey))
-	}
 
 	if this.config.Http {
 		logs.Println("start listener on", this.config.Address)
 		this.scheme = "http"
 		err = this.server.ListenAndServe()
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
-	if err != nil {
-		logs.Error(err)
-		return
+	if this.config.SSL != nil && this.config.SSL.On {
+		logs.Println("start ssl listener on", this.config.Address)
+		this.scheme = "https"
+		err = this.server.ListenAndServeTLS(Tea.ConfigFile(this.config.SSL.Certificate), Tea.ConfigFile(this.config.SSL.CertificateKey))
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 }
 

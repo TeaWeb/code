@@ -1,8 +1,8 @@
 package teaconfigs
 
 import (
-	"testing"
 	"github.com/iwind/TeaGo/assert"
+	"testing"
 )
 
 func TestParseConfigs(t *testing.T) {
@@ -12,16 +12,7 @@ func TestParseConfigs(t *testing.T) {
 		return
 	}
 	for _, config := range configs {
-		t.Log(config.Address, config.Servers)
-	}
-
-	if len(configs) > 0 {
-		config := configs[0]
-		if len(config.Servers) > 0 {
-			for _, location := range config.Servers[0].Locations {
-				t.Logf("Location: %#v", *location)
-			}
-		}
+		t.Log(config.Key, config.Address, config.Servers)
 	}
 }
 

@@ -31,6 +31,7 @@ func (this *UpdateAction) Run(params struct {
 func (this *UpdateAction) RunPost(params struct {
 	Server   string
 	HttpsOn  bool
+	Listen   []string
 	CertFile *actions.File
 	KeyFile  *actions.File
 }) {
@@ -43,6 +44,7 @@ func (this *UpdateAction) RunPost(params struct {
 		server.SSL = teaconfigs.NewSSLConfig()
 	}
 	server.SSL.On = params.HttpsOn
+	server.SSL.Listen = params.Listen
 
 	if params.CertFile != nil {
 		data, err := params.CertFile.Read()
