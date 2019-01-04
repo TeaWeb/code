@@ -56,7 +56,7 @@ func AddServerMenu(action *actions.ActionObject) {
 	// Tabbar
 	if hasServer {
 		if action.Spec.HasClassPrefix(
-			"proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "board",
+			"proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "board", "websocket",
 			"stat.",
 			"log.",
 		) && !action.Spec.HasClassPrefix("proxy.AddAction", "log.RuntimeAction") {
@@ -95,7 +95,7 @@ func AddServerMenu(action *actions.ActionObject) {
 					"subName": "",
 					"url":     "/proxy/detail?server=" + serverFilename,
 					"icon":    "setting",
-					"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend") && !action.HasPrefix("/proxy/delete"),
+					"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "websocket") && !action.HasPrefix("/proxy/delete"),
 				},
 				{
 					"name":    "删除",

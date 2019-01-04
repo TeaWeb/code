@@ -5,24 +5,35 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/types"
 )
 
 type AddAction actions.Action
 
 // 添加服务器
 func (this *AddAction) Run(params struct {
-	Server string
-	Backup bool
+	From       string
+	Server     string
+	LocationId string // 路径
+	Websocket  bool   // 是否是Websocket设置
+	Backup     bool
 }) {
 	proxy, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
 	}
 
-	this.Data["selectedTab"] = "backend"
+	if len(params.LocationId) > 0 {
+		this.Data["selectedTab"] = "location"
+	} else {
+		this.Data["selectedTab"] = "backend"
+	}
 	this.Data["filename"] = params.Server
 	this.Data["proxy"] = proxy
 
+	this.Data["from"] = params.From
+	this.Data["locationId"] = params.LocationId
+	this.Data["websocket"] = types.Int(params.Websocket)
 	this.Data["isBackup"] = params.Backup
 
 	this.Show()
@@ -31,6 +42,8 @@ func (this *AddAction) Run(params struct {
 // 提交
 func (this *AddAction) RunPost(params struct {
 	Server      string
+	LocationId  string // 路径
+	Websocket   bool   // 是否是Websocket设置
 	Address     string
 	Weight      uint
 	On          bool
@@ -50,7 +63,7 @@ func (this *AddAction) RunPost(params struct {
 		this.Fail(err.Error())
 	}
 
-	backend := teaconfigs.NewServerBackendConfig()
+	backend := teaconfigs.NewBackendConfig()
 	backend.Address = params.Address
 	backend.Weight = params.Weight
 	backend.On = params.On
@@ -61,8 +74,16 @@ func (this *AddAction) RunPost(params struct {
 	backend.MaxConns = params.MaxConns
 	backend.IsBackup = params.IsBackup
 
-	server.Backends = append(server.Backends, backend)
-	server.Save()
+	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
+	if err != nil {
+		this.Fail(err.Error())
+	}
+	backendList.AddBackend(backend)
+
+	err = server.Save()
+	if err != nil {
+		this.Fail(err.Error())
+	}
 
 	proxyutils.NotifyChange()
 

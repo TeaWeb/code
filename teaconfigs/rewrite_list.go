@@ -20,7 +20,7 @@ type RewriteListInterface interface {
 
 // RewriteList定义
 type RewriteList struct {
-	Rewrite []*RewriteRule
+	Rewrite []*RewriteRule `yaml:"rewrite" json:"rewrite"`
 }
 
 // 校验

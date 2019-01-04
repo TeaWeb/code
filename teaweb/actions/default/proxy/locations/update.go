@@ -3,6 +3,7 @@ package locations
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/locationutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -18,25 +19,10 @@ func (this *UpdateAction) Run(params struct {
 	From        string
 	ShowSpecial bool
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
-	}
+	_, location := locationutils.SetCommonInfo(this, params.Server, params.LocationId, "detail")
 
-	this.Data["server"] = maps.Map{
-		"filename": params.Server,
-	}
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = server
-	this.Data["selectedTab"] = "location"
-	this.Data["selectedSubTab"] = "detail"
 	this.Data["from"] = params.From
 	this.Data["showSpecial"] = params.ShowSpecial
-
-	location := server.FindLocation(params.LocationId)
-	if location == nil {
-		this.Fail("找不到要修改的Location")
-	}
 
 	this.Data["patternTypes"] = teaconfigs.AllLocationPatternTypes()
 	this.Data["usualCharsets"] = teautils.UsualCharsets
@@ -58,6 +44,7 @@ func (this *UpdateAction) Run(params struct {
 		"headers":     location.Headers,
 		"fastcgi":     location.Fastcgi,
 		"cachePolicy": location.CachePolicy,
+		"websocket":   location.Websocket,
 	}
 
 	this.Show()

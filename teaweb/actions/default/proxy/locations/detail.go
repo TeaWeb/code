@@ -1,8 +1,8 @@
 package locations
 
 import (
-	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/locationutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -14,27 +14,7 @@ func (this *DetailAction) Run(params struct {
 	Server     string
 	LocationId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
-	}
-
-	this.Data["server"] = maps.Map{
-		"filename": server.Filename,
-	}
-
-	location := server.FindLocation(params.LocationId)
-	if location == nil {
-		this.Fail("找不到要修改的路径配置")
-	}
-
-	if location.Index == nil {
-		location.Index = []string{}
-	}
-
-	this.Data["selectedTab"] = "location"
-	this.Data["selectedSubTab"] = "detail"
-	this.Data["filename"] = params.Server
+	server, location := locationutils.SetCommonInfo(this, params.Server, params.LocationId, "detail")
 
 	this.Data["location"] = maps.Map{
 		"on":              location.On,
@@ -50,6 +30,7 @@ func (this *DetailAction) Run(params struct {
 		"headers":         location.Headers,
 		"cachePolicy":     location.CachePolicy,
 		"rewrite":         location.Rewrite,
+		"websocket":       location.Websocket,
 	}
 	this.Data["proxy"] = server
 

@@ -81,7 +81,7 @@ func TestRequest_CallBackend(t *testing.T) {
 	request := NewRequest(req)
 	request.scheme = "http"
 	request.host = "wx.balefm.cn"
-	request.backend = &teaconfigs.ServerBackendConfig{
+	request.backend = &teaconfigs.BackendConfig{
 		Address: "127.0.0.1",
 	}
 	request.backend.Validate()
@@ -107,7 +107,7 @@ func TestRequest_CallProxy(t *testing.T) {
 	request.host = "wx.balefm.cn"
 
 	proxy := teaconfigs.NewServerConfig()
-	proxy.AddBackend(&teaconfigs.ServerBackendConfig{
+	proxy.AddBackend(&teaconfigs.BackendConfig{
 		Address: "127.0.0.1:80",
 	})
 	/**proxy.AddBackend(&teaconfigs.ServerBackendConfig{

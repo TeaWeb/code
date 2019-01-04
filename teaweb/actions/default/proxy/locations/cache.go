@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/locationutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -16,23 +17,7 @@ func (this *CacheAction) Run(params struct {
 	Server     string
 	LocationId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
-	}
-
-	location := server.FindLocation(params.LocationId)
-	if location == nil {
-		this.Fail("找不到要修改的Location")
-	}
-	this.Data["location"] = maps.Map{
-		"id":          location.Id,
-		"pattern":     location.PatternString(),
-		"fastcgi":     location.Fastcgi,
-		"rewrite":     location.Rewrite,
-		"headers":     location.Headers,
-		"cachePolicy": location.CachePolicy,
-	}
+	_, location := locationutils.SetCommonInfo(this, params.Server, params.LocationId, "cache")
 
 	// 缓存策略
 	this.Data["cachePolicy"] = ""
@@ -53,14 +38,6 @@ func (this *CacheAction) Run(params struct {
 			"type":     teacache.TypeName(policy.Type),
 		}
 	})
-
-	this.Data["selectedTab"] = "location"
-	this.Data["selectedSubTab"] = "cache"
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = server
-	this.Data["server"] = maps.Map{
-		"filename": server.Filename,
-	}
 
 	this.Show()
 }

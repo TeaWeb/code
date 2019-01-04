@@ -6,14 +6,18 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 )
 
 type UpdateAction actions.Action
 
 // 修改后端服务器
 func (this *UpdateAction) Run(params struct {
-	Server  string
-	Backend string
+	Server     string
+	LocationId string
+	Websocket  bool
+	Backend    string
+	From       string
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
@@ -21,10 +25,21 @@ func (this *UpdateAction) Run(params struct {
 	}
 
 	this.Data["proxy"] = server
-	this.Data["selectedTab"] = "backend"
+	if len(params.LocationId) > 0 {
+		this.Data["selectedTab"] = "location"
+	} else {
+		this.Data["selectedTab"] = "backend"
+	}
 	this.Data["filename"] = server.Filename
+	this.Data["locationId"] = params.LocationId
+	this.Data["websocket"] = types.Int(params.Websocket)
+	this.Data["from"] = params.From
 
-	backend := server.FindBackend(params.Backend)
+	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
+	if err != nil {
+		this.Fail(err.Error())
+	}
+	backend := backendList.FindBackend(params.Backend)
 	if backend == nil {
 		this.Fail("找不到要修改的后端服务器")
 	}
@@ -50,6 +65,8 @@ func (this *UpdateAction) Run(params struct {
 // 提交
 func (this *UpdateAction) RunPost(params struct {
 	Server      string
+	LocationId  string
+	Websocket   bool
 	BackendId   string
 	Address     string
 	Weight      uint
@@ -70,7 +87,12 @@ func (this *UpdateAction) RunPost(params struct {
 		this.Fail(err.Error())
 	}
 
-	backend := server.FindBackend(params.BackendId)
+	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
+	if err != nil {
+		this.Fail(err.Error())
+	}
+
+	backend := backendList.FindBackend(params.BackendId)
 	if backend == nil {
 		this.Fail("找不到要修改的后端服务器")
 	}

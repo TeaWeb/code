@@ -59,7 +59,7 @@ func (this *AddAction) RunPost(params struct {
 		for _, backend := range regexp.MustCompile("\\s+").Split(params.Backend, -1) {
 			backend = strings.TrimSpace(backend)
 			if len(backend) > 0 {
-				backendObject := teaconfigs.NewServerBackendConfig()
+				backendObject := teaconfigs.NewBackendConfig()
 				backendObject.Address = backend
 				server.AddBackend(backendObject)
 			}

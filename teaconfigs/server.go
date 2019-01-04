@@ -3,17 +3,14 @@ package teaconfigs
 import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/api"
-	"github.com/TeaWeb/code/teaconfigs/scheduling"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/mozillazg/go-pinyin"
 	"strings"
-	"sync"
 )
 
 // 服务配置
@@ -21,6 +18,7 @@ type ServerConfig struct {
 	shared.HeaderList `yaml:",inline"`
 	FastcgiList       `yaml:",inline"`
 	RewriteList       `yaml:",inline"`
+	BackendList       `yaml:",inline"`
 
 	On bool `yaml:"on" json:"on"` // 是否开启 @TODO
 
@@ -32,12 +30,10 @@ type ServerConfig struct {
 	// 监听地址
 	Listen []string `yaml:"listen" json:"listen"`
 
-	Root       string                 `yaml:"root" json:"root"`             // 资源根目录 @TODO
-	Index      []string               `yaml:"index" json:"index"`           // 默认文件 @TODO
-	Charset    string                 `yaml:"charset" json:"charset"`       // 字符集 @TODO
-	Backends   []*ServerBackendConfig `yaml:"backends" json:"backends"`     // 后端服务器配置
-	Scheduling *SchedulingConfig      `yaml:"scheduling" json:"scheduling"` // 调度算法选项
-	Locations  []*LocationConfig      `yaml:"locations" json:"locations"`   // 地址配置
+	Root      string            `yaml:"root" json:"root"`           // 资源根目录 @TODO
+	Index     []string          `yaml:"index" json:"index"`         // 默认文件 @TODO
+	Charset   string            `yaml:"charset" json:"charset"`     // 字符集 @TODO
+	Locations []*LocationConfig `yaml:"locations" json:"locations"` // 地址配置
 
 	Async   bool     `yaml:"async" json:"async"`     // 请求是否异步处理 @TODO
 	Notify  []string `yaml:"notify" json:"notify"`   // 请求转发地址 @TODO
@@ -65,10 +61,6 @@ type ServerConfig struct {
 
 	// API相关
 	API *api.APIConfig `yaml:"api" json:"api"` // API配置
-
-	schedulingIsBackup bool
-	schedulingObject   scheduling.SchedulingInterface
-	schedulingLocker   sync.Mutex
 }
 
 // 从目录中加载配置
@@ -164,11 +156,9 @@ func (this *ServerConfig) Validate() error {
 	}
 
 	// backends
-	for _, backend := range this.Backends {
-		err := backend.Validate()
-		if err != nil {
-			return err
-		}
+	err := this.ValidateBackends()
+	if err != nil {
+		return err
 	}
 
 	// scheduling
@@ -183,7 +173,7 @@ func (this *ServerConfig) Validate() error {
 	}
 
 	// fastcgi
-	err := this.ValidateFastcgi()
+	err = this.ValidateFastcgi()
 	if err != nil {
 		return err
 	}
@@ -233,68 +223,6 @@ func (this *ServerConfig) AddName(name ... string) {
 // 添加监听地址
 func (this *ServerConfig) AddListen(address string) {
 	this.Listen = append(this.Listen, address)
-}
-
-// 添加后端服务
-func (this *ServerConfig) AddBackend(config *ServerBackendConfig) {
-	this.Backends = append(this.Backends, config)
-}
-
-// 取得下一个可用的后端服务
-func (this *ServerConfig) NextBackend(options maps.Map) *ServerBackendConfig {
-	this.schedulingLocker.Lock()
-	defer this.schedulingLocker.Unlock()
-
-	if this.schedulingObject == nil {
-		return nil
-	}
-
-	if this.Scheduling != nil {
-		for k, v := range this.Scheduling.Options {
-			options[k] = v
-		}
-	}
-
-	candidate := this.schedulingObject.Next(options)
-	if candidate == nil {
-		// 启用备用服务器
-		if !this.schedulingIsBackup {
-			this.SetupScheduling(true)
-
-			candidate = this.schedulingObject.Next(options)
-			if candidate == nil {
-				return nil
-			}
-		}
-
-		if candidate == nil {
-			return nil
-		}
-	}
-
-	return candidate.(*ServerBackendConfig)
-}
-
-// 根据ID查找后端服务器
-func (this *ServerConfig) FindBackend(backendId string) *ServerBackendConfig {
-	for _, backend := range this.Backends {
-		if backend.Id == backendId {
-			return backend
-		}
-	}
-	return nil
-}
-
-// 删除后端服务器
-func (this *ServerConfig) DeleteBackend(backendId string) {
-	result := []*ServerBackendConfig{}
-	for _, backend := range this.Backends {
-		if backend.Id == backendId {
-			continue
-		}
-		result = append(result, backend)
-	}
-	this.Backends = result
 }
 
 // 获取某个位置上的配置
@@ -414,40 +342,6 @@ func (this *ServerConfig) convertPinYin(s string) string {
 		}
 	}
 	return strings.Join(result, "")
-}
-
-// 设置调度算法
-func (this *ServerConfig) SetupScheduling(isBackup bool) {
-	if !isBackup {
-		this.schedulingLocker.Lock()
-		defer this.schedulingLocker.Unlock()
-	}
-	this.schedulingIsBackup = isBackup
-
-	if this.Scheduling == nil {
-		this.schedulingObject = &scheduling.RandomScheduling{}
-	} else {
-		typeCode := this.Scheduling.Code
-		s := scheduling.FindSchedulingType(typeCode)
-		if s == nil {
-			this.Scheduling = nil
-			this.schedulingObject = &scheduling.RandomScheduling{}
-		} else {
-			this.schedulingObject = s["instance"].(scheduling.SchedulingInterface)
-		}
-	}
-
-	for _, backend := range this.Backends {
-		if backend.On && !backend.IsDown {
-			if isBackup && backend.IsBackup {
-				this.schedulingObject.Add(backend)
-			} else if !isBackup && !backend.IsBackup {
-				this.schedulingObject.Add(backend)
-			}
-		}
-	}
-
-	this.schedulingObject.Start()
 }
 
 // 根据Id查找Location
@@ -583,4 +477,25 @@ func (this *ServerConfig) FindRewriteList(locationId string) (rewriteList Rewrit
 	}
 	rewriteList = this
 	return
+}
+
+// 查找后端服务器列表
+func (this *ServerConfig) FindBackendList(locationId string, websocket bool) (backendList BackendListInterface, err error) {
+	if len(locationId) > 0 {
+		location := this.FindLocation(locationId)
+		if location == nil {
+			err = errors.New("找不到要修改的location")
+			return
+		}
+		if websocket {
+			if location.Websocket == nil {
+				err = errors.New("websocket未设置")
+				return
+			}
+			return location.Websocket, nil
+		} else {
+			return location, nil
+		}
+	}
+	return this, nil
 }

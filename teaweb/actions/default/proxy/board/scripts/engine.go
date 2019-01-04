@@ -51,7 +51,7 @@ func (this *Engine) SetContext(context *Context) {
 			"description": context.Server.Description,
 			"listen":      context.Server.Listen,
 			"backends": lists.Map(context.Server.Backends, func(k int, v interface{}) interface{} {
-				backend := v.(*teaconfigs.ServerBackendConfig)
+				backend := v.(*teaconfigs.BackendConfig)
 
 				if runningServer != nil {
 					runningBackend := runningServer.FindBackend(backend.Id)

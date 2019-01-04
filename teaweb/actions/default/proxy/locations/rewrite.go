@@ -1,7 +1,7 @@
 package locations
 
 import (
-	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/locationutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -13,28 +13,7 @@ func (this *RewriteAction) Run(params struct {
 	Server     string
 	LocationId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
-	}
-
-	location := server.FindLocation(params.LocationId)
-	if location == nil {
-		this.Fail("找不到要修改的Location")
-	}
-	this.Data["location"] = maps.Map{
-		"id":          location.Id,
-		"pattern":     location.PatternString(),
-		"fastcgi":     location.Fastcgi,
-		"rewrite":     location.Rewrite,
-		"headers":     location.Headers,
-		"cachePolicy": location.CachePolicy,
-	}
-
-	this.Data["selectedTab"] = "location"
-	this.Data["selectedSubTab"] = "rewrite"
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = server
+	locationutils.SetCommonInfo(this, params.Server, params.LocationId, "rewrite")
 
 	this.Data["queryParams"] = maps.Map{
 		"server":     params.Server,

@@ -6,13 +6,17 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 )
 
 type SchedulingAction actions.Action
 
 // 调度算法
 func (this *SchedulingAction) Run(params struct {
-	Server string
+	Server     string
+	LocationId string
+	Websocket  bool
+	From       string
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
@@ -21,15 +25,26 @@ func (this *SchedulingAction) Run(params struct {
 
 	this.Data["proxy"] = server
 	this.Data["filename"] = server.Filename
-	this.Data["selectedTab"] = "backend"
+	if len(params.LocationId) > 0 {
+		this.Data["selectedTab"] = "location"
+	} else {
+		this.Data["selectedTab"] = "backend"
+	}
+	this.Data["locationId"] = params.LocationId
+	this.Data["websocket"] = types.Int(params.Websocket)
+	this.Data["from"] = params.From
 
-	if server.Scheduling == nil {
-		server.Scheduling = &teaconfigs.SchedulingConfig{
+	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
+	if err != nil {
+		this.Fail(err.Error())
+	}
+	if backendList.SchedulingConfig() == nil {
+		backendList.SetSchedulingConfig(&teaconfigs.SchedulingConfig{
 			Code:    "random",
 			Options: maps.Map{},
-		}
+		})
 	}
-	this.Data["scheduling"] = server.Scheduling
+	this.Data["scheduling"] = backendList.SchedulingConfig()
 	this.Data["schedulingTypes"] = scheduling.AllSchedulingTypes()
 
 	this.Show()
@@ -38,6 +53,8 @@ func (this *SchedulingAction) Run(params struct {
 // 保存提交
 func (this *SchedulingAction) RunPost(params struct {
 	Server      string
+	LocationId  string
+	Websocket   bool
 	Type        string
 	HashKey     string
 	StickyType  string
@@ -45,6 +62,11 @@ func (this *SchedulingAction) RunPost(params struct {
 	Must        *actions.Must
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
+	if err != nil {
+		this.Fail(err.Error())
+	}
+
+	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
 	if err != nil {
 		this.Fail(err.Error())
 	}
@@ -73,17 +95,17 @@ func (this *SchedulingAction) RunPost(params struct {
 		this.Fail("不支持此种算法")
 	}
 
-	server.Scheduling = &teaconfigs.SchedulingConfig{
+	backendList.SetSchedulingConfig(&teaconfigs.SchedulingConfig{
 		Code:    params.Type,
 		Options: options,
-	}
+	})
 
 	err = server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}
 
-	if len(server.Backends) > 0 {
+	if len(backendList.AllBackends()) > 0 {
 		proxyutils.NotifyChange()
 	}
 

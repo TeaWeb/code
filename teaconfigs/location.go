@@ -4,18 +4,16 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/utils/string"
-	"math/rand"
 	"regexp"
 	"strings"
-	"time"
 )
 
 // 路径配置
-// @TODO 匹配的时候去除路径中多余的斜杠（/）
 type LocationConfig struct {
 	shared.HeaderList `yaml:",inline"`
 	FastcgiList       `yaml:",inline"`
 	RewriteList       `yaml:",inline"`
+	BackendList       `yaml:",inline"`
 
 	On      bool   `yaml:"on" json:"on"`           // 是否开启
 	Id      string `yaml:"id" json:"id"`           // ID
@@ -35,12 +33,14 @@ type LocationConfig struct {
 	Allow []string `yaml:"allow" json:"allow"` // 允许的终端地址 @TODO
 	Deny  []string `yaml:"deny" json:"deny"`   // 禁止的终端地址 @TODO
 
-	Proxy    string                 `yaml:proxy" json:"proxy"`        //  代理配置 @TODO
-	Backends []*ServerBackendConfig `yaml:"backends" json:"backends"` // 后端服务器配置 @TODO
+	Proxy string `yaml:proxy" json:"proxy"` //  代理配置 @TODO
 
 	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
 	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开 TODO
 	cachePolicy *shared.CachePolicy
+
+	// websocket设置
+	Websocket *WebsocketConfig `yaml:"websocket" json:"websocket"`
 
 	patternType LocationPatternType // 规则类型：LocationPattern*
 	prefix      string              // 前缀
@@ -304,41 +304,7 @@ func (this *LocationConfig) SetPattern(pattern string, patternType int, caseInse
 	this.Pattern = pattern
 }
 
-// 取得下一个可用的后端服务
-// @TODO 实现backend中的各种参数
-func (this *LocationConfig) NextBackend() *ServerBackendConfig {
-	if len(this.Backends) == 0 {
-		return nil
-	}
-
-	availableBackends := []*ServerBackendConfig{}
-	for _, backend := range this.Backends {
-		if backend.On && !backend.IsDown {
-			availableBackends = append(availableBackends, backend)
-		}
-	}
-
-	countBackends := len(availableBackends)
-	if countBackends == 0 {
-		return nil
-	}
-
-	rand.Seed(time.Now().UnixNano())
-	index := rand.Int() % countBackends
-	return availableBackends[index]
-}
-
 // 缓存策略
 func (this *LocationConfig) CachePolicyObject() *shared.CachePolicy {
 	return this.cachePolicy
-}
-
-// 根据ID查找后端服务器
-func (this *LocationConfig) FindBackend(backendId string) *ServerBackendConfig {
-	for _, backend := range this.Backends {
-		if backend.Id == backendId {
-			return backend
-		}
-	}
-	return nil
 }

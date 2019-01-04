@@ -71,7 +71,7 @@ type Request struct {
 
 	root     string   // 资源根目录
 	index    []string // 目录下默认访问的文件
-	backend  *teaconfigs.ServerBackendConfig
+	backend  *teaconfigs.BackendConfig
 	fastcgi  *teaconfigs.FastcgiConfig
 	proxy    *teaconfigs.ServerConfig
 	location *teaconfigs.LocationConfig
@@ -412,7 +412,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 			// backends
 			if len(location.Backends) > 0 {
-				backend := location.NextBackend()
+				options := maps.Map{
+					"request":   this.raw,
+					"formatter": this.Format,
+				}
+				backend := location.NextBackend(options)
 				if backend == nil {
 					return errors.New("no backends available")
 				}

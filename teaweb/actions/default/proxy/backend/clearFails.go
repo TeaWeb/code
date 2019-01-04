@@ -10,8 +10,10 @@ type ClearFailsAction actions.Action
 
 // 清除失败次数
 func (this *ClearFailsAction) Run(params struct {
-	Server    string
-	BackendId string
+	Server     string
+	LocationId string
+	Websocket  bool
+	BackendId  string
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
@@ -20,9 +22,12 @@ func (this *ClearFailsAction) Run(params struct {
 
 	runningServer, _ := teaproxy.FindServer(server.Id)
 	if runningServer != nil {
-		backend := runningServer.FindBackend(params.BackendId)
-		if backend != nil {
-			backend.CurrentFails = 0
+		backendList, _ := runningServer.FindBackendList(params.LocationId, params.Websocket)
+		if backendList != nil {
+			backend := backendList.FindBackend(params.BackendId)
+			if backend != nil {
+				backend.CurrentFails = 0
+			}
 		}
 	}
 

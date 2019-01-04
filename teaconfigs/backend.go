@@ -9,7 +9,7 @@ import (
 )
 
 // 服务后端配置
-type ServerBackendConfig struct {
+type BackendConfig struct {
 	shared.HeaderList `yaml:",inline"`
 
 	On           bool      `yaml:"on" json:"on"`                                 // 是否启用
@@ -31,15 +31,15 @@ type ServerBackendConfig struct {
 }
 
 // 获取新对象
-func NewServerBackendConfig() *ServerBackendConfig {
-	return &ServerBackendConfig{
+func NewBackendConfig() *BackendConfig {
+	return &BackendConfig{
 		On: true,
 		Id: stringutil.Rand(16),
 	}
 }
 
 // 校验
-func (this *ServerBackendConfig) Validate() error {
+func (this *BackendConfig) Validate() error {
 	// failTimeout
 	if len(this.FailTimeout) > 0 {
 		this.failTimeoutDuration, _ = time.ParseDuration(this.FailTimeout)
@@ -61,12 +61,12 @@ func (this *ServerBackendConfig) Validate() error {
 }
 
 // 超时时间
-func (this *ServerBackendConfig) FailTimeoutDuration() time.Duration {
+func (this *BackendConfig) FailTimeoutDuration() time.Duration {
 	return this.failTimeoutDuration
 }
 
 // 候选对象代号
-func (this *ServerBackendConfig) CandidateCodes() []string {
+func (this *BackendConfig) CandidateCodes() []string {
 	codes := []string{this.Id}
 	if len(this.Code) > 0 {
 		codes = append(codes, this.Code)
@@ -75,12 +75,12 @@ func (this *ServerBackendConfig) CandidateCodes() []string {
 }
 
 // 候选对象权重
-func (this *ServerBackendConfig) CandidateWeight() uint {
+func (this *BackendConfig) CandidateWeight() uint {
 	return this.Weight
 }
 
 // 增加错误次数
-func (this *ServerBackendConfig) IncreaseFails() uint {
+func (this *BackendConfig) IncreaseFails() uint {
 	this.failsLocker.Lock()
 	defer this.failsLocker.Unlock()
 

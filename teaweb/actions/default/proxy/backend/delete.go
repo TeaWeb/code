@@ -10,15 +10,21 @@ type DeleteAction actions.Action
 
 // 删除后端服务器
 func (this *DeleteAction) Run(params struct {
-	Server    string
-	BackendId string
+	Server     string
+	LocationId string
+	Websocket  bool
+	BackendId  string
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
 	}
 
-	server.DeleteBackend(params.BackendId)
+	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
+	if err != nil {
+		this.Fail(err.Error())
+	}
+	backendList.DeleteBackend(params.BackendId)
 
 	err = server.Save()
 	if err != nil {

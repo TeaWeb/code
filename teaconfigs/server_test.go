@@ -17,7 +17,7 @@ func TestServerConfig_NextBackend(t *testing.T) {
 
 	a.IsNil(s.NextBackend(maps.Map{}))
 
-	s.AddBackend(&ServerBackendConfig{
+	s.AddBackend(&BackendConfig{
 		On:       true,
 		IsBackup: false,
 		IsDown:   false,
@@ -26,15 +26,15 @@ func TestServerConfig_NextBackend(t *testing.T) {
 	a.IsNotNil(s.NextBackend(maps.Map{}))
 
 	// backup
-	s.Backends = []*ServerBackendConfig{}
-	s.AddBackend(&ServerBackendConfig{
+	s.Backends = []*BackendConfig{}
+	s.AddBackend(&BackendConfig{
 		Address:  ":80",
 		On:       true,
 		IsBackup: true,
 		IsDown:   false,
 		Weight:   10,
 	})
-	s.AddBackend(&ServerBackendConfig{
+	s.AddBackend(&BackendConfig{
 		Address:  ":81",
 		On:       true,
 		IsBackup: false,
@@ -55,6 +55,7 @@ func TestServerConfig_NextBackend(t *testing.T) {
 func TestServerConfig_Encode(t *testing.T) {
 	s := NewServerConfig()
 	s.IgnoreHeaders = []string{"Server", "Content-Type"}
+	s.AddBackend(NewBackendConfig())
 	data, err := yaml.Marshal(s)
 	if err != nil {
 		t.Fatal(err)

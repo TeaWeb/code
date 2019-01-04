@@ -20,6 +20,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/fastcgi"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/headers"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/locations"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/websocket"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/rewrite"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/ssl"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings"

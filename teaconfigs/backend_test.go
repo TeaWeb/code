@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestServerBackendConfig(t *testing.T) {
-	yamlData, err := yaml.Marshal(new(ServerBackendConfig))
+func TestBackendConfig(t *testing.T) {
+	yamlData, err := yaml.Marshal(new(BackendConfig))
 	if err != nil {
 		t.Fatal(err)
 	}

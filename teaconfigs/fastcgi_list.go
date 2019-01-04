@@ -25,7 +25,7 @@ type FastcgiListInterface interface {
 
 // FastcgiList定义
 type FastcgiList struct {
-	Fastcgi []*FastcgiConfig
+	Fastcgi []*FastcgiConfig `yaml:"fastcgi" json:"fastcgi"`
 }
 
 // 校验
