@@ -73,7 +73,7 @@ func (this *Engine) SetContext(context *Context) {
 			"locations": lists.Map(context.Server.Locations, func(k int, v interface{}) interface{} {
 				location := v.(*teaconfigs.LocationConfig)
 				location.Validate()
-				return map[string]interface{}{
+				locationOptions := map[string]interface{}{
 					"id":          location.Id,
 					"on":          location.On,
 					"pattern":     location.PatternString(),
@@ -99,6 +99,14 @@ func (this *Engine) SetContext(context *Context) {
 					"index":   location.Index,
 					"headers": location.Headers,
 				}
+				if location.Websocket != nil && location.Websocket.On {
+					locationOptions["websocket"] = maps.Map{
+						"on": true,
+					}
+				} else {
+					locationOptions["websocket"] = nil
+				}
+				return locationOptions
 			}),
 		}
 

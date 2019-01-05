@@ -288,6 +288,18 @@ func (this *AccessLog) Format(format string) string {
 	return format
 }
 
+// 获取Header内容
+func (this *AccessLog) GetHeader(name string) string {
+	v, found := this.Header[name]
+	if !found {
+		return ""
+	}
+	if len(v) == 0 {
+		return ""
+	}
+	return v[0]
+}
+
 func (this *AccessLog) Parse() {
 	this.parseMime()
 	this.parseExtension()

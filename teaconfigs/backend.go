@@ -21,13 +21,15 @@ type BackendConfig struct {
 	IsBackup     bool      `yaml:"backup" json:"isBackup"`                       // 超时时间
 	FailTimeout  string    `yaml:"failTimeout" json:"failTimeout"`               // 失败超时
 	MaxFails     uint      `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
-	CurrentFails uint      `yaml:"currentFails" json:"currentFails"`             // 当前已失败
-	MaxConns     uint      `yaml:"maxConns" json:"maxConns"`                     // 并发连接数
+	CurrentFails uint      `yaml:"currentFails" json:"currentFails"`             // 当前已失败次数
+	MaxConns     uint      `yaml:"maxConns" json:"maxConns"`                     // 最大并发连接数
+	CurrentConns uint      `yaml:"currentConns" json:"currentConns"`             // 当前连接数
 	IsDown       bool      `yaml:"down" json:"isDown"`                           // 是否下线
 	DownTime     time.Time `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
 
 	failTimeoutDuration time.Duration
 	failsLocker         sync.Mutex
+	connsLocker         sync.Mutex
 }
 
 // 获取新对象
@@ -87,4 +89,22 @@ func (this *BackendConfig) IncreaseFails() uint {
 	this.CurrentFails ++
 
 	return this.CurrentFails
+}
+
+// 增加连接数
+func (this *BackendConfig) IncreaseConn() {
+	this.connsLocker.Lock()
+	defer this.connsLocker.Unlock()
+
+	this.CurrentConns ++
+}
+
+// 减少连接数
+func (this *BackendConfig) DecreaseConn() {
+	this.connsLocker.Lock()
+	defer this.connsLocker.Unlock()
+
+	if this.CurrentConns > 0 {
+		this.CurrentConns --
+	}
 }

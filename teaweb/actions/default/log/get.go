@@ -57,6 +57,7 @@ func (this *GetAction) Run(params struct {
 			"fastcgiAddress": accessLog.FastcgiAddress,
 			"extend":         accessLog.Extend,
 			"referer":        accessLog.Referer,
+			"upgrade":        accessLog.GetHeader("Upgrade"),
 		}
 	})
 

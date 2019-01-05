@@ -860,6 +860,17 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 	defer client.Close()
 
 	if this.websocket.ForwardMode == teaconfigs.WebsocketForwardModeWebsocket {
+		// 判断最大连接数
+		if this.backend.CurrentConns >= this.backend.MaxConns {
+			this.serverError(writer)
+			logs.Error(errors.New("too many connections"))
+			return nil
+		}
+
+		// 增加连接数
+		this.backend.IncreaseConn()
+		defer this.backend.DecreaseConn()
+
 		// 连接后端服务器
 		wsURL := url.URL{Scheme: "ws", Host: this.backend.Address, Path: this.raw.RequestURI}
 		dialer := websocket.Dialer{
@@ -879,6 +890,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 		}
 		defer server.Close()
 
+		// 设置关闭连接的处理函数
 		clientIsClosed := false
 		serverIsClosed := false
 		client.SetCloseHandler(func(code int, text string) error {
@@ -887,13 +899,6 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 			}
 			serverIsClosed = true
 			return server.Close()
-		})
-		server.SetCloseHandler(func(code int, text string) error {
-			if clientIsClosed {
-				return nil
-			}
-			clientIsClosed = true
-			return client.Close()
 		})
 
 		// 从客户端接收数据
@@ -921,6 +926,10 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 					logs.Error(err)
 				}
 				serverIsClosed = true
+				server.Close()
+				if !clientIsClosed {
+					client.Close()
+				}
 				break
 			}
 			client.WriteMessage(messageType, message)
@@ -975,6 +984,9 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 
 // 调用后端服务器
 func (this *Request) callBackend(writer *ResponseWriter) error {
+	this.backend.IncreaseConn()
+	defer this.backend.DecreaseConn()
+
 	if len(this.backend.Address) == 0 {
 		this.serverError(writer)
 		logs.Error(errors.New("backend address should not be empty"))
@@ -1041,7 +1053,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	defer resp.Body.Close()
 
 	// 清除错误次数
-	if resp.StatusCode >= 200 && resp.StatusCode < 500 {
+	if resp.StatusCode >= 200 {
 		if !this.backend.IsDown && this.backend.CurrentFails > 0 {
 			this.backend.CurrentFails = 0
 		}

@@ -40,6 +40,7 @@ func (this *IndexAction) Run(params struct {
 			"fastcgi":           location.Fastcgi,
 			"root":              location.Root,
 			"cachePolicy":       location.CachePolicyObject(),
+			"websocket":         location.Websocket != nil && location.Websocket.On,
 		})
 	}
 

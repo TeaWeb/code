@@ -37,6 +37,7 @@ func (this *DataAction) Run(params struct {
 					backend.IsDown = runningBackend.IsDown
 					backend.DownTime = runningBackend.DownTime
 					backend.CurrentFails = runningBackend.CurrentFails
+					backend.CurrentConns = runningBackend.CurrentConns
 				}
 			}
 		}
