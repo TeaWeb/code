@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/api"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
@@ -161,9 +162,6 @@ func (this *ServerConfig) Validate() error {
 		return err
 	}
 
-	// scheduling
-	this.SetupScheduling(false)
-
 	// locations
 	for _, location := range this.Locations {
 		err := location.Validate()
@@ -270,37 +268,12 @@ func (this *ServerConfig) Save() error {
 }
 
 // 判断是否和域名匹配
-// @TODO 支持  .example.com （所有以example.com结尾的域名，包括example.com）
-// 更多参考：http://nginx.org/en/docs/http/ngx_http_core_module.html#server_name
 func (this *ServerConfig) MatchName(name string) (matchedName string, matched bool) {
-	if len(name) == 0 {
-		return "", false
+	isMatched := teautils.MatchDomains(this.Name, name)
+	if isMatched {
+		return name, true
 	}
-	pieces1 := strings.Split(name, ".")
-	countPieces1 := len(pieces1)
-	for _, testName := range this.Name {
-		if len(testName) == 0 {
-			continue
-		}
-		if name == testName {
-			return testName, true
-		}
-		pieces2 := strings.Split(testName, ".")
-		if countPieces1 != len(pieces2) {
-			continue
-		}
-		matched := true
-		for index, piece := range pieces2 {
-			if pieces1[index] != piece && piece != "*" && piece != "" {
-				matched = false
-				break
-			}
-		}
-		if matched {
-			return "", true
-		}
-	}
-	return "", false
+	return
 }
 
 // 取得第一个非泛解析的域名

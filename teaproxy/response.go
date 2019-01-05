@@ -23,13 +23,24 @@ func NewResponseWriter(httpResponseWriter http.ResponseWriter) *ResponseWriter {
 	}
 }
 
+// 包装前的原始的Writer
+func (this *ResponseWriter) Raw() http.ResponseWriter {
+	return this.writer
+}
+
 // 获取Header
 func (this *ResponseWriter) Header() http.Header {
+	if this.writer == nil {
+		return http.Header{}
+	}
 	return this.writer.Header()
 }
 
 // 添加一组Header
 func (this *ResponseWriter) AddHeaders(header http.Header) {
+	if this.writer == nil {
+		return
+	}
 	for key, value := range header {
 		for _, v := range value {
 			this.writer.Header().Add(key, v)
@@ -39,9 +50,15 @@ func (this *ResponseWriter) AddHeaders(header http.Header) {
 
 // 写入数据
 func (this *ResponseWriter) Write(data []byte) (n int, err error) {
-	n, err = this.writer.Write(data)
-	if n > 0 {
-		this.sentBodyBytes += int64(n)
+	if this.writer != nil {
+		n, err = this.writer.Write(data)
+		if n > 0 {
+			this.sentBodyBytes += int64(n)
+		}
+	} else {
+		if n == 0 {
+			n = len(data) // 防止出现short write错误
+		}
 	}
 	if this.bodyCopying {
 		this.body = append(this.body, data ...)
@@ -56,7 +73,9 @@ func (this *ResponseWriter) SentBodyBytes() int64 {
 
 // 写入状态码
 func (this *ResponseWriter) WriteHeader(statusCode int) {
-	this.writer.WriteHeader(statusCode)
+	if this.writer != nil {
+		this.writer.WriteHeader(statusCode)
+	}
 	this.statusCode = statusCode
 }
 
@@ -85,6 +104,10 @@ func (this *ResponseWriter) Body() []byte {
 
 // 读取Header二进制数据
 func (this *ResponseWriter) HeaderData() []byte {
+	if this.writer == nil {
+		return nil
+	}
+
 	resp := &http.Response{}
 	resp.Header = this.Header()
 	if this.statusCode == 0 {

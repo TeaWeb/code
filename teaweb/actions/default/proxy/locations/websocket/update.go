@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/locationutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -94,5 +95,8 @@ func (this *UpdateAction) RunPost(params struct {
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}
+
+	proxyutils.NotifyChange()
+
 	this.Success()
 }

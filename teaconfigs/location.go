@@ -176,6 +176,13 @@ func (this *LocationConfig) Validate() error {
 	if err != nil {
 		return err
 	}
+	//websocket
+	if this.Websocket != nil {
+		err = this.Websocket.Validate()
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

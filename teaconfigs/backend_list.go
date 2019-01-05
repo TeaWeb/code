@@ -48,6 +48,10 @@ func (this *BackendList) ValidateBackends() error {
 			return err
 		}
 	}
+
+	// scheduling
+	this.SetupScheduling(false)
+
 	return nil
 }
 

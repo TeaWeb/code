@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/maps"
 	"time"
 )
@@ -59,4 +60,12 @@ func (this *WebsocketConfig) ForwardModeSummary() maps.Map {
 		}
 	}
 	return nil
+}
+
+// 匹配域名
+func (this *WebsocketConfig) MatchOrigin(origin string) bool {
+	if this.AllowAllOrigins {
+		return true
+	}
+	return teautils.MatchDomains(this.Origins, origin)
 }

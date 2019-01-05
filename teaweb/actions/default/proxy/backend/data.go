@@ -28,13 +28,16 @@ func (this *DataAction) Run(params struct {
 	backupBackends := []*teaconfigs.BackendConfig{}
 	runningServer, _ := teaproxy.FindServer(server.Id)
 	for _, backend := range backendList.AllBackends() {
-		// 是否下线
+		// 是否下线以及错误次数
 		if runningServer != nil {
-			runningBackend := runningServer.FindBackend(backend.Id)
-			if runningBackend != nil {
-				backend.IsDown = runningBackend.IsDown
-				backend.DownTime = runningBackend.DownTime
-				backend.CurrentFails = runningBackend.CurrentFails
+			runningBackendList, err := runningServer.FindBackendList(params.LocationId, params.Websocket)
+			if err == nil {
+				runningBackend := runningBackendList.FindBackend(backend.Id)
+				if runningBackend != nil {
+					backend.IsDown = runningBackend.IsDown
+					backend.DownTime = runningBackend.DownTime
+					backend.CurrentFails = runningBackend.CurrentFails
+				}
 			}
 		}
 
