@@ -1,14 +1,12 @@
 package mongo
 
 import (
-	"github.com/iwind/TeaGo/actions"
-	"github.com/TeaWeb/code/teaweb/configs"
-	"github.com/mongodb/mongo-go-driver/mongo"
 	"context"
-	"github.com/iwind/TeaGo/logs"
-	"github.com/TeaWeb/code/teamongo"
-	"time"
+	"github.com/TeaWeb/code/teaweb/configs"
+	"github.com/iwind/TeaGo/actions"
+	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"time"
 )
 
 type TestAction actions.Action
@@ -27,15 +25,14 @@ func (this *TestAction) Run(params struct {
 	}
 
 	uri := config.URI()
-	logs.Println(uri)
-	client, err := mongo.Connect(context.Background(), uri)
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	client, err := mongo.Connect(ctx, uri)
 	if err != nil {
 		this.Message = "有错误需要修复：" + err.Error()
 		this.Fail()
 	}
-	defer client.Disconnect(context.Background())
 
-	ctx, _ := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, _ = context.WithTimeout(context.Background(), 1*time.Second)
 	_, err = client.
 		Database("teaweb").
 		Collection("logs").
@@ -45,7 +42,7 @@ func (this *TestAction) Run(params struct {
 		this.Fail()
 	}
 
-	teamongo.Test()
+	client.Disconnect(context.Background())
 
 	this.Success()
 }
