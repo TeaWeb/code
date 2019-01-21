@@ -1,0 +1,124 @@
+package agents
+
+import (
+	"github.com/TeaWeb/code/teaconfigs/widgets"
+	"github.com/iwind/TeaGo/utils/string"
+	"time"
+)
+
+// 数据指标项
+type Item struct {
+	On            bool                   `yaml:"on" json:"on"`
+	Id            string                 `yaml:"id" json:"id"`
+	Name          string                 `yaml:"name" json:"name"`
+	SourceCode    string                 `yaml:"sourceCode" json:"sourceCode"`       // 数据源代号
+	SourceOptions map[string]interface{} `yaml:"sourceOptions" json:"sourceOptions"` // 数据源选项
+	Interval      string                 `yaml:"interval" json:"interval"`           // 刷新间隔
+	Thresholds    []*Threshold           `yaml:"thresholds" json:"thresholds"`       // 阈值设置
+	IsSystem      bool                   `yaml:"isSystem" json:"isSystem"`           // 是否为系统提供的指标
+	Charts        []*widgets.Chart       `yaml:"charts" json:"charts"`               // 图表
+
+	source           SourceInterface
+	intervalDuration time.Duration
+}
+
+// 获取新对象
+func NewItem() *Item {
+	return &Item{
+		On:         true,
+		Id:         stringutil.Rand(16),
+		Thresholds: []*Threshold{},
+	}
+}
+
+// 校验
+func (this *Item) Validate() error {
+	this.source = FindDataSourceInstance(this.SourceCode, this.SourceOptions)
+
+	if this.source != nil {
+		err := this.source.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, t := range this.Thresholds {
+		err := t.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, c := range this.Charts {
+		err := c.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
+	this.intervalDuration, _ = time.ParseDuration(this.Interval)
+
+	return nil
+}
+
+// 获取刷新间隔
+func (this *Item) IntervalDuration() time.Duration {
+	if this.intervalDuration.Seconds() > 0 {
+		return this.intervalDuration
+	}
+	return 30 * time.Second
+}
+
+// 添加阈值
+func (this *Item) AddThreshold(t *Threshold) {
+	this.Thresholds = append(this.Thresholds, t)
+}
+
+// 数据源对象
+func (this *Item) Source() SourceInterface {
+	return this.source
+}
+
+// 检查某个值对应的通知级别
+func (this *Item) TestValue(value interface{}) (level NoticeLevel, message string) {
+	if len(this.Thresholds) == 0 {
+		return NoticeLevelNone, ""
+	}
+	for _, t := range this.Thresholds {
+		if t.Test(value) {
+			if len(t.NoticeMessage) > 0 {
+				return t.NoticeLevel, t.NoticeMessage
+			} else {
+				return t.NoticeLevel, t.Param + " " + t.Operator + " " + t.Value
+			}
+		}
+	}
+	return NoticeLevelNone, ""
+}
+
+// 添加图表
+func (this *Item) AddChart(chart *widgets.Chart) {
+	this.Charts = append(this.Charts, chart)
+}
+
+// 查找图表
+func (this *Item) FindChart(chartId string) *widgets.Chart {
+	for _, c := range this.Charts {
+		if c.Id == chartId {
+			return c
+		}
+	}
+	return nil
+}
+
+// 删除图表
+func (this *Item) RemoveChart(chartId string) {
+	result := []*widgets.Chart{}
+	for _, c := range this.Charts {
+		if c.Id == chartId {
+			continue
+		}
+		result = append(result, c)
+	}
+	this.Charts = result
+}
