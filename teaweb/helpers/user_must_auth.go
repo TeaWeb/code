@@ -5,7 +5,6 @@ import (
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
 	"net/http"
-	"runtime"
 )
 
 // 认证拦截
@@ -89,23 +88,19 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 
 	// 附加功能
 	if user.Granted(configs.AdminGrantAgent) {
-		if runtime.GOOS != "windows" {
-			modules = append(modules, map[string]interface{}{
-				"code":     "agents",
-				"menuName": "主机",
-				"icon":     "server",
-			})
-		}
+		modules = append(modules, map[string]interface{}{
+			"code":     "agents",
+			"menuName": "主机",
+			"icon":     "server",
+		})
 	}
 
 	if user.Granted(configs.AdminGrantPlugin) {
-		if runtime.GOOS != "windows" {
-			modules = append(modules, map[string]interface{}{
-				"code":     "plugins",
-				"menuName": "插件",
-				"icon":     "puzzle piece",
-			})
-		}
+		modules = append(modules, map[string]interface{}{
+			"code":     "plugins",
+			"menuName": "插件",
+			"icon":     "puzzle piece",
+		})
 	}
 
 	if teaconst.PlusEnabled {

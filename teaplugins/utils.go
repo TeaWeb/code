@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 	"sync"
 )
 
@@ -173,14 +174,19 @@ func load() {
 	logs.Println("[plugin]load plugins")
 	dir := Tea.Root + Tea.DS + "plugins"
 	files.NewFile(dir).Range(func(file *files.File) {
-		if file.Ext() != ".tea" {
+		if !strings.HasSuffix(file.Name(), ".tea") && !strings.HasSuffix(file.Name(), ".tea.exe") {
 			return
 		}
 
 		logs.Println("[plugin][loader]load plugin '" + file.Name() + "'")
 
 		loader := NewLoader(file.Path())
-		go loader.Load()
+		go func() {
+			err := loader.Load()
+			if err != nil {
+				logs.Println("[plugin][" + file.Name() + "]failed:" + err.Error())
+			}
+		}()
 		loaders = append(loaders, loader)
 	})
 }

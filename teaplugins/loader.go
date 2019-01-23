@@ -3,6 +3,7 @@ package teaplugins
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/Microsoft/go-winio"
 	"github.com/TeaWeb/code/teaapps"
 	"github.com/TeaWeb/code/teacharts"
 	"github.com/TeaWeb/plugin/apps"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"time"
 )
 
@@ -22,9 +24,14 @@ type Loader struct {
 	methods   map[string]reflect.Method
 	thisValue reflect.Value
 
-	writer *os.File
+	writer PipeInterface
 
 	debug bool
+}
+
+type PipeInterface interface {
+	Read([]byte) (n int, err error)
+	Write([]byte) (n int, err error)
 }
 
 func NewLoader(path string) *Loader {
@@ -51,81 +58,95 @@ func (this *Loader) Debug() {
 
 // 加载插件
 func (this *Loader) Load() error {
+	if runtime.GOOS == "windows" {
+		return this.loadWindows()
+	} else {
+		return this.loadUnixLike()
+	}
+}
+
+func (this *Loader) loadWindows() error {
 	reader, w /** 子进程写入器 **/, err := os.Pipe()
 	if err != nil {
 		return err
 	}
 
-	r2 /** 子进程读取器 **/, writer, err := os.Pipe()
+	r /** 子进程读取器 **/, writer, err := os.Pipe()
 	if err != nil {
 		return err
 	}
 
-	this.writer = writer
+	rFile := `\\.\pipe\teaweb-readerpipe`
+	wFile := `\\.\pipe\teaweb-writerpipe`
 
-	p := processes.NewProcess(this.path)
-	p.AppendFile(r2, w)
+	this.Debug() // TODO仅供测试
 
+	rListener, err := winio.ListenPipe(rFile, nil)
+	if err != nil {
+		return errors.New("ERROR1:" + err.Error())
+	}
 	go func() {
-		buf := make([]byte, 1024)
-		msgData := []byte{}
 		for {
-			if this.debug {
-				logs.Println("[plugin][" + this.shortFileName() + "]try to read buf")
-			}
-
-			n, err := reader.Read(buf)
-
-			if n > 0 {
-				msgData = append(msgData, buf[:n] ...)
-
-				if this.debug {
-					logs.Println("[plugin]["+this.shortFileName()+"]len:", len(msgData), ",", "read msg data:", string(msgData))
-				}
-
-				msgLen := uint32(len(msgData))
-				h := uint32(24) // header length
-
-				if msgLen > h { // 数据组成方式： | actionLen[8] | dataLen[8] | action | data[len-8]
-					id := binary.BigEndian.Uint32(msgData[:8])
-					l1 := binary.BigEndian.Uint32(msgData[8:16])
-					l2 := binary.BigEndian.Uint32(msgData[16:24])
-
-					if msgLen >= h+l1+l2 { // 数据已经完整了
-						action := string(msgData[h : h+l1])
-						valueData := msgData[h+l1 : h+l1+l2]
-
-						msgData = msgData[h+l1+l2:]
-
-						ptr, err := messages.Unmarshal(action, valueData)
-						if err != nil {
-							logs.Println("[plugin]["+this.shortFileName()+"[unmarshal message error:", err.Error())
-							continue
-						}
-
-						err = this.CallAction(ptr, id)
-						if err != nil {
-							logs.Println("[plugin]["+this.shortFileName()+"]call action error:", err.Error())
-							continue
-						}
-					}
-				}
-			}
-
+			conn, err := rListener.Accept()
 			if err != nil {
-				logs.Println("[plugin][" + this.shortFileName() + "]" + err.Error())
+				logs.Error(err)
 				break
+			}
+
+			data := make([]byte, 1024)
+			for {
+				n, err := conn.Read(data)
+				if n > 0 {
+					w.Write(data[:n])
+				}
+				if err != nil {
+					break
+				}
 			}
 		}
 	}()
 
+	wListener, err := winio.ListenPipe(wFile, nil)
+	if err != nil {
+		return errors.New("ERROR2:" + err.Error())
+	}
+	go func() {
+		for {
+			conn, err := wListener.Accept()
+			if err != nil {
+				logs.Error(err)
+				break
+			}
+
+			data := make([]byte, 1024)
+			for {
+				n, err := r.Read(data)
+				if n > 0 {
+					conn.Write(data[:n])
+				}
+				if err != nil {
+					break
+				}
+			}
+		}
+	}()
+
+	this.writer = writer
+
+	go this.pipe(reader, writer)
+
+	p := processes.NewProcess(this.path)
+
 	err = p.Start()
 	if err != nil {
+		logs.Println("[plugin][" + this.shortFileName() + "]start failed:" + err.Error())
 		return err
 	}
 
 	err = p.Wait()
 	if err != nil {
+		logs.Println("[plugin][" + this.shortFileName() + "]wait failed" + err.Error())
+
 		reader.Close()
 
 		// 重新加载
@@ -134,6 +155,97 @@ func (this *Loader) Load() error {
 	}
 
 	return nil
+}
+
+func (this *Loader) loadUnixLike() error {
+	reader, w /** 子进程写入器 **/, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+
+	r /** 子进程读取器 **/, writer, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+
+	this.writer = writer
+
+	go this.pipe(reader, writer)
+
+	p := processes.NewProcess(this.path)
+	p.AppendFile(r, w)
+
+	err = p.Start()
+	if err != nil {
+		logs.Println("[plugin][" + this.shortFileName() + "]start failed:" + err.Error())
+		return err
+	}
+
+	err = p.Wait()
+	if err != nil {
+		logs.Println("[plugin][" + this.shortFileName() + "]wait failed" + err.Error())
+
+		reader.Close()
+
+		// 重新加载
+		time.Sleep(1 * time.Second)
+		return this.Load()
+	}
+
+	return nil
+}
+
+func (this *Loader) pipe(reader PipeInterface, writer PipeInterface) {
+	buf := make([]byte, 1024)
+	msgData := []byte{}
+	for {
+		if this.debug {
+			logs.Println("[plugin][" + this.shortFileName() + "]try to read buf")
+		}
+
+		n, err := reader.Read(buf)
+
+		if n > 0 {
+			msgData = append(msgData, buf[:n] ...)
+
+			if this.debug {
+				logs.Println("[plugin]["+this.shortFileName()+"]len:", len(msgData), ",", "read msg data:", string(msgData))
+			}
+
+			msgLen := uint32(len(msgData))
+			h := uint32(24) // header length
+
+			if msgLen > h { // 数据组成方式： | actionLen[8] | dataLen[8] | action | data[len-8]
+				id := binary.BigEndian.Uint32(msgData[:8])
+				l1 := binary.BigEndian.Uint32(msgData[8:16])
+				l2 := binary.BigEndian.Uint32(msgData[16:24])
+
+				if msgLen >= h+l1+l2 { // 数据已经完整了
+					action := string(msgData[h : h+l1])
+					valueData := msgData[h+l1 : h+l1+l2]
+
+					msgData = msgData[h+l1+l2:]
+
+					ptr, err := messages.Unmarshal(action, valueData)
+					if err != nil {
+						logs.Println("[plugin]["+this.shortFileName()+"[unmarshal message error:", err.Error())
+						continue
+					}
+
+					err = this.CallAction(ptr, id)
+					if err != nil {
+						logs.Println("[plugin]["+this.shortFileName()+"]call action error:", err.Error())
+						continue
+					}
+				}
+			}
+		}
+
+		if err != nil {
+			logs.Println("[plugin][" + this.shortFileName() + "]break:" + err.Error())
+			break
+		}
+	}
 }
 
 func (this *Loader) CallAction(ptr interface{}, messageId uint32) error {
