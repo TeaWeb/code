@@ -75,7 +75,7 @@ func Start() {
 		go func() {
 			time.Sleep(1 * time.Second)
 
-			startTestServer()
+			//startTestServer()
 		}()
 	}
 

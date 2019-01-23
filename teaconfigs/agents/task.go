@@ -4,6 +4,7 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/utils/string"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -85,7 +86,11 @@ func (this *TaskConfig) FormattedScript() string {
 
 // 保存到本地
 func (this *TaskConfig) Generate() (path string, err error) {
-	path = Tea.ConfigFile("agents/task." + this.Id + ".script")
+	if runtime.GOOS == "windows" {
+		path = Tea.ConfigFile("agents/task." + this.Id + ".bat")
+	} else {
+		path = Tea.ConfigFile("agents/task." + this.Id + ".script")
+	}
 	shFile := files.NewFile(path)
 	if !shFile.Exists() {
 		err = shFile.WriteString(this.FormattedScript())
@@ -102,7 +107,11 @@ func (this *TaskConfig) Generate() (path string, err error) {
 
 // 重新生成
 func (this *TaskConfig) GenerateAgain() (path string, err error) {
-	path = Tea.ConfigFile("agents/task." + this.Id + ".script")
+	if runtime.GOOS == "windows" {
+		path = Tea.ConfigFile("agents/task." + this.Id + ".bat")
+	} else {
+		path = Tea.ConfigFile("agents/task." + this.Id + ".script")
+	}
 	shFile := files.NewFile(path)
 	err = shFile.WriteString(this.FormattedScript())
 	if err != nil {

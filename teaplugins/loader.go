@@ -3,18 +3,13 @@ package teaplugins
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/Microsoft/go-winio"
 	"github.com/TeaWeb/code/teaapps"
 	"github.com/TeaWeb/code/teacharts"
 	"github.com/TeaWeb/plugin/apps"
 	"github.com/TeaWeb/plugin/messages"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/processes"
-	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
-	"time"
 )
 
 type Loader struct {
@@ -54,145 +49,6 @@ func NewLoader(path string) *Loader {
 
 func (this *Loader) Debug() {
 	this.debug = true
-}
-
-// 加载插件
-func (this *Loader) Load() error {
-	if runtime.GOOS == "windows" {
-		return this.loadWindows()
-	} else {
-		return this.loadUnixLike()
-	}
-}
-
-func (this *Loader) loadWindows() error {
-	reader, w /** 子进程写入器 **/, err := os.Pipe()
-	if err != nil {
-		return err
-	}
-
-	r /** 子进程读取器 **/, writer, err := os.Pipe()
-	if err != nil {
-		return err
-	}
-
-	rFile := `\\.\pipe\teaweb-readerpipe`
-	wFile := `\\.\pipe\teaweb-writerpipe`
-
-	this.Debug() // TODO仅供测试
-
-	rListener, err := winio.ListenPipe(rFile, nil)
-	if err != nil {
-		return errors.New("ERROR1:" + err.Error())
-	}
-	go func() {
-		for {
-			conn, err := rListener.Accept()
-			if err != nil {
-				logs.Error(err)
-				break
-			}
-
-			data := make([]byte, 1024)
-			for {
-				n, err := conn.Read(data)
-				if n > 0 {
-					w.Write(data[:n])
-				}
-				if err != nil {
-					break
-				}
-			}
-		}
-	}()
-
-	wListener, err := winio.ListenPipe(wFile, nil)
-	if err != nil {
-		return errors.New("ERROR2:" + err.Error())
-	}
-	go func() {
-		for {
-			conn, err := wListener.Accept()
-			if err != nil {
-				logs.Error(err)
-				break
-			}
-
-			data := make([]byte, 1024)
-			for {
-				n, err := r.Read(data)
-				if n > 0 {
-					conn.Write(data[:n])
-				}
-				if err != nil {
-					break
-				}
-			}
-		}
-	}()
-
-	this.writer = writer
-
-	go this.pipe(reader, writer)
-
-	p := processes.NewProcess(this.path)
-
-	err = p.Start()
-	if err != nil {
-		logs.Println("[plugin][" + this.shortFileName() + "]start failed:" + err.Error())
-		return err
-	}
-
-	err = p.Wait()
-	if err != nil {
-		logs.Println("[plugin][" + this.shortFileName() + "]wait failed" + err.Error())
-
-		reader.Close()
-
-		// 重新加载
-		time.Sleep(1 * time.Second)
-		return this.Load()
-	}
-
-	return nil
-}
-
-func (this *Loader) loadUnixLike() error {
-	reader, w /** 子进程写入器 **/, err := os.Pipe()
-	if err != nil {
-		return err
-	}
-
-	r /** 子进程读取器 **/, writer, err := os.Pipe()
-	if err != nil {
-		return err
-	}
-
-	this.writer = writer
-
-	go this.pipe(reader, writer)
-
-	p := processes.NewProcess(this.path)
-	p.AppendFile(r, w)
-
-	err = p.Start()
-	if err != nil {
-		logs.Println("[plugin][" + this.shortFileName() + "]start failed:" + err.Error())
-		return err
-	}
-
-	err = p.Wait()
-	if err != nil {
-		logs.Println("[plugin][" + this.shortFileName() + "]wait failed" + err.Error())
-
-		reader.Close()
-
-		// 重新加载
-		time.Sleep(1 * time.Second)
-		return this.Load()
-	}
-
-	return nil
 }
 
 func (this *Loader) pipe(reader PipeInterface, writer PipeInterface) {
