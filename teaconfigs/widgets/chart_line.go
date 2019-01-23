@@ -27,22 +27,17 @@ if (chart.options.limit <= 0) {
 	query.limit(chart.options.limit);
 }
 var ones = query.desc().cache(60).findAll();
-var reversedOnes = [];
-
-// 没有使用.reverse()方法，是因为otto引擎有Bug
-for (var i = ones.length - 1; i >= 0; i --) {
-	reversedOnes.push(ones[i]);
-}
+ones.reverse();
 
 var lines = [];
 chart.options.params.$each(function (k, v) {
 	var line = new charts.Line();
-	line.color = null;
+	line.color = (k < colors.ARRAY.length) ? colors.ARRAY[k] : null;
 	line.isFilled = false;
 	line.values = [];
 	lines.push(line);
 });
-reversedOnes.$each(function (k, v) {
+ones.$each(function (k, v) {
 	chart.options.params.$each(function (k, param) {
 		var value = values.valueOf(v.value, param);
 		lines[k].values.push(value);

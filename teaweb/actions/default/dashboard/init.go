@@ -1,8 +1,8 @@
 package dashboard
 
 import (
-	"github.com/iwind/TeaGo"
 	"github.com/TeaWeb/code/teaweb/helpers"
+	"github.com/iwind/TeaGo"
 )
 
 func init() {
@@ -10,8 +10,8 @@ func init() {
 		server.
 			Helper(new(helpers.UserMustAuth)).
 			Prefix("/dashboard").
-			Get("", new(IndexAction)).
-			Get("/widgets", new(WidgetsAction)).
+			GetPost("", new(IndexAction)).
+			Get("/logs", new(LogsAction)).
 			EndAll()
 	})
 }

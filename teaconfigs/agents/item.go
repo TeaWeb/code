@@ -15,7 +15,6 @@ type Item struct {
 	SourceOptions map[string]interface{} `yaml:"sourceOptions" json:"sourceOptions"` // 数据源选项
 	Interval      string                 `yaml:"interval" json:"interval"`           // 刷新间隔
 	Thresholds    []*Threshold           `yaml:"thresholds" json:"thresholds"`       // 阈值设置
-	IsSystem      bool                   `yaml:"isSystem" json:"isSystem"`           // 是否为系统提供的指标
 	Charts        []*widgets.Chart       `yaml:"charts" json:"charts"`               // 图表
 
 	source           SourceInterface
@@ -34,6 +33,10 @@ func NewItem() *Item {
 // 校验
 func (this *Item) Validate() error {
 	this.source = FindDataSourceInstance(this.SourceCode, this.SourceOptions)
+
+	if len(this.Charts) == 0 {
+		this.Charts = []*widgets.Chart{}
+	}
 
 	if this.source != nil {
 		err := this.source.Validate()

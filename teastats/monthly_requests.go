@@ -66,7 +66,7 @@ func (this *MonthlyRequestsStat) SumMonthRequests(serverId string, months []stri
 	}
 	sumColl := findCollection("stats.requests.monthly", nil)
 
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",

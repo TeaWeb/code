@@ -4,11 +4,12 @@ import "github.com/iwind/TeaGo/utils/string"
 
 // App定义
 type AppConfig struct {
-	Id    string        `yaml:"id" json:"id"`       // ID
-	On    bool          `yaml:"on" json:"on"`       // 是否启用
-	Tasks []*TaskConfig `yaml:"tasks" json:"tasks"` // 任务设置
-	Items []*Item       `yaml:"item" json:"items"`  // 监控项
-	Name  string        `yaml:"name" json:"name"`   // 名称
+	Id       string        `yaml:"id" json:"id"`             // ID
+	On       bool          `yaml:"on" json:"on"`             // 是否启用
+	Tasks    []*TaskConfig `yaml:"tasks" json:"tasks"`       // 任务设置
+	Items    []*Item       `yaml:"item" json:"items"`        // 监控项
+	Name     string        `yaml:"name" json:"name"`         // 名称
+	IsSystem bool          `yaml:"isSystem" json:"isSystem"` // 是否为系统定义
 }
 
 // 获取新对象
@@ -17,6 +18,14 @@ func NewAppConfig() *AppConfig {
 		Id: stringutil.Rand(16),
 		On: true,
 	}
+}
+
+// 获取非用户定义对象
+func NewSystemAppConfig(id string) *AppConfig {
+	app := NewAppConfig()
+	app.IsSystem = true
+	app.Id = id
+	return app
 }
 
 // 校验

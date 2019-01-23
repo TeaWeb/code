@@ -180,7 +180,7 @@ func (this *AdminConfig) FindAllActiveGrants() []*AdminGrant {
 		NewAdminGrant("代理", AdminGrantProxy),
 		NewAdminGrant("日志", AdminGrantLog),
 		NewAdminGrant("统计", AdminGrantStatistics),
-		NewAdminGrant("本地服务", AdminGrantApp),
+		NewAdminGrant("本地服务", AdminGrantAgent),
 		NewAdminGrant("插件", AdminGrantPlugin),
 	}
 

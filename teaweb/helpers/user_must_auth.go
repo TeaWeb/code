@@ -88,12 +88,12 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	}
 
 	// 附加功能
-	if user.Granted(configs.AdminGrantApp) {
+	if user.Granted(configs.AdminGrantAgent) {
 		if runtime.GOOS != "windows" {
 			modules = append(modules, map[string]interface{}{
-				"code":     "apps",
-				"menuName": "本地服务",
-				"icon":     "gem outline",
+				"code":     "agents",
+				"menuName": "主机",
+				"icon":     "server",
 			})
 		}
 	}

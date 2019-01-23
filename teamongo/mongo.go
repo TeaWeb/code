@@ -1,14 +1,14 @@
 package teamongo
 
 import (
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo/logs"
 	"context"
-	"time"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
 	"errors"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"time"
 )
 
 var sharedClient *mongo.Client

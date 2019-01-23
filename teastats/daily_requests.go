@@ -67,7 +67,7 @@ func (this *DailyRequestsStat) SumDayRequests(serverId string, days []string) in
 	sumColl := findCollection("stats.requests.daily", nil)
 
 	//pipelines := bson.NewArray()
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",

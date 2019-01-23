@@ -2,6 +2,7 @@ package proxyutils
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -13,7 +14,7 @@ func AddServerMenu(action *actions.ActionObject) {
 	action.Data["teaMenu"] = "proxy"
 
 	// 子菜单
-	var subMenus = []maps.Map{}
+	var subMenu = utils.NewSubMenu()
 
 	// 服务
 	var hasServer = false
@@ -26,12 +27,7 @@ func AddServerMenu(action *actions.ActionObject) {
 		} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
 			urlPrefix = "/proxy/detail"
 		}
-		subMenus = append(subMenus, maps.Map{
-			"name":    server.Description,
-			"subName": "",
-			"url":     urlPrefix + "?server=" + server.Filename,
-			"active":  action.ParamString("server") == server.Filename,
-		})
+		subMenu.Add(server.Description, "", urlPrefix+"?server="+server.Filename, action.ParamString("server") == server.Filename)
 		hasServer = true
 	}
 	if hasServer {
@@ -39,19 +35,9 @@ func AddServerMenu(action *actions.ActionObject) {
 	}
 
 	// 其他
-	subMenus = append(subMenus, maps.Map{
-		"name":    "[添加新代理]",
-		"subName": "",
-		"url":     "/proxy/add",
-		"active":  action.Spec.ClassName == "proxy.AddAction",
-	})
-	subMenus = append(subMenus, maps.Map{
-		"name":    "[缓存策略]",
-		"subName": "",
-		"url":     "/cache",
-		"active":  action.Spec.HasClassPrefix("cache"),
-	})
-	action.Data["teaSubMenus"] = subMenus
+	subMenu.Add("[添加新代理]", "", "/proxy/add", action.Spec.ClassName == "proxy.AddAction", )
+	subMenu.Add("[缓存策略]", "", "/cache", action.Spec.HasClassPrefix("cache"), )
+	utils.SetSubMenu(action, subMenu)
 
 	// Tabbar
 	if hasServer {

@@ -14,8 +14,10 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
+	"github.com/iwind/TeaGo/utils/string"
 	"github.com/robertkrimen/otto"
 	"reflect"
+	"runtime"
 	"time"
 )
 
@@ -61,7 +63,7 @@ func (this *Engine) SetContext(context *Context) {
 				}
 
 				return map[string]interface{}{
-					"on":       backend.On,
+					"isOn":     backend.On,
 					"weight":   backend.Weight,
 					"id":       backend.Id,
 					"isDown":   backend.IsDown,
@@ -75,14 +77,14 @@ func (this *Engine) SetContext(context *Context) {
 				location.Validate()
 				locationOptions := map[string]interface{}{
 					"id":          location.Id,
-					"on":          location.On,
+					"isOn":        location.On,
 					"pattern":     location.PatternString(),
 					"cachePolicy": location.CachePolicy,
 					"fastcgi": lists.Map(location.Fastcgi, func(k int, v interface{}) interface{} {
 						fastcgi := v.(*teaconfigs.FastcgiConfig)
 						return map[string]interface{}{
 							"id":   fastcgi.Id,
-							"on":   fastcgi.On,
+							"isOn": fastcgi.On,
 							"pass": fastcgi.Pass,
 						}
 					}),
@@ -90,7 +92,7 @@ func (this *Engine) SetContext(context *Context) {
 						rewrite := v.(*teaconfigs.RewriteRule)
 						return map[string]interface{}{
 							"id":      rewrite.Id,
-							"on":      rewrite.On,
+							"isOn":    rewrite.On,
 							"pattern": rewrite.Pattern,
 							"replace": rewrite.Replace,
 						}
@@ -101,7 +103,7 @@ func (this *Engine) SetContext(context *Context) {
 				}
 				if location.Websocket != nil && location.Websocket.On {
 					locationOptions["websocket"] = maps.Map{
-						"on": true,
+						"isOn": true,
 					}
 				} else {
 					locationOptions["websocket"] = nil
@@ -112,17 +114,17 @@ func (this *Engine) SetContext(context *Context) {
 
 		if context.Server.SSL != nil {
 			options["ssl"] = maps.Map{
-				"on":     context.Server.SSL.On,
+				"isOn":   context.Server.SSL.On,
 				"listen": context.Server.SSL.Listen,
 			}
 		} else {
 			options["ssl"] = maps.Map{
-				"on":     false,
+				"isOn":   false,
 				"listen": []string{},
 			}
 		}
 
-		this.vm.Run(`context.server = new http.Server(` + this.jsonEncode(options) + `);`)
+		this.vm.Run(`context.server = new http.Server(` + stringutil.JSONEncode(options) + `);`)
 	}
 
 	// 可供使用的特性
@@ -130,7 +132,9 @@ func (this *Engine) SetContext(context *Context) {
 	if teamongo.Test() == nil {
 		features = append(features, "mongo")
 	}
-	this.vm.Run(`context.features=` + this.jsonEncode(features) + `;`)
+	features = append(features, runtime.GOOS)
+	features = append(features, runtime.GOARCH)
+	this.vm.Run(`context.features=` + stringutil.JSONEncode(features) + `;`)
 }
 
 // 初始化
@@ -360,6 +364,8 @@ func (this *Engine) callSetCache(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 
+	key = stringutil.Md5(key)
+
 	value, err := call.Argument(1).Export()
 	if err != nil {
 		this.throw(err)
@@ -372,6 +378,7 @@ func (this *Engine) callSetCache(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 	lifeSeconds := types.Int64(life)
+
 	engineCache.Set(key, value, time.Duration(lifeSeconds)*time.Second)
 
 	return otto.UndefinedValue()
@@ -383,6 +390,8 @@ func (this *Engine) callGetCache(call otto.FunctionCall) otto.Value {
 		this.throw(err)
 		return otto.UndefinedValue()
 	}
+
+	key = stringutil.Md5(key)
 
 	value, found := engineCache.Get(key)
 	if !found {
@@ -398,7 +407,7 @@ func (this *Engine) callGetCache(call otto.FunctionCall) otto.Value {
 
 // 加载widgets
 func (this *Engine) loadWidgets() {
-	widgetFiles := files.NewFile(Tea.Root + Tea.DS + "libs" + Tea.DS + "widgets").Glob("*.js")
+	widgetFiles := files.NewFile(Tea.Root + Tea.DS + "libs" + Tea.DS + "proxy").Glob("*.js")
 	for _, file := range widgetFiles {
 		s, err := file.ReadAllString()
 		if err != nil {
@@ -449,16 +458,6 @@ func (this *Engine) loadLib(file string) {
 		logs.Error(err)
 		return
 	}
-}
-
-func (this *Engine) jsonEncode(v interface{}) string {
-	data, err := json.Marshal(v)
-	if err != nil {
-		logs.Error(err)
-		return "null"
-	}
-
-	return string(data)
 }
 
 func (this *Engine) toValue(data interface{}) (v otto.Value, err error) {

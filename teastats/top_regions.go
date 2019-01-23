@@ -78,7 +78,7 @@ func (this *TopRegionStat) List(serverId string, size int64) (result []TopRegion
 
 	// 开始查找
 	coll := findCollection("stats.top.regions.monthly", nil)
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",

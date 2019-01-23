@@ -66,7 +66,7 @@ func (this *HourlyRequestsStat) SumHourRequests(serverId string, hours []string)
 	}
 	sumColl := findCollection("stats.requests.hourly", nil)
 
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",

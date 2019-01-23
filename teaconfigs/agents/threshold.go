@@ -53,14 +53,26 @@ func (this *Threshold) Test(value interface{}) bool {
 		varName := s[2 : len(s)-1]
 		switch v := value.(type) {
 		case string:
-			return v
+			if varName == "0" {
+				return v
+			}
+			return ""
 		case int8, int16, int, int32, int64, uint8, uint16, uint, uint32, uint64:
-			return fmt.Sprintf("%d", v)
+			if varName == "0" {
+				return fmt.Sprintf("%d", v)
+			}
+			return "0"
 		case float32, float64:
-			return fmt.Sprintf("%f", v)
+			if varName == "0" {
+				return fmt.Sprintf("%f", v)
+			}
+			return "0"
 		case bool:
-			if v {
-				return "1"
+			if varName == "0" {
+				if v {
+					return "1"
+				}
+				return "0"
 			}
 			return "0"
 		case []interface{}:

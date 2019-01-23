@@ -70,7 +70,7 @@ func (this *MonthlyPVStat) SumMonthPV(serverId string, months []string) int64 {
 	}
 	sumColl := findCollection("stats.pv.monthly", nil)
 
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",

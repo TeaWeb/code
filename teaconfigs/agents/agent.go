@@ -99,6 +99,11 @@ func (this *AgentConfig) Filename() string {
 
 // 保存
 func (this *AgentConfig) Save() error {
+	dirFile := files.NewFile(Tea.ConfigFile("agents"))
+	if !dirFile.Exists() {
+		dirFile.Mkdir()
+	}
+
 	writer, err := files.NewWriter(Tea.ConfigFile("agents/" + this.Filename()))
 	if err != nil {
 		return err
@@ -118,6 +123,11 @@ func (this *AgentConfig) Delete() error {
 // 添加App
 func (this *AgentConfig) AddApp(app *AppConfig) {
 	this.Apps = append(this.Apps, app)
+}
+
+// 添加一组App
+func (this *AgentConfig) AddApps(apps []*AppConfig) {
+	this.Apps = append(this.Apps, apps ...)
 }
 
 // 删除App
@@ -157,4 +167,28 @@ func (this *AgentConfig) FindTask(taskId string) (appConfig *AppConfig, taskConf
 		}
 	}
 	return nil, nil
+}
+
+// 清除系统App
+func (this *AgentConfig) ResetSystemApps() {
+	result := []*AppConfig{}
+	for _, app := range this.Apps {
+		if app.IsSystem {
+			continue
+		}
+		result = append(result, app)
+	}
+	this.Apps = result
+}
+
+// 取得系统App列表
+func (this *AgentConfig) FindSystemApps() []*AppConfig {
+	result := []*AppConfig{}
+	for _, app := range this.Apps {
+		if !app.IsSystem {
+			continue
+		}
+		result = append(result, app)
+	}
+	return result
 }

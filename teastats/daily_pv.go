@@ -70,7 +70,7 @@ func (this *DailyPVStat) SumDayPV(serverId string, days []string) int64 {
 	}
 	sumColl := findCollection("stats.pv.daily", nil)
 
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",

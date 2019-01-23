@@ -105,7 +105,7 @@ func (this *TopCostStat) List(serverId string, size int64) (result []TopCostStat
 
 	// 开始查找
 	coll := findCollection("stats.top.cost.monthly", nil)
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",

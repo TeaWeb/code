@@ -83,7 +83,7 @@ func (this *TopBrowserStat) List(serverId string, size int64) (result []TopBrows
 
 	// 开始查找
 	coll := findCollection("stats.top.browsers.monthly", nil)
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",

@@ -84,7 +84,7 @@ func (this *DailyUVStat) SumDayUV(serverId string, days []string) int64 {
 	}
 	sumColl := findCollection("stats.uv.daily", nil)
 
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",

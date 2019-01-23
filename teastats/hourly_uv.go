@@ -84,7 +84,7 @@ func (this *HourlyUVStat) SumHourUV(serverId string, hours []string) int64 {
 	}
 	sumColl := findCollection("stats.uv.hourly", nil)
 
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": {
 			"serverId": "` + serverId + `",

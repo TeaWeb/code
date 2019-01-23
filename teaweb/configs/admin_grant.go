@@ -8,7 +8,7 @@ const (
 	AdminGrantApi        = "api"
 	AdminGrantLog        = "log"
 	AdminGrantStatistics = "stat"
-	AdminGrantApp        = "app"
+	AdminGrantAgent      = "agent"
 	AdminGrantPlugin     = "plugin"
 	AdminGrantTeam       = "team"
 )

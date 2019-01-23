@@ -396,7 +396,7 @@ func (this *Query) queryDuration(collectionName string) (result map[string]float
 		return nil, err
 	}
 
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": ` + filterString + `
 	},
@@ -496,7 +496,7 @@ func (this *Query) queryGroup(collectionName string) (result map[string]map[stri
 		return nil, err
 	}
 
-	pipelines, err := teamongo.JSONArrayBytes([]byte(`[
+	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{
 		"$match": ` + filterString + `
 	},
