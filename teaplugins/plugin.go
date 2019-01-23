@@ -8,14 +8,13 @@ import (
 type Plugin struct {
 	IsExternal bool // 是否第三方开发的
 
-	Name        string    // 名称
-	Code        string    // 代号
-	Version     string    // 版本
-	Date        string    // 发布日期
-	Site        string    // 网站链接
-	Developer   string    // 开发者
-	Description string    // 插件简介
-	Widgets     []*Widget // 小组件
+	Name        string // 名称
+	Code        string // 代号
+	Version     string // 版本
+	Date        string // 发布日期
+	Site        string // 网站链接
+	Developer   string // 开发者
+	Description string // 插件简介
 	Apps        []*teaapps.App
 
 	HasRequestFilter  bool
@@ -24,16 +23,7 @@ type Plugin struct {
 
 func NewPlugin() *Plugin {
 	return &Plugin{
-		Widgets: []*Widget{},
 	}
-}
-
-func (this *Plugin) AddWidget(widget *Widget) {
-	if len(widget.Id) == 0 {
-		widget.Id = stringutil.Rand(16)
-	}
-
-	this.Widgets = append(this.Widgets, widget)
 }
 
 func (this *Plugin) ResetApps() {
@@ -58,9 +48,6 @@ func (this *Plugin) AppWithId(appId string) *teaapps.App {
 
 func (this *Plugin) InterfaceNames() []string {
 	names := []string{}
-	if len(this.Widgets) > 0 {
-		names = append(names, "widget")
-	}
 	if len(this.Apps) > 0 {
 		names = append(names, "app")
 	}

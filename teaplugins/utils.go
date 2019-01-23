@@ -31,66 +31,6 @@ func Plugins() []*Plugin {
 	return plugins
 }
 
-func TopBarWidgets() []*Widget {
-	pluginsLocker.Lock()
-	defer pluginsLocker.Unlock()
-
-	result := []*Widget{}
-	for _, p := range plugins {
-		for _, widget := range p.Widgets {
-			if widget.TopBar {
-				result = append(result, widget)
-			}
-		}
-	}
-	return result
-}
-
-func MenuBarWidgets() []*Widget {
-	pluginsLocker.Lock()
-	defer pluginsLocker.Unlock()
-
-	result := []*Widget{}
-	for _, p := range plugins {
-		for _, widget := range p.Widgets {
-			if widget.MenuBar {
-				result = append(result, widget)
-			}
-		}
-	}
-	return result
-}
-
-func HelperBarWidgets() []*Widget {
-	pluginsLocker.Lock()
-	defer pluginsLocker.Unlock()
-
-	result := []*Widget{}
-	for _, p := range plugins {
-		for _, widget := range p.Widgets {
-			if widget.HelperBar {
-				result = append(result, widget)
-			}
-		}
-	}
-	return result
-}
-
-func DashboardWidgets(group WidgetGroup) []*Widget {
-	pluginsLocker.Lock()
-	defer pluginsLocker.Unlock()
-
-	result := []*Widget{}
-	for _, p := range plugins {
-		for _, widget := range p.Widgets {
-			if widget.Dashboard && widget.Group == group {
-				result = append(result, widget)
-			}
-		}
-	}
-	return result
-}
-
 func FilterRequest(request *http.Request) (resultReq *http.Request, willContinue bool) {
 	if !HasRequestFilters {
 		return request, true

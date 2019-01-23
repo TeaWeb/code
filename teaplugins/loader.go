@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/TeaWeb/code/teaapps"
-	"github.com/TeaWeb/code/teacharts"
 	"github.com/TeaWeb/plugin/apps"
 	"github.com/TeaWeb/plugin/messages"
 	"github.com/iwind/TeaGo/logs"
@@ -179,57 +178,6 @@ func (this *Loader) ActionRegisterPlugin(action *messages.RegisterPluginAction) 
 			HasResponseFilters = true
 		}
 
-		// widget
-		for _, w := range p.Widgets {
-			w2 := NewWidget()
-			w2.Id = w.Id
-			w2.Name = w.Name
-			w2.Icon = w.Icon
-			w2.Title = w.Title
-			w2.URL = w.URL
-			w2.MoreURL = w.MoreURL
-			w2.TopBar = w.TopBar
-			w2.MenuBar = w.MenuBar
-			w2.HelperBar = w.HelperBar
-			w2.Dashboard = w.Dashboard
-			w2.Group = w.Group
-			w2.OnForceReload(func() {
-				action := new(messages.ReloadWidgetAction)
-				action.WidgetId = w2.Id
-				this.Write(action)
-			})
-			w2.OnReload(func() {
-				action := new(messages.ReloadWidgetAction)
-				action.WidgetId = w2.Id
-				this.Write(action)
-			})
-
-			// chart
-			for _, c := range w.Charts {
-				c2 := teacharts.ConvertInterface(c)
-				if c2 == nil {
-					continue
-				}
-				w2.AddChart(c2)
-			}
-
-			p2.AddWidget(w2)
-		}
-
-		// apps
-		for _, a := range p.Apps {
-			a2 := teaapps.NewApp()
-			a2.LoadFromInterface(a)
-			func(a *apps.App) {
-				a2.OnReload(func() {
-					action := new(messages.ReloadAppAction)
-					action.App = a
-					this.Write(action)
-				})
-			}(a)
-			p2.AddApp(a2)
-		}
-
 		Register(p2)
 
 		this.plugin = p2
@@ -237,23 +185,6 @@ func (this *Loader) ActionRegisterPlugin(action *messages.RegisterPluginAction) 
 
 	// 发送启动信息
 	this.Write(&messages.StartAction{})
-}
-
-func (this *Loader) ActionReloadChart(action *messages.ReloadChartAction) {
-	chart := teacharts.ConvertInterface(action.Chart)
-	if chart == nil {
-		return
-	}
-
-	// 查找
-	for _, w := range this.plugin.Widgets {
-		for index, c := range w.Charts {
-			if c.ChartId() == chart.ChartId() {
-				w.Charts[index] = chart
-				break
-			}
-		}
-	}
 }
 
 func (this *Loader) ActionFilterRequest(action *messages.FilterRequestAction) {
