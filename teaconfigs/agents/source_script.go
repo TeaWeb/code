@@ -17,6 +17,7 @@ import (
 type ScriptSource struct {
 	Path       string           `yaml:"path" json:"path"`
 	ScriptType string           `yaml:"scriptType" json:"scriptType"` // 脚本类型，可以为path, code
+	ScriptLang string           `yaml:"scriptLang" json:"scriptLang"` // 脚本语言
 	Script     string           `yaml:"script" json:"script"`         // 脚本代码
 	Env        []*EnvVariable   `yaml:"env" json:"env"`               // 环境变量设置
 	Cwd        string           `yaml:"cwd" json:"cwd"`

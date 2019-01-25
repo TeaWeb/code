@@ -51,6 +51,7 @@ func (this *UpdateItemAction) RunPost(params struct {
 
 	ScriptType      string
 	ScriptPath      string
+	ScriptLang      string
 	ScriptCode      string
 	ScriptCwd       string
 	ScriptEnvNames  []string
@@ -120,6 +121,7 @@ func (this *UpdateItemAction) RunPost(params struct {
 		source := agents.NewScriptSource()
 		source.ScriptType = params.ScriptType
 		source.Path = params.ScriptPath
+		source.ScriptLang = params.ScriptLang
 		source.Script = params.ScriptCode
 		source.Cwd = params.ScriptCwd
 		source.DataFormat = params.DataFormat
