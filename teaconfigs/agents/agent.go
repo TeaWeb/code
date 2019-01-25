@@ -169,6 +169,18 @@ func (this *AgentConfig) FindTask(taskId string) (appConfig *AppConfig, taskConf
 	return nil, nil
 }
 
+// 查找监控项
+func (this *AgentConfig) FindItem(itemId string) (appConfig *AppConfig, item *Item) {
+	for _, app := range this.Apps {
+		for _, item := range app.Items {
+			if item.Id == itemId {
+				return app, item
+			}
+		}
+	}
+	return nil, nil
+}
+
 // 清除系统App
 func (this *AgentConfig) ResetSystemApps() {
 	result := []*AppConfig{}

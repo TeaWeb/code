@@ -49,7 +49,9 @@ func (this *UpdateItemAction) RunPost(params struct {
 	SourceCode string
 	On         bool
 
+	ScriptType      string
 	ScriptPath      string
+	ScriptCode      string
 	ScriptCwd       string
 	ScriptEnvNames  []string
 	ScriptEnvValues []string
@@ -101,12 +103,24 @@ func (this *UpdateItemAction) RunPost(params struct {
 
 	switch params.SourceCode {
 	case "script":
-		params.Must.
-			Field("scriptPath", params.ScriptPath).
-			Require("请输入脚本路径")
+		if params.ScriptType == "path" {
+			params.Must.
+				Field("scriptPath", params.ScriptPath).
+				Require("请输入脚本路径")
+		} else if params.ScriptType == "code" {
+			params.Must.
+				Field("scriptCode", params.ScriptCode).
+				Require("请输入脚本代码")
+		} else {
+			params.Must.
+				Field("scriptPath", params.ScriptPath).
+				Require("请输入脚本路径")
+		}
 
 		source := agents.NewScriptSource()
+		source.ScriptType = params.ScriptType
 		source.Path = params.ScriptPath
+		source.Script = params.ScriptCode
 		source.Cwd = params.ScriptCwd
 		source.DataFormat = params.DataFormat
 

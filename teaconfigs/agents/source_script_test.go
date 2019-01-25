@@ -34,3 +34,18 @@ echo 10
 		t.Log(data)
 	}
 }
+
+func TestScriptSource_Execute_Script(t *testing.T) {
+	source := NewScriptSource()
+	source.DataFormat = SourceDataFormatSingeLine
+	source.ScriptType = "code"
+	source.Script = `#!/usr/bin/env bash
+echo 123
+`
+	v, err := source.Execute(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(v)
+}

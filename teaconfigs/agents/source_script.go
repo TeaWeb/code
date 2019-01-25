@@ -2,16 +2,23 @@ package agents
 
 import (
 	"bytes"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/utils/string"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"os/exec"
+	"runtime"
+	"strings"
 )
 
-// Script文件
+// Script文件数据源
 type ScriptSource struct {
 	Path       string           `yaml:"path" json:"path"`
-	Env        []*EnvVariable   `yaml:"env" json:"env"` // 环境变量设置
+	ScriptType string           `yaml:"scriptType" json:"scriptType"` // 脚本类型，可以为path, code
+	Script     string           `yaml:"script" json:"script"`         // 脚本代码
+	Env        []*EnvVariable   `yaml:"env" json:"env"`               // 环境变量设置
 	Cwd        string           `yaml:"cwd" json:"cwd"`
 	DataFormat SourceDataFormat `yaml:"dataFormat" json:"dataFormat"` // 数据格式
 }
@@ -25,10 +32,6 @@ func NewScriptSource() *ScriptSource {
 
 // 校验
 func (this *ScriptSource) Validate() error {
-	if len(this.Path) == 0 {
-		return errors.New("path should not be empty")
-	}
-
 	return nil
 }
 
@@ -52,10 +55,54 @@ func (this *ScriptSource) DataFormatCode() SourceDataFormat {
 	return this.DataFormat
 }
 
+// 格式化脚本
+func (this *ScriptSource) FormattedScript() string {
+	script := this.Script
+	script = strings.Replace(script, "\r", "", -1)
+	return script
+}
+
+// 保存到本地
+func (this *ScriptSource) Generate(id string) (path string, err error) {
+	if runtime.GOOS == "windows" {
+		path = Tea.ConfigFile("agents/source." + id + ".bat")
+	} else {
+		path = Tea.ConfigFile("agents/source." + id + ".script")
+	}
+	shFile := files.NewFile(path)
+	if !shFile.Exists() {
+		err = shFile.WriteString(this.FormattedScript())
+		if err != nil {
+			return
+		}
+		err = shFile.Chmod(0777)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
 // 执行
 func (this *ScriptSource) Execute(params map[string]string) (value interface{}, err error) {
+	// 脚本
+	if this.ScriptType == "code" {
+		path, err := this.Generate(stringutil.Rand(16))
+		if err != nil {
+			return nil, err
+		}
+		this.Path = path
+
+		defer func() {
+			err := files.NewFile(this.Path).Delete()
+			if err != nil {
+				logs.Error(err)
+			}
+		}()
+	}
+
 	if len(this.Path) == 0 {
-		return nil, errors.New("path should not be empty")
+		return nil, errors.New("path or script should not be empty")
 	}
 
 	cmd := exec.Command(this.Path)

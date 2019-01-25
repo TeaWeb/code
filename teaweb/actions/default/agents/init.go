@@ -1,7 +1,6 @@
 package agents
 
 import (
-	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/app"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo"

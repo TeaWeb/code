@@ -75,6 +75,8 @@ func (this *MonitorAction) RunPost(params struct {
 			}
 		}
 
+		item.Validate()
+
 		return maps.Map{
 			"id":          item.Id,
 			"name":        item.Name,
@@ -84,6 +86,7 @@ func (this *MonitorAction) RunPost(params struct {
 			"latestValue": latestValue,
 			"latestTime":  latestTime,
 			"latestLevel": agents.FindNoticeLevel(latestLevel),
+			"sourceName":  item.Source().Name(),
 		}
 	})
 
