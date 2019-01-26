@@ -6,16 +6,17 @@ import "github.com/iwind/TeaGo/maps"
 type ThresholdOperator = string
 
 const (
-	ThresholdOperatorRegexp   = "regexp"
-	ThresholdOperatorGt       = "gt"
-	ThresholdOperatorGte      = "gte"
-	ThresholdOperatorLt       = "lt"
-	ThresholdOperatorLte      = "lte"
-	ThresholdOperatorEq       = "eq"
-	ThresholdOperatorNot      = "not"
-	ThresholdOperatorPrefix   = "prefix"
-	ThresholdOperatorSuffix   = "suffix"
-	ThresholdOperatorContains = "contains"
+	ThresholdOperatorRegexp      = "regexp"
+	ThresholdOperatorGt          = "gt"
+	ThresholdOperatorGte         = "gte"
+	ThresholdOperatorLt          = "lt"
+	ThresholdOperatorLte         = "lte"
+	ThresholdOperatorEq          = "eq"
+	ThresholdOperatorNot         = "not"
+	ThresholdOperatorPrefix      = "prefix"
+	ThresholdOperatorSuffix      = "suffix"
+	ThresholdOperatorContains    = "contains"
+	ThresholdOperatorNotContains = "not contains"
 )
 
 // 所有的运算符
@@ -30,6 +31,11 @@ func AllThresholdOperators() []maps.Map {
 			"name":        "等于",
 			"op":          ThresholdOperatorEq,
 			"description": "使用字符串对比参数值是否相等于某个值",
+		},
+		{
+			"name":        "不等于",
+			"op":          ThresholdOperatorNot,
+			"description": "使用字符串对比参数值是否不相等于某个值",
 		},
 		{
 			"name":        "前缀",
@@ -47,9 +53,9 @@ func AllThresholdOperators() []maps.Map {
 			"description": "参数值包含另外一个字符串",
 		},
 		{
-			"name":        "不等于",
-			"op":          ThresholdOperatorNot,
-			"description": "使用字符串对比参数值是否不相等于某个值",
+			"name":        "不包含",
+			"op":          ThresholdOperatorNotContains,
+			"description": "参数值不包含另外一个字符串",
 		},
 		{
 			"name":        "大于",

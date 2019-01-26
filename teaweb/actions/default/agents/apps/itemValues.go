@@ -74,6 +74,7 @@ func (this *ItemValuesAction) RunPost(params struct {
 			"timestamp":   value.Timestamp,
 			"timeFormat":  value.TimeFormat,
 			"value":       value.Value,
+			"error":       value.Error,
 			"noticeLevel": agents.FindNoticeLevel(value.NoticeLevel),
 		}
 	})

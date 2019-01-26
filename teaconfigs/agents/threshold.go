@@ -115,6 +115,8 @@ func (this *Threshold) Test(value interface{}) bool {
 		return strings.HasSuffix(types.String(paramValue), this.Value)
 	case ThresholdOperatorContains:
 		return strings.Contains(types.String(paramValue), this.Value)
+	case ThresholdOperatorNotContains:
+		return !strings.Contains(types.String(paramValue), this.Value)
 	}
 	return false
 }

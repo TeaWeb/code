@@ -113,6 +113,7 @@ func (this *PushAction) Run(params struct{}) {
 			AgentId:     agent.Id,
 			ItemId:      itemId,
 			Value:       v,
+			Error:       m.GetString("error"),
 			NoticeLevel: level,
 		}
 		value.SetTime(t)
