@@ -13,9 +13,8 @@ type RuntimeAction actions.Action
 var runtimeLogOffset = int64(0)
 var runtimeLogLocker = sync.Mutex{}
 
+// 系统日志
 func (this *RuntimeAction) Run(params struct{}) {
-	this.Data["teaMenu"] = "log.runtime"
-
 	runtimeLogLocker.Lock()
 	runtimeLogOffset = 0
 	runtimeLogLocker.Unlock()
@@ -23,6 +22,7 @@ func (this *RuntimeAction) Run(params struct{}) {
 	this.Show()
 }
 
+// 读取数据
 func (this *RuntimeAction) RunPost() {
 	runtimeLogLocker.Lock()
 	runtimeLogLocker.Unlock()

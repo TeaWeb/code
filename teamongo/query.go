@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
@@ -15,28 +15,28 @@ import (
 	"time"
 )
 
-type ValueQueryAction = string
+type QueryAction = string
 
 const (
-	ValueQueryActionCount   = "count"
-	ValueQueryActionSum     = "sum"
-	ValueQueryActionAvg     = "avg"
-	ValueQueryActionMin     = "min"
-	ValueQueryActionMax     = "max"
-	ValueQueryActionFind    = "find"
-	ValueQueryActionFindAll = "findAll"
+	QueryActionCount   = "count"
+	QueryActionSum     = "sum"
+	QueryActionAvg     = "avg"
+	QueryActionMin     = "min"
+	QueryActionMax     = "max"
+	QueryActionFind    = "find"
+	QueryActionFindAll = "findAll"
 )
 
-var valueCollectionsMap = map[string]*Collection{}
-var valueCollectionsLocker sync.Mutex
+var queryCollectionsMap = map[string]*Collection{}
+var queryCollectionsLocker sync.Mutex
 
-type ValueQuery struct {
-	action   string
-	agentId  string
-	appId    string
-	group    []string
-	cond     map[string]interface{}
-	forField string
+type Query struct {
+	collectionName string
+	modelType      reflect.Type
+	action         string
+	group          []string
+	cond           map[string]interface{}
+	forField       string
 
 	sorts  []map[string]int
 	offset int64
@@ -45,36 +45,28 @@ type ValueQuery struct {
 	debug bool
 }
 
-func NewValueQuery() *ValueQuery {
-	return &ValueQuery{
-		cond:   map[string]interface{}{},
-		sorts:  []map[string]int{},
-		offset: -1,
-		size:   -1,
+func NewQuery(collectionName string, modelPtr interface{}) *Query {
+	return &Query{
+		collectionName: collectionName,
+		modelType:      reflect.TypeOf(modelPtr),
+		cond:           map[string]interface{}{},
+		sorts:          []map[string]int{},
+		offset:         -1,
+		size:           -1,
 	}
 }
 
-func (this *ValueQuery) Debug() *ValueQuery {
+func (this *Query) Debug() *Query {
 	this.debug = true
 	return this
 }
 
-func (this *ValueQuery) Agent(agentId string) *ValueQuery {
-	this.agentId = agentId
-	return this
-}
-
-func (this *ValueQuery) App(appId string) *ValueQuery {
-	this.appId = appId
-	return this
-}
-
-func (this *ValueQuery) Item(itemId string) *ValueQuery {
+func (this *Query) Item(itemId string) *Query {
 	this.Attr("itemId", itemId)
 	return this
 }
 
-func (this *ValueQuery) Asc(field string) *ValueQuery {
+func (this *Query) Asc(field string) *Query {
 	if len(field) == 0 {
 		field = "_id"
 	}
@@ -84,7 +76,7 @@ func (this *ValueQuery) Asc(field string) *ValueQuery {
 	return this
 }
 
-func (this *ValueQuery) Desc(field string) *ValueQuery {
+func (this *Query) Desc(field string) *Query {
 	if len(field) == 0 {
 		field = "_id"
 	}
@@ -94,22 +86,26 @@ func (this *ValueQuery) Desc(field string) *ValueQuery {
 	return this
 }
 
-func (this *ValueQuery) Offset(offset int64) *ValueQuery {
+func (this *Query) DeskPk() *Query {
+	return this.Desc("_id")
+}
+
+func (this *Query) Offset(offset int64) *Query {
 	this.offset = offset
 	return this
 }
 
-func (this *ValueQuery) Limit(size int64) *ValueQuery {
+func (this *Query) Limit(size int64) *Query {
 	this.size = size
 	return this
 }
 
-func (this *ValueQuery) Group(group []string) *ValueQuery {
+func (this *Query) Group(group []string) *Query {
 	this.group = group
 	return this
 }
 
-func (this *ValueQuery) Attr(field string, value interface{}) *ValueQuery {
+func (this *Query) Attr(field string, value interface{}) *Query {
 	if reflect.TypeOf(value).Kind() == reflect.Slice {
 		this.Op("in", field, value)
 	} else {
@@ -119,7 +115,7 @@ func (this *ValueQuery) Attr(field string, value interface{}) *ValueQuery {
 }
 
 // 设置日志ID
-func (this *ValueQuery) Id(idString string) *ValueQuery {
+func (this *Query) Id(idString string) *Query {
 	objectId, err := objectid.FromHex(idString)
 	if err != nil {
 		logs.Error(err)
@@ -129,7 +125,7 @@ func (this *ValueQuery) Id(idString string) *ValueQuery {
 	return this
 }
 
-func (this *ValueQuery) Op(op string, field string, value interface{}) {
+func (this *Query) Op(op string, field string, value interface{}) {
 	_, found := this.cond[field]
 	if found {
 		this.cond[field].(map[string]interface{})[op] = value
@@ -140,7 +136,7 @@ func (this *ValueQuery) Op(op string, field string, value interface{}) {
 	}
 }
 
-func (this *ValueQuery) Not(field string, value interface{}) *ValueQuery {
+func (this *Query) Not(field string, value interface{}) *Query {
 	if reflect.TypeOf(value).Kind() == reflect.Slice {
 		this.Op("nin", field, value)
 	} else {
@@ -149,53 +145,49 @@ func (this *ValueQuery) Not(field string, value interface{}) *ValueQuery {
 	return this
 }
 
-func (this *ValueQuery) Lt(field string, value interface{}) *ValueQuery {
+func (this *Query) Lt(field string, value interface{}) *Query {
 	this.Op("lt", field, value)
 	return this
 }
 
-func (this *ValueQuery) Lte(field string, value interface{}) *ValueQuery {
+func (this *Query) Lte(field string, value interface{}) *Query {
 	this.Op("lte", field, value)
 	return this
 }
 
-func (this *ValueQuery) Gt(field string, value interface{}) *ValueQuery {
+func (this *Query) Gt(field string, value interface{}) *Query {
 	this.Op("gt", field, value)
 	return this
 }
 
-func (this *ValueQuery) Gte(field string, value interface{}) *ValueQuery {
+func (this *Query) Gte(field string, value interface{}) *Query {
 	this.Op("gte", field, value)
 	return this
 }
 
-func (this *ValueQuery) Action(action ValueQueryAction, ) *ValueQuery {
+func (this *Query) Action(action QueryAction, ) *Query {
 	this.action = action
 	return this
 }
 
-func (this *ValueQuery) For(field string) *ValueQuery {
+func (this *Query) For(field string) *Query {
 	this.forField = field
 	return this
 }
 
 // 开始执行
-func (this *ValueQuery) Execute() (interface{}, error) {
-	if len(this.agentId) == 0 {
-		return nil, errors.New("AgentId should be set")
-	}
-	collectionName := "values.agent." + this.agentId
-	if this.action == ValueQueryActionFindAll {
-		result := []*agents.Value{}
-		ones, err := this.findAll(collectionName)
+func (this *Query) Execute() (interface{}, error) {
+	if this.action == QueryActionFindAll {
+		result := []interface{}{}
+		ones, err := this.FindAll()
 		if err != nil {
 			return nil, err
 		}
 		result = append(result, ones ...)
 		return result, nil
-	} else if this.action == ValueQueryActionFind {
-		result := []*agents.Value{}
-		ones, err := this.findAll(collectionName)
+	} else if this.action == QueryActionFind {
+		result := []interface{}{}
+		ones, err := this.FindAll()
 		if err != nil {
 			return nil, err
 		}
@@ -205,68 +197,56 @@ func (this *ValueQuery) Execute() (interface{}, error) {
 		}
 		return result[0], nil
 	} else if len(this.group) > 0 { // 按某个字段分组
-		return this.queryGroup(collectionName)
+		return this.queryGroup()
 	} else { // count
-		return this.queryNumber(collectionName)
+		return this.queryNumber()
 	}
 }
 
 // 查找单个数据
-func (this *ValueQuery) Find() (*agents.Value, error) {
-	result, err := this.Action(ValueQueryActionFind).Execute()
+func (this *Query) Find() (interface{}, error) {
+	result, err := this.Action(QueryActionFind).Execute()
 	if err != nil {
 		return nil, err
 	}
 	if result == nil {
 		return nil, nil
 	}
-	return result.(*agents.Value), nil
+	return result, nil
+}
+
+// 数字
+func (this *Query) Count() (int64, error) {
+	count, err := this.Action(QueryActionCount).Execute()
+	if err != nil {
+		return 0, err
+	}
+	return types.Int64(count), err
 }
 
 // 插入新数据
-func (this *ValueQuery) Insert(value *agents.Value) error {
+func (this *Query) Insert(value interface{}) error {
 	if value == nil {
 		return errors.New("value should not be nil")
 	}
-	if len(this.agentId) == 0 {
-		if len(value.AgentId) > 0 {
-			this.agentId = value.AgentId
-		} else {
-			return errors.New("AgentId should be set")
-		}
-	}
 
-	if value.Value == nil {
-		value.Value = 0
-	}
-
-	if value.Id.IsZero() {
-		value.Id = objectid.New()
-	}
-
-	collectionName := "values.agent." + this.agentId
-	coll := this.selectColl(collectionName)
-	_, err := coll.InsertOne(context.Background(), *value)
+	coll := this.selectColl()
+	_, err := coll.InsertOne(this.context(3*time.Second), value)
 	return err
 }
 
 // 删除数据
-func (this *ValueQuery) Delete() error {
-	if len(this.agentId) == 0 {
-		return errors.New("AgentId should be set")
-	}
-
+func (this *Query) Delete() error {
 	filter := this.buildFilter()
 
-	collectionName := "values.agent." + this.agentId
-	coll := this.selectColl(collectionName)
+	coll := this.selectColl()
 	_, err := coll.DeleteMany(context.Background(), filter)
 	return err
 }
 
-func (this *ValueQuery) queryNumber(collectionName string) (float64, error) {
-	if this.action == ValueQueryActionCount {
-		coll := this.selectColl(collectionName)
+func (this *Query) queryNumber() (float64, error) {
+	if this.action == QueryActionCount {
+		coll := this.selectColl()
 		filter := this.buildFilter()
 		i, err := coll.Count(context.Background(), filter)
 		if err != nil {
@@ -274,7 +254,7 @@ func (this *ValueQuery) queryNumber(collectionName string) (float64, error) {
 		}
 		return float64(i), nil
 	} else {
-		result, err := this.queryGroup(collectionName)
+		result, err := this.queryGroup()
 		if err != nil {
 			return 0, err
 		}
@@ -288,7 +268,7 @@ func (this *ValueQuery) queryNumber(collectionName string) (float64, error) {
 	return 0, nil
 }
 
-func (this *ValueQuery) queryGroup(collectionName string) (result map[string]map[string]interface{}, err error) {
+func (this *Query) queryGroup() (result map[string]map[string]interface{}, err error) {
 	result = map[string]map[string]interface{}{}
 
 	var groupId interface{} = nil
@@ -306,32 +286,32 @@ func (this *ValueQuery) queryGroup(collectionName string) (result map[string]map
 	}
 
 	var countField interface{}
-	if this.action == ValueQueryActionCount {
+	if this.action == QueryActionCount {
 		countField = map[string]interface{}{
 			"$sum": 1,
 		}
-	} else if this.action == ValueQueryActionMin {
+	} else if this.action == QueryActionMin {
 		if len(this.forField) == 0 {
 			return nil, errors.New("should specify field for the action")
 		}
 		countField = map[string]interface{}{
 			"$min": "$" + this.forField,
 		}
-	} else if this.action == ValueQueryActionMax {
+	} else if this.action == QueryActionMax {
 		if len(this.forField) == 0 {
 			return nil, errors.New("should specify field for the action")
 		}
 		countField = map[string]interface{}{
 			"$max": "$" + this.forField,
 		}
-	} else if this.action == ValueQueryActionAvg {
+	} else if this.action == QueryActionAvg {
 		if len(this.forField) == 0 {
 			return nil, errors.New("should specify field for the action")
 		}
 		countField = map[string]interface{}{
 			"$avg": "$" + this.forField,
 		}
-	} else if this.action == ValueQueryActionSum {
+	} else if this.action == QueryActionSum {
 		if len(this.forField) == 0 {
 			return nil, errors.New("should specify field for the action")
 		}
@@ -369,7 +349,7 @@ func (this *ValueQuery) queryGroup(collectionName string) (result map[string]map
 		return nil, err
 	}
 
-	cursor, err := this.selectColl(collectionName).Aggregate(context.Background(), pipelines)
+	cursor, err := this.selectColl().Aggregate(context.Background(), pipelines)
 	if err != nil {
 		return nil, err
 	}
@@ -392,8 +372,8 @@ func (this *ValueQuery) queryGroup(collectionName string) (result map[string]map
 	return
 }
 
-func (this *ValueQuery) findAll(collectionName string) (result []*agents.Value, err error) {
-	coll := this.selectColl(collectionName)
+func (this *Query) FindAll() (result []interface{}, err error) {
+	coll := this.selectColl()
 	opts := []findopt.Find{}
 	if this.offset > -1 {
 		opts = append(opts, findopt.Skip(this.offset))
@@ -422,29 +402,43 @@ func (this *ValueQuery) findAll(collectionName string) (result []*agents.Value, 
 		}
 	}()
 
-	result = []*agents.Value{}
+	result = []interface{}{}
 	for cursor.Next(context.Background()) {
-		m := &agents.Value{}
-		err := cursor.Decode(m)
-
-		// m.Value处理，因为m.Value是一个interface{}，在Decode的时候有可能会变成*bson.Document
-		if m.Value != nil {
-			m.Value, err = BSONDecode(m.Value)
-			if err != nil {
-				logs.Error(err)
-			}
-		}
+		m := map[string]interface{}{}
+		err := cursor.Decode(&m)
 
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, m)
+
+		one, err := BSONDecode(m)
+		if err == nil {
+			ptrValue := reflect.New(this.modelType)
+			ptr := ptrValue.Interface()
+			err = teautils.MapToObjectJSON(one.(map[string]interface{}), ptr)
+			if err != nil {
+				logs.Error(err)
+				continue
+			}
+
+			// _id
+			modelCopyValue := reflect.Indirect(ptrValue)
+			idField := modelCopyValue.Elem().FieldByName("Id")
+			if idField.IsValid() {
+				idField.Set(reflect.ValueOf(m["_id"]))
+			}
+
+			result = append(result, modelCopyValue.Interface())
+		} else {
+			logs.Error(err)
+			continue
+		}
 	}
 
 	return result, nil
 }
 
-func (this *ValueQuery) buildFilter() map[string]interface{} {
+func (this *Query) buildFilter() map[string]interface{} {
 	filter := map[string]interface{}{}
 
 	// cond
@@ -462,11 +456,6 @@ func (this *ValueQuery) buildFilter() map[string]interface{} {
 		}
 	}
 
-	// app id
-	if len(this.appId) > 0 {
-		filter["appId"] = this.appId
-	}
-
 	if this.debug {
 		logs.PrintAsJSON(filter)
 	}
@@ -474,7 +463,7 @@ func (this *ValueQuery) buildFilter() map[string]interface{} {
 	return filter
 }
 
-func (this *ValueQuery) jsonEncode(i interface{}) (string, error) {
+func (this *Query) jsonEncode(i interface{}) (string, error) {
 	data, err := json.Marshal(i)
 	if err != nil {
 		return "", err
@@ -482,7 +471,7 @@ func (this *ValueQuery) jsonEncode(i interface{}) (string, error) {
 	return string(data), nil
 }
 
-func (this *ValueQuery) jsonEncodeString(i interface{}) string {
+func (this *Query) jsonEncodeString(i interface{}) string {
 	data, err := json.Marshal(i)
 	if err != nil {
 		return ""
@@ -490,19 +479,21 @@ func (this *ValueQuery) jsonEncodeString(i interface{}) string {
 	return string(data)
 }
 
-func (this *ValueQuery) selectColl(collectionName string) *Collection {
-	valueCollectionsLocker.Lock()
-	defer valueCollectionsLocker.Unlock()
+func (this *Query) selectColl() *Collection {
+	queryCollectionsLocker.Lock()
+	defer queryCollectionsLocker.Unlock()
 
-	coll, found := valueCollectionsMap[collectionName]
+	coll, found := queryCollectionsMap[this.collectionName]
 	if found {
 		return coll
 	}
 
-	coll = FindCollection(collectionName)
-	coll.CreateIndex(map[string]bool{
-		"itemId": true,
-	})
-	valueCollectionsMap[collectionName] = coll
+	coll = FindCollection(this.collectionName)
+	queryCollectionsMap[this.collectionName] = coll
 	return coll
+}
+
+func (this *Query) context(timeout time.Duration) context.Context {
+	ctx, _ := context.WithTimeout(context.Background(), timeout)
+	return ctx
 }

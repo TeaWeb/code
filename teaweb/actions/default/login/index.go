@@ -1,7 +1,9 @@
 package login
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/audits"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo/actions"
@@ -30,12 +32,18 @@ func (this *IndexAction) RunGet() {
 	this.Show()
 }
 
+// 提交登录
 func (this *IndexAction) RunPost(params struct {
 	Username string
 	Password string
 	Must     *actions.Must
 	Auth     *helpers.UserShouldAuth
 }) {
+	// 记录
+	teamongo.NewAuditsQuery().Insert(audits.NewLog(params.Username, audits.ActionLogin, "登录", map[string]string{
+		"ip": this.RequestRemoteIP(),
+	}))
+
 	// 检查IP限制
 	if !configs.SharedAdminConfig().AllowIP(this.RequestRemoteIP()) {
 		this.ResponseWriter.WriteHeader(http.StatusForbidden)

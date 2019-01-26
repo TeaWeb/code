@@ -132,6 +132,14 @@ func BSONDecode(value interface{}) (interface{}, error) {
 	case *bson.Value:
 		v2 := v.Interface()
 		return BSONDecode(v2)
+	case map[string]interface{}:
+		for itemKey, itemValue := range v {
+			r, err := BSONDecode(itemValue)
+			if err != nil {
+				return nil, err
+			}
+			v[itemKey] = r
+		}
 	}
 
 	return value, nil

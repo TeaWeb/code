@@ -2,6 +2,7 @@ package log
 
 import (
 	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -21,6 +22,8 @@ func (this *IndexAction) Run(params struct {
 	this.Data["server"] = maps.Map{
 		"filename": params.Server,
 	}
+
+	proxyutils.AddServerMenu(this.Object())
 
 	this.Show()
 }

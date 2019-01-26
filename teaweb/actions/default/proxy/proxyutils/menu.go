@@ -22,8 +22,8 @@ func AddServerMenu(action *actions.ActionObject) {
 		urlPrefix := "/proxy/board"
 		if action.HasPrefix("/stat") {
 			urlPrefix = "/stat"
-		} else if action.HasPrefix("/log") {
-			urlPrefix = "/log"
+		} else if action.HasPrefix("/proxy/log") {
+			urlPrefix = "/proxy/log"
 		} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
 			urlPrefix = "/proxy/detail"
 		}
@@ -58,7 +58,7 @@ func AddServerMenu(action *actions.ActionObject) {
 				{
 					"name":    "日志",
 					"subName": "",
-					"url":     "/log?server=" + serverFilename,
+					"url":     "/proxy/log?server=" + serverFilename,
 					"active":  action.Spec.HasClassPrefix("log."),
 					"icon":    "history",
 				},

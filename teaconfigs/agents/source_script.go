@@ -95,9 +95,12 @@ func (this *ScriptSource) Execute(params map[string]string) (value interface{}, 
 		this.Path = path
 
 		defer func() {
-			err := files.NewFile(this.Path).Delete()
-			if err != nil {
-				logs.Error(err)
+			f := files.NewFile(this.Path)
+			if f.Exists() {
+				err := f.Delete()
+				if err != nil {
+					logs.Error(err)
+				}
 			}
 		}()
 	}
