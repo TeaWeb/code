@@ -74,3 +74,8 @@ func (this *AdminUser) ResetLoginTries() {
 	defer this.locker.Unlock()
 	this.countLoginTries = 0
 }
+
+// 重置状态
+func (this *AdminUser) Reset() {
+	this.ResetLoginTries()
+}

@@ -59,7 +59,7 @@ func (this *IndexAction) RunPost(params struct {
 	if user != nil {
 		// 错误次数
 		if user.CountLoginTries() >= 3 {
-			this.Fail("登录失败已超过3次，系统被锁定，需要重启服务后才能继续")
+			this.Fail("登录失败已超过3次，系统被锁定，需要重置服务后才能继续")
 		}
 
 		// 密码错误

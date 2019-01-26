@@ -214,3 +214,13 @@ func (this *AdminConfig) AllowIP(ip string) bool {
 
 	return false
 }
+
+// 重置状态
+func (this *AdminConfig) Reset() {
+	adminConfigLocker.Lock()
+	defer adminConfigLocker.Unlock()
+
+	for _, u := range this.Users {
+		u.Reset()
+	}
+}
