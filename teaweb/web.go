@@ -131,6 +131,7 @@ func lookupArgs() bool {
 		fmt.Println("  start", "\n     start the server")
 		fmt.Println("  stop", "\n     stop the server")
 		fmt.Println("  restart", "\n     restart the server")
+		fmt.Println("  reset", "\n     reset the server status")
 		return true
 	} else if lists.Contains(args, "-v") { // 版本号
 		fmt.Println("TeaWeb v"+teaconst.TeaVersion, "(build: "+runtime.Version(), runtime.GOOS, runtime.GOARCH+")")

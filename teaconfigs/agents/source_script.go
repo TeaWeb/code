@@ -86,16 +86,18 @@ func (this *ScriptSource) Generate(id string) (path string, err error) {
 
 // 执行
 func (this *ScriptSource) Execute(params map[string]string) (value interface{}, err error) {
+	currentPath := this.Path
+
 	// 脚本
 	if this.ScriptType == "code" {
 		path, err := this.Generate(stringutil.Rand(16))
 		if err != nil {
 			return nil, err
 		}
-		this.Path = path
+		currentPath = path
 
 		defer func() {
-			f := files.NewFile(this.Path)
+			f := files.NewFile(currentPath)
 			if f.Exists() {
 				err := f.Delete()
 				if err != nil {
@@ -105,11 +107,11 @@ func (this *ScriptSource) Execute(params map[string]string) (value interface{}, 
 		}()
 	}
 
-	if len(this.Path) == 0 {
+	if len(currentPath) == 0 {
 		return nil, errors.New("path or script should not be empty")
 	}
 
-	cmd := exec.Command(this.Path)
+	cmd := exec.Command(currentPath)
 
 	if len(this.Env) > 0 {
 		for _, env := range this.Env {
