@@ -14,6 +14,7 @@ func init() {
 			Prefix("/settings/login").
 			Get("", new(IndexAction)).
 			GetPost("/update", new(UpdateAction)).
+			Post("/generateKey", new(GenerateKeyAction)).
 			EndAll()
 	})
 }

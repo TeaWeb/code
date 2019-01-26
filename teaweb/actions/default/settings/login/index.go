@@ -14,18 +14,15 @@ func (this *IndexAction) Run(params struct{}) {
 	this.Data["passwordMask"] = ""
 
 	config := configs.SharedAdminConfig()
-	var found = false
-	for _, user := range config.Users {
-		if user.Username == username {
-			this.Data["passwordMask"] = strings.Repeat("*", len(user.Password))
-			found = true
-		}
-	}
 
-	if !found {
+	user := config.FindUser(username)
+	if user == nil {
 		this.RedirectURL("/logout")
 		return
 	}
+
+	this.Data["passwordMask"] = strings.Repeat("*", len(user.Password))
+	this.Data["key"] = user.Key
 
 	this.Show()
 }

@@ -11,6 +11,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/notices"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/settings"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/api/agent"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/api/monitor"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/cache"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/dashboard"
 	"github.com/TeaWeb/code/teaweb/actions/default/index"

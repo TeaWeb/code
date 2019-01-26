@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"github.com/iwind/TeaGo/utils/string"
 	"sync"
 )
 
@@ -9,6 +10,7 @@ type AdminUser struct {
 	Username string   `yaml:"username" json:"username"` // 用户名
 	Password string   `yaml:"password" json:"password"` // 密码
 	Role     []string `yaml:"role" json:"role"`         // 角色
+	Key      string   `yaml:"key" json:"key"`           // Key，用来请求API等
 
 	Name      string `yaml:"name" json:"name"`           // 姓名
 	Avatar    string `yaml:"avatar" json:"avatar"`       // 头像
@@ -27,7 +29,9 @@ type AdminUser struct {
 
 // 获取新对象
 func NewAdminUser() *AdminUser {
-	return &AdminUser{}
+	user := &AdminUser{}
+	user.Key = user.GenerateKey()
+	return user
 }
 
 // 判断用户是否已被授权
@@ -78,4 +82,9 @@ func (this *AdminUser) ResetLoginTries() {
 // 重置状态
 func (this *AdminUser) Reset() {
 	this.ResetLoginTries()
+}
+
+// 生成Key
+func (this *AdminUser) GenerateKey() string {
+	return stringutil.Rand(32)
 }

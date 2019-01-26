@@ -122,6 +122,23 @@ func (this *AdminConfig) FindUser(username string) *AdminUser {
 	return nil
 }
 
+// 使用Key查找用户
+func (this *AdminConfig) FindUserWithKey(key string) *AdminUser {
+	adminConfigLocker.Lock()
+	defer adminConfigLocker.Unlock()
+
+	if len(key) == 0 {
+		return nil
+	}
+
+	for _, user := range this.Users {
+		if user.Key == key {
+			return user
+		}
+	}
+	return nil
+}
+
 // 添加用户
 func (this *AdminConfig) AddUser(user *AdminUser) {
 	this.Users = append(this.Users, user)
