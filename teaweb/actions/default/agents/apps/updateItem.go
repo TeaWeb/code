@@ -11,6 +11,7 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"net/http"
+	"regexp"
 )
 
 type UpdateItemAction actions.Action
@@ -177,10 +178,20 @@ func (this *UpdateItemAction) RunPost(params struct {
 	item.Thresholds = []*agents.Threshold{}
 	for index, param := range params.CondParams {
 		if index < len(params.CondValues) && index < len(params.CondOps) && index < len(params.CondValues) && index < len(params.CondNoticeLevels) && index < len(params.CondNoticeMessages) {
+			// 校验
+			op := params.CondOps[index]
+			value := params.CondValues[index]
+			if op == agents.ThresholdOperatorRegexp || op == agents.ThresholdOperatorNotRegexp {
+				_, err := regexp.Compile(value)
+				if err != nil {
+					this.Fail("阈值" + param + "正则表达式" + value + "校验失败：" + err.Error())
+				}
+			}
+
 			t := agents.NewThreshold()
 			t.Param = param
-			t.Operator = params.CondOps[index]
-			t.Value = params.CondValues[index]
+			t.Operator = op
+			t.Value = value
 			t.NoticeLevel = types.Uint8(params.CondNoticeLevels[index])
 			t.NoticeMessage = params.CondNoticeMessages[index]
 			item.AddThreshold(t)

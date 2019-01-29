@@ -1,12 +1,15 @@
 package agents
 
-import "github.com/iwind/TeaGo/maps"
+import (
+	"github.com/iwind/TeaGo/maps"
+)
 
 // 运算符定义
 type ThresholdOperator = string
 
 const (
 	ThresholdOperatorRegexp      = "regexp"
+	ThresholdOperatorNotRegexp   = "not regexp"
 	ThresholdOperatorGt          = "gt"
 	ThresholdOperatorGte         = "gte"
 	ThresholdOperatorLt          = "lt"
@@ -23,9 +26,14 @@ const (
 func AllThresholdOperators() []maps.Map {
 	return []maps.Map{
 		{
-			"name":        "正则表达式匹配",
+			"name":        "匹配正则表达式",
 			"op":          ThresholdOperatorRegexp,
-			"description": "使用正则表达式匹配",
+			"description": "判断参数值是否匹配正则表达式",
+		},
+		{
+			"name":        "不匹配正则表达式",
+			"op":          ThresholdOperatorNotRegexp,
+			"description": "判断参数值是否不匹配正则表达式",
 		},
 		{
 			"name":        "等于",

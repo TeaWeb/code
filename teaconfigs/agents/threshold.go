@@ -32,7 +32,7 @@ func NewThreshold() *Threshold {
 
 // 校验
 func (this *Threshold) Validate() error {
-	if this.Operator == ThresholdOperatorRegexp {
+	if this.Operator == ThresholdOperatorRegexp || this.Operator == ThresholdOperatorNotRegexp {
 		reg, err := regexp.Compile(this.Value)
 		if err != nil {
 			return err
@@ -98,6 +98,11 @@ func (this *Threshold) Test(value interface{}) bool {
 			return false
 		}
 		return this.regValue.MatchString(types.String(paramValue))
+	case ThresholdOperatorNotRegexp:
+		if this.regValue == nil {
+			return false
+		}
+		return !this.regValue.MatchString(types.String(paramValue))
 	case ThresholdOperatorGt:
 		return types.Float64(paramValue) > this.floatValue
 	case ThresholdOperatorGte:
