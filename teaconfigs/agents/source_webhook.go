@@ -3,6 +3,7 @@ package agents
 import (
 	"bytes"
 	"fmt"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io"
@@ -98,6 +99,7 @@ func (this *WebHookSource) Execute(params map[string]string) (value interface{},
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
 
 	resp, err := client.Do(req)
 	if err != nil {

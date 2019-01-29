@@ -3,6 +3,7 @@ package apps
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
@@ -34,7 +35,7 @@ func (this *UpdateItemAction) Run(params struct {
 	this.Data["methods"] = []string{http.MethodGet, http.MethodPost, http.MethodPut}
 	this.Data["dataFormats"] = agents.AllSourceDataFormats()
 	this.Data["operators"] = agents.AllThresholdOperators()
-	this.Data["noticeLevels"] = agents.AllNoticeLevels()
+	this.Data["noticeLevels"] = notices.AllNoticeLevels()
 
 	this.Show()
 }
@@ -140,6 +141,7 @@ func (this *UpdateItemAction) RunPost(params struct {
 		params.Must.
 			Field("webhookURL", params.WebhookURL).
 			Require("请输入URL").
+			Match("(?i)^(http|https)://", "URL地址必须以http或https开头").
 			Field("webhookMethod", params.WebhookMethod).
 			Require("请选择请求方法")
 

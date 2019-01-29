@@ -19,6 +19,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/login"
 	"github.com/TeaWeb/code/teaweb/actions/default/logout"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/mongo"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/notices"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/plugins"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/backend"

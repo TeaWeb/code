@@ -1,4 +1,4 @@
-package agents
+package notices
 
 import (
 	"github.com/iwind/TeaGo/maps"
@@ -20,28 +20,32 @@ const (
 func AllNoticeLevels() []maps.Map {
 	return []maps.Map{
 		{
-			"name":    "信息",
-			"code":    NoticeLevelInfo,
-			"bgcolor": "#f8ffff",
-			"color":   "#276f86",
+			"name":        "信息",
+			"description": "通常是一般的指标数据信息",
+			"code":        NoticeLevelInfo,
+			"bgcolor":     "#f8ffff",
+			"color":       "#276f86",
 		},
 		{
-			"name":    "警告",
-			"code":    NoticeLevelWarning,
-			"bgcolor": "#fffaf3",
-			"color":   "#573a08",
+			"name":        "警告",
+			"description": "可能会发生异常的警告信息",
+			"code":        NoticeLevelWarning,
+			"bgcolor":     "#fffaf3",
+			"color":       "#573a08",
 		},
 		{
-			"name":    "错误",
-			"code":    NoticeLevelError,
-			"bgcolor": "#fff6f6",
-			"color":   "#9f3a38",
+			"name":        "错误",
+			"description": "发生了错误信息",
+			"code":        NoticeLevelError,
+			"bgcolor":     "#fff6f6",
+			"color":       "#9f3a38",
 		},
 		{
-			"name":    "成功",
-			"code":    NoticeLevelSuccess,
-			"bgcolor": "#fcfff5",
-			"color":   "#2c662d",
+			"name":        "成功",
+			"description": "某个任务处理成功之后的通知信息",
+			"code":        NoticeLevelSuccess,
+			"bgcolor":     "#fcfff5",
+			"color":       "#2c662d",
 		},
 	}
 }

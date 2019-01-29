@@ -1,4 +1,4 @@
-package agents
+package shared
 
 // 环境变量
 type EnvVariable struct {

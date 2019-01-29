@@ -36,6 +36,7 @@ func LocalAgentConfig() *AgentConfig {
 		localAgentConfig = &AgentConfig{
 			On:       true,
 			Id:       "local",
+			Name:     "本地",
 			Key:      stringutil.Rand(32),
 			AllowAll: false,
 			Allow:    []string{"127.0.0.1"},
@@ -66,6 +67,10 @@ func NewAgentConfigFromId(agentId string) *AgentConfig {
 	}
 	agent := NewAgentConfigFromFile("agent." + agentId + ".conf")
 	if agent != nil {
+		if agent.Id == "local" && len(agent.Name) == 0 {
+			agent.Name = "本地"
+		}
+
 		return agent
 	}
 

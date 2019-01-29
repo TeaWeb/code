@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/iwind/TeaGo/utils/time"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"time"
@@ -8,15 +9,15 @@ import (
 
 // 应用指标值定义
 type Value struct {
-	Id          objectid.ObjectID `bson:"_id" json:"id"`                  // 数据库存储的ID
-	AgentId     string            `bson:"agentId" json:"agentId"`         // Agent ID
-	AppId       string            `bson:"appId" json:"appId"`             // App ID
-	ItemId      string            `bson:"itemId" json:"itemId"`           // 监控项ID
-	Timestamp   int64             `bson:"timestamp" json:"timestamp"`     // 时间戳
-	Value       interface{}       `bson:"value" json:"value"`             // 值，可以是个标量，或者一个组合的值
-	Error       string            `bson:"error" json:"error"`             // 错误信息
-	IsTesting   bool              `bson:"isTesting" json:"isTesting"`     // 是否为测试数据
-	NoticeLevel NoticeLevel       `bson:"noticeLevel" json:"noticeLevel"` // 通知级别
+	Id          objectid.ObjectID   `bson:"_id" json:"id"`                  // 数据库存储的ID
+	AgentId     string              `bson:"agentId" json:"agentId"`         // Agent ID
+	AppId       string              `bson:"appId" json:"appId"`             // App ID
+	ItemId      string              `bson:"itemId" json:"itemId"`           // 监控项ID
+	Timestamp   int64               `bson:"timestamp" json:"timestamp"`     // 时间戳
+	Value       interface{}         `bson:"value" json:"value"`             // 值，可以是个标量，或者一个组合的值
+	Error       string              `bson:"error" json:"error"`             // 错误信息
+	IsTesting   bool                `bson:"isTesting" json:"isTesting"`     // 是否为测试数据
+	NoticeLevel notices.NoticeLevel `bson:"noticeLevel" json:"noticeLevel"` // 通知级别
 	TimeFormat  struct {
 		Year   string `bson:"year" json:"year"`
 		Month  string `bson:"month" json:"month"`

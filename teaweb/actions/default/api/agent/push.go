@@ -91,7 +91,7 @@ func (this *PushAction) Run(params struct{}) {
 		level, message := item.TestValue(v)
 
 		// 通知消息
-		if level != agents.NoticeLevelNone {
+		if level != notices.NoticeLevelNone {
 			notice := notices.NewNotice()
 			notice.SetTime(t)
 			notice.Message = message

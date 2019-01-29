@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/iwind/TeaGo/utils/string"
 	"time"
@@ -83,9 +84,9 @@ func (this *Item) Source() SourceInterface {
 }
 
 // 检查某个值对应的通知级别
-func (this *Item) TestValue(value interface{}) (level NoticeLevel, message string) {
+func (this *Item) TestValue(value interface{}) (level notices.NoticeLevel, message string) {
 	if len(this.Thresholds) == 0 {
-		return NoticeLevelNone, ""
+		return notices.NoticeLevelNone, ""
 	}
 	for _, t := range this.Thresholds {
 		if t.Test(value) {
@@ -96,7 +97,7 @@ func (this *Item) TestValue(value interface{}) (level NoticeLevel, message strin
 			}
 		}
 	}
-	return NoticeLevelNone, ""
+	return notices.NoticeLevelNone, ""
 }
 
 // 添加图表

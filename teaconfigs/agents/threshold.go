@@ -3,6 +3,7 @@ package agents
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"regexp"
@@ -11,12 +12,12 @@ import (
 
 // 阈值定义
 type Threshold struct {
-	Id            string            `yaml:"id" json:"id"`                       // ID
-	Param         string            `yaml:"param" json:"param"`                 // 参数
-	Operator      ThresholdOperator `yaml:"operator" json:"operator"`           // 运算符
-	Value         string            `yaml:"value" json:"value"`                 // 对比值
-	NoticeLevel   NoticeLevel       `yaml:"noticeLevel" json:"noticeLevel"`     // 通知级别
-	NoticeMessage string            `yaml:"noticeMessage" json:"noticeMessage"` // 通知消息
+	Id            string              `yaml:"id" json:"id"`                       // ID
+	Param         string              `yaml:"param" json:"param"`                 // 参数
+	Operator      ThresholdOperator   `yaml:"operator" json:"operator"`           // 运算符
+	Value         string              `yaml:"value" json:"value"`                 // 对比值
+	NoticeLevel   notices.NoticeLevel `yaml:"noticeLevel" json:"noticeLevel"`     // 通知级别
+	NoticeMessage string              `yaml:"noticeMessage" json:"noticeMessage"` // 通知消息
 
 	regValue   *regexp.Regexp
 	floatValue float64

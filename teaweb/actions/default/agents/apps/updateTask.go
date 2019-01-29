@@ -3,6 +3,7 @@ package apps
 import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -108,7 +109,7 @@ func (this *UpdateTaskAction) RunPost(params struct {
 	task.Name = params.Name
 	task.Script = params.Script
 	task.Cwd = params.Cwd
-	task.Env = []*agents.EnvVariable{}
+	task.Env = []*shared.EnvVariable{}
 	for index, name := range params.EnvNames {
 		if index < len(params.EnvValues) {
 			task.AddEnv(name, params.EnvValues[index])

@@ -262,6 +262,15 @@ func (this *NoticeQuery) Update(values maps.Map) error {
 	return err
 }
 
+// 计算数量
+func (this *NoticeQuery) Count() (count int64, err error) {
+	c, err := this.Action(NoticeQueryActionCount).Execute()
+	if err != nil {
+		return 0, err
+	}
+	return types.Int64(c), err
+}
+
 func (this *NoticeQuery) queryNumber(collectionName string) (float64, error) {
 	if this.action == NoticeQueryActionCount {
 		coll := teamongo.FindCollection(collectionName)

@@ -3,6 +3,7 @@ package apps
 import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
@@ -29,7 +30,7 @@ func (this *MonitorAction) Run(params struct {
 	m := this.Data["app"].(maps.Map)
 	m["items"] = app.Items
 
-	this.Data["noticeLevels"] = agents.AllNoticeLevels()
+	this.Data["noticeLevels"] = notices.AllNoticeLevels()
 
 	this.Show()
 }
@@ -54,7 +55,7 @@ func (this *MonitorAction) RunPost(params struct {
 
 		latestValue := ""
 		latestTime := ""
-		latestLevel := agents.NoticeLevelNone
+		latestLevel := notices.NoticeLevelNone
 
 		value, err := teamongo.NewValueQuery().
 			Agent(params.AgentId).
@@ -85,7 +86,7 @@ func (this *MonitorAction) RunPost(params struct {
 			"thresholds":  item.Thresholds,
 			"latestValue": latestValue,
 			"latestTime":  latestTime,
-			"latestLevel": agents.FindNoticeLevel(latestLevel),
+			"latestLevel": notices.FindNoticeLevel(latestLevel),
 		}
 
 		source := item.Source()

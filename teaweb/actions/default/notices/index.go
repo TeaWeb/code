@@ -16,21 +16,19 @@ import (
 
 type IndexAction actions.Action
 
-// 通知首页
+// 通知
 func (this *IndexAction) Run(params struct {
-	AgentId string
-	Read    int
-	Page    int
+	Read int
+	Page int
 }) {
-	this.Data["agentId"] = params.AgentId
 	this.Data["isRead"] = params.Read > 0
 
 	count := 0
-	countUnread := noticeutils.CountUnreadNoticesForAgent(params.AgentId)
+	countUnread := noticeutils.CountUnreadNotices()
 	if params.Read == 0 {
 		count = countUnread
 	} else {
-		count = noticeutils.CountReadNoticesForAgent(params.AgentId)
+		count = noticeutils.CountReadNotices()
 	}
 
 	this.Data["countUnread"] = countUnread
@@ -50,9 +48,6 @@ func (this *IndexAction) Run(params struct {
 
 	// 读取数据
 	ones, err := noticeutils.NewNoticeQuery().
-		Agent(&notices.AgentCond{
-			AgentId: params.AgentId,
-		}).
 		Attr("isRead", params.Read == 1).
 		Offset(int64((params.Page - 1) * pageSize)).
 		Limit(int64(pageSize)).

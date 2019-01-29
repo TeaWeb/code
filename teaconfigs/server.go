@@ -297,7 +297,7 @@ func (this *ServerConfig) CachePolicyObject() *shared.CachePolicy {
 	return this.cachePolicy
 }
 
-// 拼音转换，用户转换代理描述中的中文
+// 拼音转换，用于转换代理描述中的中文
 func (this *ServerConfig) convertPinYin(s string) string {
 	a := pinyin.NewArgs()
 

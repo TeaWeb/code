@@ -2,6 +2,7 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -34,7 +35,7 @@ func (this *ItemDetailAction) Run(params struct {
 		}
 	}
 
-	this.Data["noticeLevels"] = agents.AllNoticeLevels()
+	this.Data["noticeLevels"] = notices.AllNoticeLevels()
 
 	this.Show()
 }

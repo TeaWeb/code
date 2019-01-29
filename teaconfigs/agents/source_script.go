@@ -2,6 +2,7 @@ package agents
 
 import (
 	"bytes"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -15,19 +16,19 @@ import (
 
 // Script文件数据源
 type ScriptSource struct {
-	Path       string           `yaml:"path" json:"path"`
-	ScriptType string           `yaml:"scriptType" json:"scriptType"` // 脚本类型，可以为path, code
-	ScriptLang string           `yaml:"scriptLang" json:"scriptLang"` // 脚本语言
-	Script     string           `yaml:"script" json:"script"`         // 脚本代码
-	Env        []*EnvVariable   `yaml:"env" json:"env"`               // 环境变量设置
-	Cwd        string           `yaml:"cwd" json:"cwd"`
-	DataFormat SourceDataFormat `yaml:"dataFormat" json:"dataFormat"` // 数据格式
+	Path       string                `yaml:"path" json:"path"`
+	ScriptType string                `yaml:"scriptType" json:"scriptType"` // 脚本类型，可以为path, code
+	ScriptLang string                `yaml:"scriptLang" json:"scriptLang"` // 脚本语言
+	Script     string                `yaml:"script" json:"script"`         // 脚本代码
+	Env        []*shared.EnvVariable `yaml:"env" json:"env"`               // 环境变量设置
+	Cwd        string                `yaml:"cwd" json:"cwd"`
+	DataFormat SourceDataFormat      `yaml:"dataFormat" json:"dataFormat"` // 数据格式
 }
 
 // 获取新对象
 func NewScriptSource() *ScriptSource {
 	return &ScriptSource{
-		Env: []*EnvVariable{},
+		Env: []*shared.EnvVariable{},
 	}
 }
 
@@ -163,7 +164,7 @@ func (this *ScriptSource) Summary() maps.Map {
 
 // 添加环境变量
 func (this *ScriptSource) AddEnv(name, value string) {
-	this.Env = append(this.Env, &EnvVariable{
+	this.Env = append(this.Env, &shared.EnvVariable{
 		Name:  name,
 		Value: value,
 	})
