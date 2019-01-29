@@ -7,12 +7,14 @@ import (
 
 // 通知
 type Notice struct {
-	Id        objectid.ObjectID `bson:"_id" json:"id"` // 数据库存储的ID
-	Proxy     ProxyCond         `bson:"proxy" json:"proxy"`
-	Agent     AgentCond         `bson:"agent" json:"agent"`
-	Timestamp int64             `bson:"timestamp" json:"timestamp"` // 时间戳
-	Message   string            `bson:"message" json:"message"`
-	IsRead    bool              `bson:"isRead" json:"isRead"` // 已读
+	Id         objectid.ObjectID `bson:"_id" json:"id"` // 数据库存储的ID
+	Proxy      ProxyCond         `bson:"proxy" json:"proxy"`
+	Agent      AgentCond         `bson:"agent" json:"agent"`
+	Timestamp  int64             `bson:"timestamp" json:"timestamp"` // 时间戳
+	Message    string            `bson:"message" json:"message"`
+	IsRead     bool              `bson:"isRead" json:"isRead"`         // 已读
+	IsNotified bool              `bson:"isNotified" json:"isNotified"` // 是否发送通知
+	Receivers  []string          `bson:"receivers" json:"receivers"`   // 接收人ID列表
 }
 
 // Proxy条件
@@ -22,6 +24,7 @@ type ProxyCond struct {
 	RewriteId  string `bson:"rewriteId" json:"serverId"`
 	BackendId  string `bson:"backendId" json:"serverId"`
 	FastcgiId  string `bson:"fastcgiId" json:"serverId"`
+	Level      uint8  `bson:"level" json:"level"`
 }
 
 // Agent条件

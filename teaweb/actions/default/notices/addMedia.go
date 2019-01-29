@@ -1,6 +1,7 @@
 package notices
 
 import (
+	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/actions"
@@ -38,6 +39,15 @@ func (this *AddMediaAction) RunPost(params struct {
 	ScriptCwd       string
 	ScriptEnvNames  []string
 	ScriptEnvValues []string
+
+	TimeFromHour   int
+	TimeFromMinute int
+	TimeFromSecond int
+	TimeToHour     int
+	TimeToMinute   int
+	TimeToSecond   int
+	RateCount      int
+	RateMinutes    int
 
 	Must *actions.Must
 }) {
@@ -112,6 +122,39 @@ func (this *AddMediaAction) RunPost(params struct {
 
 		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
 	}
+
+	// 时间
+	params.Must.
+		Field("timeFromHour", params.TimeFromHour).
+		Require("请输入正确的小时数").
+		Gte(0, "请输入正确的小时数").
+		Lte(23, "请输入正确的小时数").
+		Field("timeFromMinute", params.TimeFromMinute).
+		Require("请输入正确的分钟数").
+		Gte(0, "请输入正确的分钟数").
+		Lte(59, "请输入正确的分钟数").
+		Field("timeFromSecond", params.TimeFromSecond).
+		Require("请输入正确的秒数").
+		Gte(0, "请输入正确的秒数").
+		Lte(59, "请输入正确的秒数").
+
+		Field("timeToHour", params.TimeToHour).
+		Require("请输入正确的小时数").
+		Gte(0, "请输入正确的小时数").
+		Lte(23, "请输入正确的小时数").
+		Field("timeToMinute", params.TimeToMinute).
+		Require("请输入正确的分钟数").
+		Gte(0, "请输入正确的分钟数").
+		Lte(59, "请输入正确的分钟数").
+		Field("timeToSecond", params.TimeToSecond).
+		Require("请输入正确的秒数").
+		Gte(0, "请输入正确的秒数").
+		Lte(59, "请输入正确的秒数")
+
+	mediaConfig.TimeFrom = fmt.Sprintf("%02d:%02d:%02d", params.TimeFromHour, params.TimeFromMinute, params.TimeFromSecond)
+	mediaConfig.TimeTo = fmt.Sprintf("%02d:%02d:%02d", params.TimeToHour, params.TimeToMinute, params.TimeToSecond)
+	mediaConfig.RateCount = params.RateCount
+	mediaConfig.RateMinutes = params.RateMinutes
 
 	setting := notices.SharedNoticeSetting()
 	setting.AddMedia(mediaConfig)

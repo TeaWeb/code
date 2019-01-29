@@ -38,7 +38,7 @@ func (this *NoticeEmailMedia) Send(user string, subject string, body string) (re
 
 	contentType := "Content-Type: text/html; charset=UTF-8"
 
-	msg := []byte("To: " + user + "\r\nFrom: TeaWeb <" + this.From + ">\r\nSubject: " + subject + "\r\n" + contentType + "\r\n\r\n" + body)
+	msg := []byte("To: " + user + "\r\nFrom: \"TeaWeb\" <" + this.From + ">\r\nSubject: " + subject + "\r\n" + contentType + "\r\n\r\n" + body)
 
 	return nil, smtp.SendMail(this.SMTP, auth, this.From, []string{user}, msg)
 }

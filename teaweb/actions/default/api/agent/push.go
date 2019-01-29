@@ -11,9 +11,11 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"io/ioutil"
+	"strings"
 	"sync"
 	"time"
 )
@@ -104,6 +106,23 @@ func (this *PushAction) Run(params struct{}) {
 			err = noticeutils.NewNoticeQuery().Insert(notice)
 			if err != nil {
 				logs.Error(err)
+			}
+
+			// 通过媒介发送通知
+			setting := notices.SharedNoticeSetting()
+			fullMessage := "消息：" + message + "\n时间：" + timeutil.Format("Y-m-d H:i:s", t)
+			linkNames := []string{}
+			for _, l := range agentutils.FindNoticeLinks(notice) {
+				linkNames = append(linkNames, types.String(l["name"]))
+			}
+			if len(linkNames) > 0 {
+				fullMessage += "\n位置：" + strings.Join(linkNames, "/")
+			}
+			receiverIds := setting.Notify(level, fullMessage, func(receiverId string, minutes int) int {
+				return noticeutils.CountReceivedNotices(receiverId, minutes)
+			})
+			if len(receiverIds) > 0 {
+				noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
 			}
 		}
 

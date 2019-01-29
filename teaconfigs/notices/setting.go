@@ -4,6 +4,9 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
+	"strings"
 )
 
 // 通知设置
@@ -105,4 +108,45 @@ func (this *NoticeSetting) FindReceiver(receiverId string) (level NoticeLevel, r
 		}
 	}
 	return 0, nil
+}
+
+// 发送通知
+func (this *NoticeSetting) Notify(level NoticeLevel, message string, counter func(receiverId string, minutes int) int) (receiverIds []string) {
+	config, found := this.Levels[level]
+	if !found {
+		return
+	}
+	for _, r := range config.Receivers {
+		if !r.On {
+			continue
+		}
+		media := this.FindMedia(r.MediaId)
+		if !media.On {
+			continue
+		}
+		mediaType := FindNoticeMediaType(media.Type)
+		if mediaType == nil {
+			continue
+		}
+		raw, err := media.Raw()
+		if err != nil {
+			logs.Error(err)
+			continue
+		}
+		if !media.ShouldNotify(counter(r.Id, media.RateMinutes)) {
+			continue
+		}
+		receiverIds = append(receiverIds, r.Id)
+		go func(raw NoticeMediaInterface, mediaType maps.Map, user string) {
+			body := message
+			if types.Bool(mediaType["supportsHTML"]) {
+				body = strings.Replace(body, "\n", "<br/>", -1)
+			}
+			_, err := raw.Send(user, "[TeaWeb]["+FindNoticeLevelName(level)+"]有新的通知", body)
+			if err != nil {
+				logs.Error(err)
+			}
+		}(raw, mediaType, r.User)
+	}
+	return
 }
