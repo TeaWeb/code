@@ -9,15 +9,16 @@ import (
 
 // Agent定义
 type AgentConfig struct {
-	Id       string       `yaml:"id" json:"id"`             // ID
-	On       bool         `yaml:"on" json:"on"`             // 是否启用
-	Name     string       `yaml:"name" json:"name"`         // 名称
-	Host     string       `yaml:"host" json:"host"`         // 主机地址
-	Key      string       `yaml:"key" json:"key"`           // 密钥
-	AllowAll bool         `yaml:"allowAll" json:"allowAll"` // 是否允许所有的IP
-	Allow    []string     `yaml:"allow" json:"allow"`       // 允许的IP地址
-	Apps     []*AppConfig `yaml:"apps" json:"apps"`         // Apps
-	Version  uint         `yaml:"version" json:"version"`   // 版本
+	Id                  string       `yaml:"id" json:"id"`                                   // ID
+	On                  bool         `yaml:"on" json:"on"`                                   // 是否启用
+	Name                string       `yaml:"name" json:"name"`                               // 名称
+	Host                string       `yaml:"host" json:"host"`                               // 主机地址
+	Key                 string       `yaml:"key" json:"key"`                                 // 密钥
+	AllowAll            bool         `yaml:"allowAll" json:"allowAll"`                       // 是否允许所有的IP
+	Allow               []string     `yaml:"allow" json:"allow"`                             // 允许的IP地址
+	Apps                []*AppConfig `yaml:"apps" json:"apps"`                               // Apps
+	Version             uint         `yaml:"version" json:"version"`                         // 版本
+	CountDisconnections int          `yaml:"countDisconnections" json:"countDisconnections"` // 错误次数
 }
 
 // 获取新对象
