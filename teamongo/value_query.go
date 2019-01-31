@@ -213,7 +213,7 @@ func (this *ValueQuery) Execute() (interface{}, error) {
 
 // 查找单个数据
 func (this *ValueQuery) Find() (*agents.Value, error) {
-	result, err := this.Action(ValueQueryActionFind).Execute()
+	result, err := this.Limit(1).Action(ValueQueryActionFind).Execute()
 	if err != nil {
 		return nil, err
 	}

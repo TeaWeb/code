@@ -205,7 +205,7 @@ func (this *Query) Execute() (interface{}, error) {
 
 // 查找单个数据
 func (this *Query) Find() (interface{}, error) {
-	result, err := this.Action(QueryActionFind).Execute()
+	result, err := this.Limit(1).Action(QueryActionFind).Execute()
 	if err != nil {
 		return nil, err
 	}
