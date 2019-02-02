@@ -23,8 +23,8 @@ func (this *Loader) Load() error {
 		return err
 	}
 
-	rFile := `\\.\pipe\teaweb-readerpipe`
-	wFile := `\\.\pipe\teaweb-writerpipe`
+	rFile := `\\.\pipe\teaweb.reader.` + this.shortFileName() + `.pipe`
+	wFile := `\\.\pipe\teaweb.writer.` + this.shortFileName() + `.pipe`
 
 	rListener, err := winio.ListenPipe(rFile, nil)
 	if err != nil {

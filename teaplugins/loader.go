@@ -11,6 +11,7 @@ import (
 	"reflect"
 )
 
+// 插件加载器
 type Loader struct {
 	path   string
 	plugin *Plugin
