@@ -58,7 +58,9 @@ func ParseConfigs() ([]*ListenerConfig, error) {
 		if serverConfig.Http {
 			for _, address := range serverConfig.Listen {
 				// 是否有端口
-				if strings.Index(address, ":") < 0 {
+				if RegexpDigitNumber.MatchString(address) {
+					address = ":" + address
+				} else if strings.Index(address, ":") < 0 {
 					address += ":80"
 				}
 
@@ -83,7 +85,9 @@ func ParseConfigs() ([]*ListenerConfig, error) {
 			serverConfig.SSL.Validate()
 			for _, address := range serverConfig.SSL.Listen {
 				// 是否有端口
-				if strings.Index(address, ":") < 0 {
+				if RegexpDigitNumber.MatchString(address) {
+					address = ":" + address
+				} else if strings.Index(address, ":") < 0 {
 					address += ":443"
 				}
 
