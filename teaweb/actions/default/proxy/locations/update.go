@@ -8,6 +8,7 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
+	"regexp"
 )
 
 type UpdateAction actions.Action
@@ -72,6 +73,15 @@ func (this *UpdateAction) RunPost(params struct {
 	if location == nil {
 		this.Fail("找不到要修改的Location")
 	}
+
+	// 校验正则
+	if params.PatternType == teaconfigs.LocationPatternTypeRegexp {
+		_, err := regexp.Compile(params.Pattern)
+		if err != nil {
+			this.Fail("正则表达式校验失败：" + err.Error())
+		}
+	}
+
 	location.SetPattern(params.Pattern, params.PatternType, params.IsCaseInsensitive, params.IsReverse)
 	location.On = params.On
 	location.Root = params.Root

@@ -31,9 +31,9 @@ type ServerConfig struct {
 	// 监听地址
 	Listen []string `yaml:"listen" json:"listen"`
 
-	Root      string            `yaml:"root" json:"root"`           // 资源根目录 @TODO
-	Index     []string          `yaml:"index" json:"index"`         // 默认文件 @TODO
-	Charset   string            `yaml:"charset" json:"charset"`     // 字符集 @TODO
+	Root      string            `yaml:"root" json:"root"`           // 资源根目录
+	Index     []string          `yaml:"index" json:"index"`         // 默认文件
+	Charset   string            `yaml:"charset" json:"charset"`     // 字符集
 	Locations []*LocationConfig `yaml:"locations" json:"locations"` // 地址配置
 
 	Async   bool     `yaml:"async" json:"async"`     // 请求是否异步处理 @TODO
@@ -57,7 +57,7 @@ type ServerConfig struct {
 	Proxy string `yaml:"proxy" json:"proxy"` //  代理配置 TODO
 
 	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
-	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开 TODO
+	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开
 	cachePolicy *shared.CachePolicy
 
 	// API相关
@@ -214,7 +214,7 @@ func (this *ServerConfig) Validate() error {
 }
 
 // 添加域名
-func (this *ServerConfig) AddName(name ... string) {
+func (this *ServerConfig) AddName(name ...string) {
 	this.Name = append(this.Name, name ...)
 }
 

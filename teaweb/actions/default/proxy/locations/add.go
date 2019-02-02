@@ -7,6 +7,7 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
+	"regexp"
 )
 
 type AddAction actions.Action
@@ -53,6 +54,14 @@ func (this *AddAction) RunPost(params struct {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail(err.Error())
+	}
+
+	// 校验正则
+	if params.PatternType == teaconfigs.LocationPatternTypeRegexp {
+		_, err := regexp.Compile(params.Pattern)
+		if err != nil {
+			this.Fail("正则表达式校验失败：" + err.Error())
+		}
 	}
 
 	location := teaconfigs.NewLocation()

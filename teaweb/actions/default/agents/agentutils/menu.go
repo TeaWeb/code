@@ -53,6 +53,8 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 			isWaiting := CheckAgentIsWaiting(agent.Id)
 			if isWaiting {
 				subMenu.Add(agent.Name, "已连接", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+			} else if !agent.On {
+				subMenu.Add(agent.Name, "未启用", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
 			} else {
 				subMenu.Add(agent.Name, "", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
 			}

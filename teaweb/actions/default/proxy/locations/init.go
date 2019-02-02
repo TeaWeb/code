@@ -26,6 +26,7 @@ func init() {
 			Get("/fastcgi", new(FastcgiAction)).
 			Get("/cache", new(CacheAction)).
 			Post("/updateCache", new(UpdateCacheAction)).
+			Post("/test", new(TestAction)).
 			EndAll()
 	})
 }
