@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/apiutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
@@ -30,6 +31,7 @@ func (this *IndexAction) Run(params struct{}) {
 	runtime.ReadMemStats(&stat)
 	result["heap"] = stat.HeapAlloc
 	result["memory"] = stat.Sys
+	result["mongo"] = teamongo.Test() == nil
 
 	data, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
