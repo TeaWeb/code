@@ -45,7 +45,7 @@ func (this *Listener) Start() {
 		logs.Println("start listener on", this.config.Address)
 		this.scheme = "http"
 		err = this.server.ListenAndServe()
-		if err != nil {
+		if err != nil && err != http.ErrServerClosed {
 			logs.Error(err)
 		}
 	}
@@ -54,7 +54,7 @@ func (this *Listener) Start() {
 		logs.Println("start ssl listener on", this.config.Address)
 		this.scheme = "https"
 		err = this.server.ListenAndServeTLS(Tea.ConfigFile(this.config.SSL.Certificate), Tea.ConfigFile(this.config.SSL.CertificateKey))
-		if err != nil {
+		if err != nil && err != http.ErrServerClosed {
 			logs.Error(err)
 		}
 	}
