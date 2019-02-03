@@ -26,6 +26,7 @@ func (this *DetailAction) Run(params struct {
 		"root":            location.Root,
 		"charset":         location.Charset,
 		"index":           location.Index,
+		"maxBodySize":     location.MaxBodySize,
 		"fastcgi":         location.Fastcgi,
 		"headers":         location.Headers,
 		"cachePolicy":     location.CachePolicy,

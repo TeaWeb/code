@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
+	"strconv"
 )
 
 type UpdateAction actions.Action
@@ -37,6 +38,8 @@ func (this *UpdateAction) RunPost(params struct {
 	Root        string
 	Charset     string
 	Index       []string
+	MaxBodySize float64
+	MaxBodyUnit string
 	Must        *actions.Must
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
@@ -55,6 +58,7 @@ func (this *UpdateAction) RunPost(params struct {
 	server.Root = params.Root
 	server.Charset = params.Charset
 	server.Index = params.Index
+	server.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
 	err = server.Validate()
 	if err != nil {
 		this.Fail("校验失败：" + err.Error())

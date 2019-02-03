@@ -8,6 +8,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"regexp"
+	"strconv"
 )
 
 type AddAction actions.Action
@@ -47,6 +48,8 @@ func (this *AddAction) RunPost(params struct {
 	Root              string
 	Charset           string
 	Index             []string
+	MaxBodySize       float64
+	MaxBodyUnit       string
 	On                bool
 	IsReverse         bool
 	IsCaseInsensitive bool
@@ -69,6 +72,7 @@ func (this *AddAction) RunPost(params struct {
 	location.On = params.On
 	location.Root = params.Root
 	location.Charset = params.Charset
+	location.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
 
 	index := []string{}
 	for _, i := range params.Index {

@@ -102,6 +102,7 @@ type Request struct {
 	requestTimeLocal   string
 	requestMsec        float64
 	requestTimestamp   int64
+	requestMaxSize     int64
 
 	isWatching        bool   // 是否在监控
 	requestData       []byte // 导出的request，在监控请求的时候有用
@@ -172,6 +173,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		if cachePolicy != nil && cachePolicy.On {
 			this.cachePolicy = cachePolicy
 		}
+	}
+
+	// other
+	if server.MaxBodyBytes() > 0 {
+		this.requestMaxSize = server.MaxBodyBytes()
 	}
 
 	// API配置，目前只有Plus版本支持
@@ -289,6 +295,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 			if len(location.Index) > 0 {
 				this.index = this.formatAll(location.Index)
+			}
+			if location.MaxBodyBytes() > 0 {
+				this.requestMaxSize = location.MaxBodyBytes()
 			}
 
 			if location.CacheOn {
@@ -589,6 +598,10 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 }
 
 func (this *Request) call(writer *ResponseWriter) error {
+	if this.requestMaxSize > 0 {
+		this.raw.Body = http.MaxBytesReader(writer, this.raw.Body, this.requestMaxSize)
+	}
+
 	this.responseWriter = writer
 
 	defer func() {

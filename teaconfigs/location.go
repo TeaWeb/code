@@ -19,12 +19,13 @@ type LocationConfig struct {
 	Id      string `yaml:"id" json:"id"`           // ID
 	Pattern string `yaml:"pattern" json:"pattern"` // 匹配规则
 
-	Async   bool          `yaml:"async" json:"async"`     // 是否异步请求 @TODO
-	Notify  []interface{} `yaml:"notify" json:"notify"`   // 转发请求，可以配置转发策略 @TODO
-	LogOnly bool          `yaml:"logOnly" json:"logOnly"` // 是否只记录日志 @TODO
-	Root    string        `yaml:"root" json:"root"`       // 资源根目录
-	Index   []string      `yaml:"index" json:"index"`     // 默认文件
-	Charset string        `yaml:"charset" json:"charset"` // 字符集设置
+	Async       bool          `yaml:"async" json:"async"`             // 是否异步请求 @TODO
+	Notify      []interface{} `yaml:"notify" json:"notify"`           // 转发请求，可以配置转发策略 @TODO
+	LogOnly     bool          `yaml:"logOnly" json:"logOnly"`         // 是否只记录日志 @TODO
+	Root        string        `yaml:"root" json:"root"`               // 资源根目录
+	Index       []string      `yaml:"index" json:"index"`             // 默认文件
+	Charset     string        `yaml:"charset" json:"charset"`         // 字符集设置
+	MaxBodySize string        `yaml:"maxBodySize" json:"maxBodySize"` // 请求body最大尺寸
 
 	// 日志
 	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // @TODO
@@ -41,6 +42,8 @@ type LocationConfig struct {
 
 	// websocket设置
 	Websocket *WebsocketConfig `yaml:"websocket" json:"websocket"`
+
+	maxBodySize int64
 
 	patternType LocationPatternType // 规则类型：LocationPattern*
 	prefix      string              // 前缀
@@ -61,6 +64,10 @@ func NewLocation() *LocationConfig {
 
 // 校验
 func (this *LocationConfig) Validate() error {
+	// 最大Body尺寸
+	maxBodySize, _ := stringutil.ParseFileSize(this.MaxBodySize)
+	this.maxBodySize = int64(maxBodySize)
+
 	// 分析pattern
 	this.reverse = false
 	this.caseInsensitive = false
@@ -185,6 +192,11 @@ func (this *LocationConfig) Validate() error {
 	}
 
 	return nil
+}
+
+// 最大Body尺寸
+func (this *LocationConfig) MaxBodyBytes() int64 {
+	return this.maxBodySize
 }
 
 // 模式类型
