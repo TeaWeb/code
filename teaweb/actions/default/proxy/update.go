@@ -30,17 +30,18 @@ func (this *UpdateAction) Run(params struct {
 
 // 保存提交
 func (this *UpdateAction) RunPost(params struct {
-	HttpOn      bool
-	Server      string
-	Description string
-	Name        []string
-	Listen      []string
-	Root        string
-	Charset     string
-	Index       []string
-	MaxBodySize float64
-	MaxBodyUnit string
-	Must        *actions.Must
+	HttpOn          bool
+	Server          string
+	Description     string
+	Name            []string
+	Listen          []string
+	Root            string
+	Charset         string
+	Index           []string
+	MaxBodySize     float64
+	MaxBodyUnit     string
+	EnableAccessLog bool
+	Must            *actions.Must
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
@@ -59,6 +60,7 @@ func (this *UpdateAction) RunPost(params struct {
 	server.Charset = params.Charset
 	server.Index = params.Index
 	server.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
+	server.DisableAccessLog = !params.EnableAccessLog
 	err = server.Validate()
 	if err != nil {
 		this.Fail("校验失败：" + err.Error())

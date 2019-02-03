@@ -50,6 +50,7 @@ func (this *AddAction) RunPost(params struct {
 	Index             []string
 	MaxBodySize       float64
 	MaxBodyUnit       string
+	EnableAccessLog   bool
 	On                bool
 	IsReverse         bool
 	IsCaseInsensitive bool
@@ -73,6 +74,7 @@ func (this *AddAction) RunPost(params struct {
 	location.Root = params.Root
 	location.Charset = params.Charset
 	location.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
+	location.DisableAccessLog = !params.EnableAccessLog
 
 	index := []string{}
 	for _, i := range params.Index {

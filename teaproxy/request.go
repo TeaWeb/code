@@ -108,8 +108,8 @@ type Request struct {
 	requestData       []byte // 导出的request，在监控请求的时候有用
 	responseAPIStatus string // API状态码
 
-	shouldLog bool
-	debug     bool
+	enableAccessLog bool
+	debug           bool
 }
 
 // 获取新的请求
@@ -124,7 +124,7 @@ func NewRequest(rawRequest *http.Request) *Request {
 		requestTimeISO8601: now.Format("2006-01-02T15:04:05.000Z07:00"),
 		requestTimeLocal:   now.Format("2/Jan/2006:15:04:05 -0700"),
 		requestMsec:        float64(now.Unix()) + float64(now.Nanosecond())/1000000000,
-		shouldLog:          true,
+		enableAccessLog:    true,
 	}
 }
 
@@ -178,6 +178,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	// other
 	if server.MaxBodyBytes() > 0 {
 		this.requestMaxSize = server.MaxBodyBytes()
+	}
+	if server.DisableAccessLog {
+		this.enableAccessLog = false
 	}
 
 	// API配置，目前只有Plus版本支持
@@ -298,6 +301,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 			if location.MaxBodyBytes() > 0 {
 				this.requestMaxSize = location.MaxBodyBytes()
+			}
+			if location.DisableAccessLog {
+				this.enableAccessLog = false
 			}
 
 			if location.CacheOn {
@@ -1820,7 +1826,7 @@ func (this *Request) log() {
 	// 计算请求时间
 	this.requestTime = time.Since(this.requestFromTime).Seconds()
 
-	if !this.shouldLog {
+	if !this.enableAccessLog {
 		return
 	}
 

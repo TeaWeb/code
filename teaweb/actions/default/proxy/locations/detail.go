@@ -27,11 +27,13 @@ func (this *DetailAction) Run(params struct {
 		"charset":         location.Charset,
 		"index":           location.Index,
 		"maxBodySize":     location.MaxBodySize,
-		"fastcgi":         location.Fastcgi,
-		"headers":         location.Headers,
-		"cachePolicy":     location.CachePolicy,
-		"rewrite":         location.Rewrite,
-		"websocket":       location.Websocket,
+		"enableAccessLog": !location.DisableAccessLog,
+
+		"fastcgi":     location.Fastcgi,
+		"headers":     location.Headers,
+		"cachePolicy": location.CachePolicy,
+		"rewrite":     location.Rewrite,
+		"websocket":   location.Websocket,
 	}
 	this.Data["proxy"] = server
 

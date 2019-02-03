@@ -28,7 +28,8 @@ type LocationConfig struct {
 	MaxBodySize string        `yaml:"maxBodySize" json:"maxBodySize"` // 请求body最大尺寸
 
 	// 日志
-	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // @TODO
+	DisableAccessLog bool               `yaml:"disableAccessLog" json:"disableAccessLog"` // 是否禁用访问日志
+	AccessLog        []*AccessLogConfig `yaml:"accessLog" json:"accessLog"`               // 访问日志设置 TODO
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` // 允许的终端地址 @TODO

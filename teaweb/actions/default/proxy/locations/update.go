@@ -41,6 +41,7 @@ func (this *UpdateAction) Run(params struct {
 		"index":             location.Index,
 		"charset":           location.Charset,
 		"maxBodySize":       location.MaxBodySize,
+		"enableAccessLog":   !location.DisableAccessLog,
 
 		// 菜单用
 		"rewrite":     location.Rewrite,
@@ -64,6 +65,7 @@ func (this *UpdateAction) RunPost(params struct {
 	Index             []string
 	MaxBodySize       float64
 	MaxBodyUnit       string
+	EnableAccessLog   bool
 	On                bool
 	IsReverse         bool
 	IsCaseInsensitive bool
@@ -90,8 +92,8 @@ func (this *UpdateAction) RunPost(params struct {
 	location.On = params.On
 	location.Root = params.Root
 	location.Charset = params.Charset
-
 	location.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
+	location.DisableAccessLog = !params.EnableAccessLog
 
 	index := []string{}
 	for _, i := range params.Index {

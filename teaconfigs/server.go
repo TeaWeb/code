@@ -42,7 +42,8 @@ type ServerConfig struct {
 	LogOnly bool     `yaml:"logOnly" json:"logOnly"` // 是否只记录日志 @TODO
 
 	// 访问日志
-	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // 访问日志
+	DisableAccessLog bool               `yaml:"disableAccessLog" json:"disableAccessLog"` // 是否禁用访问日志
+	AccessLog        []*AccessLogConfig `yaml:"accessLog" json:"accessLog"`               // 访问日志，TODO
 
 	// @TODO 支持ErrorLog
 
