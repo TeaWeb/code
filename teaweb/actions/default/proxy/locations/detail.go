@@ -28,6 +28,8 @@ func (this *DetailAction) Run(params struct {
 		"index":           location.Index,
 		"maxBodySize":     location.MaxBodySize,
 		"enableAccessLog": !location.DisableAccessLog,
+		"gzipLevel":       location.GzipLevel,
+		"gzipMinLength":   location.GzipMinLength,
 
 		"fastcgi":     location.Fastcgi,
 		"headers":     location.Headers,

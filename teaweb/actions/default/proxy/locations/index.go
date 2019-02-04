@@ -39,6 +39,7 @@ func (this *IndexAction) Run(params struct {
 			"headers":           location.Headers,
 			"fastcgi":           location.Fastcgi,
 			"root":              location.Root,
+			"gzipLevel":         location.GzipLevel,
 			"cachePolicy":       location.CachePolicyObject(),
 			"websocket":         location.Websocket != nil && location.Websocket.On,
 		})

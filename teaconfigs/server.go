@@ -31,11 +31,13 @@ type ServerConfig struct {
 	// 监听地址
 	Listen []string `yaml:"listen" json:"listen"`
 
-	Root        string            `yaml:"root" json:"root"`               // 资源根目录
-	Index       []string          `yaml:"index" json:"index"`             // 默认文件
-	Charset     string            `yaml:"charset" json:"charset"`         // 字符集
-	Locations   []*LocationConfig `yaml:"locations" json:"locations"`     // 地址配置
-	MaxBodySize string            `yaml:"maxBodySize" json:"maxBodySize"` // 请求body最大尺寸
+	Root          string            `yaml:"root" json:"root"`                   // 资源根目录
+	Index         []string          `yaml:"index" json:"index"`                 // 默认文件
+	Charset       string            `yaml:"charset" json:"charset"`             // 字符集
+	Locations     []*LocationConfig `yaml:"locations" json:"locations"`         // 地址配置
+	MaxBodySize   string            `yaml:"maxBodySize" json:"maxBodySize"`     // 请求body最大尺寸
+	GzipLevel     uint8             `yaml:"gzipLevel" json:"gzipLevel"`         // Gzip压缩级别
+	GzipMinLength string            `yaml:"gzipMinLength" json:"gzipMinLength"` // 需要压缩的最小内容尺寸
 
 	Async   bool     `yaml:"async" json:"async"`     // 请求是否异步处理 @TODO
 	Notify  []string `yaml:"notify" json:"notify"`   // 请求转发地址 @TODO
@@ -65,7 +67,8 @@ type ServerConfig struct {
 	// API相关
 	API *api.APIConfig `yaml:"api" json:"api"` // API配置
 
-	maxBodySize int64
+	maxBodySize   int64
+	gzipMinLength int64
 }
 
 // 从目录中加载配置
@@ -156,6 +159,9 @@ func (this *ServerConfig) Validate() error {
 	maxBodySize, _ := stringutil.ParseFileSize(this.MaxBodySize)
 	this.maxBodySize = int64(maxBodySize)
 
+	gzipMinLength, _ := stringutil.ParseFileSize(this.GzipMinLength)
+	this.gzipMinLength = int64(gzipMinLength)
+
 	// ssl
 	if this.SSL != nil {
 		err := this.SSL.Validate()
@@ -224,6 +230,11 @@ func (this *ServerConfig) Validate() error {
 // 最大Body尺寸
 func (this *ServerConfig) MaxBodyBytes() int64 {
 	return this.maxBodySize
+}
+
+// 可压缩最小尺寸
+func (this *ServerConfig) GzipMinBytes() int64 {
+	return this.gzipMinLength
 }
 
 // 添加域名

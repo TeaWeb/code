@@ -109,6 +109,8 @@ type Request struct {
 	responseAPIStatus string // API状态码
 
 	enableAccessLog bool
+	gzipLevel       uint8
+	gzipMinLength   int64
 	debug           bool
 }
 
@@ -182,6 +184,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	if server.DisableAccessLog {
 		this.enableAccessLog = false
 	}
+	this.gzipLevel = server.GzipLevel
+	this.gzipMinLength = server.GzipMinBytes()
 
 	// API配置，目前只有Plus版本支持
 	if teaconst.PlusEnabled && server.API != nil && server.API.On {
@@ -304,6 +308,12 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 			if location.DisableAccessLog {
 				this.enableAccessLog = false
+			}
+			if location.GzipLevel >= 0 {
+				this.gzipLevel = uint8(location.GzipLevel)
+			}
+			if location.GzipMinBytes() > 0 {
+				this.gzipMinLength = location.GzipMinBytes()
 			}
 
 			if location.CacheOn {
@@ -604,12 +614,6 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 }
 
 func (this *Request) call(writer *ResponseWriter) error {
-	if this.requestMaxSize > 0 {
-		this.raw.Body = http.MaxBytesReader(writer, this.raw.Body, this.requestMaxSize)
-	}
-
-	this.responseWriter = writer
-
 	defer func() {
 		// log
 		this.log()
@@ -617,6 +621,17 @@ func (this *Request) call(writer *ResponseWriter) error {
 		// call hook
 		CallRequestAfterHook(this, writer)
 	}()
+
+	if this.requestMaxSize > 0 {
+		this.raw.Body = http.MaxBytesReader(writer, this.raw.Body, this.requestMaxSize)
+	}
+
+	if this.gzipLevel > 0 && this.allowGzip() {
+		writer.Gzip(this.gzipLevel, this.gzipMinLength)
+		defer writer.Close()
+	}
+
+	this.responseWriter = writer
 
 	// hook
 	b := CallRequestBeforeHook(this, writer)
@@ -838,6 +853,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	}
 	defer fp.Close()
 
+	writer.Prepare(stat.Size())
 	_, err = io.Copy(writer, fp)
 
 	if err != nil {
@@ -1120,6 +1136,9 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		this.responseCallback(writer)
 	}
 
+	// 准备
+	writer.Prepare(resp.ContentLength)
+
 	// 设置响应代码
 	writer.WriteHeader(resp.StatusCode)
 
@@ -1143,7 +1162,6 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		logs.Error(err)
 		return nil
 	}
-
 	return nil
 }
 
@@ -1332,6 +1350,9 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 		}
 	}
 
+	// 准备
+	writer.Prepare(resp.ContentLength)
+
 	// 设置响应码
 	writer.WriteHeader(resp.StatusCode)
 
@@ -1407,6 +1428,7 @@ func (this *Request) callRewrite(writer *ResponseWriter) error {
 
 		// Header
 		writer.AddHeaders(resp.Header)
+		writer.Prepare(resp.ContentLength)
 
 		// 设置响应代码
 		writer.WriteHeader(resp.StatusCode)
@@ -1676,6 +1698,20 @@ func (this *Request) requestHeader(key string) string {
 		return ""
 	}
 	return strings.Join(v, ";")
+}
+
+func (this *Request) allowGzip() bool {
+	encodingList := this.raw.Header.Get("Accept-Encoding")
+	if len(encodingList) == 0 {
+		return false
+	}
+	encodings := strings.Split(encodingList, ",")
+	for _, encoding := range encodings {
+		if encoding == "gzip" {
+			return true
+		}
+	}
+	return false
 }
 
 func (this *Request) CachePolicy() *shared.CachePolicy {

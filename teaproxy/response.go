@@ -2,12 +2,18 @@ package teaproxy
 
 import (
 	"bytes"
+	"compress/gzip"
+	"github.com/iwind/TeaGo/logs"
 	"net/http"
 )
 
 // 响应Writer
 type ResponseWriter struct {
 	writer http.ResponseWriter
+
+	gzipLevel     uint8
+	gzipMinLength int64
+	gzipWriter    *gzip.Writer
 
 	statusCode    int
 	sentBodyBytes int64
@@ -20,6 +26,41 @@ type ResponseWriter struct {
 func NewResponseWriter(httpResponseWriter http.ResponseWriter) *ResponseWriter {
 	return &ResponseWriter{
 		writer: httpResponseWriter,
+	}
+}
+
+// 设置Gzip
+func (this *ResponseWriter) Gzip(level uint8, minLength int64) {
+	this.gzipLevel = level
+	this.gzipMinLength = minLength
+}
+
+// 准备输出
+func (this *ResponseWriter) Prepare(size int64) {
+	if this.gzipLevel > 0 {
+		// 尺寸
+		if size <= this.gzipMinLength {
+			return
+		}
+
+		// 如果已经有编码则不处理
+		if len(this.writer.Header().Get("Content-Encoding")) > 0 {
+			return
+		}
+
+		// gzip writer
+		var err error = nil
+		this.gzipWriter, err = gzip.NewWriterLevel(this.writer, int(this.gzipLevel))
+		if err != nil {
+			logs.Error(err)
+			return
+		}
+
+		header := this.writer.Header()
+		header.Set("Content-Encoding", "gzip")
+		header.Set("Transfer-Encoding", "chunked")
+		header.Set("Vary", "Accept-Encoding")
+		header.Del("Content-Length")
 	}
 }
 
@@ -51,7 +92,11 @@ func (this *ResponseWriter) AddHeaders(header http.Header) {
 // 写入数据
 func (this *ResponseWriter) Write(data []byte) (n int, err error) {
 	if this.writer != nil {
-		n, err = this.writer.Write(data)
+		if this.gzipWriter != nil {
+			n, err = this.gzipWriter.Write(data)
+		} else {
+			n, err = this.writer.Write(data)
+		}
 		if n > 0 {
 			this.sentBodyBytes += int64(n)
 		}
@@ -122,4 +167,12 @@ func (this *ResponseWriter) HeaderData() []byte {
 	writer := bytes.NewBuffer([]byte{})
 	resp.Write(writer)
 	return writer.Bytes()
+}
+
+// 关闭
+func (this *ResponseWriter) Close() {
+	if this.gzipWriter != nil {
+		this.gzipWriter.Close()
+		this.gzipWriter = nil
+	}
 }

@@ -41,6 +41,9 @@ func (this *UpdateAction) RunPost(params struct {
 	MaxBodySize     float64
 	MaxBodyUnit     string
 	EnableAccessLog bool
+	GzipLevel       uint8
+	GzipMinLength   float64
+	GzipMinUnit     string
 	Must            *actions.Must
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
@@ -61,6 +64,11 @@ func (this *UpdateAction) RunPost(params struct {
 	server.Index = params.Index
 	server.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
 	server.DisableAccessLog = !params.EnableAccessLog
+	if params.GzipLevel <= 9 {
+		server.GzipLevel = params.GzipLevel
+	}
+	server.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
+
 	err = server.Validate()
 	if err != nil {
 		this.Fail("校验失败：" + err.Error())

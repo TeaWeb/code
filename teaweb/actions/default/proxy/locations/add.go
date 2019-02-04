@@ -51,6 +51,9 @@ func (this *AddAction) RunPost(params struct {
 	MaxBodySize       float64
 	MaxBodyUnit       string
 	EnableAccessLog   bool
+	GzipLevel         int8
+	GzipMinLength     float64
+	GzipMinUnit       string
 	On                bool
 	IsReverse         bool
 	IsCaseInsensitive bool
@@ -75,6 +78,8 @@ func (this *AddAction) RunPost(params struct {
 	location.Charset = params.Charset
 	location.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
 	location.DisableAccessLog = !params.EnableAccessLog
+	location.GzipLevel = params.GzipLevel
+	location.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
 
 	index := []string{}
 	for _, i := range params.Index {
