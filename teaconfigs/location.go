@@ -19,15 +19,16 @@ type LocationConfig struct {
 	Id      string `yaml:"id" json:"id"`           // ID
 	Pattern string `yaml:"pattern" json:"pattern"` // 匹配规则
 
-	Async         bool          `yaml:"async" json:"async"`                 // 是否异步请求 @TODO
-	Notify        []interface{} `yaml:"notify" json:"notify"`               // 转发请求，可以配置转发策略 @TODO
-	LogOnly       bool          `yaml:"logOnly" json:"logOnly"`             // 是否只记录日志 @TODO
-	Root          string        `yaml:"root" json:"root"`                   // 资源根目录
-	Index         []string      `yaml:"index" json:"index"`                 // 默认文件
-	Charset       string        `yaml:"charset" json:"charset"`             // 字符集设置
-	MaxBodySize   string        `yaml:"maxBodySize" json:"maxBodySize"`     // 请求body最大尺寸
-	GzipLevel     int8          `yaml:"gzipLevel" json:"gzipLevel"`         // Gzip压缩级别
-	GzipMinLength string        `yaml:"gzipMinLength" json:"gzipMinLength"` // 需要压缩的最小内容尺寸
+	Async         bool                 `yaml:"async" json:"async"`                 // 是否异步请求 @TODO
+	Notify        []interface{}        `yaml:"notify" json:"notify"`               // 转发请求，可以配置转发策略 @TODO
+	LogOnly       bool                 `yaml:"logOnly" json:"logOnly"`             // 是否只记录日志 @TODO
+	Root          string               `yaml:"root" json:"root"`                   // 资源根目录
+	Index         []string             `yaml:"index" json:"index"`                 // 默认文件
+	Charset       string               `yaml:"charset" json:"charset"`             // 字符集设置
+	MaxBodySize   string               `yaml:"maxBodySize" json:"maxBodySize"`     // 请求body最大尺寸
+	GzipLevel     int8                 `yaml:"gzipLevel" json:"gzipLevel"`         // Gzip压缩级别
+	GzipMinLength string               `yaml:"gzipMinLength" json:"gzipMinLength"` // 需要压缩的最小内容尺寸
+	AccessPolicy  *shared.AccessPolicy `yaml:"accessPolicy" json:"accessPolicy"`   // 访问控制
 
 	// 日志
 	DisableAccessLog bool               `yaml:"disableAccessLog" json:"disableAccessLog"` // 是否禁用访问日志
@@ -170,6 +171,14 @@ func (this *LocationConfig) Validate() error {
 				return err
 			}
 			this.cachePolicy = policy
+		}
+	}
+
+	// 校验访问控制
+	if this.AccessPolicy != nil {
+		err := this.AccessPolicy.Validate()
+		if err != nil {
+			return err
 		}
 	}
 

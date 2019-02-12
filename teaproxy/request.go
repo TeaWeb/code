@@ -70,12 +70,13 @@ type Request struct {
 	ignoreHeaders []string               // 忽略的Header
 	varMapping    map[string]string      // 自定义变量
 
-	root     string   // 资源根目录
-	index    []string // 目录下默认访问的文件
-	backend  *teaconfigs.BackendConfig
-	fastcgi  *teaconfigs.FastcgiConfig
-	proxy    *teaconfigs.ServerConfig
-	location *teaconfigs.LocationConfig
+	root         string   // 资源根目录
+	index        []string // 目录下默认访问的文件
+	backend      *teaconfigs.BackendConfig
+	fastcgi      *teaconfigs.FastcgiConfig
+	proxy        *teaconfigs.ServerConfig
+	location     *teaconfigs.LocationConfig
+	accessPolicy *shared.AccessPolicy
 
 	cachePolicy  *shared.CachePolicy
 	cacheEnabled bool
@@ -331,6 +332,10 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 			if len(location.IgnoreHeaders) > 0 {
 				this.ignoreHeaders = append(this.ignoreHeaders, location.IgnoreHeaders ...)
+			}
+
+			if location.AccessPolicy != nil {
+				this.accessPolicy = location.AccessPolicy
 			}
 
 			this.location = location
@@ -669,6 +674,22 @@ func (this *Request) call(writer *ResponseWriter) error {
 		// 检查consumer
 		goNext := this.consumeAPI(writer)
 		if !goNext {
+			return nil
+		}
+	}
+
+	// access policy
+	if this.accessPolicy != nil {
+		if !this.accessPolicy.AllowAccess(this.requestRemoteAddr()) {
+			writer.WriteHeader(http.StatusForbidden)
+			writer.Write([]byte("Forbidden Request"))
+			return nil
+		}
+
+		reason, allowed := this.accessPolicy.AllowTraffic()
+		if !allowed {
+			writer.WriteHeader(http.StatusTooManyRequests)
+			writer.Write([]byte("[" + reason + "]Request Quota Exceeded"))
 			return nil
 		}
 	}

@@ -24,6 +24,7 @@ func init() {
 			Get("/headers", new(HeadersAction)).
 			Get("/rewrite", new(RewriteAction)).
 			Get("/fastcgi", new(FastcgiAction)).
+			GetPost("/access", new(AccessAction)).
 			Get("/cache", new(CacheAction)).
 			Post("/updateCache", new(UpdateCacheAction)).
 			Post("/test", new(TestAction)).

@@ -1,13 +1,12 @@
-package api
+package shared
 
 import (
-	"github.com/iwind/TeaGo/lists"
 	"sync"
 	"time"
 )
 
 // API控制策略
-type APIAccessPolicy struct {
+type AccessPolicy struct {
 	locker    sync.Mutex
 	isChanged bool
 
@@ -61,26 +60,49 @@ type APIAccessPolicy struct {
 	} `yaml:"traffic" json:"traffic"` // 流量控制
 
 	// 访问控制
-	Access struct {
-		On      bool     `yaml:"on" json:"on"`           // 是否开启
-		AllowOn bool     `yaml:"allowOn" json:"allowOn"` // 白名单是否开启
-		DenyOn  bool     `yaml:"denyOn" json:"denyOn"`   // 黑名单是否开启
-		Allow   []string `yaml:"allow" json:"allow"`     // 允许的IP
-		Deny    []string `yaml:"deny" json:"deny"`       // 禁止的IP
-	} `yaml:"access" json:"access"` // 访问控制
+	Access AccessConfig `yaml:"access" json:"access"` // 访问控制
+}
+
+// 获取新对象
+func NewAccessPolicy() *AccessPolicy {
+	return &AccessPolicy{}
+}
+
+// 校验
+func (this *AccessPolicy) Validate() error {
+	err := this.Access.Validate()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // 检查权限
-func (this *APIAccessPolicy) AllowAccess(ip string) bool {
+func (this *AccessPolicy) AllowAccess(ip string) bool {
 	// Access
 	if this.Access.On {
 		// deny
-		if this.Access.DenyOn && lists.Contains(this.Access.Deny, ip) {
-			return false
+		if this.Access.DenyOn {
+			for _, client := range this.Access.Deny {
+				if !client.On {
+					continue
+				}
+				if client.Match(ip) {
+					return false
+				}
+			}
 		}
 
 		// allow
-		if this.Access.AllowOn && !lists.Contains(this.Access.Allow, ip) {
+		if this.Access.AllowOn {
+			for _, client := range this.Access.Allow {
+				if !client.On {
+					continue
+				}
+				if client.Match(ip) {
+					return true
+				}
+			}
 			return false
 		}
 	}
@@ -88,7 +110,7 @@ func (this *APIAccessPolicy) AllowAccess(ip string) bool {
 }
 
 // 检查流量
-func (this *APIAccessPolicy) AllowTraffic() (reason string, allowed bool) {
+func (this *AccessPolicy) AllowTraffic() (reason string, allowed bool) {
 	if !this.Traffic.On {
 		return "", true
 	}
@@ -162,7 +184,7 @@ func (this *APIAccessPolicy) AllowTraffic() (reason string, allowed bool) {
 }
 
 // 增加流量
-func (this *APIAccessPolicy) IncreaseTraffic() {
+func (this *AccessPolicy) IncreaseTraffic() {
 	if !this.Traffic.On {
 		return
 	}
@@ -242,11 +264,11 @@ func (this *APIAccessPolicy) IncreaseTraffic() {
 }
 
 // 判断是否改变
-func (this *APIAccessPolicy) IsChanged() bool {
+func (this *AccessPolicy) IsChanged() bool {
 	return this.isChanged
 }
 
 // 设置已完成改变
-func (this *APIAccessPolicy) FinishChange() {
+func (this *AccessPolicy) FinishChange() {
 	this.isChanged = false
 }

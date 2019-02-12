@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
@@ -30,7 +31,7 @@ type APIConsumer struct {
 		Deny     []string `yaml:"deny" json:"deny"`         // 禁止的API
 	} `yaml:"api" json:"api"` // API控制
 
-	Policy APIAccessPolicy `yaml:"policy" json:"policy"` // 控制策略
+	Policy shared.AccessPolicy `yaml:"policy" json:"policy"` // 控制策略
 }
 
 // 获取新对象

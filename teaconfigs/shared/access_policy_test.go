@@ -1,4 +1,4 @@
-package api
+package shared
 
 import (
 	"github.com/iwind/TeaGo/assert"
@@ -10,15 +10,15 @@ import (
 )
 
 func TestAPIAccessPolicy(t *testing.T) {
-	printTime := func(t1 time.Time) {
-		log.Println(timeutil.Format("Y-m-d H:i:s", t1))
+	printTime := func(t1 int64) {
+		log.Println(timeutil.Format("Y-m-d H:i:s", time.Unix(t1, 0)))
 	}
 
-	printTime2 := func(t1 time.Time, t2 time.Time) {
-		log.Println(timeutil.Format("Y-m-d H:i:s", t1), timeutil.Format("Y-m-d H:i:s", t2))
+	printTime2 := func(t1 int64, t2 int64) {
+		log.Println(timeutil.Format("Y-m-d H:i:s", time.Unix(t1, 0)), timeutil.Format("Y-m-d H:i:s", time.Unix(t2, 0)))
 	}
 
-	p := APIAccessPolicy{}
+	p := AccessPolicy{}
 	p.Traffic.On = true
 	p.Traffic.Second.On = true
 	p.Traffic.Second.Duration = 1
@@ -42,10 +42,10 @@ func TestAPIAccessPolicy(t *testing.T) {
 		p.IncreaseTraffic()
 
 		log.Println("seconds:", p.Traffic.Second.Used)
-		printTime(p.Traffic.Second.fromTime)
+		printTime(p.Traffic.Second.FromTime)
 
 		log.Println("minutes:", p.Traffic.Minute.Used)
-		printTime2(p.Traffic.Minute.fromTime, p.Traffic.Minute.toTime)
+		printTime2(p.Traffic.Minute.FromTime, p.Traffic.Minute.ToTime)
 
 		/**log.Println("hours:", p.Traffic.Hour.Used)
 		printTime2(p.Traffic.Hour.fromTime, p.Traffic.Hour.toTime)
@@ -63,46 +63,73 @@ func TestAPIAccessPolicy(t *testing.T) {
 func TestAPIAccessPolicySecond(t *testing.T) {
 	a := assert.NewAssertion(t).Quiet()
 
-	p := APIAccessPolicy{}
+	p := AccessPolicy{}
 	p.Traffic.On = true
 	p.Traffic.Second.On = false
-	a.IsTrue(p.AllowTraffic())
+	{
+		_, isAllowed := p.AllowTraffic()
+		a.IsTrue(isAllowed)
+	}
 
 	p.Traffic.Second.On = true
-	a.IsFalse(p.AllowTraffic())
+	{
+		_, isAllowed := p.AllowTraffic()
+		a.IsFalse(isAllowed)
+	}
 
 	p.Traffic.Second.On = true
 	p.Traffic.Second.Duration = 1
 	p.Traffic.Second.Total = 1
-	a.IsTrue(p.AllowTraffic())
+	{
+		_, isAllowed := p.AllowTraffic()
+		a.IsTrue(isAllowed)
+	}
 
 	p.Traffic.Second.On = true
 	p.Traffic.Second.Duration = 1
 	p.Traffic.Second.Total = 2
 	p.IncreaseTraffic()
 	p.IncreaseTraffic()
-	a.IsFalse(p.AllowTraffic())
+	{
+		_, isAllowed := p.AllowTraffic()
+		a.IsFalse(isAllowed)
+	}
 
 	time.Sleep(1 * time.Second)
-	a.IsTrue(p.AllowTraffic())
+	{
+		_, isAllowed := p.AllowTraffic()
+		a.IsTrue(isAllowed)
+	}
 }
 
 func TestAPIAccessPolicyMinute(t *testing.T) {
 	a := assert.NewAssertion(t).Quiet()
 
-	p := APIAccessPolicy{}
+	p := AccessPolicy{}
 	p.Traffic.On = true
 	p.Traffic.Minute.On = true
-	a.IsFalse(p.AllowTraffic())
+	{
+		_, isAllowed := p.AllowTraffic()
+		a.IsFalse(isAllowed)
+	}
 
 	p.Traffic.Minute.Total = 1
-	a.IsFalse(p.AllowTraffic())
+	{
+		_, isAllowed := p.AllowTraffic()
+		a.IsFalse(isAllowed)
+	}
 
 	p.Traffic.Minute.Duration = 1
-	a.IsTrue(p.AllowTraffic())
+	{
+		_, isAllowed := p.AllowTraffic()
+		a.IsTrue(isAllowed)
+	}
 
 	p.IncreaseTraffic()
-	a.IsFalse(p.AllowTraffic())
+	{
+		_, isAllowed := p.AllowTraffic()
+		a.IsFalse(isAllowed)
+	}
 
 	//time.Sleep(61 * time.Second)
 	//a.IsTrue(p.AllowTraffic())
@@ -116,7 +143,7 @@ func TestAPIAccessPolicyPerformance(t *testing.T) {
 	for i := 0; i < times; i ++ {
 		locker.Lock()
 
-		p := APIAccessPolicy{}
+		p := AccessPolicy{}
 		p.Traffic.On = true
 		p.Traffic.Second.On = true
 		p.Traffic.Second.Duration = 1
@@ -140,4 +167,28 @@ func TestAPIAccessPolicyPerformance(t *testing.T) {
 	}
 
 	t.Log(int(float64(times) / time.Since(before).Seconds()))
+}
+
+func TestAccessPolicy_AllowAccess(t *testing.T) {
+	p := AccessPolicy{}
+	p.Access.On = true
+
+	{
+		client := NewClientConfig()
+		client.IP = "192.168.1.100"
+		client.On = false
+		p.Access.AllowOn = false
+		p.Access.AddAllow(client)
+	}
+
+	{
+		client := NewClientConfig()
+		client.IP = "192.168.1.101"
+		client.On = true
+		p.Access.DenyOn = true
+		p.Access.AddDeny(client)
+	}
+
+	p.Validate()
+	t.Log(p.AllowAccess("192.168.1.100"))
 }
