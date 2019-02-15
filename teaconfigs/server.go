@@ -87,6 +87,7 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 		config := &ServerConfig{}
 		err = reader.ReadYAML(config)
 		if err != nil {
+			reader.Close()
 			continue
 		}
 		config.Filename = configFile.Name()
@@ -97,6 +98,7 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 		}
 
 		servers = append(servers, config)
+		reader.Close()
 	}
 
 	lists.Sort(servers, func(i int, j int) bool {
