@@ -18,6 +18,8 @@ func AddServerMenu(action *actions.ActionObject) {
 
 	// 服务
 	var hasServer = false
+	serverFilename := action.ParamString("server")
+	serverId := action.ParamString("serverId")
 	for _, server := range teaconfigs.LoadServerConfigsFromDir(Tea.ConfigDir()) {
 		urlPrefix := "/proxy/board"
 		if action.HasPrefix("/stat") {
@@ -27,8 +29,12 @@ func AddServerMenu(action *actions.ActionObject) {
 		} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
 			urlPrefix = "/proxy/detail"
 		}
-		subMenu.Add(server.Description, "", urlPrefix+"?server="+server.Filename, action.ParamString("server") == server.Filename)
+		subMenu.Add(server.Description, "", urlPrefix+"?server="+server.Filename, action.ParamString("server") == server.Filename || serverId == server.Id)
 		hasServer = true
+
+		if serverId == server.Id {
+			serverFilename = server.Filename
+		}
 	}
 	if hasServer {
 		action.Data["teaSubHeader"] = "代理服务"
@@ -55,7 +61,6 @@ func AddServerMenu(action *actions.ActionObject) {
 			"stat.",
 			"log.",
 		) && !action.Spec.HasClassPrefix("proxy.AddAction", "log.RuntimeAction") {
-			serverFilename := action.ParamString("server")
 			tabbar := []maps.Map{
 				{
 					"name":    "看板",

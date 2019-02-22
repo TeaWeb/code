@@ -32,7 +32,6 @@ type AccessLogger struct {
 
 	collectionCacheMap    map[string]*mongo.Collection
 	collectionCacheLocker sync.Mutex
-	processors            []Processor
 }
 
 type AccessLogItem struct {
@@ -90,13 +89,6 @@ func (this *AccessLogger) collection() *mongo.Collection {
 		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
 	})
 
-	for _, field := range []string{"timeFormat.hour", "timeFormat.minute", "timeFormat.second"} {
-		indexes.CreateOne(context.Background(), mongo.IndexModel{
-			Keys:    bson.NewDocument(bson.EC.Int32(field, 1), bson.EC.Int32("serverId", 1)),
-			Options: bson.NewDocument(bson.EC.Boolean("background", true)),
-		})
-	}
-
 	this.collectionCacheLocker.Lock()
 	this.collectionCacheMap[collName] = coll
 	this.collectionCacheLocker.Unlock()
@@ -141,15 +133,12 @@ func (this *AccessLogger) wait() {
 
 				// 分析
 				for _, doc := range docSlice {
-					doc.(*AccessLog).Parse()
-					doc.(*AccessLog).Id = objectid.New()
+					accessLog := doc.(*AccessLog)
+					accessLog.Parse()
+					accessLog.Id = objectid.New()
 
-					// 其他处理器
-					if len(this.processors) > 0 {
-						for _, processor := range this.processors {
-							processor.Process(doc.(*AccessLog))
-						}
-					}
+					// 执行处理器
+					CallAccessLogHooks(accessLog)
 				}
 
 				// 写入数据库
@@ -176,22 +165,6 @@ func (this *AccessLogger) wait() {
 	for {
 		item := <-this.queue
 		log := item.log
-		t := time.Unix(log.Timestamp, 0)
-		log.TimeFormat = struct {
-			Year   string `var:"year" bson:"year" json:"year"`
-			Month  string `var:"month" bson:"month" json:"month"`
-			Day    string `var:"day" bson:"day" json:"day"`
-			Hour   string `var:"hour" bson:"hour" json:"hour"`
-			Minute string `var:"minute" bson:"minute" json:"minute"`
-			Second string `var:"second" bson:"second" json:"second"`
-		}{
-			Year:   timeutil.Format("Y", t),
-			Month:  timeutil.Format("Ym", t),
-			Day:    timeutil.Format("Ymd", t),
-			Hour:   timeutil.Format("YmdH", t),
-			Minute: timeutil.Format("YmdHi", t),
-			Second: timeutil.Format("YmdHis", t),
-		}
 
 		// 计算QPS和BandWidth
 		this.timestamp = log.Timestamp
@@ -210,11 +183,6 @@ func (this *AccessLogger) wait() {
 		docs = append(docs, log)
 		docsLocker.Unlock()
 	}
-}
-
-// 添加处理器
-func (this *AccessLogger) AddProcessor(processor ... Processor) {
-	this.processors = append(this.processors, processor ...)
 }
 
 // 关闭

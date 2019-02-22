@@ -5,7 +5,6 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/utils/string"
 	"regexp"
 	"strings"
 )
@@ -18,6 +17,7 @@ func (this *AddAction) Run(params struct {
 	this.Show()
 }
 
+// 提交保存
 func (this *AddAction) RunPost(params struct {
 	Description string
 	ServiceType uint
@@ -73,7 +73,7 @@ func (this *AddAction) RunPost(params struct {
 		this.Fail("添加时有问题发生：" + err.Error())
 	}
 
-	filename := "server." + stringutil.Rand(16) + ".proxy.conf"
+	filename := "server." + server.Id + ".proxy.conf"
 	configPath := Tea.ConfigFile(filename)
 	err = server.WriteToFile(configPath)
 	if err != nil {

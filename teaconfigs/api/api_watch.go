@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
 	"sync"
 	"time"
@@ -34,7 +33,6 @@ func (this *ApiWatching) gc() {
 	for path, t := range this.apis {
 		if time.Since(t).Seconds() >= 5 {
 			delete(this.apis, path)
-			logs.Println("remove watching:", path)
 		}
 	}
 }

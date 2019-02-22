@@ -1926,6 +1926,7 @@ func (this *Request) log() {
 		ServerPort:      this.requestServerPort(),
 		ServerProtocol:  this.requestProto(),
 	}
+	accessLog.SetShouldStat(true)
 
 	if this.api != nil {
 		accessLog.APIPath = this.api.Path

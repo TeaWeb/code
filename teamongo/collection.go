@@ -1,11 +1,12 @@
 package teamongo
 
 import (
-	"github.com/mongodb/mongo-go-driver/mongo"
 	"context"
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/maps"
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"time"
 )
 
 type Collection struct {
@@ -19,7 +20,7 @@ func FindCollection(collName string) *Collection {
 }
 
 // 创建索引
-func (this *Collection) CreateIndex(indexes map[string]bool) {
+func (this *Collection) CreateIndex(indexes map[string]bool) error {
 	manager := this.Indexes()
 
 	doc := bson.NewDocument()
@@ -40,8 +41,10 @@ func (this *Collection) CreateIndex(indexes map[string]bool) {
 		}
 	}
 
-	manager.CreateOne(context.Background(), mongo.IndexModel{
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	_, err := manager.CreateOne(ctx, mongo.IndexModel{
 		Keys:    doc,
 		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
 	})
+	return err
 }

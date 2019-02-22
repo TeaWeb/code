@@ -93,7 +93,7 @@ func (this *IndexAction) RunPost(params struct {
 		})
 
 		widgetCode := `var widget = new widgets.Widget({
-	"name": "面板",
+	"name": "看板",
 	"requirements": ["mongo"]
 });
 

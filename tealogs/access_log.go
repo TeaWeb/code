@@ -15,6 +15,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var userAgentParser *uaparser.Parser
@@ -52,18 +53,10 @@ type AccessLog struct {
 	StatusMessage string              `var:"statusMessage" bson:"statusMessage" json:"statusMessage"` // 响应的信息
 	SentHeader    map[string][]string `var:"sentHeader" bson:"sentHeader" json:"sentHeader"`          // 响应的头信息
 
-	TimeISO8601 string  `var:"timeISO8601" bson:"timeISO8601" json:"timeISO8601"` // ISO 8601格式的本地时间，比如 2018-07-16T23:52:24.839+08:00
-	TimeLocal   string  `var:"timeLocal" bson:"timeLocal" json:"timeLocal"`       // 本地时间，比如 17/Jul/2018:09:52:24 +0800
-	Msec        float64 `var:"msec" bson:"msec" json:"msec"`                      // 带有毫秒的时间，比如 1531756823.054
-	Timestamp   int64   `var:"timestamp" bson:"timestamp" json:"timestamp"`       // unix时间戳，单位为秒
-	TimeFormat  struct {
-		Year   string `var:"year" bson:"year" json:"year"`
-		Month  string `var:"month" bson:"month" json:"month"`
-		Day    string `var:"day" bson:"day" json:"day"`
-		Hour   string `var:"hour" bson:"hour" json:"hour"`
-		Minute string `var:"minute" bson:"minute" json:"minute"`
-		Second string `var:"second" bson:"second" json:"second"`
-	} `var:"timeFormat" bson:"timeFormat" json:"timeFormat"`
+	TimeISO8601    string              `var:"timeISO8601" bson:"timeISO8601" json:"timeISO8601"`          // ISO 8601格式的本地时间，比如 2018-07-16T23:52:24.839+08:00
+	TimeLocal      string              `var:"timeLocal" bson:"timeLocal" json:"timeLocal"`                // 本地时间，比如 17/Jul/2018:09:52:24 +0800
+	Msec           float64             `var:"msec" bson:"msec" json:"msec"`                               // 带有毫秒的时间，比如 1531756823.054
+	Timestamp      int64               `var:"timestamp" bson:"timestamp" json:"timestamp"`                // unix时间戳，单位为秒
 	Host           string              `var:"host" bson:"host" json:"host"`                               // 主机名
 	Referer        string              `var:"referer" bson:"referer" json:"referer"`                      // 请求来源URL
 	UserAgent      string              `var:"userAgent" bson:"userAgent" json:"userAgent"`                // 客户端信息
@@ -95,8 +88,9 @@ type AccessLog struct {
 	} `bson:"extend" json:"extend"`
 
 	// 格式化的正则表达式
-	formatReg *regexp.Regexp
-	headerReg *regexp.Regexp
+	formatReg  *regexp.Regexp
+	headerReg  *regexp.Regexp
+	shouldStat bool // 是否应该统计
 }
 
 type AccessLogFile struct {
@@ -169,6 +163,11 @@ func init() {
 			accessLogVars[value] = field.Name
 		}
 	}
+}
+
+// 获取访问日志的时间
+func (this *AccessLog) Time() time.Time {
+	return time.Unix(this.Timestamp, 0)
 }
 
 func (this *AccessLog) SentContentType() string {
@@ -300,11 +299,22 @@ func (this *AccessLog) GetHeader(name string) string {
 	return v[0]
 }
 
+// 分析mime，扩展名、代理设置等
 func (this *AccessLog) Parse() {
 	this.parseMime()
 	this.parseExtension()
 	this.parseUserAgent()
 	this.parseGeoIP()
+}
+
+// 是否支持统计
+func (this *AccessLog) ShouldStat() bool {
+	return this.shouldStat
+}
+
+// 设置是否支持统计
+func (this *AccessLog) SetShouldStat(b bool) {
+	this.shouldStat = b
 }
 
 func (this *AccessLog) parseMime() {

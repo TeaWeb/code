@@ -3,17 +3,13 @@ package board
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/board/scripts"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
-	"io/ioutil"
 )
 
 type IndexAction actions.Action
 
-// 面板
+// 看板
 func (this *IndexAction) Run(params struct {
 	Server string
 }) {
@@ -27,57 +23,79 @@ func (this *IndexAction) Run(params struct {
 		"filename": params.Server,
 	}
 
-	configFile := "board." + server.Id + ".conf"
-	if !files.NewFile(Tea.ConfigFile(configFile)).Exists() {
-		configFile = "board.default.conf"
-
-		// 如果配置文件不存在，则尝试创建
-		if !files.NewFile(Tea.ConfigFile(configFile)).Exists() {
-			err := ioutil.WriteFile(Tea.ConfigFile(configFile), []byte(`widgets:
-- id: "1545562554961080824"
-  code: "proxy_status@tea"
-- id: "1545562554961080825"
-  code: "locations@tea"
-- id: "1545562554961080826"
-  code: "bandwidth_realtime@tea"
-- id: "1545562554961080827"
-  code: "request_realtime@tea"
-- id: "1545562554961080828"
-  code: "request_time@tea"
-- id: "1545562554961080829"
-  code: "status_stat@tea"
-- id: "1545562554961080830"
-  code: "latest_error_log@tea"`), 0777)
-			if err != nil {
-				logs.Println("failed to create '" + configFile + "'")
-			}
-		}
-	}
-
-	this.Data["config"] = configFile
-
 	this.Show()
 }
 
-// 面板数据
+// 看板数据
 func (this *IndexAction) RunPost(params struct {
 	Server string
-	Config string
+	Type   string // realtime or stat
 }) {
 	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
 	if err != nil {
 		this.Fail("找不到要查看的代理服务")
 	}
 
+	var board *teaconfigs.Board
+	{
+	}
+	switch params.Type {
+	case "realtime":
+		board = server.RealtimeBoard
+	case "stat":
+		board = server.StatBoard
+	default:
+		board = server.RealtimeBoard
+	}
+
+	if board == nil || len(board.Charts) == 0 {
+		this.Data["charts"] = []maps.Map{}
+		this.Success()
+	}
+
 	engine := scripts.NewEngine()
 	engine.SetContext(&scripts.Context{
 		Server: server,
 	})
-	err = engine.RunConfig(Tea.ConfigFile(params.Config), maps.Map{})
-	this.Data["widgetError"] = ""
-	if err != nil {
-		this.Data["widgetError"] = err.Error()
+
+	for _, c := range board.Charts {
+		chart := c.FindChart()
+		if chart == nil || !chart.On {
+			continue
+		}
+
+		obj, err := chart.AsObject()
+		if err != nil {
+			this.Fail(err.Error())
+		}
+		code, err := obj.AsJavascript(map[string]interface{}{
+			"name":    chart.Name,
+			"columns": chart.Columns,
+		})
+		if err != nil {
+			this.Fail(err.Error())
+		}
+
+		widgetCode := `var widget = new widgets.Widget({
+	"name": "看板",
+	"requirements": ["mongo"]
+});
+
+widget.run = function () {
+`
+		widgetCode += "{\n" + code + "\n}\n"
+		widgetCode += `
+};
+`
+
+		err = engine.RunCode(widgetCode)
+		if err != nil {
+			this.Fail("运行错误：" + err.Error())
+		}
 	}
+
 	this.Data["charts"] = engine.Charts()
+	this.Data["output"] = engine.Output()
+
 	this.Success()
 }

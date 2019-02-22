@@ -137,7 +137,7 @@ func (this *Engine) init() {
 	this.loadLib("libs/times.js")
 	this.loadLib("libs/caches.js")
 	this.loadLib("libs/mutex.js")
-	this.loadLib("libs/values.js")
+	this.loadLib("libs/agent.values.js")
 	this.loadLib("libs/colors.js")
 	this.loadLib("libs/widgets.js")
 	this.loadLib("libs/charts.js")
@@ -152,58 +152,10 @@ func (this *Engine) init() {
 	this.loadLib("libs/context.js")
 	this.loadLib("libs/agent.js")
 
-	this.loadWidgets()
-
 	this.vm.Set("callSetCache", this.callSetCache)
 	this.vm.Set("callGetCache", this.callGetCache)
 	this.vm.Set("callChartRender", this.callRenderChart)
 	this.vm.Set("callExecuteQuery", this.callExecuteQuery)
-}
-
-// 运行widget配置文件
-func (this *Engine) RunConfig(configFile string, options maps.Map) error {
-	reader, err := files.NewReader(configFile)
-	if err != nil {
-		return err
-	}
-	defer reader.Close()
-
-	m := maps.Map{}
-	err = reader.ReadYAML(&m)
-	if err != nil {
-		return err
-	}
-
-	widgets := m.Get("widgets")
-	if widgets == nil {
-		return nil
-	}
-	if reflect.TypeOf(widgets).Kind() != reflect.Slice {
-		return errors.New("'widgets' should be array")
-	}
-
-	arr, ok := widgets.([]interface{})
-	if !ok {
-		return errors.New("'widgets' format not valid")
-	}
-
-	for _, item := range arr {
-		m := maps.NewMap(item)
-		code := m.GetString("code")
-		if len(code) == 0 {
-			return errors.New("'code' should not be empty")
-		}
-
-		widget, found := this.widgetCodes[code]
-		if !found {
-			return errors.New("widget with code '" + code + "' not found")
-		}
-		err = this.RunCode(widget.GetString("definition"))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // 运行Widget代码
@@ -315,39 +267,6 @@ func (this *Engine) callGetCache(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 	return v
-}
-
-// 加载widgets
-func (this *Engine) loadWidgets() {
-	widgetFiles := files.NewFile(Tea.Root + Tea.DS + "libs" + Tea.DS + "agent").Glob("*.js")
-	for _, file := range widgetFiles {
-		s, err := file.ReadAllString()
-		if err != nil {
-			logs.Error(err)
-			continue
-		}
-
-		widgetValue, err := this.vm.Run(`(function () {` + s + `
-	return widget;
-})();`)
-		if err != nil {
-			logs.Error(errors.New("[" + file.Name() + "]" + err.Error()))
-			continue
-		}
-		w, err := widgetValue.Export()
-		if err != nil {
-			logs.Error(errors.New("[" + file.Name() + "]" + err.Error()))
-			continue
-		}
-		m := maps.NewMap(w)
-		code := m.GetString("code")
-		if len(code) == 0 {
-			logs.Error(errors.New("[" + file.Name() + "]'code' should not be empty"))
-			continue
-		}
-		m["definition"] = s
-		this.widgetCodes[code] = m
-	}
 }
 
 // 加载JS库文件

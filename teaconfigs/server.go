@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/api"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
@@ -66,6 +67,10 @@ type ServerConfig struct {
 
 	// API相关
 	API *api.APIConfig `yaml:"api" json:"api"` // API配置
+
+	// 看板
+	RealtimeBoard *Board `yaml:"realtimeBoard" json:"realtimeBoard"` // 即时看板
+	StatBoard     *Board `yaml:"statBoard" json:"statBoard"`         // 统计看板
 
 	maxBodySize   int64
 	gzipMinLength int64
@@ -153,6 +158,40 @@ func NewServerConfigFromFile(filename string) (*ServerConfig, error) {
 	}
 
 	return config, nil
+}
+
+// 通过ID读取配置信息
+func NewServerConfigFromId(serverId string) *ServerConfig {
+	if len(serverId) == 0 {
+		return nil
+	}
+
+	filename := "server." + serverId + ".proxy.conf"
+	file := files.NewFile(Tea.ConfigFile(filename))
+	if !file.Exists() {
+		// 遍历查找
+		for _, server := range LoadServerConfigsFromDir(Tea.ConfigDir()) {
+			if server.Id == serverId {
+				return server
+			}
+		}
+
+		return nil
+	}
+	data, err := file.ReadAll()
+	if err != nil {
+		logs.Error(err)
+		return nil
+	}
+
+	server := &ServerConfig{}
+	err = yaml.Unmarshal(data, server)
+	if err != nil {
+		logs.Error(err)
+		return nil
+	}
+
+	return server
 }
 
 // 校验配置

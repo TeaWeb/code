@@ -52,6 +52,12 @@ func TestServerConfig_NextBackend(t *testing.T) {
 	t.Log(s.NextBackend(maps.Map{}))
 }
 
+func TestNewServerConfigFromId(t *testing.T) {
+	t.Log(NewServerConfigFromId("123456"))
+	t.Log(NewServerConfigFromId("defaultproxy"))
+	t.Log(NewServerConfigFromId("XAPyHD1En4Z88yMc"))
+}
+
 func TestServerConfig_Encode(t *testing.T) {
 	s := NewServerConfig()
 	s.IgnoreHeaders = []string{"Server", "Content-Type"}

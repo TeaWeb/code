@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
@@ -230,8 +231,17 @@ func (this *Query) Insert(value interface{}) error {
 		return errors.New("value should not be nil")
 	}
 
-	coll := this.selectColl()
+	coll := this.Coll()
 	_, err := coll.InsertOne(this.context(3*time.Second), value)
+	return err
+}
+
+// 更新数据
+func (this *Query) Update(updates maps.Map) error {
+	filter := this.buildFilter()
+
+	coll := this.Coll()
+	_, err := coll.UpdateMany(context.Background(), filter, updates, nil)
 	return err
 }
 
@@ -239,14 +249,14 @@ func (this *Query) Insert(value interface{}) error {
 func (this *Query) Delete() error {
 	filter := this.buildFilter()
 
-	coll := this.selectColl()
+	coll := this.Coll()
 	_, err := coll.DeleteMany(context.Background(), filter)
 	return err
 }
 
 func (this *Query) queryNumber() (float64, error) {
 	if this.action == QueryActionCount {
-		coll := this.selectColl()
+		coll := this.Coll()
 		filter := this.buildFilter()
 		i, err := coll.Count(context.Background(), filter)
 		if err != nil {
@@ -349,7 +359,7 @@ func (this *Query) queryGroup() (result map[string]map[string]interface{}, err e
 		return nil, err
 	}
 
-	cursor, err := this.selectColl().Aggregate(context.Background(), pipelines)
+	cursor, err := this.Coll().Aggregate(context.Background(), pipelines)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +383,7 @@ func (this *Query) queryGroup() (result map[string]map[string]interface{}, err e
 }
 
 func (this *Query) FindAll() (result []interface{}, err error) {
-	coll := this.selectColl()
+	coll := this.Coll()
 	opts := []findopt.Find{}
 	if this.offset > -1 {
 		opts = append(opts, findopt.Skip(this.offset))
@@ -438,6 +448,21 @@ func (this *Query) FindAll() (result []interface{}, err error) {
 	return result, nil
 }
 
+// 选择集合
+func (this *Query) Coll() *Collection {
+	queryCollectionsLocker.Lock()
+	defer queryCollectionsLocker.Unlock()
+
+	coll, found := queryCollectionsMap[this.collectionName]
+	if found {
+		return coll
+	}
+
+	coll = FindCollection(this.collectionName)
+	queryCollectionsMap[this.collectionName] = coll
+	return coll
+}
+
 func (this *Query) buildFilter() map[string]interface{} {
 	filter := map[string]interface{}{}
 
@@ -477,20 +502,6 @@ func (this *Query) jsonEncodeString(i interface{}) string {
 		return ""
 	}
 	return string(data)
-}
-
-func (this *Query) selectColl() *Collection {
-	queryCollectionsLocker.Lock()
-	defer queryCollectionsLocker.Unlock()
-
-	coll, found := queryCollectionsMap[this.collectionName]
-	if found {
-		return coll
-	}
-
-	coll = FindCollection(this.collectionName)
-	queryCollectionsMap[this.collectionName] = coll
-	return coll
 }
 
 func (this *Query) context(timeout time.Duration) context.Context {
