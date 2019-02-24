@@ -10,13 +10,13 @@ type FastcgiAction actions.Action
 
 // Fastcgi设置
 func (this *FastcgiAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
-	locationutils.SetCommonInfo(this, params.Server, params.LocationId, "fastcgi")
+	locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "fastcgi")
 
 	this.Data["queryParams"] = maps.Map{
-		"server":     params.Server,
+		"serverId":   params.ServerId,
 		"locationId": params.LocationId,
 	}
 

@@ -33,12 +33,19 @@ func (this *DeleteChartAction) Run(params struct {
 	}
 
 	widget.RemoveChart(params.ChartId)
-	err := widget.Save()
-	if err != nil {
-		this.Fail("保存失败：" + err.Error())
+	if len(widget.Charts) > 0 {
+		err := widget.Save()
+		if err != nil {
+			this.Fail("保存失败：" + err.Error())
+		}
+	} else {
+		err := widget.Delete()
+		if err != nil {
+			this.Fail("保存失败：" + err.Error())
+		}
 	}
 
-	// 重启统计指标
+	// 移除所有Server中的相关记录
 	chartId := params.ChartId
 	for _, s := range teaconfigs.LoadServerConfigsFromDir(Tea.ConfigDir()) {
 		contains := false
@@ -58,6 +65,7 @@ func (this *DeleteChartAction) Run(params struct {
 				logs.Error(err)
 			}
 
+			// 重启统计
 			if len(chart.Requirements) > 0 {
 				proxyutils.ReloadServerStats(s.Id)
 			}

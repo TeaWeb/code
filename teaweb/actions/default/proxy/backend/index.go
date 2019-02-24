@@ -10,19 +10,18 @@ type IndexAction actions.Action
 
 // 后端列表
 func (this *IndexAction) Run(params struct {
-	Server string
+	ServerId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	this.Data["selectedTab"] = "backend"
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = server
+	this.Data["server"] = server
 
 	this.Data["queryParams"] = maps.Map{
-		"server": params.Server,
+		"serverId": params.ServerId,
 	}
 
 	this.Show()

@@ -10,14 +10,14 @@ type OnlineAction actions.Action
 
 // 上线服务器
 func (this *OnlineAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 	Websocket  bool
 	BackendId  string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	runningServer, _ := teaproxy.FindServer(server.Id)

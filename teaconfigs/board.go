@@ -56,19 +56,20 @@ func (this *Board) MoveChart(fromIndex int, toIndex int) {
 		return
 	}
 
-	status := this.Charts[fromIndex]
+	chart := this.Charts[fromIndex]
 	newList := []*BoardChart{}
 	for i := 0; i < len(this.Charts); i ++ {
 		if i == fromIndex {
 			continue
 		}
 		if fromIndex > toIndex && i == toIndex {
-			newList = append(newList, status)
+			newList = append(newList, chart)
 		}
 		newList = append(newList, this.Charts[i])
 		if fromIndex < toIndex && i == toIndex {
-			newList = append(newList, status)
+			newList = append(newList, chart)
 		}
 	}
+
 	this.Charts = newList
 }

@@ -39,10 +39,6 @@ func init() {
 			Post("/deleteItemChart", new(DeleteItemChartAction)).
 			GetPost("/updateItemChart", new(UpdateItemChartAction)).
 			Post("/clearItemValues", new(ClearItemValuesAction)).
-			Get("/widget", new(WidgetAction)).
-			GetPost("/addWidget", new(AddWidgetAction)).
-			GetPost("/makeWidget", new(MakeWidgetAction)).
-			Post("/testWidget", new(TestWidgetAction)).
 			EndAll()
 	})
 }

@@ -332,6 +332,14 @@ func (this *ServerConfig) Save() error {
 	return this.WriteToFilename(this.Filename)
 }
 
+// 删除
+func (this *ServerConfig) Delete() error {
+	if len(this.Filename) == 0 {
+		return errors.New("'filename' should be specified")
+	}
+	return files.NewFile(Tea.ConfigFile(this.Filename)).Delete()
+}
+
 // 判断是否和域名匹配
 func (this *ServerConfig) MatchName(name string) (matchedName string, matched bool) {
 	isMatched := teautils.MatchDomains(this.Name, name)

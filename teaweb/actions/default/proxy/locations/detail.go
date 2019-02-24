@@ -11,10 +11,10 @@ type DetailAction actions.Action
 
 // 路径规则详情
 func (this *DetailAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
-	server, location := locationutils.SetCommonInfo(this, params.Server, params.LocationId, "detail")
+	server, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "detail")
 
 	this.Data["location"] = maps.Map{
 		"on":              location.On,
@@ -37,7 +37,7 @@ func (this *DetailAction) Run(params struct {
 		"rewrite":     location.Rewrite,
 		"websocket":   location.Websocket,
 	}
-	this.Data["proxy"] = server
+	this.Data["server"] = server
 
 	// 字符集
 	this.Data["usualCharsets"] = teautils.UsualCharsets

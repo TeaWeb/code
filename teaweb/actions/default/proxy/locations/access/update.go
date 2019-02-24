@@ -12,10 +12,10 @@ type UpdateAction actions.Action
 
 // 修改访问控制
 func (this *UpdateAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
-	_, location := locationutils.SetCommonInfo(this, params.Server, params.LocationId, "access")
+	_, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "access")
 
 	if location.AccessPolicy != nil {
 		this.Data["policy"] = location.AccessPolicy
@@ -28,7 +28,7 @@ func (this *UpdateAction) Run(params struct {
 
 // 保存访问控制
 func (this *UpdateAction) RunPost(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 
 	TrafficOn         bool
@@ -64,10 +64,11 @@ func (this *UpdateAction) RunPost(params struct {
 
 	Must *actions.Must
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail("找不到Server:" + err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
+
 	location := server.FindLocation(params.LocationId)
 	if location == nil {
 		this.Fail("找不到Location")
@@ -124,7 +125,7 @@ func (this *UpdateAction) RunPost(params struct {
 		}
 	}
 
-	err = server.Save()
+	err := server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

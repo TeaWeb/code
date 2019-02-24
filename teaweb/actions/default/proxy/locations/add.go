@@ -6,7 +6,6 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/maps"
 	"regexp"
 	"strconv"
 )
@@ -15,20 +14,16 @@ type AddAction actions.Action
 
 // 添加路径规则
 func (this *AddAction) Run(params struct {
-	Server string
-	From   string
-	Must   *actions.Must
+	ServerId string
+	From     string
+	Must     *actions.Must
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
-	this.Data["server"] = maps.Map{
-		"filename": params.Server,
-	}
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = server
+	this.Data["server"] = server
 	this.Data["selectedTab"] = "location"
 	this.Data["selectedSubTab"] = "detail"
 	this.Data["from"] = params.From
@@ -42,7 +37,7 @@ func (this *AddAction) Run(params struct {
 
 // 保存提交
 func (this *AddAction) RunPost(params struct {
-	Server            string
+	ServerId          string
 	Pattern           string
 	PatternType       int
 	Root              string
@@ -58,9 +53,9 @@ func (this *AddAction) RunPost(params struct {
 	IsReverse         bool
 	IsCaseInsensitive bool
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	// 校验正则
@@ -90,7 +85,7 @@ func (this *AddAction) RunPost(params struct {
 	location.Index = index
 	server.AddLocation(location)
 
-	err = server.Save()
+	err := server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

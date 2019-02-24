@@ -13,24 +13,23 @@ type UpdateAction actions.Action
 
 // 修改后端服务器
 func (this *UpdateAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 	Websocket  bool
 	Backend    string
 	From       string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
-	this.Data["proxy"] = server
+	this.Data["server"] = server
 	if len(params.LocationId) > 0 {
 		this.Data["selectedTab"] = "location"
 	} else {
 		this.Data["selectedTab"] = "backend"
 	}
-	this.Data["filename"] = server.Filename
 	this.Data["locationId"] = params.LocationId
 	this.Data["websocket"] = types.Int(params.Websocket)
 	this.Data["from"] = params.From
@@ -64,7 +63,7 @@ func (this *UpdateAction) Run(params struct {
 
 // 提交
 func (this *UpdateAction) RunPost(params struct {
-	Server      string
+	ServerId    string
 	LocationId  string
 	Websocket   bool
 	BackendId   string
@@ -82,9 +81,9 @@ func (this *UpdateAction) RunPost(params struct {
 		Field("address", params.Address).
 		Require("请输入后端服务器地址")
 
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)

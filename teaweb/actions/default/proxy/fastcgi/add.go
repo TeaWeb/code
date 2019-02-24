@@ -13,12 +13,12 @@ type AddAction actions.Action
 // 添加
 func (this *AddAction) Run(params struct {
 	From       string
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
 	this.Data["from"] = params.From
 	this.Data["server"] = maps.Map{
-		"filename": params.Server,
+		"id": params.ServerId,
 	}
 	this.Data["locationId"] = params.LocationId
 
@@ -27,7 +27,7 @@ func (this *AddAction) Run(params struct {
 
 // 提交保存
 func (this *AddAction) RunPost(params struct {
-	Server      string
+	ServerId    string
 	LocationId  string
 	On          bool
 	Pass        string
@@ -50,9 +50,9 @@ func (this *AddAction) RunPost(params struct {
 		}
 	}
 
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	fastcgiList, err := server.FindFastcgiList(params.LocationId)

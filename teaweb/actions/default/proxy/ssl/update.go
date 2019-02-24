@@ -13,31 +13,30 @@ type UpdateAction actions.Action
 
 // 修改
 func (this *UpdateAction) Run(params struct {
-	Server string
+	ServerId string
 }) {
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	this.Data["selectedTab"] = "https"
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = proxy
+	this.Data["server"] = server
 
 	this.Show()
 }
 
 // 提交保存
 func (this *UpdateAction) RunPost(params struct {
-	Server   string
+	ServerId string
 	HttpsOn  bool
 	Listen   []string
 	CertFile *actions.File
 	KeyFile  *actions.File
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	if server.SSL == nil {
@@ -78,7 +77,7 @@ func (this *UpdateAction) RunPost(params struct {
 		server.SSL.CertificateKey = keyFilename
 	}
 
-	err = server.Save()
+	err := server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

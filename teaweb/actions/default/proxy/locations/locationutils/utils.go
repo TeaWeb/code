@@ -7,12 +7,12 @@ import (
 )
 
 // 设置公用信息
-func SetCommonInfo(action actions.ActionWrapper, serverFilename string, locationId string, subTab string) (server *teaconfigs.ServerConfig, location *teaconfigs.LocationConfig) {
+func SetCommonInfo(action actions.ActionWrapper, serverId string, locationId string, subTab string) (server *teaconfigs.ServerConfig, location *teaconfigs.LocationConfig) {
 	obj := action.Object()
 
-	server, err := teaconfigs.NewServerConfigFromFile(serverFilename)
-	if err != nil {
-		obj.Fail(err.Error())
+	server = teaconfigs.NewServerConfigFromId(serverId)
+	if server == nil {
+		obj.Fail("找不到Server")
 	}
 
 	location = server.FindLocation(locationId)
@@ -32,11 +32,7 @@ func SetCommonInfo(action actions.ActionWrapper, serverFilename string, location
 
 	obj.Data["selectedTab"] = "location"
 	obj.Data["selectedSubTab"] = subTab
-	obj.Data["filename"] = server.Filename
-	obj.Data["proxy"] = server
-	obj.Data["server"] = maps.Map{
-		"filename": server.Filename,
-	}
+	obj.Data["server"] = server
 
 	return server, location
 }

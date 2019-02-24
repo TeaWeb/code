@@ -14,21 +14,21 @@ type UpdateChartAction actions.Action
 
 // 修改图表
 func (this *UpdateChartAction) Run(params struct {
-	From     string
-	ServerId string
-	WidgetId string
-	ChartId  string
+	From      string
+	ServerId  string
+	WidgetId  string
+	ChartId   string
+	BoardType string
 }) {
 	this.Data["from"] = params.From
+	this.Data["boardType"] = params.BoardType
 
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
 		this.Fail("找不到server")
 	}
 	this.Data["server"] = maps.Map{
-		"id":       server.Id,
-		"name":     server.Name,
-		"filename": server.Filename,
+		"id": server.Id,
 	}
 
 	widget := widgets.NewWidgetFromId(params.WidgetId)

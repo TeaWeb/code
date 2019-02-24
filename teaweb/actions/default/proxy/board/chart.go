@@ -3,26 +3,29 @@ package board
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
+	"strings"
 )
 
 type ChartAction actions.Action
 
 // 图表详情
 func (this *ChartAction) Run(params struct {
-	ServerId string
-	WidgetId string
-	ChartId  string
+	ServerId  string
+	WidgetId  string
+	ChartId   string
+	BoardType string
 }) {
+	this.Data["boardType"] = params.BoardType
+
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
 		this.Fail("找不到server")
 	}
 	this.Data["server"] = maps.Map{
-		"id":       server.Id,
-		"name":     server.Name,
-		"filename": server.Filename,
+		"id": server.Id,
 	}
 
 	widget := widgets.NewWidgetFromId(params.WidgetId)
@@ -37,5 +40,7 @@ func (this *ChartAction) Run(params struct {
 	}
 
 	this.Data["chart"] = chart
+	this.Data["canUpdate"] = Tea.IsTesting() || !strings.HasPrefix(widget.Id, "teaweb.")
+
 	this.Show()
 }

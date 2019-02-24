@@ -8,6 +8,7 @@ import (
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"github.com/syndtr/goleveldb/leveldb/errors"
 	"sync"
 	"time"
 )
@@ -31,15 +32,30 @@ func NewQueue() *Queue {
 func (this *Queue) Start(serverId string) {
 	this.ServerId = serverId
 	this.c = make(chan *Value, 4096)
+
+	// 测试连接，如果有错误则重新连接
+	err := teamongo.Test()
+	if err != nil {
+		logs.Println("[stat]queue start failed: can not connect to mongodb, will reconnect to mongodb")
+		time.Sleep(5 * time.Second)
+		this.Start(serverId)
+		return
+	}
+
 	insertQuery := teamongo.NewQuery("values.server."+serverId, new(Value))
 
 	// 创建索引
 	coll := insertQuery.Coll()
+
 	this.coll = coll
 	for _, indexMap := range []map[string]bool{
 		{
 			"item":      true,
 			"timestamp": true,
+		},
+		{
+			"item":              true,
+			"timeFormat.second": true,
 		},
 		{
 			"item":              true,
@@ -68,7 +84,7 @@ func (this *Queue) Start(serverId string) {
 	} {
 		err := coll.CreateIndex(indexMap)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(errors.New("mongo:" + err.Error()))
 		}
 	}
 
@@ -152,7 +168,7 @@ func (this *Queue) Start(serverId string) {
 
 	// 清理数据
 	go func() {
-		this.looper = timers.Loop(1*time.Second, func(looper *timers.Looper) {
+		this.looper = timers.Loop(1*time.Hour, func(looper *timers.Looper) {
 			// 清除24小时之前的second
 			err := teamongo.NewQuery("values.server."+serverId, new(Value)).
 				Attr("period", "second").
@@ -199,12 +215,20 @@ func (this *Queue) Add(itemCode string, t time.Time, period ValuePeriod, params 
 	item.Params = params
 	item.SetTime(t)
 
-	this.c <- item
+	if this.c != nil {
+		this.c <- item
+	}
 }
 
 // 停止
 func (this *Queue) Stop() {
+	// 等待数据完成
+	if len(this.c) > 0 {
+		time.Sleep(200 * time.Millisecond)
+	}
+
 	close(this.c)
+	this.c = nil
 
 	if this.looper != nil {
 		this.looper.Stop()

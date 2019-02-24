@@ -13,7 +13,7 @@ type AddAction actions.Action
 // 添加Header
 func (this *AddAction) Run(params struct {
 	From       string
-	Server     string
+	ServerId   string
 	LocationId string
 	RewriteId  string
 	FastcgiId  string
@@ -21,7 +21,7 @@ func (this *AddAction) Run(params struct {
 }) {
 	this.Data["from"] = params.From
 	this.Data["server"] = maps.Map{
-		"filename": params.Server,
+		"id": params.ServerId,
 	}
 	this.Data["locationId"] = params.LocationId
 	this.Data["rewriteId"] = params.RewriteId
@@ -33,7 +33,7 @@ func (this *AddAction) Run(params struct {
 
 // 提交保存
 func (this *AddAction) RunPost(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 	RewriteId  string
 	FastcgiId  string
@@ -51,10 +51,11 @@ func (this *AddAction) RunPost(params struct {
 		Field("name", params.Name).
 		Require("请输入名称")
 
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
+
 	headerList, err := server.FindHeaderList(params.LocationId, params.BackendId, params.RewriteId, params.FastcgiId)
 	if err != nil {
 		this.Fail(err.Error())

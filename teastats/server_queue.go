@@ -11,10 +11,11 @@ type ServerQueue struct {
 }
 
 func (this *ServerQueue) Stop() {
-	this.Queue.Stop()
 	for _, f := range this.Filters {
 		f.Stop()
 	}
+
+	this.Queue.Stop()
 	this.Queue = nil
 	this.Filters = nil
 }

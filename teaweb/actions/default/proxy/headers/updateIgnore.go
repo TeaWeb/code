@@ -12,21 +12,21 @@ type UpdateIgnoreAction actions.Action
 // 修改屏蔽的Header
 func (this *UpdateIgnoreAction) Run(params struct {
 	From       string
-	Server     string
+	ServerId   string
 	LocationId string
 	RewriteId  string
 	FastcgiId  string
 	BackendId  string
 	Name       string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	this.Data["from"] = params.From
 	this.Data["server"] = maps.Map{
-		"filename": server.Filename,
+		"id": server.Id,
 	}
 	this.Data["locationId"] = params.LocationId
 	this.Data["rewriteId"] = params.RewriteId
@@ -39,7 +39,7 @@ func (this *UpdateIgnoreAction) Run(params struct {
 
 // 提交修改
 func (this *UpdateIgnoreAction) RunPost(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 	RewriteId  string
 	FastcgiId  string
@@ -52,9 +52,9 @@ func (this *UpdateIgnoreAction) RunPost(params struct {
 		Field("name", params.Name).
 		Require("请输入Name")
 
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	headerList, err := server.FindHeaderList(params.LocationId, params.BackendId, params.RewriteId, params.FastcgiId)

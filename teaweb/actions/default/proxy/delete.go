@@ -1,10 +1,9 @@
 package proxy
 
 import (
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -13,24 +12,24 @@ type DeleteAction actions.Action
 
 // 删除
 func (this *DeleteAction) Run(params struct {
-	Server string
+	ServerId string
 }) {
 	this.Data["server"] = maps.Map{
-		"filename": params.Server,
+		"id": params.ServerId,
 	}
 
 	this.Show()
 }
 
 func (this *DeleteAction) RunPost(params struct {
-	Server string
+	ServerId string
 }) {
-	configFile := files.NewFile(Tea.ConfigFile(params.Server))
-	if !configFile.Exists() {
-		this.Fail("要删除的配置文件不存在")
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
-	err := configFile.Delete()
+	err := server.Delete()
 	if err != nil {
 		logs.Error(err)
 		this.Fail("配置文件删除失败")

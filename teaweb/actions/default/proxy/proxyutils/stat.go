@@ -20,7 +20,7 @@ func ReloadServerStats(serverId string) {
 			continue
 		}
 		for _, c := range board.Charts {
-			chart := c.FindChart()
+			_, chart := c.FindChart()
 			if chart == nil || !chart.On {
 				continue
 			}

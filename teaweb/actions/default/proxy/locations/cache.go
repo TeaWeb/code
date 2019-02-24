@@ -14,10 +14,10 @@ type CacheAction actions.Action
 
 // 缓存设置
 func (this *CacheAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
-	_, location := locationutils.SetCommonInfo(this, params.Server, params.LocationId, "cache")
+	_, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "cache")
 
 	// 缓存策略
 	this.Data["cachePolicy"] = ""

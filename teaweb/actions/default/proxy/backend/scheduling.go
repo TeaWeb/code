@@ -13,18 +13,17 @@ type SchedulingAction actions.Action
 
 // 调度算法
 func (this *SchedulingAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 	Websocket  bool
 	From       string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
-	this.Data["proxy"] = server
-	this.Data["filename"] = server.Filename
+	this.Data["server"] = server
 	if len(params.LocationId) > 0 {
 		this.Data["selectedTab"] = "location"
 	} else {
@@ -52,7 +51,7 @@ func (this *SchedulingAction) Run(params struct {
 
 // 保存提交
 func (this *SchedulingAction) RunPost(params struct {
-	Server      string
+	ServerId    string
 	LocationId  string
 	Websocket   bool
 	Type        string
@@ -61,9 +60,9 @@ func (this *SchedulingAction) RunPost(params struct {
 	StickyParam string
 	Must        *actions.Must
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)

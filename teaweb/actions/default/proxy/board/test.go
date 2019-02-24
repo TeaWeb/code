@@ -3,14 +3,18 @@ package board
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
+	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teastats"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/board/scripts"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
 type TestAction actions.Action
 
-// 测试
+// 测试图表
 func (this *TestAction) Run(params struct {
 	ServerId       string
 	Name           string
@@ -19,6 +23,7 @@ func (this *TestAction) Run(params struct {
 	Items          []string
 	JavascriptCode string
 	On             bool
+	AutoGenerate   bool
 	Must           *actions.Must
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
@@ -26,6 +31,46 @@ func (this *TestAction) Run(params struct {
 		this.Fail("找不到Server")
 	}
 
+	// 如果选中了指标，而且指标没有数据的话，则试着根据access log生成指标数据
+	if params.AutoGenerate {
+		if len(params.Items) > 0 {
+			queue := teastats.NewQueue()
+			queue.Start(server.Id)
+			for _, item := range params.Items {
+				instance := teastats.FindFilter(item)
+				if instance == nil {
+					continue
+				}
+
+				// 是否有数据
+				statQuery := teamongo.NewQuery("values.server."+server.Id, new(teastats.Value))
+				statQuery.Attr("item", item)
+				v, err := statQuery.Find()
+				if err != nil {
+					logs.Error(err)
+				} else if v == nil {
+					// 读取日志
+					logQuery := tealogs.NewQuery()
+					logQuery.Attr("serverId", params.ServerId)
+					logQuery.Limit(1000)
+					logQuery.Desc("_id")
+					ones, err := logQuery.FindAll()
+					if err != nil {
+						logs.Error(err)
+					} else {
+						instance.Start(queue, item)
+						for _, one := range ones {
+							instance.Filter(one)
+						}
+						instance.Stop()
+					}
+				}
+			}
+			queue.Stop()
+		}
+	}
+
+	// 保存图表
 	chart := widgets.NewChart()
 	chart.On = params.On
 	chart.Name = params.Name

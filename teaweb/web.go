@@ -32,13 +32,13 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/log"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/rewrite"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/ssl"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/stat"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/login"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/mongo"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/profile"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/server"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/update"
-	_ "github.com/TeaWeb/code/teaweb/actions/default/stat"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo"
@@ -58,6 +58,8 @@ import (
 )
 
 // 启动
+var server *TeaGo.Server
+
 func Start() {
 	if lookupArgs() {
 		return
@@ -74,6 +76,12 @@ func Start() {
 			if sig == syscall.SIGHUP {
 				configs.SharedAdminConfig().Reset()
 			} else {
+				if sig == syscall.SIGINT {
+					if server != nil {
+						server.Stop()
+						time.Sleep(1 * time.Second)
+					}
+				}
 				os.Exit(0)
 			}
 		}
@@ -102,7 +110,7 @@ func Start() {
 	}
 
 	// 启动管理界面
-	TeaGo.NewServer().
+	server = TeaGo.NewServer().
 		AccessLog(false).
 
 		Get("/", new(index.IndexAction)).
@@ -113,9 +121,8 @@ func Start() {
 		Session(sessions.NewFileSessionManager(
 			86400,
 			"gSeDQJJ67tAVdnguDAQdGmnDVrjFd2I9",
-		)).
-
-		Start()
+		))
+	server.Start()
 }
 
 // 检查命令行参数

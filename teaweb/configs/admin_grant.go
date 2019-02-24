@@ -2,15 +2,14 @@ package configs
 
 const (
 	// 内置权限
-	AdminGrantAll        = "all"
-	AdminGrantProxy      = "proxy"
-	AdminGrantQ          = "q"
-	AdminGrantApi        = "api"
-	AdminGrantLog        = "log"
-	AdminGrantStatistics = "stat"
-	AdminGrantAgent      = "agent"
-	AdminGrantPlugin     = "plugin"
-	AdminGrantTeam       = "team"
+	AdminGrantAll    = "all"
+	AdminGrantProxy  = "proxy"
+	AdminGrantQ      = "q"
+	AdminGrantApi    = "api"
+	AdminGrantLog    = "log"
+	AdminGrantAgent  = "agent"
+	AdminGrantPlugin = "plugin"
+	AdminGrantTeam   = "team"
 )
 
 // 权限定义

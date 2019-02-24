@@ -10,19 +10,18 @@ type IndexAction actions.Action
 
 // 自定义Http Header
 func (this *IndexAction) Run(params struct {
-	Server string // 必填
+	ServerId string // 必填
 }) {
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	this.Data["selectedTab"] = "header"
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = proxy
+	this.Data["server"] = server
 
 	this.Data["headerQuery"] = maps.Map{
-		"server": params.Server,
+		"serverId": params.ServerId,
 	}
 
 	this.Show()

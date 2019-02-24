@@ -11,12 +11,12 @@ type DataAction actions.Action
 
 // Fastcgi数据
 func (this *DataAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	fastcgiList, err := server.FindFastcgiList(params.LocationId)

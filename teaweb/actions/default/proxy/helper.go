@@ -10,7 +10,7 @@ type Helper struct {
 }
 
 func (this *Helper) BeforeAction(action *actions.ActionObject) {
-	if action.Request.Method == http.MethodGet {
+	if action.Request.Method == http.MethodGet && !action.HasPrefix("/proxy/status") {
 		proxyutils.AddServerMenu(action)
 	}
 }

@@ -14,17 +14,15 @@ type UpdateAction actions.Action
 // 更改Websocket
 func (this *UpdateAction) Run(params struct {
 	From       string
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
-	this.Data["server"] = maps.Map{
-		"filename": server.Filename,
-	}
+	this.Data["server"] = server
 
 	location := server.FindLocation(params.LocationId)
 	if location == nil {
@@ -33,7 +31,6 @@ func (this *UpdateAction) Run(params struct {
 
 	this.Data["selectedTab"] = "location"
 	this.Data["selectedSubTab"] = "websocket"
-	this.Data["filename"] = params.Server
 
 	this.Data["location"] = maps.Map{
 		"on":          location.On,
@@ -44,7 +41,6 @@ func (this *UpdateAction) Run(params struct {
 		"cachePolicy": location.CachePolicy,
 		"rewrite":     location.Rewrite,
 	}
-	this.Data["proxy"] = server
 	this.Data["from"] = params.From
 
 	hasWebsocket := false
@@ -72,7 +68,7 @@ func (this *UpdateAction) Run(params struct {
 
 // 提交修改
 func (this *UpdateAction) RunPost(params struct {
-	Server           string
+	ServerId         string
 	LocationId       string
 	On               bool
 	HandshakeTimeout uint
@@ -80,7 +76,7 @@ func (this *UpdateAction) RunPost(params struct {
 	Origins          []string
 	ForwardMode      string
 }) {
-	server, location := locationutils.SetCommonInfo(this, params.Server, params.LocationId, "websocket")
+	server, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "websocket")
 
 	if location.Websocket == nil {
 		location.Websocket = teaconfigs.NewWebsocketConfig()

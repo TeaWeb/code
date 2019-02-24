@@ -10,7 +10,7 @@ import (
 type IndexAction actions.Action
 
 func (this *IndexAction) Run(params struct {
-	Server string
+	ServerId string
 }) {
 	// 检查MongoDB连接
 	this.Data["mongoError"] = ""
@@ -20,7 +20,7 @@ func (this *IndexAction) Run(params struct {
 	}
 
 	this.Data["server"] = maps.Map{
-		"filename": params.Server,
+		"id": params.ServerId,
 	}
 
 	proxyutils.AddServerMenu(this.Object())

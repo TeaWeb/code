@@ -2,6 +2,7 @@ package teastats
 
 import (
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/iwind/TeaGo"
 )
 
 func init() {
@@ -50,5 +51,14 @@ func init() {
 			serverQueue.Filter(accessLog)
 			return true
 		},
+	})
+
+	// 停止
+	TeaGo.BeforeStop(func(server *TeaGo.Server) {
+		go func() {
+			for _, serverQueue := range AllStartedServers {
+				serverQueue.(*ServerQueue).Stop()
+			}
+		}()
 	})
 }

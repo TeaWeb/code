@@ -10,7 +10,7 @@ type DeleteIgnoreAction actions.Action
 
 // 删除屏蔽的Header
 func (this *DeleteIgnoreAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 	RewriteId  string
 	FastcgiId  string
@@ -18,9 +18,9 @@ func (this *DeleteIgnoreAction) Run(params struct {
 	Name       string
 	Must       *actions.Must
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	headerList, err := server.FindHeaderList(params.LocationId, params.BackendId, params.RewriteId, params.FastcgiId)

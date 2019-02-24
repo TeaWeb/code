@@ -13,14 +13,14 @@ type AddAction actions.Action
 // 添加服务器
 func (this *AddAction) Run(params struct {
 	From       string
-	Server     string
+	ServerId   string
 	LocationId string // 路径
 	Websocket  bool   // 是否是Websocket设置
 	Backup     bool
 }) {
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	if len(params.LocationId) > 0 {
@@ -28,8 +28,7 @@ func (this *AddAction) Run(params struct {
 	} else {
 		this.Data["selectedTab"] = "backend"
 	}
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = proxy
+	this.Data["server"] = server
 
 	this.Data["from"] = params.From
 	this.Data["locationId"] = params.LocationId
@@ -41,7 +40,7 @@ func (this *AddAction) Run(params struct {
 
 // 提交
 func (this *AddAction) RunPost(params struct {
-	Server      string
+	ServerId    string
 	LocationId  string // 路径
 	Websocket   bool   // 是否是Websocket设置
 	Address     string
@@ -58,9 +57,9 @@ func (this *AddAction) RunPost(params struct {
 		Field("address", params.Address).
 		Require("请输入后端服务器地址")
 
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	backend := teaconfigs.NewBackendConfig()

@@ -9,11 +9,11 @@ type DetailAction actions.Action
 
 // 代理详情
 func (this *DetailAction) Run(params struct {
-	Server string
+	ServerId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	if server.Index == nil {
@@ -21,8 +21,7 @@ func (this *DetailAction) Run(params struct {
 	}
 
 	this.Data["selectedTab"] = "basic"
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = server
+	this.Data["server"] = server
 
 	this.Show()
 }

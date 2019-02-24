@@ -16,12 +16,12 @@ type UpdateAction actions.Action
 
 // 修改
 func (this *UpdateAction) Run(params struct {
-	Server      string
+	ServerId    string
 	LocationId  string
 	From        string
 	ShowSpecial bool
 }) {
-	_, location := locationutils.SetCommonInfo(this, params.Server, params.LocationId, "detail")
+	_, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "detail")
 
 	this.Data["from"] = params.From
 	this.Data["showSpecial"] = params.ShowSpecial
@@ -58,7 +58,7 @@ func (this *UpdateAction) Run(params struct {
 
 // 保存修改
 func (this *UpdateAction) RunPost(params struct {
-	Server            string
+	ServerId          string
 	LocationId        string
 	Pattern           string
 	PatternType       int
@@ -75,9 +75,9 @@ func (this *UpdateAction) RunPost(params struct {
 	IsReverse         bool
 	IsCaseInsensitive bool
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	location := server.FindLocation(params.LocationId)
@@ -110,7 +110,7 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 	location.Index = index
 
-	err = server.Save()
+	err := server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

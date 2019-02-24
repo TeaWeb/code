@@ -10,16 +10,16 @@ type IndexAction actions.Action
 
 // Websocket信息
 func (this *IndexAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
 	this.Data["queryParams"] = maps.Map{
-		"server":     params.Server,
+		"serverId":   params.ServerId,
 		"locationId": params.LocationId,
 		"websocket":  1,
 	}
 
-	_, location := locationutils.SetCommonInfo(this, params.Server, params.LocationId, "websocket")
+	_, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "websocket")
 
 	if location.Websocket == nil {
 		this.Data["websocket"] = nil

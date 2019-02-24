@@ -10,13 +10,13 @@ type RewriteAction actions.Action
 
 // 重写规则
 func (this *RewriteAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
-	locationutils.SetCommonInfo(this, params.Server, params.LocationId, "rewrite")
+	locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "rewrite")
 
 	this.Data["queryParams"] = maps.Map{
-		"server":     params.Server,
+		"serverId":   params.ServerId,
 		"locationId": params.LocationId,
 	}
 

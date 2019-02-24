@@ -9,22 +9,25 @@ import (
 type MoveUpAction actions.Action
 
 func (this *MoveUpAction) Run(params struct {
-	Filename string
+	ServerId string
 	Index    int
 }) {
-	proxy, err := teaconfigs.NewServerConfigFromFile(params.Filename)
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
+	}
+
+	if params.Index >= 1 && params.Index < len(server.Locations) {
+		prev := server.Locations[params.Index-1]
+		current := server.Locations[params.Index]
+		server.Locations[params.Index-1] = current
+		server.Locations[params.Index] = prev
+	}
+
+	err := server.Save()
 	if err != nil {
-		this.Fail(err.Error())
+		this.Fail("找不到Server")
 	}
-
-	if params.Index >= 1 && params.Index < len(proxy.Locations) {
-		prev := proxy.Locations[params.Index-1]
-		current := proxy.Locations[params.Index]
-		proxy.Locations[params.Index-1] = current
-		proxy.Locations[params.Index] = prev
-	}
-
-	proxy.Save()
 
 	proxyutils.NotifyChange()
 

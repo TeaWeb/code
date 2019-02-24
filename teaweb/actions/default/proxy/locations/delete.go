@@ -10,16 +10,16 @@ type DeleteAction actions.Action
 
 // 删除路径规则
 func (this *DeleteAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	server.RemoveLocation(params.LocationId)
-	err = server.Save()
+	err := server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

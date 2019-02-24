@@ -12,7 +12,7 @@ type AddIgnoreAction actions.Action
 // 添加屏蔽的Header
 func (this *AddIgnoreAction) Run(params struct {
 	From       string
-	Server     string
+	ServerId   string
 	LocationId string
 	RewriteId  string
 	FastcgiId  string
@@ -20,7 +20,7 @@ func (this *AddIgnoreAction) Run(params struct {
 }) {
 	this.Data["from"] = params.From
 	this.Data["server"] = maps.Map{
-		"filename": params.Server,
+		"id": params.ServerId,
 	}
 	this.Data["locationId"] = params.LocationId
 	this.Data["rewriteId"] = params.RewriteId
@@ -32,7 +32,7 @@ func (this *AddIgnoreAction) Run(params struct {
 
 // 提交保存
 func (this *AddIgnoreAction) RunPost(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 	RewriteId  string
 	FastcgiId  string
@@ -40,9 +40,9 @@ func (this *AddIgnoreAction) RunPost(params struct {
 	Name       string
 	Must       *actions.Must
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	params.Must.

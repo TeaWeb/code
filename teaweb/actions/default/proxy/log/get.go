@@ -2,7 +2,6 @@ package log
 
 import (
 	"fmt"
-	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -14,19 +13,12 @@ type GetAction actions.Action
 
 // 获取日志
 func (this *GetAction) Run(params struct {
-	Server       string
+	ServerId     string
 	FromId       string
 	Size         int64 `default:"10"`
 	BodyFetching bool
 }) {
-	serverId := ""
-	if len(params.Server) > 0 {
-		server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-		if err != nil {
-			this.Fail("发生错误：" + err.Error())
-		}
-		serverId = server.Id
-	}
+	serverId := params.ServerId
 
 	requestBodyFetching = params.BodyFetching
 	requestBodyTime = time.Now()

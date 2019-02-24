@@ -11,14 +11,15 @@ type DataAction actions.Action
 
 // 后端服务器数据
 func (this *DataAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 	Websocket  bool
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
+
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
 	if err != nil {
 		this.Fail(err.Error())

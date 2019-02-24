@@ -10,13 +10,13 @@ type HeadersAction actions.Action
 
 // 自定义Http Header
 func (this *HeadersAction) Run(params struct {
-	Server     string // 必填
+	ServerId   string // 必填
 	LocationId string
 }) {
-	locationutils.SetCommonInfo(this, params.Server, params.LocationId, "headers")
+	locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "headers")
 
 	this.Data["headerQuery"] = maps.Map{
-		"server":     params.Server,
+		"serverId":   params.ServerId,
 		"locationId": params.LocationId,
 	}
 

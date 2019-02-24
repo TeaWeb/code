@@ -14,7 +14,7 @@ func (this *IndexAction) Run(params struct {
 	// 跳转到第一个
 	servers := teaconfigs.LoadServerConfigsFromDir(Tea.ConfigDir())
 	if len(servers) > 0 {
-		this.RedirectURL("/proxy/board?server=" + servers[0].Filename)
+		this.RedirectURL("/proxy/board?serverId=" + servers[0].Id)
 	} else {
 		this.Show()
 	}

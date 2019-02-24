@@ -13,14 +13,15 @@ type UpdateAction actions.Action
 // 修改
 func (this *UpdateAction) Run(params struct {
 	From       string
-	Server     string
+	ServerId   string
 	LocationId string
 	FastcgiId  string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
+
 	fastcgiList, err := server.FindFastcgiList(params.LocationId)
 	if err != nil {
 		this.Fail(err.Error())
@@ -46,7 +47,7 @@ func (this *UpdateAction) Run(params struct {
 
 	this.Data["from"] = params.From
 	this.Data["server"] = maps.Map{
-		"filename": params.Server,
+		"id": params.ServerId,
 	}
 	this.Data["locationId"] = params.LocationId
 
@@ -55,7 +56,7 @@ func (this *UpdateAction) Run(params struct {
 
 // 修改
 func (this *UpdateAction) RunPost(params struct {
-	Server      string
+	ServerId    string
 	LocationId  string
 	On          bool
 	Pass        string
@@ -81,9 +82,9 @@ func (this *UpdateAction) RunPost(params struct {
 		}
 	}
 
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	fastcgiList, err := server.FindFastcgiList(params.LocationId)

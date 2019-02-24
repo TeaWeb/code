@@ -9,10 +9,10 @@ type AccessAction actions.Action
 
 // 访问控制
 func (this *AccessAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
-	_, location := locationutils.SetCommonInfo(this, params.Server, params.LocationId, "access")
+	_, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "access")
 
 	this.Data["policy"] = location.AccessPolicy
 

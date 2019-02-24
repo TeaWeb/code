@@ -12,14 +12,13 @@ type UpdateAction actions.Action
 
 // 修改代理服务信息
 func (this *UpdateAction) Run(params struct {
-	Server string
+	ServerId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
-	this.Data["proxy"] = server
-	this.Data["filename"] = server.Filename
+	this.Data["server"] = server
 	this.Data["selectedTab"] = "basic"
 
 	this.Data["usualCharsets"] = teautils.UsualCharsets
@@ -31,7 +30,7 @@ func (this *UpdateAction) Run(params struct {
 // 保存提交
 func (this *UpdateAction) RunPost(params struct {
 	HttpOn          bool
-	Server          string
+	ServerId        string
 	Description     string
 	Name            []string
 	Listen          []string
@@ -46,9 +45,9 @@ func (this *UpdateAction) RunPost(params struct {
 	GzipMinUnit     string
 	Must            *actions.Must
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	params.Must.
@@ -69,7 +68,7 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 	server.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
 
-	err = server.Validate()
+	err := server.Validate()
 	if err != nil {
 		this.Fail("校验失败：" + err.Error())
 	}

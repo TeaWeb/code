@@ -13,16 +13,16 @@ type UpdateCacheAction actions.Action
 
 // 更新缓存设置
 func (this *UpdateCacheAction) Run(params struct {
-	Server        string
-	LocationIndex int
-	Policy        string
+	ServerId   string
+	LocationId string
+	Policy     string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail("找不到要操作的代理服务")
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
-	location := server.LocationAtIndex(params.LocationIndex)
+	location := server.FindLocation(params.LocationId)
 	if location == nil {
 		this.Fail("找不到要操作的路径规则")
 	}
@@ -45,7 +45,7 @@ func (this *UpdateCacheAction) Run(params struct {
 
 	location.CacheOn = true
 	location.CachePolicy = params.Policy
-	err = server.Save()
+	err := server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

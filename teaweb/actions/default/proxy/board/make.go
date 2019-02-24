@@ -12,16 +12,18 @@ type MakeAction actions.Action
 
 // 制作图表
 func (this *MakeAction) Run(params struct {
-	Server string
+	ServerId  string
+	BoardType string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail("找不到要查看的代理服务")
+	this.Data["boardType"] = params.BoardType
+
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	this.Data["server"] = maps.Map{
-		"id":       server.Id,
-		"filename": params.Server,
+		"id": server.Id,
 	}
 
 	this.Data["items"] = teastats.FindAllStatFilters()
@@ -31,7 +33,7 @@ func (this *MakeAction) Run(params struct {
 
 // 保存提交
 func (this *MakeAction) RunPost(params struct {
-	Server         string
+	ServerId       string
 	Name           string
 	Description    string
 	Columns        uint8
@@ -44,9 +46,9 @@ func (this *MakeAction) RunPost(params struct {
 		Field("name", params.Name).
 		Require("请输入名称")
 
-	_, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail("找不到要查看的代理服务")
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	chart := widgets.NewChart()
@@ -62,7 +64,7 @@ func (this *MakeAction) RunPost(params struct {
 
 	widget := widgets.NewWidget()
 	widget.AddChart(chart)
-	err = widget.Save()
+	err := widget.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

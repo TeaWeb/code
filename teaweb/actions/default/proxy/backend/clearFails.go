@@ -10,14 +10,14 @@ type ClearFailsAction actions.Action
 
 // 清除失败次数
 func (this *ClearFailsAction) Run(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 	Websocket  bool
 	BackendId  string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	runningServer, _ := teaproxy.FindServer(server.Id)

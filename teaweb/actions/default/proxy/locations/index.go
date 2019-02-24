@@ -10,19 +10,15 @@ type IndexAction actions.Action
 
 // 路径规则列表
 func (this *IndexAction) Run(params struct {
-	Server string
+	ServerId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	this.Data["selectedTab"] = "location"
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = server
-	this.Data["server"] = maps.Map{
-		"filename": server.Filename,
-	}
+	this.Data["server"] = server
 
 	locations := []maps.Map{}
 	for _, location := range server.Locations {

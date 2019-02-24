@@ -12,31 +12,30 @@ type ChartsAction actions.Action
 
 // 图表
 func (this *ChartsAction) Run(params struct {
-	Server string
-	Type   string
+	ServerId  string
+	BoardType string
 }) {
-	if len(params.Type) == 0 {
-		params.Type = "realtime"
+	if len(params.BoardType) == 0 {
+		params.BoardType = "realtime"
 	}
 
-	this.Data["boardType"] = params.Type
+	this.Data["boardType"] = params.BoardType
 
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail("找不到要查看的代理服务")
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	this.Data["server"] = maps.Map{
-		"id":       server.Id,
-		"filename": params.Server,
+		"id": server.Id,
 	}
 
 	// 正在使用的图表
 	usingCharts := []maps.Map{}
-	if params.Type == "realtime" {
+	if params.BoardType == "realtime" {
 		if server.RealtimeBoard != nil {
 			for _, c := range server.RealtimeBoard.Charts {
-				chart := c.FindChart()
+				widget, chart := c.FindChart()
 				if chart == nil {
 					continue
 				}
@@ -47,14 +46,18 @@ func (this *ChartsAction) Run(params struct {
 					"requirements": chart.Requirements,
 					"columns":      chart.Columns,
 					"on":           chart.On,
-					"widgetId":     c.WidgetId,
+					"widget": maps.Map{
+						"id":      widget.Id,
+						"author":  widget.Author,
+						"version": widget.Version,
+					},
 				})
 			}
 		}
 	} else {
 		if server.StatBoard != nil {
 			for _, c := range server.StatBoard.Charts {
-				chart := c.FindChart()
+				widget, chart := c.FindChart()
 				if chart == nil {
 					continue
 				}
@@ -65,7 +68,11 @@ func (this *ChartsAction) Run(params struct {
 					"requirements": chart.Requirements,
 					"columns":      chart.Columns,
 					"on":           chart.On,
-					"widgetId":     c.WidgetId,
+					"widget": maps.Map{
+						"id":      widget.Id,
+						"author":  widget.Author,
+						"version": widget.Version,
+					},
 				})
 			}
 		}
@@ -81,7 +88,7 @@ func (this *ChartsAction) Run(params struct {
 			"charts": lists.Map(widget.Charts, func(k int, v interface{}) interface{} {
 				chart := v.(*widgets.Chart)
 				isUsing := false
-				if params.Type == "realtime" {
+				if params.BoardType == "realtime" {
 					if server.RealtimeBoard != nil {
 						isUsing = server.RealtimeBoard.HasChart(chart.Id)
 					}
@@ -98,6 +105,11 @@ func (this *ChartsAction) Run(params struct {
 					"columns":      chart.Columns,
 					"on":           chart.On,
 					"isUsing":      isUsing,
+					"widget": maps.Map{
+						"id":      widget.Id,
+						"author":  widget.Author,
+						"version": widget.Version,
+					},
 				}
 			}),
 		}

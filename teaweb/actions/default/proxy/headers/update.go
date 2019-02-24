@@ -12,21 +12,21 @@ type UpdateAction actions.Action
 // 修改
 func (this *UpdateAction) Run(params struct {
 	From       string
-	Server     string
+	ServerId   string
 	LocationId string
 	RewriteId  string
 	FastcgiId  string
 	BackendId  string
 	HeaderId   string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	this.Data["from"] = params.From
 	this.Data["server"] = maps.Map{
-		"filename": params.Server,
+		"id": params.ServerId,
 	}
 	this.Data["locationId"] = params.LocationId
 	this.Data["rewriteId"] = params.RewriteId
@@ -50,7 +50,7 @@ func (this *UpdateAction) Run(params struct {
 
 // 提交修改
 func (this *UpdateAction) RunPost(params struct {
-	Server     string
+	ServerId   string
 	LocationId string
 	RewriteId  string
 	FastcgiId  string
@@ -69,10 +69,11 @@ func (this *UpdateAction) RunPost(params struct {
 		Field("name", params.Name).
 		Require("请输入名称")
 
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
+
 	headerList, err := server.FindHeaderList(params.LocationId, params.BackendId, params.RewriteId, params.FastcgiId)
 	if err != nil {
 		this.Fail(err.Error())

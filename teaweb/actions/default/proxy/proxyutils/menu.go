@@ -18,23 +18,18 @@ func AddServerMenu(action *actions.ActionObject) {
 
 	// 服务
 	var hasServer = false
-	serverFilename := action.ParamString("server")
 	serverId := action.ParamString("serverId")
 	for _, server := range teaconfigs.LoadServerConfigsFromDir(Tea.ConfigDir()) {
 		urlPrefix := "/proxy/board"
-		if action.HasPrefix("/stat") {
-			urlPrefix = "/stat"
+		if action.HasPrefix("/proxy/stat") {
+			urlPrefix = "/proxy/stat"
 		} else if action.HasPrefix("/proxy/log") {
 			urlPrefix = "/proxy/log"
 		} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
 			urlPrefix = "/proxy/detail"
 		}
-		subMenu.Add(server.Description, "", urlPrefix+"?server="+server.Filename, action.ParamString("server") == server.Filename || serverId == server.Id)
+		subMenu.Add(server.Description, "", urlPrefix+"?serverId="+server.Id, serverId == server.Id)
 		hasServer = true
-
-		if serverId == server.Id {
-			serverFilename = server.Filename
-		}
 	}
 	if hasServer {
 		action.Data["teaSubHeader"] = "代理服务"
@@ -65,42 +60,35 @@ func AddServerMenu(action *actions.ActionObject) {
 				{
 					"name":    "看板",
 					"subName": "",
-					"url":     "/proxy/board?server=" + serverFilename,
-					"active":  action.Spec.HasClassPrefix("board."),
+					"url":     "/proxy/board?serverId=" + serverId,
+					"active":  action.HasPrefix("/proxy/board") && action.ParamString("boardType") != "stat",
 					"icon":    "dashboard",
 				},
 				{
 					"name":    "日志",
 					"subName": "",
-					"url":     "/proxy/log?server=" + serverFilename,
-					"active":  action.Spec.HasClassPrefix("log."),
+					"url":     "/proxy/log?serverId=" + serverId,
+					"active":  action.HasPrefix("/proxy/log"),
 					"icon":    "history",
 				},
 				{
 					"name":    "统计",
 					"subName": "",
-					"url":     "/stat?server=" + serverFilename,
-					"active":  action.Spec.HasClassPrefix("stat."),
+					"url":     "/proxy/stat?serverId=" + serverId,
+					"active":  action.HasPrefix("/proxy/stat") || (action.HasPrefix("/proxy/board") && action.ParamString("boardType") == "stat"),
 					"icon":    "chart area",
 				},
-				/**{
-				"name":    "测试",
-				"subName": "",
-				"url":     "/test?server=" + serverFilename,
-				"active":  false,
-				"icon":    "stethoscope",
-			},**/
 				{
 					"name":    "设置",
 					"subName": "",
-					"url":     "/proxy/detail?server=" + serverFilename,
+					"url":     "/proxy/detail?serverId=" + serverId,
 					"icon":    "setting",
 					"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "websocket", "access") && !action.HasPrefix("/proxy/delete"),
 				},
 				{
 					"name":    "删除",
 					"subName": "",
-					"url":     "/proxy/delete?server=" + serverFilename,
+					"url":     "/proxy/delete?serverId=" + serverId,
 					"icon":    "trash",
 					"active":  action.HasPrefix("/proxy/delete"),
 				},

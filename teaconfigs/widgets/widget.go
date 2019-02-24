@@ -104,6 +104,15 @@ func (this *Widget) Save() error {
 	return err
 }
 
+// 删除当前Widget
+func (this *Widget) Delete() error {
+	file := files.NewFile(Tea.ConfigDir() + Tea.DS + "widgets" + Tea.DS + "widget." + this.Id + ".conf")
+	if file.Exists() {
+		return file.Delete()
+	}
+	return nil
+}
+
 // 添加Chart
 func (this *Widget) AddChart(chart *Chart) {
 	this.Charts = append(this.Charts, chart)

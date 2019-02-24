@@ -13,20 +13,15 @@ type CacheAction actions.Action
 
 // 缓存设置
 func (this *CacheAction) Run(params struct {
-	Server string
+	ServerId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
-	}
-
-	this.Data["server"] = maps.Map{
-		"filename": params.Server,
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	this.Data["selectedTab"] = "cache"
-	this.Data["filename"] = params.Server
-	this.Data["proxy"] = server
+	this.Data["server"] = server
 
 	// 缓存策略
 	this.Data["cachePolicy"] = ""

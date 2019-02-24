@@ -74,6 +74,7 @@ func (this *AddAction) RunPost(params struct {
 	}
 
 	filename := "server." + server.Id + ".proxy.conf"
+	server.Filename = filename
 	configPath := Tea.ConfigFile(filename)
 	err = server.WriteToFile(configPath)
 	if err != nil {
@@ -83,6 +84,6 @@ func (this *AddAction) RunPost(params struct {
 	proxyutils.NotifyChange()
 
 	this.Next("/proxy/detail", map[string]interface{}{
-		"server": filename,
+		"serverId": server.Id,
 	}, "").Success("添加成功，现在去查看详细信息")
 }

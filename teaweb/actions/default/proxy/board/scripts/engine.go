@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaproxy"
+	"github.com/TeaWeb/code/teastats"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/caches"
 	"github.com/iwind/TeaGo/files"
@@ -30,6 +31,7 @@ type Engine struct {
 	chartOptions []maps.Map
 	widgetCodes  map[string]maps.Map // "code" => { name, ..., definition:FUNCTION CODE }
 	output       []string
+	context      *Context
 }
 
 // 获取新引擎
@@ -44,6 +46,8 @@ func NewEngine() *Engine {
 
 // 设置上下文信息
 func (this *Engine) SetContext(context *Context) {
+	this.context = context
+
 	if context.Server != nil {
 		runningServer, _ := teaproxy.FindServer(context.Server.Id)
 
@@ -149,7 +153,8 @@ func (this *Engine) init() {
 	this.loadLib("libs/times.js")
 	this.loadLib("libs/caches.js")
 	this.loadLib("libs/mutex.js")
-	this.loadLib("libs/logs.js")
+	this.loadLib("libs/server.logs.js")
+	this.loadLib("libs/server.stat.js")
 	this.loadLib("libs/http.js")
 	this.loadLib("libs/colors.js")
 	this.loadLib("libs/widgets.js")
@@ -166,7 +171,8 @@ func (this *Engine) init() {
 	this.vm.Set("callSetCache", this.callSetCache)
 	this.vm.Set("callGetCache", this.callGetCache)
 	this.vm.Set("callChartRender", this.callRenderChart)
-	this.vm.Set("callExecuteQuery", this.callExecuteQuery)
+	this.vm.Set("callLogExecuteQuery", this.callLogExecuteQuery)
+	this.vm.Set("callStatExecuteQuery", this.callStatExecuteQuery)
 }
 
 // 运行Widget代码
@@ -234,7 +240,7 @@ func (this *Engine) callRenderChart(call otto.FunctionCall) otto.Value {
 	return otto.UndefinedValue()
 }
 
-func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
+func (this *Engine) callLogExecuteQuery(call otto.FunctionCall) otto.Value {
 	arg, err := call.Argument(0).Export()
 	if err != nil {
 		this.throw(err)
@@ -302,6 +308,86 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 	timeTo := m.GetInt64("timeTo")
 	if timeTo > 0 {
 		query.To(time.Unix(timeTo, 0))
+	}
+
+	// offset & size
+	query.Offset(m.GetInt64("offset"))
+	query.Limit(m.GetInt64("size"))
+
+	// sort
+	sorts := m.Get("sorts")
+	if sorts != nil {
+		sortsMap, ok := sorts.([]map[string]interface{})
+		if ok {
+			for _, m := range sortsMap {
+				for k, v := range m {
+					vInt := types.Int(v)
+					if vInt < 0 {
+						query.Desc(k)
+					} else {
+						query.Asc(k)
+					}
+				}
+			}
+		}
+	}
+
+	// 开始执行
+	query.Action(action)
+	v, err := query.Execute()
+	if err != nil {
+		this.throw(err)
+		return otto.UndefinedValue()
+	}
+
+	jsValue, err := this.toValue(v)
+	if err != nil {
+		this.throw(err)
+		return otto.UndefinedValue()
+	}
+	return jsValue
+}
+
+func (this *Engine) callStatExecuteQuery(call otto.FunctionCall) otto.Value {
+	if this.context == nil {
+		this.throw(errors.New("'context' should not be nil"))
+		return otto.UndefinedValue()
+	}
+
+	if this.context.Server == nil {
+		this.throw(errors.New("'context.server' should not be nil"))
+		return otto.UndefinedValue()
+	}
+
+	arg, err := call.Argument(0).Export()
+	if err != nil {
+		this.throw(err)
+		return otto.UndefinedValue()
+	}
+	m := maps.NewMap(arg)
+
+	action := m.GetString("action")
+	if len(action) == 0 {
+		this.throw(errors.New("'action' should not be empty"))
+		return otto.UndefinedValue()
+	}
+
+	query := teamongo.NewQuery("values.server."+this.context.Server.Id, new(teastats.Value))
+
+	// cond
+	cond := m.Get("cond")
+	if cond != nil && reflect.TypeOf(cond).Kind() == reflect.Map {
+		m, ok := cond.(map[string]interface{})
+		if ok {
+			for field, ops := range m {
+				opsMap, ok := ops.(map[string]interface{})
+				if ok {
+					for op, v := range opsMap {
+						query.Op(op, field, v)
+					}
+				}
+			}
+		}
 	}
 
 	// offset & size
@@ -445,6 +531,34 @@ func (this *Engine) toValue(data interface{}) (v otto.Value, err error) {
 			return this.vm.ToValue(data)
 		}
 		return this.vm.ToValue(m)
+	}
+
+	// *Value
+	if _, ok := data.(*teastats.Value); ok {
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			return this.vm.ToValue(data)
+		}
+		m := map[string]interface{}{}
+		err = json.Unmarshal(jsonData, &m)
+		if err != nil {
+			logs.Error(err)
+			return this.vm.ToValue(data)
+		}
+		return this.vm.ToValue(m)
+	}
+
+	if values, ok := data.([]interface{}); ok {
+		result := []otto.Value{}
+		for _, v := range values {
+			jsValue, err := this.toValue(v)
+			if err != nil {
+				logs.Error(err)
+				continue
+			}
+			result = append(result, jsValue)
+		}
+		return this.vm.ToValue(result)
 	}
 
 	return this.vm.ToValue(data)

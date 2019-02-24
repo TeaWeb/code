@@ -300,6 +300,18 @@ func (this *Query) Find() (*AccessLog, error) {
 	return result.(*AccessLog), nil
 }
 
+// 查找多个数据
+func (this *Query) FindAll() ([]*AccessLog, error) {
+	result, err := this.Action(QueryActionFindAll).Execute()
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, nil
+	}
+	return result.([]*AccessLog), nil
+}
+
 func (this *Query) queryNumber(collectionName string) (float64, error) {
 	if this.action == QueryActionCount {
 		coll := teamongo.FindCollection(collectionName)

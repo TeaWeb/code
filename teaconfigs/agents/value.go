@@ -16,7 +16,6 @@ type Value struct {
 	Timestamp   int64               `bson:"timestamp" json:"timestamp"`     // 时间戳
 	Value       interface{}         `bson:"value" json:"value"`             // 值，可以是个标量，或者一个组合的值
 	Error       string              `bson:"error" json:"error"`             // 错误信息
-	IsTesting   bool                `bson:"isTesting" json:"isTesting"`     // 是否为测试数据
 	NoticeLevel notices.NoticeLevel `bson:"noticeLevel" json:"noticeLevel"` // 通知级别
 	TimeFormat  struct {
 		Year   string `bson:"year" json:"year"`

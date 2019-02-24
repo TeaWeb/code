@@ -14,16 +14,16 @@ type AddAction actions.Action
 // 添加重写规则
 func (this *AddAction) Run(params struct {
 	From       string
-	Server     string
+	ServerId   string
 	LocationId string
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	this.Data["server"] = maps.Map{
-		"filename": params.Server,
+		"id": params.ServerId,
 	}
 	this.Data["from"] = params.From
 	this.Data["locationId"] = params.LocationId
@@ -70,7 +70,7 @@ func (this *AddAction) Run(params struct {
 
 // 提交保存
 func (this *AddAction) RunPost(params struct {
-	Server       string
+	ServerId     string
 	LocationId   string
 	On           bool
 	Pattern      string
@@ -83,9 +83,9 @@ func (this *AddAction) RunPost(params struct {
 	CondValues   []string
 	Must         *actions.Must
 }) {
-	server, err := teaconfigs.NewServerConfigFromFile(params.Server)
-	if err != nil {
-		this.Fail(err.Error())
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
 	}
 
 	params.Must.
