@@ -22,6 +22,7 @@ func (this *ProvinceAllPeriodFilter) Codes() []string {
 		"province.all.minute",
 		"province.all.hour",
 		"province.all.day",
+		"province.all.week",
 		"province.all.month",
 		"province.all.year",
 	}

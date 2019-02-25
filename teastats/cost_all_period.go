@@ -22,6 +22,7 @@ func (this *CostAllPeriodFilter) Codes() []string {
 		"cost.all.minute",
 		"cost.all.hour",
 		"cost.all.day",
+		"cost.all.week",
 		"cost.all.month",
 		"cost.all.year",
 	}

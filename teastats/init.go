@@ -35,6 +35,7 @@ func init() {
 		new(OSAllPeriodFilter),
 		new(BrowserAllPeriodFilter),
 		new(RegionAllPeriodFilter),
+		new(ProvinceAllPeriodFilter),
 		new(CityAllPeriodFilter),
 	)
 

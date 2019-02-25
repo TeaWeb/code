@@ -1,6 +1,7 @@
 package board
 
 import (
+	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/board/scripts"
 	"github.com/iwind/TeaGo/actions"
@@ -24,6 +25,9 @@ func (this *IndexAction) Run(params struct {
 		"id": server.Id,
 	}
 
+	if len(params.BoardType) == 0 {
+		params.BoardType = "realtime"
+	}
 	this.Data["boardType"] = params.BoardType
 
 	this.Show()
@@ -33,6 +37,7 @@ func (this *IndexAction) Run(params struct {
 func (this *IndexAction) RunPost(params struct {
 	ServerId string
 	Type     string // realtime or stat
+	Events   string
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -52,28 +57,42 @@ func (this *IndexAction) RunPost(params struct {
 	}
 
 	// 初始化
-	if board == nil {
+	shouldSave := false
+	if server.RealtimeBoard == nil {
+		shouldSave = true
+
 		board = teaconfigs.NewBoard()
-		switch params.Type {
-		case "realtime":
-			server.RealtimeBoard = board
+		server.RealtimeBoard = board
 
-			// 添加一些默认的图表
-			board.AddChart("teaweb.proxy_status", "kTVuOEBm605H3AJS")
-			board.AddChart("teaweb.locations", "cyZsvwR66oxcVpvj")
-			board.AddChart("teaweb.bandwidth_realtime", "hiAUsteL1V6LG8zD")
-			board.AddChart("teaweb.request_realtime", "APvSaVEoQ7VUvX4a")
-			board.AddChart("teaweb.request_time", "g8SrxuMYwwhxNWwk")
-			board.AddChart("teaweb.status_stat", "xnUsgQMSjWZ9MN7g")
-			board.AddChart("teaweb.latest_errors", "RUCF1EbF4FpPMHpN")
-			err := server.Save()
-			if err != nil {
-				logs.Error(err)
-			}
-		case "stat":
-			server.StatBoard = board
+		// 添加一些默认的图表
+		board.AddChart("teaweb.proxy_status", "kTVuOEBm605H3AJS")
+		board.AddChart("teaweb.locations", "cyZsvwR66oxcVpvj")
+		board.AddChart("teaweb.bandwidth_realtime", "hiAUsteL1V6LG8zD")
+		board.AddChart("teaweb.request_realtime", "APvSaVEoQ7VUvX4a")
+		board.AddChart("teaweb.request_time", "g8SrxuMYwwhxNWwk")
+		board.AddChart("teaweb.status_stat", "xnUsgQMSjWZ9MN7g")
+		board.AddChart("teaweb.latest_errors", "RUCF1EbF4FpPMHpN")
+	}
+	if server.StatBoard == nil {
+		shouldSave = true
 
-			// TODO 添加一些默认的图表
+		board = teaconfigs.NewBoard()
+		server.StatBoard = board
+
+		// 添加一些默认的图表
+		board.AddChart("teaweb.request_stat", "QdC9mdfECEqdKllp")
+		board.AddChart("teaweb.url_rank", "3TLvbynJiU6Ik5Yh")
+		board.AddChart("teaweb.cost_rank", "U79hACpwPmMtmEgu")
+		board.AddChart("teaweb.os_rank", "rJLuNQm6UeGJbyz6")
+		board.AddChart("teaweb.browser_rank", "2yS1FKYOv0nIMc4I")
+		board.AddChart("teaweb.region_rank", "nDx94UkqwzrdaNg1")
+		board.AddChart("teaweb.province_rank", "chtZBWnb955NCre7")
+	}
+
+	if shouldSave {
+		err := server.Save()
+		if err != nil {
+			logs.Error(err)
 		}
 	}
 
@@ -86,6 +105,15 @@ func (this *IndexAction) RunPost(params struct {
 	engine.SetContext(&scripts.Context{
 		Server: server,
 	})
+
+	// 事件
+	events := []interface{}{}
+	if len(params.Events) > 0 {
+		err := json.Unmarshal([]byte(params.Events), &events)
+		if err != nil {
+			logs.Error(err)
+		}
+	}
 
 	for _, c := range board.Charts {
 		_, chart := c.FindChart()
@@ -100,6 +128,8 @@ func (this *IndexAction) RunPost(params struct {
 		code, err := obj.AsJavascript(map[string]interface{}{
 			"name":    chart.Name,
 			"columns": chart.Columns,
+			"id":      chart.Id,
+			"events":  events,
 		})
 		if err != nil {
 			this.Fail(err.Error())

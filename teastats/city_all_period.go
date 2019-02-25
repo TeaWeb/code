@@ -22,6 +22,7 @@ func (this *CityAllPeriodFilter) Codes() []string {
 		"city.all.minute",
 		"city.all.hour",
 		"city.all.day",
+		"city.all.week",
 		"city.all.month",
 		"city.all.year",
 	}

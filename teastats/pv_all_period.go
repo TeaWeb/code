@@ -22,6 +22,7 @@ func (this *PVAllPeriodFilter) Codes() []string {
 		"pv.all.minute",
 		"pv.all.hour",
 		"pv.all.day",
+		"pv.all.week",
 		"pv.all.month",
 		"pv.all.year",
 	}

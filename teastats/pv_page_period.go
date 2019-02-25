@@ -22,6 +22,7 @@ func (this *PVPagePeriodFilter) Codes() []string {
 		"pv.page.minute",
 		"pv.page.hour",
 		"pv.page.day",
+		"pv.page.week",
 		"pv.page.month",
 		"pv.page.year",
 	}

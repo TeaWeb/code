@@ -22,6 +22,7 @@ func (this *UVAllPeriodFilter) Codes() []string {
 		"uv.all.minute",
 		"uv.all.hour",
 		"uv.all.day",
+		"uv.all.week",
 		"uv.all.month",
 		"uv.all.year",
 	}

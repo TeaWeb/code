@@ -22,6 +22,7 @@ func (this *RewriteAllPeriodFilter) Codes() []string {
 		"rewrite.all.minute",
 		"rewrite.all.hour",
 		"rewrite.all.day",
+		"rewrite.all.week",
 		"rewrite.all.month",
 		"rewrite.all.year",
 	}

@@ -22,6 +22,7 @@ func (this *RefererURLPeriodFilter) Codes() []string {
 		"referer.url.minute",
 		"referer.url.hour",
 		"referer.url.day",
+		"referer.url.week",
 		"referer.url.month",
 		"referer.url.year",
 	}

@@ -3,6 +3,7 @@ package board
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
+	"github.com/TeaWeb/code/teastats"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -61,6 +62,7 @@ func (this *ChartsAction) Run(params struct {
 				if chart == nil {
 					continue
 				}
+
 				usingCharts = append(usingCharts, maps.Map{
 					"id":           chart.Id,
 					"name":         chart.Name,
@@ -97,14 +99,26 @@ func (this *ChartsAction) Run(params struct {
 						isUsing = server.StatBoard.HasChart(chart.Id)
 					}
 				}
+
+				items := []maps.Map{}
+				for _, r := range chart.Requirements {
+					filter := teastats.FindFilter(r)
+					if filter != nil {
+						items = append(items, maps.Map{
+							"name": filter.Name(),
+							"code": r,
+						})
+					}
+				}
+
 				return maps.Map{
-					"id":           chart.Id,
-					"name":         chart.Name,
-					"description":  chart.Description,
-					"requirements": chart.Requirements,
-					"columns":      chart.Columns,
-					"on":           chart.On,
-					"isUsing":      isUsing,
+					"id":          chart.Id,
+					"name":        chart.Name,
+					"description": chart.Description,
+					"items":       items,
+					"columns":     chart.Columns,
+					"on":          chart.On,
+					"isUsing":     isUsing,
 					"widget": maps.Map{
 						"id":      widget.Id,
 						"author":  widget.Author,

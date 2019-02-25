@@ -22,6 +22,7 @@ func (this *RegionAllPeriodFilter) Codes() []string {
 		"region.all.minute",
 		"region.all.hour",
 		"region.all.day",
+		"region.all.week",
 		"region.all.month",
 		"region.all.year",
 	}

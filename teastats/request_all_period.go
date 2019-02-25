@@ -22,6 +22,7 @@ func (this *RequestAllPeriodFilter) Codes() []string {
 		"request.all.minute",
 		"request.all.hour",
 		"request.all.day",
+		"request.all.week",
 		"request.all.month",
 		"request.all.year",
 	}

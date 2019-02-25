@@ -22,6 +22,7 @@ func (this *IPPagePeriodFilter) Codes() []string {
 		"ip.page.minute",
 		"ip.page.hour",
 		"ip.page.day",
+		"ip.page.week",
 		"ip.page.month",
 		"ip.page.year",
 	}

@@ -1,6 +1,7 @@
 package board
 
 import (
+	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/TeaWeb/code/tealogs"
@@ -23,7 +24,8 @@ func (this *TestAction) Run(params struct {
 	Items          []string
 	JavascriptCode string
 	On             bool
-	AutoGenerate   bool
+	AutoGenerate   bool // 是否自动生成测试数据
+	Events         string
 	Must           *actions.Must
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
@@ -70,8 +72,9 @@ func (this *TestAction) Run(params struct {
 		}
 	}
 
-	// 保存图表
+	// 图表信息
 	chart := widgets.NewChart()
+	chart.Id = "test_chart"
 	chart.On = params.On
 	chart.Name = params.Name
 	chart.Description = params.Description
@@ -86,9 +89,20 @@ func (this *TestAction) Run(params struct {
 		this.Fail("运行错误：" + err.Error())
 	}
 
+	// 事件
+	events := []interface{}{}
+	if len(params.Events) > 0 {
+		err := json.Unmarshal([]byte(params.Events), &events)
+		if err != nil {
+			logs.Error(err)
+		}
+	}
+
 	code, err := obj.AsJavascript(map[string]interface{}{
 		"name":    params.Name,
 		"columns": params.Columns,
+		"id":      chart.Id,
+		"events":  events,
 	})
 	if err != nil {
 		this.Fail("运行错误：" + err.Error())

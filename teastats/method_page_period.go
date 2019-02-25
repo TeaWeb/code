@@ -22,6 +22,7 @@ func (this *MethodPagePeriodFilter) Codes() []string {
 		"method.page.minute",
 		"method.page.hour",
 		"method.page.day",
+		"method.page.week",
 		"method.page.month",
 		"method.page.year",
 	}

@@ -22,6 +22,7 @@ func (this *BrowserAllPeriodFilter) Codes() []string {
 		"browser.all.minute",
 		"browser.all.hour",
 		"browser.all.day",
+		"browser.all.week",
 		"browser.all.month",
 		"browser.all.year",
 	}

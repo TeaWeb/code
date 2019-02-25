@@ -22,6 +22,7 @@ func (this *DeviceAllPeriodFilter) Codes() []string {
 		"device.all.minute",
 		"device.all.hour",
 		"device.all.day",
+		"device.all.week",
 		"device.all.month",
 		"device.all.year",
 	}

@@ -22,6 +22,7 @@ func (this *MethodAllPeriodFilter) Codes() []string {
 		"method.all.minute",
 		"method.all.hour",
 		"method.all.day",
+		"method.all.week",
 		"method.all.month",
 		"method.all.year",
 	}

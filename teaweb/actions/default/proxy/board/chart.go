@@ -3,6 +3,7 @@ package board
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
+	"github.com/TeaWeb/code/teastats"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -41,6 +42,18 @@ func (this *ChartAction) Run(params struct {
 
 	this.Data["chart"] = chart
 	this.Data["canUpdate"] = Tea.IsTesting() || !strings.HasPrefix(widget.Id, "teaweb.")
+
+	items := []maps.Map{}
+	for _, r := range chart.Requirements {
+		filter := teastats.FindFilter(r)
+		if filter != nil {
+			items = append(items, maps.Map{
+				"name": filter.Name(),
+				"code": r,
+			})
+		}
+	}
+	this.Data["items"] = items
 
 	this.Show()
 }

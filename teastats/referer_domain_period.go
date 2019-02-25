@@ -23,6 +23,7 @@ func (this *RefererDomainPeriodFilter) Codes() []string {
 		"referer.domain.minute",
 		"referer.domain.hour",
 		"referer.domain.day",
+		"referer.domain.week",
 		"referer.domain.month",
 		"referer.domain.year",
 	}

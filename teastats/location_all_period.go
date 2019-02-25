@@ -22,6 +22,7 @@ func (this *LocationAllPeriodFilter) Codes() []string {
 		"location.all.minute",
 		"location.all.hour",
 		"location.all.day",
+		"location.all.week",
 		"location.all.month",
 		"location.all.year",
 	}

@@ -22,6 +22,7 @@ func (this *IPAllPeriodFilter) Codes() []string {
 		"ip.all.minute",
 		"ip.all.hour",
 		"ip.all.day",
+		"ip.all.week",
 		"ip.all.month",
 		"ip.all.year",
 	}

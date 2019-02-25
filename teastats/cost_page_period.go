@@ -22,6 +22,7 @@ func (this *CostPagePeriodFilter) Codes() []string {
 		"cost.page.minute",
 		"cost.page.hour",
 		"cost.page.day",
+		"cost.page.week",
 		"cost.page.month",
 		"cost.page.year",
 	}

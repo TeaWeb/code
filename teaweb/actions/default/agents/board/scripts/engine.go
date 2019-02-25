@@ -149,6 +149,7 @@ func (this *Engine) init() {
 	this.loadLib("libs/charts.progress.js")
 	this.loadLib("libs/charts.stackbar.js")
 	this.loadLib("libs/charts.clock.js")
+	this.loadLib("libs/charts.table.js")
 	this.loadLib("libs/context.js")
 	this.loadLib("libs/agent.js")
 

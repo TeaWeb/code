@@ -22,6 +22,7 @@ func (this *LandingPagePeriodFilter) Codes() []string {
 		"landing.page.minute",
 		"landing.page.hour",
 		"landing.page.day",
+		"landing.page.week",
 		"landing.page.month",
 		"landing.page.year",
 	}

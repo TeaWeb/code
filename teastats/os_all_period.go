@@ -22,6 +22,7 @@ func (this *OSAllPeriodFilter) Codes() []string {
 		"os.all.minute",
 		"os.all.hour",
 		"os.all.day",
+		"os.all.week",
 		"os.all.month",
 		"os.all.year",
 	}

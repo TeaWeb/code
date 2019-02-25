@@ -24,6 +24,7 @@ func (this *StatusPagePeriodFilter) Codes() []string {
 		"status.page.minute",
 		"status.page.hour",
 		"status.page.day",
+		"status.page.week",
 		"status.page.month",
 		"status.page.year",
 	}

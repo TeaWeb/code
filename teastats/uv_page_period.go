@@ -22,6 +22,7 @@ func (this *UVPagePeriodFilter) Codes() []string {
 		"uv.page.minute",
 		"uv.page.hour",
 		"uv.page.day",
+		"uv.page.week",
 		"uv.page.month",
 		"uv.page.year",
 	}

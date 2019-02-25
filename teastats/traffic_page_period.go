@@ -22,6 +22,7 @@ func (this *TrafficPagePeriodFilter) Codes() []string {
 		"traffic.page.minute",
 		"traffic.page.hour",
 		"traffic.page.day",
+		"traffic.page.week",
 		"traffic.page.month",
 		"traffic.page.year",
 	}

@@ -22,6 +22,7 @@ func (this *TrafficAllPeriodFilter) Codes() []string {
 		"traffic.all.minute",
 		"traffic.all.hour",
 		"traffic.all.day",
+		"traffic.all.week",
 		"traffic.all.month",
 		"traffic.all.year",
 	}

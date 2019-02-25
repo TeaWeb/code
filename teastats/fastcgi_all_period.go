@@ -22,6 +22,7 @@ func (this *FastcgiAllPeriodFilter) Codes() []string {
 		"fastcgi.all.minute",
 		"fastcgi.all.hour",
 		"fastcgi.all.day",
+		"fastcgi.all.week",
 		"fastcgi.all.month",
 		"fastcgi.all.year",
 	}

@@ -166,6 +166,8 @@ func (this *Engine) init() {
 	this.loadLib("libs/charts.progress.js")
 	this.loadLib("libs/charts.stackbar.js")
 	this.loadLib("libs/charts.url.js")
+	this.loadLib("libs/charts.menu.js")
+	this.loadLib("libs/charts.table.js")
 	this.loadLib("libs/context.js")
 
 	this.vm.Set("callSetCache", this.callSetCache)
@@ -223,6 +225,18 @@ func (this *Engine) callRenderChart(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 	m := maps.NewMap(v)
+
+	menus, err := obj.Object().Get("menus")
+	if err != nil {
+		logs.Error(err)
+	} else {
+		menusV, err := menus.Export()
+		if err != nil {
+			logs.Error(err)
+		} else {
+			m["menus"] = menusV
+		}
+	}
 
 	options, err := obj.Object().Get("options")
 	if err != nil {
@@ -548,17 +562,19 @@ func (this *Engine) toValue(data interface{}) (v otto.Value, err error) {
 		return this.vm.ToValue(m)
 	}
 
-	if values, ok := data.([]interface{}); ok {
-		result := []otto.Value{}
-		for _, v := range values {
-			jsValue, err := this.toValue(v)
-			if err != nil {
-				logs.Error(err)
-				continue
-			}
-			result = append(result, jsValue)
+	if _, ok := data.([]interface{}); ok {
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			return this.vm.ToValue(data)
 		}
-		return this.vm.ToValue(result)
+		m := []map[string]interface{}{}
+		err = json.Unmarshal(jsonData, &m)
+		if err != nil {
+			logs.Error(err)
+			return this.vm.ToValue(data)
+		}
+
+		return this.vm.ToValue(m)
 	}
 
 	return this.vm.ToValue(data)

@@ -22,6 +22,7 @@ func (this *BackendAllPeriodFilter) Codes() []string {
 		"backend.all.minute",
 		"backend.all.hour",
 		"backend.all.day",
+		"backend.all.week",
 		"backend.all.month",
 		"backend.all.year",
 	}

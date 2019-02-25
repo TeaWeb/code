@@ -23,6 +23,7 @@ func (this *StatusAllPeriodFilter) Codes() []string {
 		"status.all.minute",
 		"status.all.hour",
 		"status.all.day",
+		"status.all.week",
 		"status.all.month",
 		"status.all.year",
 	}
