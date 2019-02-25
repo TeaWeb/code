@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teautils"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	"github.com/robertkrimen/otto"
 	"regexp"
 	"strings"
 )
@@ -46,6 +49,45 @@ func (this *Threshold) Validate() error {
 
 // 将此条件应用于阈值，检查是否匹配
 func (this *Threshold) Test(value interface{}) bool {
+	paramValue := this.Eval(value)
+
+	switch this.Operator {
+	case ThresholdOperatorRegexp:
+		if this.regValue == nil {
+			return false
+		}
+		return this.regValue.MatchString(types.String(paramValue))
+	case ThresholdOperatorNotRegexp:
+		if this.regValue == nil {
+			return false
+		}
+		return !this.regValue.MatchString(types.String(paramValue))
+	case ThresholdOperatorGt:
+		return types.Float64(paramValue) > this.floatValue
+	case ThresholdOperatorGte:
+		return types.Float64(paramValue) >= this.floatValue
+	case ThresholdOperatorLt:
+		return types.Float64(paramValue) < this.floatValue
+	case ThresholdOperatorLte:
+		return types.Float64(paramValue) <= this.floatValue
+	case ThresholdOperatorEq:
+		return paramValue == this.Value
+	case ThresholdOperatorNot:
+		return paramValue != this.Value
+	case ThresholdOperatorPrefix:
+		return strings.HasPrefix(types.String(paramValue), this.Value)
+	case ThresholdOperatorSuffix:
+		return strings.HasSuffix(types.String(paramValue), this.Value)
+	case ThresholdOperatorContains:
+		return strings.Contains(types.String(paramValue), this.Value)
+	case ThresholdOperatorNotContains:
+		return !strings.Contains(types.String(paramValue), this.Value)
+	}
+	return false
+}
+
+// 执行数值
+func (this *Threshold) Eval(value interface{}) string {
 	paramValue := teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(this.Param, func(s string) string {
 		if value == nil {
 			return ""
@@ -87,42 +129,27 @@ func (this *Threshold) Test(value interface{}) bool {
 			if found {
 				return types.String(result)
 			}
-			return ""
+			result = teautils.Get(v, strings.Split(varName, "."))
+			if result == nil {
+				return ""
+			}
+			return types.String(result)
 		}
 		return s
 	})
 
-	switch this.Operator {
-	case ThresholdOperatorRegexp:
-		if this.regValue == nil {
-			return false
+	// 支持加减乘除余
+	if len(paramValue) > 0 {
+		if strings.ContainsAny(paramValue, "+-*/%") {
+			vm := otto.New()
+			v, err := vm.Run(paramValue)
+			if err != nil {
+				logs.Error(err)
+			} else {
+				paramValue = v.String()
+			}
 		}
-		return this.regValue.MatchString(types.String(paramValue))
-	case ThresholdOperatorNotRegexp:
-		if this.regValue == nil {
-			return false
-		}
-		return !this.regValue.MatchString(types.String(paramValue))
-	case ThresholdOperatorGt:
-		return types.Float64(paramValue) > this.floatValue
-	case ThresholdOperatorGte:
-		return types.Float64(paramValue) >= this.floatValue
-	case ThresholdOperatorLt:
-		return types.Float64(paramValue) < this.floatValue
-	case ThresholdOperatorLte:
-		return types.Float64(paramValue) <= this.floatValue
-	case ThresholdOperatorEq:
-		return paramValue == this.Value
-	case ThresholdOperatorNot:
-		return paramValue != this.Value
-	case ThresholdOperatorPrefix:
-		return strings.HasPrefix(types.String(paramValue), this.Value)
-	case ThresholdOperatorSuffix:
-		return strings.HasSuffix(types.String(paramValue), this.Value)
-	case ThresholdOperatorContains:
-		return strings.Contains(types.String(paramValue), this.Value)
-	case ThresholdOperatorNotContains:
-		return !strings.Contains(types.String(paramValue), this.Value)
 	}
-	return false
+
+	return paramValue
 }

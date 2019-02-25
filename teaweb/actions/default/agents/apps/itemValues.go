@@ -48,7 +48,6 @@ func (this *ItemValuesAction) RunPost(params struct {
 	query.Agent(params.AgentId)
 	query.App(params.AppId)
 	query.Item(params.ItemId)
-	query.Attr("isTesting", false)
 	query.Offset(0)
 	query.Limit(100)
 	query.Desc("_id")

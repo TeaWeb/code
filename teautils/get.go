@@ -1,8 +1,12 @@
 package teautils
 
 import (
+	"github.com/iwind/TeaGo/types"
 	"reflect"
+	"regexp"
 )
+
+var RegexpDigitNumber = regexp.MustCompile("^\\d+$")
 
 func Get(object interface{}, keys []string) interface{} {
 	if len(keys) == 0 {
@@ -51,6 +55,22 @@ func Get(object interface{}, keys []string) interface{} {
 		}
 
 		return Get(mapValue.Interface(), keys)
+	}
+
+	if value.Kind() == reflect.Slice {
+		if RegexpDigitNumber.MatchString(firstKey) {
+			firstKeyInt := types.Int(firstKey)
+			if value.Len() > firstKeyInt {
+				result := value.Index(firstKeyInt).Interface()
+				if len(keys) == 0 {
+					return result
+				}
+
+				return Get(result, keys)
+			}
+		}
+
+		return nil
 	}
 
 	return nil
