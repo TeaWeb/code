@@ -163,9 +163,10 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 	// Header
 	if len(server.Headers) > 0 {
-		this.headers = append(this.headers, server.FormatHeaders(func(source string) string {
-			return this.Format(source)
-		}) ...)
+		// 延迟执行，让Header有机会加入Backend, Fastcgi等信息
+		defer func() {
+			this.headers = append(this.headers, server.FormatHeaders(this.Format) ...)
+		}()
 	}
 
 	if len(server.IgnoreHeaders) > 0 {
@@ -327,9 +328,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 
 			if len(location.Headers) > 0 {
-				this.headers = append(this.headers, location.FormatHeaders(func(source string) string {
-					return this.Format(source)
-				}) ...)
+				this.headers = append(this.headers, location.FormatHeaders(this.Format) ...)
 			}
 
 			if len(location.IgnoreHeaders) > 0 {
@@ -639,7 +638,7 @@ func (this *Request) call(writer *ResponseWriter) error {
 	}
 
 	// UV
-	uid, err := this.raw.Cookie("TeaUID")
+	/**uid, err := this.raw.Cookie("TeaUID")
 	if err != nil || uid == nil {
 		http.SetCookie(writer, &http.Cookie{
 			Name:    "TeaUID",
@@ -647,7 +646,7 @@ func (this *Request) call(writer *ResponseWriter) error {
 			Path:    "/",
 			Expires: time.Now().Add(24 * time.Hour),
 		})
-	}
+	}**/
 
 	this.responseWriter = writer
 
@@ -1881,6 +1880,23 @@ func (this *Request) Format(source string) string {
 		// header.
 		if prefix == "header" || prefix == "http" {
 			return this.requestHeader(suffix)
+		}
+
+		// backend.
+		if prefix == "backend" {
+			if this.backend != nil {
+				switch suffix {
+				case "address":
+					return this.backend.Address
+				case "id":
+					return this.backend.Id
+				case "scheme":
+					return this.backend.Scheme
+				case "code":
+					return this.backend.Code
+				}
+			}
+			return ""
 		}
 
 		return "${" + varName + "}"
