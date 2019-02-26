@@ -18,13 +18,15 @@ func NewSubMenu() *SubMenu {
 }
 
 // 添加菜单项
-func (this *SubMenu) Add(name string, subName string, url string, active bool) {
-	this.items = append(this.items, maps.Map{
+func (this *SubMenu) Add(name string, subName string, url string, active bool) maps.Map {
+	item := maps.Map{
 		"name":    name,
 		"subName": subName,
 		"url":     url,
 		"active":  active,
-	})
+	}
+	this.items = append(this.items, item)
+	return item
 }
 
 // 取得所有的Items

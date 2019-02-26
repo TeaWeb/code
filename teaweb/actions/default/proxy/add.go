@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"regexp"
 	"strings"
 )
@@ -79,6 +80,18 @@ func (this *AddAction) RunPost(params struct {
 	err = server.WriteToFile(configPath)
 	if err != nil {
 		this.Fail(err.Error())
+	}
+
+	// 保存到server list
+	serverList, err := teaconfigs.SharedServerList()
+	if err != nil {
+		logs.Error(err)
+	} else {
+		serverList.AddServer(server.Filename)
+		err = serverList.Save()
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	proxyutils.NotifyChange()

@@ -35,6 +35,18 @@ func (this *DeleteAction) RunPost(params struct {
 		this.Fail("配置文件删除失败")
 	}
 
+	// 从list中删除
+	serverList, err := teaconfigs.SharedServerList()
+	if err != nil {
+		logs.Error(err)
+	} else {
+		serverList.RemoveServer(server.Filename)
+		err = serverList.Save()
+		if err != nil {
+			logs.Error(err)
+		}
+	}
+
 	// @TODO 删除对应的certificate file和certificate key file
 
 	// 重启

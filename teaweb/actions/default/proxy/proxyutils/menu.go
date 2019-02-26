@@ -3,8 +3,8 @@ package proxyutils
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/utils"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -19,7 +19,11 @@ func AddServerMenu(action *actions.ActionObject) {
 	// 服务
 	var hasServer = false
 	serverId := action.ParamString("serverId")
-	for _, server := range teaconfigs.LoadServerConfigsFromDir(Tea.ConfigDir()) {
+	serverList, err := teaconfigs.SharedServerList()
+	if err != nil {
+		logs.Error(err)
+	}
+	for _, server := range serverList.FindAllServers() {
 		urlPrefix := "/proxy/board"
 		if action.HasPrefix("/proxy/stat") {
 			urlPrefix = "/proxy/stat"
@@ -28,11 +32,17 @@ func AddServerMenu(action *actions.ActionObject) {
 		} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
 			urlPrefix = "/proxy/detail"
 		}
-		subMenu.Add(server.Description, "", urlPrefix+"?serverId="+server.Id, serverId == server.Id)
+		m := subMenu.Add(server.Description, "", urlPrefix+"?serverId="+server.Id, serverId == server.Id)
+		m["sortable"] = true
+
 		hasServer = true
 	}
 	if hasServer {
-		action.Data["teaSubHeader"] = "代理服务"
+		if action.Request.URL.Path == "/proxy/board" {
+			action.Data["teaSubHeader"] = "代理服务 <span>(拖动排序)</span>"
+		} else {
+			action.Data["teaSubHeader"] = "代理服务"
+		}
 	}
 
 	// 其他
