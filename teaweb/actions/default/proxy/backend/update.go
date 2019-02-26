@@ -48,6 +48,7 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["backend"] = maps.Map{
 		"id":          backend.Id,
 		"address":     backend.Address,
+		"scheme":      backend.Scheme,
 		"code":        backend.Code,
 		"weight":      backend.Weight,
 		"failTimeout": int(backend.FailTimeoutDuration().Seconds()),
@@ -68,6 +69,7 @@ func (this *UpdateAction) RunPost(params struct {
 	Websocket   bool
 	BackendId   string
 	Address     string
+	Scheme      string
 	Weight      uint
 	On          bool
 	Code        string
@@ -97,6 +99,7 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 
 	backend.Address = params.Address
+	backend.Scheme = params.Scheme
 	backend.Weight = params.Weight
 	backend.On = params.On
 	backend.IsDown = false

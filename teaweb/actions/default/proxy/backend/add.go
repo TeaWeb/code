@@ -44,6 +44,7 @@ func (this *AddAction) RunPost(params struct {
 	LocationId  string // 路径
 	Websocket   bool   // 是否是Websocket设置
 	Address     string
+	Scheme      string
 	Weight      uint
 	On          bool
 	Code        string
@@ -64,6 +65,7 @@ func (this *AddAction) RunPost(params struct {
 
 	backend := teaconfigs.NewBackendConfig()
 	backend.Address = params.Address
+	backend.Scheme = params.Scheme
 	backend.Weight = params.Weight
 	backend.On = params.On
 	backend.IsDown = false

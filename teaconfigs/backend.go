@@ -17,6 +17,7 @@ type BackendConfig struct {
 	Code         string    `yaml:"code" json:"code"`                             // 代号
 	Name         []string  `yaml:"name" json:"name"`                             // 域名 TODO
 	Address      string    `yaml:"address" json:"address"`                       // 地址
+	Scheme       string    `yaml:"scheme" json:"scheme"`                         // 协议，http或者https
 	Weight       uint      `yaml:"weight" json:"weight"`                         // 是否为备份
 	IsBackup     bool      `yaml:"backup" json:"isBackup"`                       // 超时时间
 	FailTimeout  string    `yaml:"failTimeout" json:"failTimeout"`               // 失败超时
@@ -49,8 +50,11 @@ func (this *BackendConfig) Validate() error {
 
 	// 是否有端口
 	if strings.Index(this.Address, ":") == -1 {
-		// @TODO 如果是tls，则为443
-		this.Address += ":80"
+		if this.Scheme == "https" {
+			this.Address += ":443"
+		} else {
+			this.Address += ":80"
+		}
 	}
 
 	// Headers

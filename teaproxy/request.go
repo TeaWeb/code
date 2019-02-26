@@ -118,7 +118,7 @@ type Request struct {
 // 获取新的请求
 func NewRequest(rawRequest *http.Request) *Request {
 	now := time.Now()
-	return &Request{
+	req := &Request{
 		varMapping:         map[string]string{},
 		raw:                rawRequest,
 		rawURI:             rawRequest.URL.RequestURI(),
@@ -129,6 +129,8 @@ func NewRequest(rawRequest *http.Request) *Request {
 		requestMsec:        float64(now.Unix()) + float64(now.Nanosecond())/1000000000,
 		enableAccessLog:    true,
 	}
+
+	return req
 }
 
 func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) error {
@@ -636,6 +638,17 @@ func (this *Request) call(writer *ResponseWriter) error {
 		defer writer.Close()
 	}
 
+	// UV
+	uid, err := this.raw.Cookie("TeaUID")
+	if err != nil || uid == nil {
+		http.SetCookie(writer, &http.Cookie{
+			Name:    "TeaUID",
+			Value:   stringutil.Rand(32),
+			Path:    "/",
+			Expires: time.Now().Add(24 * time.Hour),
+		})
+	}
+
 	this.responseWriter = writer
 
 	// hook
@@ -1049,8 +1062,13 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		return nil
 	}
 
-	this.raw.URL.Scheme = this.scheme
 	this.raw.URL.Host = this.host
+
+	if len(this.backend.Scheme) > 0 && this.backend.Scheme != "http" {
+		this.raw.URL.Scheme = this.backend.Scheme
+	} else {
+		this.raw.URL.Scheme = this.scheme
+	}
 
 	// new uri
 	u, err := url.ParseRequestURI(this.uri)

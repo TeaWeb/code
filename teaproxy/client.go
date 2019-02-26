@@ -2,6 +2,7 @@ package teaproxy
 
 import (
 	"context"
+	"crypto/tls"
 	"net"
 	"net/http"
 	"sync"
@@ -53,6 +54,9 @@ func (this *ClientPool) client(address string, connectionTimeout time.Duration, 
 		IdleConnTimeout:       0, // 不限
 		TLSHandshakeTimeout:   0, // 不限
 		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
 	}
 
 	c := &http.Client{
