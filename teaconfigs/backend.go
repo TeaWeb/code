@@ -18,9 +18,10 @@ type BackendConfig struct {
 	Name         []string  `yaml:"name" json:"name"`                             // 域名 TODO
 	Address      string    `yaml:"address" json:"address"`                       // 地址
 	Scheme       string    `yaml:"scheme" json:"scheme"`                         // 协议，http或者https
-	Weight       uint      `yaml:"weight" json:"weight"`                         // 是否为备份
-	IsBackup     bool      `yaml:"backup" json:"isBackup"`                       // 超时时间
-	FailTimeout  string    `yaml:"failTimeout" json:"failTimeout"`               // 失败超时
+	Weight       uint      `yaml:"weight" json:"weight"`                         // 权重
+	IsBackup     bool      `yaml:"backup" json:"isBackup"`                       // 是否为备份
+	FailTimeout  string    `yaml:"failTimeout" json:"failTimeout"`               // 连接失败超时
+	ReadTimeout  string    `yaml:"readTimeout" json:"readTimeout"`               // 读取超时时间
 	MaxFails     uint      `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
 	CurrentFails uint      `yaml:"currentFails" json:"currentFails"`             // 当前已失败次数
 	MaxConns     uint      `yaml:"maxConns" json:"maxConns"`                     // 最大并发连接数
@@ -29,6 +30,7 @@ type BackendConfig struct {
 	DownTime     time.Time `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
 
 	failTimeoutDuration time.Duration
+	readTimeoutDuration time.Duration
 	failsLocker         sync.Mutex
 	connsLocker         sync.Mutex
 }
@@ -46,6 +48,11 @@ func (this *BackendConfig) Validate() error {
 	// failTimeout
 	if len(this.FailTimeout) > 0 {
 		this.failTimeoutDuration, _ = time.ParseDuration(this.FailTimeout)
+	}
+
+	// readTimeout
+	if len(this.ReadTimeout) > 0 {
+		this.readTimeoutDuration, _ = time.ParseDuration(this.ReadTimeout)
 	}
 
 	// 是否有端口
@@ -66,9 +73,14 @@ func (this *BackendConfig) Validate() error {
 	return nil
 }
 
-// 超时时间
+// 连接超时时间
 func (this *BackendConfig) FailTimeoutDuration() time.Duration {
 	return this.failTimeoutDuration
+}
+
+// 读取超时时间
+func (this *BackendConfig) ReadTimeoutDuration() time.Duration {
+	return this.readTimeoutDuration
 }
 
 // 候选对象代号

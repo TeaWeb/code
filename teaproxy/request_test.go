@@ -397,7 +397,7 @@ func TestPerformanceBackend(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				c := SharedClientPool.client("127.0.0.1:9992", 15*time.Second, 0)
+				c := SharedClientPool.client("123456", "127.0.0.1:9992", 15*time.Second, 0, 0)
 				resp, err := c.Do(req)
 
 				if err != nil {
@@ -450,7 +450,7 @@ func TestPerformanceStatic(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				c := SharedClientPool.client("127.0.0.1:9993", 15*time.Second, 0)
+				c := SharedClientPool.client("123456", "127.0.0.1:9993", 15*time.Second, 0, 0)
 				resp, err := c.Do(req)
 
 				if err != nil {

@@ -1093,7 +1093,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	this.raw.Header.Set("X-Forwarded-Host", this.host)
 	this.raw.Header.Set("X-Forwarded-Proto", this.raw.Proto)
 
-	client := SharedClientPool.client(this.backend.Address, this.backend.FailTimeoutDuration(), this.backend.MaxConns)
+	client := SharedClientPool.client(this.backend.Id, this.backend.Address, this.backend.FailTimeoutDuration(), this.backend.ReadTimeoutDuration(), this.backend.MaxConns)
 
 	this.raw.RequestURI = ""
 
@@ -1450,7 +1450,15 @@ func (this *Request) callRewrite(writer *ResponseWriter) error {
 
 		var client *http.Client = nil
 		if len(req.Host) > 0 {
-			client = SharedClientPool.client(req.Host, 30*time.Second, 0)
+			host := req.Host
+			if !strings.Contains(host, ":") {
+				if req.URL.Scheme == "https" {
+					host += ":443"
+				} else {
+					host += ":80"
+				}
+			}
+			client = SharedClientPool.client("", host, 30*time.Second, 0, 0)
 		} else {
 			client = &http.Client{
 				Timeout: 30 * time.Second,

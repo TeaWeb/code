@@ -40,6 +40,7 @@ func Shutdown() {
 
 	LISTENERS = []*Listener{}
 	SERVERS = map[string]*teaconfigs.ServerConfig{}
+	SharedClientPool.Reset()
 }
 
 // 重启服务

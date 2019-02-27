@@ -49,6 +49,7 @@ func (this *AddAction) RunPost(params struct {
 	On          bool
 	Code        string
 	FailTimeout uint
+	ReadTimeout uint
 	MaxFails    uint
 	MaxConns    uint
 	IsBackup    bool
@@ -71,6 +72,7 @@ func (this *AddAction) RunPost(params struct {
 	backend.IsDown = false
 	backend.Code = params.Code
 	backend.FailTimeout = fmt.Sprintf("%d", params.FailTimeout) + "s"
+	backend.ReadTimeout = fmt.Sprintf("%d", params.ReadTimeout) + "s"
 	backend.MaxFails = params.MaxFails
 	backend.MaxConns = params.MaxConns
 	backend.IsBackup = params.IsBackup

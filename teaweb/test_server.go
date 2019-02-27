@@ -4,6 +4,7 @@ import (
 	"github.com/iwind/TeaGo"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 // 测试服务器
@@ -32,6 +33,14 @@ func startTestServer() {
 			} else {
 				resp.Write([]byte("post:" + string(body)))
 			}
+		}).
+		Get("/timeout30", func(req *http.Request, resp http.ResponseWriter) {
+			time.Sleep(31 * time.Second)
+			resp.Write([]byte("30 seconds timeout"))
+		}).
+		Get("/timeout120", func(req *http.Request, resp http.ResponseWriter) {
+			time.Sleep(121 * time.Second)
+			resp.Write([]byte("120 seconds timeout"))
 		}).
 		StartOn("127.0.0.1:9991")
 }
