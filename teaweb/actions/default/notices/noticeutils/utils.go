@@ -68,16 +68,22 @@ func CountReadNotices() int {
 }
 
 // 获取某个接收人在某个时间段内接收的通知数
-func CountReceivedNotices(receiverId string, minutes int) int {
+func CountReceivedNotices(receiverId string, cond map[string]interface{}, minutes int) int {
 	if len(receiverId) == 0 {
 		return 0
 	}
 	if minutes <= 0 {
 		return 0
 	}
-	c, err := NewNoticeQuery().
+	query := NewNoticeQuery().
 		Attr("receivers", receiverId).
-		Gte("timestamp", time.Now().Unix()-int64(minutes*60)).
+		Gte("timestamp", time.Now().Unix()-int64(minutes*60))
+	if len(cond) > 0 {
+		for k, v := range cond {
+			query.Attr(k, v)
+		}
+	}
+	c, err := query.
 		Count()
 	if err != nil {
 		logs.Error(err)

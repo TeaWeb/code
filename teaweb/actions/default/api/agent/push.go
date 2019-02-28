@@ -119,7 +119,11 @@ func (this *PushAction) Run(params struct{}) {
 				fullMessage += "\n位置：" + strings.Join(linkNames, "/")
 			}
 			receiverIds := setting.Notify(level, fullMessage, func(receiverId string, minutes int) int {
-				return noticeutils.CountReceivedNotices(receiverId, minutes)
+				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+					"agent.agentId": agent.Id,
+					"agent.appId":   appId,
+					"agent.itemId":  itemId,
+				}, minutes)
 			})
 			if len(receiverIds) > 0 {
 				noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
