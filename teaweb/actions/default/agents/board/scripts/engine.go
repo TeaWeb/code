@@ -306,7 +306,7 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 
-	query := teamongo.NewValueQuery()
+	query := teamongo.NewAgentValueQuery()
 	if this.context != nil {
 		if this.context.Agent != nil {
 			query.Agent(this.context.Agent.Id)

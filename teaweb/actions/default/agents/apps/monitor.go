@@ -57,7 +57,7 @@ func (this *MonitorAction) RunPost(params struct {
 		latestTime := ""
 		latestLevel := notices.NoticeLevelNone
 
-		value, err := teamongo.NewValueQuery().
+		value, err := teamongo.NewAgentValueQuery().
 			Agent(params.AgentId).
 			App(params.AppId).
 			Item(item.Id).

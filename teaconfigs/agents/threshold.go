@@ -86,7 +86,7 @@ func (this *Threshold) Test(value interface{}) bool {
 	return false
 }
 
-// 执行数值
+// 执行数值运算，使用Javascript语法
 func (this *Threshold) Eval(value interface{}) string {
 	paramValue := teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(this.Param, func(s string) string {
 		if value == nil {

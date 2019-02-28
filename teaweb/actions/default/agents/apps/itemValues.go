@@ -44,7 +44,7 @@ func (this *ItemValuesAction) RunPost(params struct {
 		this.Fail("找不到Agent")
 	}
 
-	query := teamongo.NewValueQuery()
+	query := teamongo.NewAgentValueQuery()
 	query.Agent(params.AgentId)
 	query.App(params.AppId)
 	query.Item(params.ItemId)

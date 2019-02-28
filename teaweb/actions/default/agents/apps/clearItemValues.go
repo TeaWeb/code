@@ -29,7 +29,7 @@ func (this *ClearItemValuesAction) Run(params struct {
 		this.Fail("找不到Item")
 	}
 
-	query := teamongo.NewValueQuery()
+	query := teamongo.NewAgentValueQuery()
 	query.Agent(agent.Id)
 	query.Attr("appId", app.Id)
 	query.Attr("itemId", item.Id)

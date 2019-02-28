@@ -23,20 +23,24 @@ const (
 func AllSourceDataFormats() []maps.Map {
 	return []maps.Map{
 		{
-			"name": "单行数据",
-			"code": SourceDataFormatSingeLine,
+			"name":        "单行数据",
+			"code":        SourceDataFormatSingeLine,
+			"description": "数据源返回结果只有一行数据",
 		},
 		{
-			"name": "多行数据",
-			"code": SourceDataFormatMultipleLine,
+			"name":        "多行数据",
+			"code":        SourceDataFormatMultipleLine,
+			"description": "数据源返回结果有多行数据，换行符为\\n",
 		},
 		{
-			"name": "JSON数据",
-			"code": SourceDataFormatJSON,
+			"name":        "JSON数据",
+			"code":        SourceDataFormatJSON,
+			"description": "数据源返回结果为一个JSON格式的数据",
 		},
 		{
-			"name": "YAML数据",
-			"code": SourceDataFormatYAML,
+			"name":        "YAML数据",
+			"code":        SourceDataFormatYAML,
+			"description": "数据源返回结果为一个YAML格式的数据",
 		},
 	}
 }

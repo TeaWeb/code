@@ -141,7 +141,7 @@ func (this *PushAction) Run(params struct{}) {
 		}
 		value.SetTime(t)
 
-		err := teamongo.NewValueQuery().Insert(value)
+		err := teamongo.NewAgentValueQuery().Insert(value)
 		if err != nil {
 			logs.Error(err)
 		}

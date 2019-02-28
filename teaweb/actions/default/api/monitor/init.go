@@ -1,12 +1,16 @@
 package monitor
 
-import "github.com/iwind/TeaGo"
+import (
+	"github.com/TeaWeb/code/teaweb/actions/default/api/monitor/agent"
+	"github.com/iwind/TeaGo"
+)
 
 func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		server.
 			Prefix("/api/monitor").
 			GetPost("", new(IndexAction)).
+			GetPost("/agent/:agentId/item/:itemId", new(agent.ItemAction)).
 			EndAll()
 	})
 }

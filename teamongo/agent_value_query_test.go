@@ -8,7 +8,7 @@ import (
 )
 
 func TestInsertValues(t *testing.T) {
-	query := NewValueQuery()
+	query := NewAgentValueQuery()
 
 	{
 		value := agents.NewValue()
@@ -24,7 +24,7 @@ func TestInsertValues(t *testing.T) {
 }
 
 func TestNewQuery(t *testing.T) {
-	query := NewValueQuery()
+	query := NewAgentValueQuery()
 	query.Action(ValueQueryActionFindAll)
 	query.Agent("local")
 	result, err := query.

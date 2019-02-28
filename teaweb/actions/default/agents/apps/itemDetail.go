@@ -16,6 +16,10 @@ func (this *ItemDetailAction) Run(params struct {
 	AppId   string
 	ItemId  string
 }) {
+	this.Data["agent"] = maps.Map{
+		"id": params.AgentId,
+	}
+
 	app := agentutils.InitAppData(this, params.AgentId, params.AppId, "monitor")
 	item := app.FindItem(params.ItemId)
 

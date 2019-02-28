@@ -41,7 +41,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 	}
 	if hasServer {
 		if action.Request.URL.Path == "/proxy/board" {
-			action.Data["teaSubHeader"] = "代理服务 <span>(拖动排序)</span>"
+			action.Data["teaSubHeader"] = "代理服务 <span>(可拖动排序)</span>"
 		} else {
 			action.Data["teaSubHeader"] = "代理服务"
 		}
