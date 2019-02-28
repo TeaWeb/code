@@ -84,6 +84,10 @@ func (this *ListAction) Run(params struct {
 				"upgrade":        accessLog.GetHeader("Upgrade"),
 				"day":            timeutil.Format("Ymd", accessLog.Time()),
 				"errors":         accessLog.Errors,
+				"backendId":      accessLog.BackendId,
+				"locationId":     accessLog.LocationId,
+				"rewriteId":      accessLog.RewriteId,
+				"fastcgiId":      accessLog.FastcgiId,
 			}
 		})
 

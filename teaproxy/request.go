@@ -1289,8 +1289,8 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	client, err := gofcgi.SharedPool(this.fastcgi.Network(), this.fastcgi.Address(), uint(poolSize)).Client()
 	if err != nil {
 		this.serverError(writer)
-		logs.Error(err)
-		this.addError(err)
+		logs.Error(errors.New("fastcgi: " + err.Error()))
+		this.addError(errors.New("fastcgi: " + err.Error()))
 		return nil
 	}
 
