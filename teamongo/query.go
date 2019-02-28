@@ -37,6 +37,7 @@ type Query struct {
 	action         string
 	group          []string
 	cond           map[string]interface{}
+	orCond         []map[string]interface{}
 	forField       string
 
 	sorts  []map[string]int
@@ -87,7 +88,11 @@ func (this *Query) Desc(field string) *Query {
 	return this
 }
 
-func (this *Query) DeskPk() *Query {
+func (this *Query) AscPk() *Query {
+	return this.Asc("_id")
+}
+
+func (this *Query) DescPk() *Query {
 	return this.Desc("_id")
 }
 
@@ -112,6 +117,11 @@ func (this *Query) Attr(field string, value interface{}) *Query {
 	} else {
 		this.Op("eq", field, value)
 	}
+	return this
+}
+
+func (this *Query) Or(conds ...map[string]interface{}) *Query {
+	this.orCond = conds
 	return this
 }
 
@@ -471,6 +481,14 @@ func (this *Query) buildFilter() map[string]interface{} {
 		for field, cond := range this.cond {
 			fieldQuery := map[string]interface{}{}
 			for op, value := range cond.(map[string]interface{}) {
+				if field == "_id" {
+					if valueString, ok := value.(string); ok {
+						idValue, err := objectid.FromHex(valueString)
+						if err == nil {
+							value = idValue
+						}
+					}
+				}
 				if lists.Contains([]string{"eq", "lt", "lte", "gt", "gte", "in", "nin", "ne"}, op) {
 					fieldQuery["$"+op] = value
 				}
@@ -479,6 +497,11 @@ func (this *Query) buildFilter() map[string]interface{} {
 				filter[field] = fieldQuery
 			}
 		}
+	}
+
+	// or
+	if len(this.orCond) > 0 {
+		filter["$or"] = this.orCond
 	}
 
 	if this.debug {

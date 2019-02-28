@@ -22,7 +22,6 @@ var userAgentParser *uaparser.Parser
 var geoDB *geoip2.Reader
 var accessLogVars = map[string]string{}
 
-// 参考：http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format
 type AccessLog struct {
 	Id objectid.ObjectID `var:"id" bson:"_id" json:"id"` // 数据库存储的ID
 
@@ -79,6 +78,10 @@ type AccessLog struct {
 	RequestData        []byte `var:"" bson:"requestData" json:"requestData"`               // 请求数据
 	ResponseHeaderData []byte `var:"" bson:"responseHeaderData" json:"responseHeaderData"` // 响应Header数据
 	ResponseBodyData   []byte `var:"" bson:"responseBodyData" json:"responseBodyData"`     // 响应Body数据
+
+	// 错误信息
+	Errors    []string `var:"errors" bson:"errors" json:"errors"`          // 错误信息
+	HasErrors bool     `var:"hasErrors" bson:"hasErrors" json:"hasErrors"` // 是否包含有错误信息
 
 	// 扩展
 	Extend struct {

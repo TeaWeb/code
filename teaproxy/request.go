@@ -105,9 +105,10 @@ type Request struct {
 	requestTimestamp   int64
 	requestMaxSize     int64
 
-	isWatching        bool   // 是否在监控
-	requestData       []byte // 导出的request，在监控请求的时候有用
-	responseAPIStatus string // API状态码
+	isWatching        bool     // 是否在监控
+	requestData       []byte   // 导出的request，在监控请求的时候有用
+	responseAPIStatus string   // API状态码
+	errors            []string // 错误信息
 
 	enableAccessLog bool
 	gzipLevel       uint8
@@ -756,6 +757,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 			err := this.configure(this.server, 0)
 			if err != nil {
 				logs.Error(err)
+				this.addError(err)
 				this.serverError(writer)
 				return nil
 			}
@@ -783,6 +785,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 		} else {
 			this.serverError(writer)
 			logs.Error(err)
+			this.addError(err)
 			return nil
 		}
 	}
@@ -797,6 +800,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 			if err != nil {
 				logs.Error(err)
 				this.serverError(writer)
+				this.addError(err)
 				return nil
 			}
 			return this.call(writer)
@@ -882,6 +886,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	if err != nil {
 		this.serverError(writer)
 		logs.Error(err)
+		this.addError(err)
 		return nil
 	}
 	defer fp.Close()
@@ -904,6 +909,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 	if this.backend == nil {
 		err := errors.New(this.requestPath() + ": no available backends for websocket")
 		logs.Error(err)
+		this.addError(err)
 		this.serverError(writer)
 		return err
 	}
@@ -923,6 +929,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 	client, err := upgrader.Upgrade(this.responseWriter.Raw(), this.raw, nil)
 	if err != nil {
 		logs.Error(errors.New("upgrade: " + err.Error()))
+		this.addError(errors.New("upgrade: " + err.Error()))
 		return err
 	}
 	defer client.Close()
@@ -932,6 +939,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 		if this.backend.CurrentConns >= this.backend.MaxConns {
 			this.serverError(writer)
 			logs.Error(errors.New("too many connections"))
+			this.addError(errors.New("too many connections"))
 			return nil
 		}
 
@@ -948,6 +956,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 		server, _, err := dialer.Dial(wsURL.String(), nil)
 		if err != nil {
 			logs.Error(err)
+			this.addError(err)
 			currentFails := this.backend.IncreaseFails()
 			if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
 				this.backend.IsDown = true
@@ -977,6 +986,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 					closeErr, ok := err.(*websocket.CloseError)
 					if !ok || closeErr.Code != websocket.CloseGoingAway {
 						logs.Error(err)
+						this.addError(err)
 					}
 					clientIsClosed = true
 					break
@@ -992,6 +1002,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 				closeErr, ok := err.(*websocket.CloseError)
 				if !ok || closeErr.Code != websocket.CloseGoingAway {
 					logs.Error(err)
+					this.addError(err)
 				}
 				serverIsClosed = true
 				server.Close()
@@ -1022,6 +1033,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 						}
 						if responseWriter.StatusCode() != http.StatusOK {
 							logs.Error(errors.New(this.requestURI() + ": invalid response from backend: " + fmt.Sprintf("%d", responseWriter.StatusCode()) + " " + http.StatusText(responseWriter.StatusCode())))
+							this.addError(errors.New(this.requestURI() + ": invalid response from backend: " + fmt.Sprintf("%d", responseWriter.StatusCode()) + " " + http.StatusText(responseWriter.StatusCode())))
 							continue FOR
 						}
 						client.WriteMessage(websocket.TextMessage, responseWriter.Body())
@@ -1037,6 +1049,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 				closeErr, ok := err.(*websocket.CloseError)
 				if !ok || closeErr.Code != websocket.CloseGoingAway {
 					logs.Error(err)
+					this.addError(err)
 				}
 				quit <- true
 				break
@@ -1058,6 +1071,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	if len(this.backend.Address) == 0 {
 		this.serverError(writer)
 		logs.Error(errors.New("backend address should not be empty"))
+		this.addError(errors.New("backend address should not be empty"))
 		return nil
 	}
 
@@ -1121,6 +1135,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 		this.serverError(writer)
 		logs.Error(err)
+		this.addError(err)
 		return nil
 	}
 	defer resp.Body.Close()
@@ -1198,6 +1213,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	_, err = io.Copy(writer, resp.Body)
 	if err != nil {
 		logs.Error(err)
+		this.addError(err)
 		return nil
 	}
 	return nil
@@ -1274,6 +1290,7 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	if err != nil {
 		this.serverError(writer)
 		logs.Error(err)
+		this.addError(err)
 		return nil
 	}
 
@@ -1323,6 +1340,7 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 		this.serverError(writer)
 		//if this.debug {
 		logs.Error(err)
+		this.addError(err)
 		//}
 		return nil
 	}
@@ -1398,6 +1416,7 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	_, err = io.Copy(writer, resp.Body)
 	if err != nil {
 		logs.Error(err)
+		this.addError(err)
 		return nil
 	}
 
@@ -1467,6 +1486,7 @@ func (this *Request) callRewrite(writer *ResponseWriter) error {
 		resp, err := client.Do(req)
 		if err != nil {
 			logs.Error(errors.New(req.URL.String() + ": " + err.Error()))
+			this.addError(err)
 			this.serverError(writer)
 			return err
 		}
@@ -1967,6 +1987,8 @@ func (this *Request) log() {
 		ServerName:      this.serverName,
 		ServerPort:      this.requestServerPort(),
 		ServerProtocol:  this.requestProto(),
+		Errors:          this.errors,
+		HasErrors:       len(this.errors) > 0,
 	}
 	accessLog.SetShouldStat(true)
 
@@ -2023,6 +2045,7 @@ func (this *Request) findIndexFile(dir string) string {
 			indexFiles, err := filepath.Glob(dir + Tea.DS + index)
 			if err != nil {
 				logs.Error(err)
+				this.addError(err)
 				continue
 			}
 			if len(indexFiles) > 0 {
@@ -2054,4 +2077,11 @@ func (this *Request) addVarMapping(varMapping map[string]string) {
 	for k, v := range varMapping {
 		this.varMapping[k] = v
 	}
+}
+
+func (this *Request) addError(err error) {
+	if err == nil {
+		return
+	}
+	this.errors = append(this.errors, err.Error())
 }

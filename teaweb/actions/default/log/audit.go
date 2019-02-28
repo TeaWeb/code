@@ -39,7 +39,7 @@ func (this *AuditAction) Run(params struct {
 
 	// 读取列表数据
 	ones, err := teamongo.NewAuditsQuery().
-		DeskPk().
+		DescPk().
 		Offset(int64(pageSize * (params.Page - 1))).
 		Limit(int64(pageSize)).
 		FindAll()

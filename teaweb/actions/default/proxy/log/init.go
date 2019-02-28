@@ -21,10 +21,12 @@ func init() {
 			Helper(new(Helper)).
 			Prefix("/proxy/log").
 			Get("", new(IndexAction)).
-			Get("/get", new(GetAction)).
-			Get("/responseHeader/:logId", new(ResponseHeaderAction)).
-			Get("/requestHeader/:logId", new(RequestHeaderAction)).
-			Get("/cookies/:logId", new(CookiesAction)).
+			Get("/list", new(ListAction)).
+			Get("/responseHeader/:logId/:day", new(ResponseHeaderAction)).
+			Get("/requestHeader/:logId/:day", new(RequestHeaderAction)).
+			Get("/cookies/:logId/:day", new(CookiesAction)).
+			Get("/history", new(HistoryAction)).
+			GetPost("/day", new(DayAction)).
 			EndAll()
 	})
 

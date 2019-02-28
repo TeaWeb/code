@@ -54,6 +54,11 @@ func init() {
 		},
 	})
 
+	// kv storage
+	TeaGo.BeforeStart(func(server *TeaGo.Server) {
+		sharedKV = NewKVStorage("stat.leveldb")
+	})
+
 	// 停止
 	TeaGo.BeforeStop(func(server *TeaGo.Server) {
 		go func() {

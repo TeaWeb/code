@@ -1,0 +1,68 @@
+package log
+
+import (
+	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/utils/time"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"golang.org/x/net/context"
+	"time"
+)
+
+type HistoryAction actions.Action
+
+// 历史日志
+func (this *HistoryAction) Run(params struct {
+	ServerId string
+}) {
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
+	}
+
+	this.Data["server"] = maps.Map{
+		"id": server.Id,
+	}
+
+	proxyutils.AddServerMenu(this)
+
+	// 检查MongoDB连接
+	this.Data["mongoError"] = ""
+	err := teamongo.Test()
+	mongoAvailable := true
+	if err != nil {
+		this.Data["mongoError"] = "此功能需要连接MongoDB"
+		mongoAvailable = false
+	}
+
+	this.Data["server"] = maps.Map{
+		"id": params.ServerId,
+	}
+
+	// 列出最近30天的日志
+	days := []string{}
+	if mongoAvailable {
+		for i := 0; i < 30; i ++ {
+			day := timeutil.Format("Ymd", time.Now().Add(time.Duration(-i*24)*time.Hour))
+			collName := "logs." + day
+			result := teamongo.FindCollection(collName).FindOne(context.Background(), map[string]interface{}{
+				"serverId": server.Id,
+			})
+			m := map[string]interface{}{}
+			err := result.Decode(&m)
+			if err == mongo.ErrNoDocuments {
+				continue
+			}
+
+			days = append(days, day)
+		}
+	}
+
+	this.Data["days"] = days
+	this.Data["today"] = timeutil.Format("Ymd")
+
+	this.Show()
+}

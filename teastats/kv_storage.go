@@ -15,7 +15,7 @@ type KVStorage struct {
 	db *leveldb.DB
 }
 
-var sharedKV = NewKVStorage("stat.leveldb")
+var sharedKV *KVStorage = nil
 
 // 获取新对象
 func NewKVStorage(filename string) *KVStorage {

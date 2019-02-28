@@ -98,8 +98,8 @@ func TestLogOSParser1(t *testing.T) {
 	t.Log(client.OS.PatchMinor)  // ""
 	t.Log(client.Device.Family)  // "Kindle Fire"
 
-	cost := float64(time.Since(now).Nanoseconds()) / 1000000000
-	t.Log("cost:", cost)
+	cost := time.Since(now).Seconds()
+	t.Log("cost:", cost, "s")
 	t.Log("QPS", 1/cost)
 }
 

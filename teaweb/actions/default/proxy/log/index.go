@@ -11,6 +11,7 @@ type IndexAction actions.Action
 
 func (this *IndexAction) Run(params struct {
 	ServerId string
+	LogType  string
 }) {
 	// 检查MongoDB连接
 	this.Data["mongoError"] = ""
@@ -22,8 +23,9 @@ func (this *IndexAction) Run(params struct {
 	this.Data["server"] = maps.Map{
 		"id": params.ServerId,
 	}
+	this.Data["logType"] = params.LogType
 
-	proxyutils.AddServerMenu(this.Object())
+	proxyutils.AddServerMenu(this)
 
 	this.Show()
 }

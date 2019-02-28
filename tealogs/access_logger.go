@@ -85,6 +85,10 @@ func (this *AccessLogger) collection() *mongo.Collection {
 		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
 	})
 	indexes.CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    bson.NewDocument(bson.EC.Int32("hasErrors", 1), bson.EC.Int32("serverId", 1)),
+		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
+	})
+	indexes.CreateOne(context.Background(), mongo.IndexModel{
 		Keys:    bson.NewDocument(bson.EC.Int32("apiPath", 1), bson.EC.Int32("serverId", 1)),
 		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
 	})
@@ -190,69 +194,6 @@ func (this *AccessLogger) Close() {
 	if this.client() != nil {
 		this.client().Disconnect(context.Background())
 	}
-}
-
-// 读取日志
-func (this *AccessLogger) ReadNewLogs(serverId string, fromId string, size int64) []AccessLog {
-	if this.client() == nil {
-		return []AccessLog{}
-	}
-
-	if size <= 0 {
-		size = 10
-	}
-
-	result := []AccessLog{}
-	coll := this.collection()
-
-	filter := map[string]interface{}{}
-	if len(serverId) > 0 {
-		filter["serverId"] = serverId
-	}
-	if len(fromId) > 0 {
-		objectId, err := objectid.FromHex(fromId)
-		if err == nil {
-			filter["_id"] = map[string]interface{}{
-				"$gt": objectId,
-			}
-		} else {
-			logs.Error(err)
-		}
-	}
-
-	opts := []findopt.Find{}
-	isReverse := false
-
-	if len(fromId) == 0 {
-		opts = append(opts, findopt.Sort(bson.NewDocument(bson.EC.Int32("_id", -1))))
-		opts = append(opts, findopt.Limit(size))
-		isReverse = true
-	} else {
-		opts = append(opts, findopt.Sort(bson.NewDocument(bson.EC.Int32("_id", 1))))
-		opts = append(opts, findopt.Limit(size))
-	}
-
-	cursor, err := coll.Find(context.Background(), filter, opts ...)
-	if err != nil {
-		logs.Error(err)
-		return []AccessLog{}
-	}
-	defer cursor.Close(context.Background())
-
-	for cursor.Next(context.Background()) {
-		accessLog := AccessLog{}
-		err := cursor.Decode(&accessLog)
-		if err != nil {
-			logs.Error(err)
-			return []AccessLog{}
-		}
-		result = append(result, accessLog)
-	}
-
-	if !isReverse {
-		lists.Reverse(result)
-	}
-	return result
 }
 
 func (this *AccessLogger) QPS() int {

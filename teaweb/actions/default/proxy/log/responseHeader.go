@@ -2,8 +2,8 @@ package log
 
 import (
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/actions"
-	"time"
 )
 
 type ResponseHeaderAction actions.Action
@@ -11,22 +11,22 @@ type ResponseHeaderAction actions.Action
 // 响应Header
 func (this *ResponseHeaderAction) Run(params struct {
 	LogId string
+	Day   string
 }) {
-	query := tealogs.NewQuery()
-	query.From(time.Now())
+	query := teamongo.NewQuery("logs."+params.Day, new(tealogs.AccessLog))
 	query.Id(params.LogId)
-	accessLog, err := query.Find()
+	one, err := query.Find()
 	if err != nil {
 		this.Fail(err.Error())
 	}
-
-	if accessLog != nil {
+	if one != nil {
+		accessLog := one.(*tealogs.AccessLog)
 		this.Data["headers"] = accessLog.SentHeader
+		this.Data["body"] = string(accessLog.ResponseBodyData)
 	} else {
 		this.Data["headers"] = map[string][]string{}
+		this.Data["body"] = ""
 	}
-
-	this.Data["body"] = string(accessLog.ResponseBodyData)
 
 	this.Success()
 }

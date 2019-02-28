@@ -9,7 +9,9 @@ import (
 )
 
 // 添加服务器菜单
-func AddServerMenu(action *actions.ActionObject) {
+func AddServerMenu(actionWrapper actions.ActionWrapper) {
+	action := actionWrapper.Object()
+
 	// 选中代理
 	action.Data["teaMenu"] = "proxy"
 
