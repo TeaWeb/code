@@ -65,7 +65,7 @@ func (this *DayAction) Run(params struct {
 	this.Data["isHistory"] = regexp.MustCompile("^\\d+$").MatchString(params.Day)
 	this.Data["logType"] = params.LogType
 	this.Data["logs"] = []interface{}{}
-	this.Data["fromId"] = ""
+	this.Data["fromId"] = params.FromId
 	this.Data["hasNext"] = false
 	this.Data["page"] = params.Page
 
@@ -85,7 +85,7 @@ func (this *DayAction) Run(params struct {
 		query := teamongo.NewQuery("logs."+realDay, new(tealogs.AccessLog))
 		query.Attr("serverId", serverId)
 		if len(params.FromId) > 0 {
-			query.Lt("_id", params.FromId)
+			query.Lte("_id", params.FromId)
 		}
 		if params.LogType == "errorLog" {
 			query.Or([]map[string]interface{}{
@@ -142,7 +142,7 @@ func (this *DayAction) Run(params struct {
 			this.Data["logs"] = result
 
 			if len(result) > 0 {
-				{
+				if len(params.FromId) == 0 {
 					fromId := ones[0].(*tealogs.AccessLog).Id.Hex()
 					this.Data["fromId"] = fromId
 				}
@@ -168,7 +168,6 @@ func (this *DayAction) Run(params struct {
 					if len(params.SearchIP) > 0 {
 						query.Attr("remoteAddr", params.SearchIP)
 					}
-					query.DescPk()
 					v, err := query.Find()
 					if err != nil {
 						logs.Error(err)

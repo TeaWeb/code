@@ -32,10 +32,15 @@ func (this *ListAction) Run(params struct {
 	requestBodyFetching = params.BodyFetching
 	requestBodyTime = time.Now()
 
+	shouldReverse := true
 	query := teamongo.NewQuery("logs."+timeutil.Format("Ymd"), new(tealogs.AccessLog))
 	query.Attr("serverId", serverId)
 	if len(params.FromId) > 0 {
 		query.Gt("_id", params.FromId)
+		query.AscPk()
+	} else {
+		query.DescPk()
+		shouldReverse = false
 	}
 	if params.LogType == "errorLog" {
 		query.Or([]map[string]interface{}{
@@ -50,7 +55,6 @@ func (this *ListAction) Run(params struct {
 		} ...)
 	}
 	query.Limit(params.Size)
-	query.AscPk()
 	ones, err := query.FindAll()
 
 	if err != nil {
@@ -91,7 +95,9 @@ func (this *ListAction) Run(params struct {
 			}
 		})
 
-		lists.Reverse(result)
+		if shouldReverse {
+			lists.Reverse(result)
+		}
 		this.Data["logs"] = result
 	}
 

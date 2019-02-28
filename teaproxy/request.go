@@ -1346,7 +1346,8 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	}
 
 	if len(stderr) > 0 {
-		logs.Println("Fastcgi Error: " + string(stderr))
+		logs.Error(errors.New("Fastcgi Error: " + string(stderr)))
+		this.addError(errors.New("Fastcgi Error: " + string(stderr)))
 	}
 
 	defer resp.Body.Close()

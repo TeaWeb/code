@@ -43,9 +43,9 @@ func (this *HistoryAction) Run(params struct {
 	}
 
 	// 列出最近30天的日志
-	days := []string{}
+	days := []maps.Map{}
 	if mongoAvailable {
-		for i := 0; i < 30; i ++ {
+		for i := 0; i < 60; i ++ {
 			day := timeutil.Format("Ymd", time.Now().Add(time.Duration(-i*24)*time.Hour))
 			collName := "logs." + day
 			result := teamongo.FindCollection(collName).FindOne(context.Background(), map[string]interface{}{
@@ -53,11 +53,10 @@ func (this *HistoryAction) Run(params struct {
 			})
 			m := map[string]interface{}{}
 			err := result.Decode(&m)
-			if err == mongo.ErrNoDocuments {
-				continue
-			}
-
-			days = append(days, day)
+			days = append(days, maps.Map{
+				"day": day,
+				"has": err != mongo.ErrNoDocuments,
+			})
 		}
 	}
 
