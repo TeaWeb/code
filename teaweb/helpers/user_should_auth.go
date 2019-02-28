@@ -3,7 +3,6 @@ package helpers
 import (
 	"github.com/iwind/TeaGo/actions"
 	"net/http"
-	"time"
 )
 
 type UserShouldAuth struct {
@@ -15,15 +14,26 @@ func (auth *UserShouldAuth) BeforeAction(actionPtr actions.ActionWrapper, paramN
 	return true
 }
 
-func (auth *UserShouldAuth) StoreUsername(username string) {
+// 存储用户名到SESSION
+func (auth *UserShouldAuth) StoreUsername(username string, remember bool) {
 	// 修改sid的时间
-	cookie := &http.Cookie{
-		Name:    "sid",
-		Value:   auth.action.Session().Sid,
-		Path:    "/",
-		Expires: time.Now().Add(30 * 86400 * time.Second),
+	if remember {
+		cookie := &http.Cookie{
+			Name:   "sid",
+			Value:  auth.action.Session().Sid,
+			Path:   "/",
+			MaxAge: 14 * 86400,
+		}
+		auth.action.AddCookie(cookie)
+	} else {
+		cookie := &http.Cookie{
+			Name:   "sid",
+			Value:  auth.action.Session().Sid,
+			Path:   "/",
+			MaxAge: 0,
+		}
+		auth.action.AddCookie(cookie)
 	}
-	auth.action.AddCookie(cookie)
 	auth.action.Session().Write("username", username)
 }
 

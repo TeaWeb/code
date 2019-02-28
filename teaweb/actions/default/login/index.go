@@ -36,6 +36,7 @@ func (this *IndexAction) RunGet() {
 func (this *IndexAction) RunPost(params struct {
 	Username string
 	Password string
+	Remember bool
 	Must     *actions.Must
 	Auth     *helpers.UserShouldAuth
 }) {
@@ -79,7 +80,7 @@ func (this *IndexAction) RunPost(params struct {
 		user.ResetLoginTries()
 
 		// Session
-		params.Auth.StoreUsername(user.Username)
+		params.Auth.StoreUsername(user.Username, params.Remember)
 
 		// 记录登录IP
 		user.LoggedAt = time.Now().Unix()
