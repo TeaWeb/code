@@ -8,7 +8,7 @@ import (
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
 	"time"
 )
@@ -55,7 +55,7 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 	t := time.Now()
 
 	notice := notices.NewNotice()
-	notice.Id = objectid.New()
+	notice.Id = primitive.NewObjectID()
 	notice.Agent.AgentId = agent.Id
 	notice.Agent.Level = level
 	notice.Message = message

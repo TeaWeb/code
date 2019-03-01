@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"reflect"
 	"sync"
 	"time"
@@ -127,7 +126,7 @@ func (this *Query) Or(conds ...map[string]interface{}) *Query {
 
 // 设置日志ID
 func (this *Query) Id(idString string) *Query {
-	objectId, err := objectid.FromHex(idString)
+	objectId, err := primitive.ObjectIDFromHex(idString)
 	if err != nil {
 		logs.Error(err)
 		return this.Attr("_id", idString)
@@ -268,7 +267,7 @@ func (this *Query) queryNumber() (float64, error) {
 	if this.action == QueryActionCount {
 		coll := this.Coll()
 		filter := this.buildFilter()
-		i, err := coll.Count(context.Background(), filter)
+		i, err := coll.CountDocuments(context.Background(), filter)
 		if err != nil {
 			return 0, err
 		}
@@ -394,17 +393,17 @@ func (this *Query) queryGroup() (result map[string]map[string]interface{}, err e
 
 func (this *Query) FindAll() (result []interface{}, err error) {
 	coll := this.Coll()
-	opts := []findopt.Find{}
+	opts := []*options.FindOptions{}
 	if this.offset > -1 {
-		opts = append(opts, findopt.Skip(this.offset))
+		opts = append(opts, options.Find().SetSkip(this.offset))
 	}
 	if this.size > -1 {
-		opts = append(opts, findopt.Limit(this.size))
+		opts = append(opts, options.Find().SetLimit(this.size))
 	}
 	if len(this.sorts) > 0 {
 		for _, sort := range this.sorts {
 			for field, order := range sort {
-				opts = append(opts, findopt.Sort(map[string]int{
+				opts = append(opts, options.Find().SetSort(map[string]int{
 					field: order,
 				}))
 			}
@@ -424,35 +423,17 @@ func (this *Query) FindAll() (result []interface{}, err error) {
 
 	result = []interface{}{}
 	for cursor.Next(context.Background()) {
-		m := map[string]interface{}{}
-		err := cursor.Decode(&m)
-
+		ptrValue := reflect.New(this.modelType.Elem())
+		ptr := ptrValue.Interface()
+		err := cursor.Decode(ptr)
 		if err != nil {
-			return nil, err
-		}
-
-		one, err := BSONDecode(m)
-		if err == nil {
-			ptrValue := reflect.New(this.modelType)
-			ptr := ptrValue.Interface()
-			err = teautils.MapToObjectJSON(one.(map[string]interface{}), ptr)
-			if err != nil {
-				logs.Error(err)
-				continue
-			}
-
-			// _id
-			modelCopyValue := reflect.Indirect(ptrValue)
-			idField := modelCopyValue.Elem().FieldByName("Id")
-			if idField.IsValid() {
-				idField.Set(reflect.ValueOf(m["_id"]))
-			}
-
-			result = append(result, modelCopyValue.Interface())
-		} else {
 			logs.Error(err)
 			continue
 		}
+
+		// TODO DECODE
+
+		result = append(result, ptr)
 	}
 
 	return result, nil
@@ -483,7 +464,7 @@ func (this *Query) buildFilter() map[string]interface{} {
 			for op, value := range cond.(map[string]interface{}) {
 				if field == "_id" {
 					if valueString, ok := value.(string); ok {
-						idValue, err := objectid.FromHex(valueString)
+						idValue, err := primitive.ObjectIDFromHex(valueString)
 						if err == nil {
 							value = idValue
 						}

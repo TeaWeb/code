@@ -1,7 +1,7 @@
 package audits
 
 import (
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
@@ -14,18 +14,18 @@ const (
 
 // 审计日志
 type Log struct {
-	Id          objectid.ObjectID `bson:"_id" json:"id"` // 数据库存储的ID
-	Username    string            `bson:"username" json:"username"`
-	Action      Action            `bson:"action" json:"action"`           // 类型
-	Description string            `bson:"description" json:"description"` // 描述
-	Options     map[string]string `bson:"options" json:"options"`         // 选项
-	Timestamp   int64             `bson:"timestamp" json:"timestamp"`     // 时间戳
+	Id          primitive.ObjectID `bson:"_id" json:"id"` // 数据库存储的ID
+	Username    string             `bson:"username" json:"username"`
+	Action      Action             `bson:"action" json:"action"`           // 类型
+	Description string             `bson:"description" json:"description"` // 描述
+	Options     map[string]string  `bson:"options" json:"options"`         // 选项
+	Timestamp   int64              `bson:"timestamp" json:"timestamp"`     // 时间戳
 }
 
 // 获取新审计日志对象
 func NewLog(username string, action Action, description string, options map[string]string) *Log {
 	return &Log{
-		Id:          objectid.New(),
+		Id:          primitive.NewObjectID(),
 		Username:    username,
 		Action:      action,
 		Description: description,

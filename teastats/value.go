@@ -2,7 +2,7 @@ package teastats
 
 import (
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
@@ -21,7 +21,7 @@ const (
 
 // 统计指标值定义
 type Value struct {
-	Id         objectid.ObjectID      `bson:"_id" json:"id"`              // 数据库存储的ID
+	Id         primitive.ObjectID     `bson:"_id" json:"id"`              // 数据库存储的ID
 	Item       string                 `bson:"item" json:"item"`           // 指标代号
 	Period     ValuePeriod            `bson:"period" json:"period"`       // 周期
 	Value      map[string]interface{} `bson:"value" json:"value"`         // 数据内容

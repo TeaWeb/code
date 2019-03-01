@@ -4,8 +4,9 @@ import (
 	"context"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/iwind/TeaGo/types"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -21,9 +22,9 @@ func FindCollection(collName string) *Collection {
 
 // 创建索引
 func (this *Collection) CreateIndex(indexes map[string]bool) error {
-	manager := this.Indexes()
+	indexView := this.Indexes()
 
-	doc := bson.NewDocument()
+	doc := map[string]interface{}{}
 
 	// 对key进行排序
 	keys := maps.NewMap(indexes).Keys()
@@ -35,16 +36,58 @@ func (this *Collection) CreateIndex(indexes map[string]bool) error {
 		index := key.(string)
 		b := indexes[index]
 		if b {
-			doc.Append(bson.EC.Int32(index, 1))
+			doc[index] = 1
 		} else {
-			doc.Append(bson.EC.Int32(index, -1))
+			doc[index] = -1
 		}
 	}
 
+	// 检查是否已经存在
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	_, err := manager.CreateOne(ctx, mongo.IndexModel{
+	cursor, err := indexView.List(ctx)
+	if err != nil {
+		return err
+	}
+	defer cursor.Close(ctx)
+	for cursor.Next(ctx) {
+		m := map[string]interface{}{}
+		err = cursor.Decode(&m)
+		if err != nil {
+			return err
+		}
+		key, ok := m["key"]
+		if !ok {
+			continue
+		}
+		keyMap, ok := key.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if checkIndexEqual(doc, keyMap) {
+			return nil
+		}
+	}
+
+	// 创建新的
+	_, err = indexView.CreateOne(ctx, mongo.IndexModel{
 		Keys:    doc,
-		Options: bson.NewDocument(bson.EC.Boolean("background", true)),
+		Options: options.Index().SetBackground(true),
 	})
 	return err
+}
+
+func checkIndexEqual(index1 map[string]interface{}, index2 map[string]interface{}) bool {
+	if len(index1) != len(index2) {
+		return false
+	}
+	for k, v := range index1 {
+		v2, ok := index2[k]
+		if !ok {
+			return false
+		}
+		if types.Int(v) != types.Int(v2) {
+			return false
+		}
+	}
+	return true
 }

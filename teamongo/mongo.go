@@ -6,8 +6,8 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -37,7 +37,7 @@ func SharedClient() *mongo.Client {
 			return nil
 		}
 
-		sharedClient, err = mongo.NewClient(config.URI)
+		sharedClient, err = mongo.NewClient(options.Client().ApplyURI(config.URI))
 		if err != nil {
 			logs.Fatal(err)
 			return nil
@@ -69,7 +69,7 @@ func Test() error {
 		return err
 	}
 
-	client, err := mongo.NewClient(config.URI)
+	client, err := mongo.NewClient(options.Client().ApplyURI(config.URI))
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func Test() error {
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), 1*time.Second)
-	_, err = client.Database("teaweb").Collection("logs").Find(ctx, nil, findopt.Limit(1))
+	_, err = client.Database("teaweb").Collection("logs").Find(ctx, map[string]interface{}{}, options.Find().SetLimit(1))
 
 	if err == nil {
 		client.Disconnect(context.Background())

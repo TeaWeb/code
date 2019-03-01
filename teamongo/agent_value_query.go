@@ -8,8 +8,8 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"reflect"
 	"sync"
 	"time"
@@ -120,7 +120,7 @@ func (this *AgentValueQuery) Attr(field string, value interface{}) *AgentValueQu
 
 // 设置日志ID
 func (this *AgentValueQuery) Id(idString string) *AgentValueQuery {
-	objectId, err := objectid.FromHex(idString)
+	objectId, err := primitive.ObjectIDFromHex(idString)
 	if err != nil {
 		logs.Error(err)
 		return this.Attr("_id", idString)
@@ -241,7 +241,7 @@ func (this *AgentValueQuery) Insert(value *agents.Value) error {
 	}
 
 	if value.Id.IsZero() {
-		value.Id = objectid.New()
+		value.Id = primitive.NewObjectID()
 	}
 
 	collectionName := "values.agent." + this.agentId
@@ -268,7 +268,7 @@ func (this *AgentValueQuery) queryNumber(collectionName string) (float64, error)
 	if this.action == ValueQueryActionCount {
 		coll := this.selectColl(collectionName)
 		filter := this.buildFilter()
-		i, err := coll.Count(context.Background(), filter)
+		i, err := coll.CountDocuments(context.Background(), filter)
 		if err != nil {
 			return 0, err
 		}
@@ -394,17 +394,17 @@ func (this *AgentValueQuery) queryGroup(collectionName string) (result map[strin
 
 func (this *AgentValueQuery) findAll(collectionName string) (result []*agents.Value, err error) {
 	coll := this.selectColl(collectionName)
-	opts := []findopt.Find{}
+	opts := []*options.FindOptions{}
 	if this.offset > -1 {
-		opts = append(opts, findopt.Skip(this.offset))
+		opts = append(opts, options.Find().SetSkip(this.offset))
 	}
 	if this.size > -1 {
-		opts = append(opts, findopt.Limit(this.size))
+		opts = append(opts, options.Find().SetLimit(this.size))
 	}
 	if len(this.sorts) > 0 {
 		for _, sort := range this.sorts {
 			for field, order := range sort {
-				opts = append(opts, findopt.Sort(map[string]int{
+				opts = append(opts, options.Find().SetSort(map[string]int{
 					field: order,
 				}))
 			}

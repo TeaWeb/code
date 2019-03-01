@@ -9,8 +9,8 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -72,7 +72,7 @@ func (this *TaskLogsAction) RunPost(params struct {
 		"taskId": params.TaskId,
 	}
 	if len(params.LastId) > 0 {
-		lastObjectId, err := objectid.FromHex(params.LastId)
+		lastObjectId, err := primitive.ObjectIDFromHex(params.LastId)
 		if err != nil {
 			logs.Error(err)
 		} else {
@@ -83,9 +83,9 @@ func (this *TaskLogsAction) RunPost(params struct {
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
-	cursor, err := teamongo.FindCollection("logs.agent." + params.AgentId).Find(ctx, filter, findopt.Sort(map[string]interface{}{
+	cursor, err := teamongo.FindCollection("logs.agent." + params.AgentId).Find(ctx, filter, options.Find().SetSort(map[string]interface{}{
 		"_id": -1,
-	}), findopt.Limit(100))
+	}), options.Find().SetLimit(100))
 	if err != nil {
 		this.Fail("查询数据库出错：" + err.Error())
 	}

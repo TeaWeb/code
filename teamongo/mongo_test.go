@@ -2,13 +2,12 @@ package teamongo
 
 import (
 	"context"
-	"github.com/mongodb/mongo-go-driver/bson"
 	"testing"
 )
 
 func TestSharedClient(t *testing.T) {
 	client := SharedClient()
-	t.Log(client.Database("teadb").Collection("accessLog").Find(context.Background(), nil))
+	t.Log(client.Database("teadb").Collection("accessLog").Find(context.Background(), map[string]interface{}{}))
 }
 
 func TestUnmarshalJSON(t *testing.T) {
@@ -28,33 +27,9 @@ func TestUnmarshalJSON(t *testing.T) {
 	}`
 	t.Log(data)
 
-	arr := bson.NewDocument()
-	err := bson.UnmarshalExtJSON([]byte(data), true, &arr)
+	value, err := BSONArrayBytes([]byte(data))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(arr)
-}
-
-func TestUnmarshalJSON2(t *testing.T) {
-	data := `{
-		"group": [  "1", "2", "3" ]
-	}`
-	t.Log(data)
-
-	arr := bson.NewDocument()
-	err := bson.UnmarshalExtJSON([]byte(data), true, &arr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(arr)
-}
-
-func TestUnmarshalJSONArray(t *testing.T) {
-	arr := bson.NewArray()
-	arr.Append(bson.EC.String("", "1").Value())
-	arr.Append(bson.EC.String("", "2").Value())
-	arr.Append(bson.EC.String("", "3").Value())
-
-	t.Log(arr)
+	t.Log(value)
 }

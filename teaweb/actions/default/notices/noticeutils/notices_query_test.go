@@ -3,14 +3,14 @@ package noticeutils
 import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 	"time"
 )
 
 func TestNoticeQuery_Insert(t *testing.T) {
 	notice := notices.NewNotice()
-	notice.Id = objectid.New()
+	notice.Id = primitive.NewObjectID()
 	notice.SetTime(time.Now())
 	notice.Message = "Hello"
 	notice.Agent = notices.AgentCond{

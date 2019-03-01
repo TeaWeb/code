@@ -4,7 +4,6 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
-	"log"
 	"sync"
 )
 
@@ -44,7 +43,6 @@ func (this *RuntimeAction) RunPost() {
 			if n > 0 {
 				for {
 					newOffset, err := reader.Seek(-1, files.WhenceCurrent)
-					log.Println(newOffset)
 					if err != nil {
 						runtimeLogOffset = newOffset
 						break

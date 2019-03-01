@@ -8,7 +8,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -47,9 +47,9 @@ func FormatTask(task *agents.TaskConfig, agentId string) maps.Map {
 	ctx, _ := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	cursor, err := teamongo.FindCollection("logs.agent." + agentId).Find(ctx, map[string]interface{}{
 		"taskId": task.Id,
-	}, findopt.Sort(map[string]interface{}{
+	}, options.Find().SetSort(map[string]interface{}{
 		"_id": -1,
-	}), findopt.Limit(1))
+	}), options.Find().SetLimit(1))
 	runTime := ""
 	if err == nil {
 		if cursor.Next(context.Background()) {

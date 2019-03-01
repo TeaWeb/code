@@ -13,7 +13,7 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io/ioutil"
 	"strings"
 	"sync"
@@ -46,7 +46,7 @@ func (this *PushAction) Run(params struct{}) {
 
 	if eventDomain == "ProcessEvent" { // 进程事件
 		event := agentutils.ProcessLog{
-			Id:         objectid.New(),
+			Id:         primitive.NewObjectID(),
 			AgentId:    agent.Id,
 			TaskId:     m.GetString("taskId"),
 			ProcessId:  m.GetString("uniqueId"),
@@ -131,7 +131,7 @@ func (this *PushAction) Run(params struct{}) {
 		}
 
 		value := &agents.Value{
-			Id:          objectid.New(),
+			Id:          primitive.NewObjectID(),
 			AppId:       appId,
 			AgentId:     agent.Id,
 			ItemId:      itemId,

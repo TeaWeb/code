@@ -1,8 +1,8 @@
 package teaconfigs
 
 import (
-	"github.com/iwind/TeaGo/logs"
 	"errors"
+	"github.com/iwind/TeaGo/logs"
 )
 
 // 日志配置

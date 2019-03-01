@@ -7,9 +7,9 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/oschwald/geoip2-golang"
 	"github.com/pquerna/ffjson/ffjson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net"
 	"path/filepath"
 	"reflect"
@@ -23,7 +23,7 @@ var geoDB *geoip2.Reader
 var accessLogVars = map[string]string{}
 
 type AccessLog struct {
-	Id objectid.ObjectID `var:"id" bson:"_id" json:"id"` // 数据库存储的ID
+	Id primitive.ObjectID `var:"id" bson:"_id" json:"id"` // 数据库存储的ID
 
 	ServerId   string `var:"serverId" bson:"serverId" json:"serverId"`       // 服务ID
 	BackendId  string `var:"backendId" bson:"backendId" json:"backendId"`    // 后端服务ID

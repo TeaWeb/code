@@ -7,8 +7,8 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/syndtr/goleveldb/leveldb/errors"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"sync"
 	"time"
 )
@@ -208,7 +208,7 @@ func (this *Queue) Add(itemCode string, t time.Time, period ValuePeriod, params 
 		value = maps.Map{}
 	}
 	item := NewItemValue()
-	item.Id = objectid.New()
+	item.Id = primitive.NewObjectID()
 	item.Item = itemCode
 	item.Period = period
 	item.Value = value

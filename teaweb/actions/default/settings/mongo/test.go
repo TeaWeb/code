@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -26,7 +26,7 @@ func (this *TestAction) Run(params struct {
 
 	uri := config.URI()
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	client, err := mongo.Connect(ctx, uri)
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
 		this.Message = "有错误需要修复：" + err.Error()
 		this.Fail()
@@ -36,7 +36,7 @@ func (this *TestAction) Run(params struct {
 	_, err = client.
 		Database("teaweb").
 		Collection("logs").
-		Find(ctx, nil, findopt.Limit(1))
+		Find(ctx, map[string]interface{}{}, options.Find().SetLimit(1))
 	if err != nil {
 		this.Message = "有错误需要修复：" + err.Error()
 		this.Fail()

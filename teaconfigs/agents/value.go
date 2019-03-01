@@ -3,13 +3,13 @@ package agents
 import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
 // 应用指标值定义
 type Value struct {
-	Id          objectid.ObjectID   `bson:"_id" json:"id"`                  // 数据库存储的ID
+	Id          primitive.ObjectID  `bson:"_id" json:"id"`                  // 数据库存储的ID
 	AgentId     string              `bson:"agentId" json:"agentId"`         // Agent ID
 	AppId       string              `bson:"appId" json:"appId"`             // App ID
 	ItemId      string              `bson:"itemId" json:"itemId"`           // 监控项ID
@@ -30,7 +30,7 @@ type Value struct {
 // 获取新对象
 func NewValue() *Value {
 	return &Value{
-		Id: objectid.New(),
+		Id: primitive.NewObjectID(),
 	}
 }
 

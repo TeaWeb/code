@@ -102,7 +102,7 @@ func TestQuery_UpgradeDate(t *testing.T) {
 	for _, day := range days {
 		logs.Println(day)
 		coll := teamongo.FindCollection("logs." + day)
-		cursor, err := coll.Find(context.Background(), nil)
+		cursor, err := coll.Find(context.Background(), map[string]interface{}{})
 		if err != nil {
 			t.Fatal(err)
 		}

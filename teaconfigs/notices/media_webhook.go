@@ -2,7 +2,6 @@ package notices
 
 import (
 	"github.com/TeaWeb/code/teaconst"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io/ioutil"
 	"net/http"
@@ -40,7 +39,6 @@ func (this *NoticeWebhookMedia) Send(user string, subject string, body string) (
 
 	var req *http.Request
 	if this.Method == http.MethodGet {
-		logs.Println(this.URL)
 		req, err = http.NewRequest(this.Method, this.URL, nil)
 	} else {
 		params := url.Values{

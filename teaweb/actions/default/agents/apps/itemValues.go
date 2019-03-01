@@ -9,7 +9,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ItemValuesAction actions.Action
@@ -54,7 +54,7 @@ func (this *ItemValuesAction) RunPost(params struct {
 	query.Action(teamongo.ValueQueryActionFindAll)
 
 	if len(params.LastId) > 0 {
-		lastObjectId, err := objectid.FromHex(params.LastId)
+		lastObjectId, err := primitive.ObjectIDFromHex(params.LastId)
 		if err != nil {
 			logs.Error(err)
 		} else {

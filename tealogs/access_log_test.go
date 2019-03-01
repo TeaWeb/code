@@ -5,9 +5,7 @@ import (
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/uaparser"
 	"github.com/iwind/TeaGo/Tea"
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"testing"
 	"time"
@@ -206,7 +204,7 @@ func TestAccessLogger_DB(t *testing.T) {
 		t.Fatal("client=nil")
 	}
 
-	objectId, _ := objectid.FromHex("abc")
+	objectId, _ := primitive.ObjectIDFromHex("abc")
 	accessLog := AccessLog{
 		Id:   objectId,
 		Args: "a=b",
@@ -267,40 +265,6 @@ func TestAccessLog_Format(t *testing.T) {
 
 	format = "Extend:${extend.File} ${extend.Geo}"
 	t.Log(accessLog.Format(format))
-}
-
-func TestAccessLog_Decode(t *testing.T) {
-	client := teamongo.SharedClient()
-	if client == nil {
-		t.Fatal("client=nil")
-	}
-
-	r, err := client.
-		Database("teaweb").
-		Collection("accessLogs").
-		Find(context.Background(), bson.NewDocument(
-			//bson.EC.String("remoteAddr", "127.0.0.1"),
-			bson.EC.SubDocument("id", bson.NewDocument(bson.EC.Int64("$gt", 1535886567943382000))),
-		), findopt.Skip(0), findopt.Limit(2), findopt.Sort(bson.NewDocument(
-
-			bson.EC.Int32("_id", 1),
-		)))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for r.Next(context.Background()) {
-		accessLog := AccessLog{}
-		err = r.Decode(&accessLog)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		t.Log("mongoId:", accessLog.Id)
-		t.Log(accessLog)
-	}
-
-	client.Disconnect(context.Background())
 }
 
 func TestAccessLog_ParseGEO(t *testing.T) {

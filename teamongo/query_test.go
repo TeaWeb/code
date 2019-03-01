@@ -34,7 +34,7 @@ func TestQuery_FindAll(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, one := range ones {
-		t.Log(one.(*audits.Log))
+		t.Logf("%#v", one.(*audits.Log))
 	}
 }
 
@@ -45,5 +45,5 @@ func TestQuery_Find(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(one)
+	t.Logf("%#v", one)
 }

@@ -19,6 +19,7 @@ type AgentConfig struct {
 	Apps                []*AppConfig `yaml:"apps" json:"apps"`                               // Apps
 	Version             uint         `yaml:"version" json:"version"`                         // 版本
 	CountDisconnections int          `yaml:"countDisconnections" json:"countDisconnections"` // 错误次数
+	GroupIds            []string     `yaml:"groupIds" json:"groupIds"`                       // 分组IDs
 }
 
 // 获取新对象

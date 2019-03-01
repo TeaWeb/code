@@ -9,8 +9,8 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"reflect"
 	"time"
 )
@@ -124,7 +124,7 @@ func (this *Query) Attr(field string, value interface{}) *Query {
 
 // 设置日志ID
 func (this *Query) Id(idString string) *Query {
-	objectId, err := objectid.FromHex(idString)
+	objectId, err := primitive.ObjectIDFromHex(idString)
 	if err != nil {
 		logs.Error(err)
 		return this.Attr("_id", idString)
@@ -316,7 +316,7 @@ func (this *Query) queryNumber(collectionName string) (float64, error) {
 	if this.action == QueryActionCount {
 		coll := teamongo.FindCollection(collectionName)
 		filter := this.buildFilter()
-		i, err := coll.Count(context.Background(), filter)
+		i, err := coll.CountDocuments(context.Background(), filter)
 		if err != nil {
 			return 0, err
 		}
@@ -543,17 +543,17 @@ func (this *Query) queryGroup(collectionName string) (result map[string]map[stri
 
 func (this *Query) findAll(collectionName string) (result []*AccessLog, err error) {
 	coll := teamongo.FindCollection(collectionName)
-	opts := []findopt.Find{}
+	opts := []*options.FindOptions{}
 	if this.offset > -1 {
-		opts = append(opts, findopt.Skip(this.offset))
+		opts = append(opts, options.Find().SetSkip(this.offset))
 	}
 	if this.size > -1 {
-		opts = append(opts, findopt.Limit(this.size))
+		opts = append(opts, options.Find().SetLimit(this.size))
 	}
 	if len(this.sorts) > 0 {
 		for _, sort := range this.sorts {
 			for field, order := range sort {
-				opts = append(opts, findopt.Sort(map[string]int{
+				opts = append(opts, options.Find().SetSort(map[string]int{
 					field: order,
 				}))
 			}

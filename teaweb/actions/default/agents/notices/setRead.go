@@ -5,7 +5,7 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type SetReadAction actions.Action
@@ -26,7 +26,7 @@ func (this *SetReadAction) Run(params struct {
 			Attr("_id", lists.Map(params.NoticeIds, func(k int, v interface{}) interface{} {
 				noticeId := v.(string)
 
-				objectId, err := objectid.FromHex(noticeId)
+				objectId, err := primitive.ObjectIDFromHex(noticeId)
 				if err != nil {
 					return noticeId
 				} else {

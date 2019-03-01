@@ -5,7 +5,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
@@ -92,7 +92,7 @@ func CountReceivedNotices(receiverId string, cond map[string]interface{}, minute
 }
 
 // 更改某个通知的接收人
-func UpdateNoticeReceivers(id objectid.ObjectID, receiverIds []string) {
+func UpdateNoticeReceivers(id primitive.ObjectID, receiverIds []string) {
 	err := NewNoticeQuery().
 		Attr("_id", id).
 		Update(maps.Map{
