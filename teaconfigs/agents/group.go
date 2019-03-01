@@ -8,9 +8,6 @@ import (
 	"github.com/iwind/TeaGo/utils/string"
 )
 
-// 默认的config
-var sharedGroupConfig *GroupConfig = nil
-
 // Agent分组
 type Group struct {
 	Id   string `yaml:"id" json:"id"`
@@ -35,14 +32,10 @@ type GroupConfig struct {
 
 // 取得公用的配置
 func SharedGroupConfig() *GroupConfig {
-	if sharedGroupConfig != nil {
-		return sharedGroupConfig
-	}
 	config := &GroupConfig{
 		Filename: "agents/group.conf",
 		Groups:   []*Group{},
 	}
-	sharedGroupConfig = config
 	file := files.NewFile(Tea.ConfigFile(config.Filename))
 	if !file.Exists() {
 		return config
@@ -58,6 +51,19 @@ func SharedGroupConfig() *GroupConfig {
 		logs.Error(err)
 	}
 	return config
+}
+
+// 获取所有分组，包括默认分组
+func (this *GroupConfig) FindAllGroups() []*Group {
+	result := []*Group{}
+	result = append(result, &Group{
+		Name: "默认分组",
+		Id:   "",
+		On:   true,
+	})
+	result = append(result, this.Groups...)
+
+	return result
 }
 
 // 添加分组
@@ -86,4 +92,14 @@ func (this *GroupConfig) Save() error {
 	defer writer.Close()
 	_, err = writer.WriteYAML(this)
 	return err
+}
+
+// 查找分组
+func (this *GroupConfig) FindGroup(groupId string) *Group {
+	for _, g := range this.Groups {
+		if g.Id == groupId {
+			return g
+		}
+	}
+	return nil
 }

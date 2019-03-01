@@ -16,7 +16,8 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 	action.Data["teaMenu"] = "proxy"
 
 	// 子菜单
-	var subMenu = utils.NewSubMenu()
+	menuGroup := utils.NewMenuGroup()
+	menu := menuGroup.FindMenu("", "")
 
 	// 服务
 	var hasServer = false
@@ -34,23 +35,27 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 		} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
 			urlPrefix = "/proxy/detail"
 		}
-		m := subMenu.Add(server.Description, "", urlPrefix+"?serverId="+server.Id, serverId == server.Id)
-		m["sortable"] = true
+		item := menu.Add(server.Description, "", urlPrefix+"?serverId="+server.Id, serverId == server.Id)
+		item.IsSortable = true
 
 		hasServer = true
 	}
 	if hasServer {
 		if action.Request.URL.Path == "/proxy/board" {
-			action.Data["teaSubHeader"] = "代理服务 <span>(可拖动排序)</span>"
+			menu.Name = "代理服务 <span>(可拖动排序)</span>"
 		} else {
-			action.Data["teaSubHeader"] = "代理服务"
+			menu.Name = "代理服务"
 		}
 	}
 
 	// 其他
-	subMenu.Add("[添加新代理]", "", "/proxy/add", action.Spec.ClassName == "proxy.AddAction", )
-	subMenu.Add("[缓存策略]", "", "/cache", action.Spec.HasClassPrefix("cache"), )
-	utils.SetSubMenu(action, subMenu)
+	{
+		menu := menuGroup.FindMenu("operations", "[操作]")
+		menu.AlwaysActive = true
+		menu.Add("[添加新代理]", "", "/proxy/add", action.Spec.ClassName == "proxy.AddAction", )
+		menu.Add("[缓存策略]", "", "/cache", action.Spec.HasClassPrefix("cache"), )
+	}
+	utils.SetSubMenu(action, menuGroup)
 
 	// Tabbar
 	if hasServer {

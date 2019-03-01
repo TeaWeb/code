@@ -23,5 +23,17 @@ func (this *IndexAction) Run(params struct {
 
 	this.Data["agent"] = agent
 
+	// 分组
+	groupNames := []string{}
+	config := agents.SharedGroupConfig()
+	for _, groupId := range agent.GroupIds {
+		group := config.FindGroup(groupId)
+		if group == nil {
+			continue
+		}
+		groupNames = append(groupNames, group.Name)
+	}
+	this.Data["groupNames"] = groupNames
+
 	this.Show()
 }

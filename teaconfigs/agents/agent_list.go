@@ -75,3 +75,45 @@ func (this *AgentList) Save() error {
 	_, err = writer.WriteYAML(this)
 	return err
 }
+
+// 移动位置
+func (this *AgentList) MoveAgent(fromId string, toId string) {
+	fromIndex := -1
+	toIndex := -1
+
+	for index, f := range this.Files {
+		if f == "agent."+fromId+".conf" {
+			fromIndex = index
+		}
+		if f == "agent."+toId+".conf" {
+			toIndex = index
+		}
+	}
+
+	if fromIndex < 0 || fromIndex >= len(this.Files) {
+		return
+	}
+	if toIndex < 0 || toIndex >= len(this.Files) {
+		return
+	}
+	if fromIndex == toIndex {
+		return
+	}
+
+	file := this.Files[fromIndex]
+	newList := []string{}
+	for i := 0; i < len(this.Files); i ++ {
+		if i == fromIndex {
+			continue
+		}
+		if fromIndex > toIndex && i == toIndex {
+			newList = append(newList, file)
+		}
+		newList = append(newList, this.Files[i])
+		if fromIndex < toIndex && i == toIndex {
+			newList = append(newList, file)
+		}
+	}
+
+	this.Files = newList
+}

@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"net/http"
 )
@@ -17,10 +18,9 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 
 	action := actionWrapper.Object()
 	action.Data["teaMenu"] = "agents"
-	action.Data["teaSubHeader"] = "Agent主机"
 
 	// 子菜单
-	subMenu := utils.NewSubMenu()
+	menuGroup := utils.NewMenuGroup()
 	agentId := action.ParamString("agentId")
 	if len(agentId) == 0 {
 		agentId = "local"
@@ -38,10 +38,15 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	}
 
 	isWaiting := CheckAgentIsWaiting("local")
+	topSubName := ""
+	if lists.ContainsAny([]string{"/agents/board", "/agents/menu"}, action.Request.URL.Path) {
+		topSubName = "<span>(可拖动排序)</span>"
+	}
+	menu := menuGroup.FindMenu("", "默认分组"+topSubName)
 	if isWaiting {
-		subMenu.Add("本地", "已连接", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent"))
+		menu.Add("本地", "已连接", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/groups"))
 	} else {
-		subMenu.Add("本地", "", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent"))
+		menu.Add("本地", "", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/groups"))
 	}
 
 	// agent列表
@@ -51,21 +56,46 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	} else {
 		for _, agent := range agentList.FindAllAgents() {
 			isWaiting := CheckAgentIsWaiting(agent.Id)
-			if isWaiting {
-				subMenu.Add(agent.Name, "已连接", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
-			} else if !agent.On {
-				subMenu.Add(agent.Name, "未启用", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+
+			var menu *utils.Menu = nil
+			if len(agent.GroupIds) > 0 {
+				group := agents.SharedGroupConfig().FindGroup(agent.GroupIds[0])
+				if group == nil {
+					menu = menuGroup.FindMenu("", "默认分组"+topSubName)
+				} else {
+					menu = menuGroup.FindMenu(group.Id, group.Name)
+				}
 			} else {
-				subMenu.Add(agent.Name, "", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+				menu = menuGroup.FindMenu("", "默认分组"+topSubName)
+			}
+
+			if isWaiting {
+				item := menu.Add(agent.Name, "已连接", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+				item.Id = agent.Id
+				item.IsSortable = true
+			} else if !agent.On {
+				item := menu.Add(agent.Name, "未启用", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+				item.Id = agent.Id
+				item.IsSortable = true
+			} else {
+				item := menu.Add(agent.Name, "", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+				item.Id = agent.Id
+				item.IsSortable = true
 			}
 		}
 	}
 
-	subMenu.Add("[添加新主机]", "", "/agents/addAgent", action.HasPrefix("/agents/addAgent"))
-	utils.SetSubMenu(action, subMenu)
+	// 操作按钮
+	{
+		menu := menuGroup.FindMenu("operations", "[操作]")
+		menu.AlwaysActive = true
+		menu.Add("[添加新主机]", "", "/agents/addAgent", action.HasPrefix("/agents/addAgent"))
+		menu.Add("[分组管理]", "", "/agents/groups", action.HasPrefix("/agents/groups"))
+	}
+	utils.SetSubMenu(action, menuGroup)
 
 	// Tabbar
-	if !action.HasPrefix("/agents/addAgent") {
+	if !action.HasPrefix("/agents/addAgent", "/agents/groups") {
 		agent := agents.NewAgentConfigFromId(agentId)
 
 		tabbar := utils.NewTabbar()

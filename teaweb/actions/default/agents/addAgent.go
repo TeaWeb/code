@@ -12,6 +12,8 @@ type AddAgentAction actions.Action
 
 // 添加代理
 func (this *AddAgentAction) Run(params struct{}) {
+	this.Data["groups"] = agents.SharedGroupConfig().Groups
+
 	this.Show()
 }
 
@@ -19,6 +21,7 @@ func (this *AddAgentAction) Run(params struct{}) {
 func (this *AddAgentAction) RunPost(params struct {
 	Name       string
 	Host       string
+	GroupId    string
 	AllowAllIP bool
 	IPs        []string `alias:"ips"`
 	On         bool
@@ -39,6 +42,9 @@ func (this *AddAgentAction) RunPost(params struct {
 	agent.On = params.On
 	agent.Name = params.Name
 	agent.Host = params.Host
+	if len(params.GroupId) > 0 {
+		agent.AddGroup(params.GroupId)
+	}
 	agent.AllowAll = params.AllowAllIP
 	agent.Allow = params.IPs
 	agent.Key = stringutil.Rand(32)

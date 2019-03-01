@@ -4,6 +4,7 @@ import (
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
 )
 
@@ -210,4 +211,24 @@ func (this *AgentConfig) FindSystemApps() []*AppConfig {
 		result = append(result, app)
 	}
 	return result
+}
+
+// 添加分组
+func (this *AgentConfig) AddGroup(groupId string) {
+	if lists.Contains(this.GroupIds, groupId) {
+		return
+	}
+	this.GroupIds = append(this.GroupIds, groupId)
+}
+
+// 删除分组
+func (this *AgentConfig) RemoveGroup(groupId string) {
+	result := []string{}
+	for _, g := range this.GroupIds {
+		if g == groupId {
+			continue
+		}
+		result = append(result, g)
+	}
+	this.GroupIds = result
 }

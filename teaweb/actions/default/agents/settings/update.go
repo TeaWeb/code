@@ -19,6 +19,12 @@ func (this *UpdateAction) Run(params struct {
 	}
 
 	this.Data["agent"] = agent
+	this.Data["groups"] = agents.SharedGroupConfig().Groups
+	if len(agent.GroupIds) > 0 {
+		this.Data["groupId"] = agent.GroupIds[0]
+	} else {
+		this.Data["groupId"] = ""
+	}
 
 	this.Show()
 }
@@ -28,6 +34,7 @@ func (this *UpdateAction) RunPost(params struct {
 	AgentId    string
 	Name       string
 	Host       string
+	GroupId    string
 	AllowAllIP bool
 	IPs        []string `alias:"ips"`
 	On         bool
@@ -49,6 +56,11 @@ func (this *UpdateAction) RunPost(params struct {
 	agent.On = params.On
 	agent.Name = params.Name
 	agent.Host = params.Host
+	if len(params.GroupId) == 0 {
+		agent.GroupIds = []string{}
+	} else {
+		agent.GroupIds = []string{params.GroupId}
+	}
 	agent.AllowAll = params.AllowAllIP
 	agent.Allow = params.IPs
 	agent.Key = params.Key
