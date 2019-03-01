@@ -21,6 +21,7 @@ func init() {
 			GetPost("/groups/add", new(AddGroupAction)).
 			Post("/groups/delete", new(DeleteGroupAction)).
 			GetPost("/groups/update", new(UpdateGroupAction)).
+			Post("/groups/move", new(MoveGroupAction)).
 			Post("/move", new(MoveAction)).
 			Get("/menu", new(MenuAction)).
 			EndAll()

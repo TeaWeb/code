@@ -64,6 +64,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 					menu = menuGroup.FindMenu("", "默认分组"+topSubName)
 				} else {
 					menu = menuGroup.FindMenu(group.Id, group.Name)
+					menu.Index = group.Index
 				}
 			} else {
 				menu = menuGroup.FindMenu("", "默认分组"+topSubName)
@@ -89,9 +90,12 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	{
 		menu := menuGroup.FindMenu("operations", "[操作]")
 		menu.AlwaysActive = true
+		menu.Index = 10000
 		menu.Add("[添加新主机]", "", "/agents/addAgent", action.HasPrefix("/agents/addAgent"))
 		menu.Add("[分组管理]", "", "/agents/groups", action.HasPrefix("/agents/groups"))
 	}
+
+	menuGroup.Sort()
 	utils.SetSubMenu(action, menuGroup)
 
 	// Tabbar

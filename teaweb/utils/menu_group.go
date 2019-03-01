@@ -1,6 +1,9 @@
 package utils
 
-import "github.com/iwind/TeaGo/actions"
+import (
+	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
+)
 
 // 菜单分组
 type MenuGroup struct {
@@ -27,6 +30,15 @@ func (this *MenuGroup) FindMenu(menuId string, menuName string) *Menu {
 	menu.Items = []*MenuItem{}
 	this.Menus = append(this.Menus, menu)
 	return menu
+}
+
+// 排序
+func (this *MenuGroup) Sort() {
+	lists.Sort(this.Menus, func(i int, j int) bool {
+		menu1 := this.Menus[i]
+		menu2 := this.Menus[j]
+		return menu1.Index < menu2.Index
+	})
 }
 
 // 设置子菜单

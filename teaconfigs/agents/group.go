@@ -10,9 +10,10 @@ import (
 
 // Agent分组
 type Group struct {
-	Id   string `yaml:"id" json:"id"`
-	On   bool   `yaml:"on" json:"on"`
-	Name string `yaml:"name" json:"name"`
+	Id    string `yaml:"id" json:"id"`
+	On    bool   `yaml:"on" json:"on"`
+	Name  string `yaml:"name" json:"name"`
+	Index int    `yaml:"index" json:"index"`
 }
 
 // 获取新分组
@@ -96,10 +97,41 @@ func (this *GroupConfig) Save() error {
 
 // 查找分组
 func (this *GroupConfig) FindGroup(groupId string) *Group {
-	for _, g := range this.Groups {
+	for index, g := range this.Groups {
 		if g.Id == groupId {
+			g.Index = index
 			return g
 		}
 	}
 	return nil
+}
+
+// 移动位置
+func (this *GroupConfig) Move(fromIndex int, toIndex int) {
+	if fromIndex < 0 || fromIndex >= len(this.Groups) {
+		return
+	}
+	if toIndex < 0 || toIndex >= len(this.Groups) {
+		return
+	}
+	if fromIndex == toIndex {
+		return
+	}
+
+	group := this.Groups[fromIndex]
+	newList := []*Group{}
+	for i := 0; i < len(this.Groups); i ++ {
+		if i == fromIndex {
+			continue
+		}
+		if fromIndex > toIndex && i == toIndex {
+			newList = append(newList, group)
+		}
+		newList = append(newList, this.Groups[i])
+		if fromIndex < toIndex && i == toIndex {
+			newList = append(newList, group)
+		}
+	}
+
+	this.Groups = newList
 }

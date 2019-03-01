@@ -7,6 +7,7 @@ type Menu struct {
 	Items        []*MenuItem `json:"items"`
 	IsActive     bool        `json:"isActive"`
 	AlwaysActive bool        `json:"alwaysActive"`
+	Index        int         `json:"index"`
 }
 
 // 获取新对象
