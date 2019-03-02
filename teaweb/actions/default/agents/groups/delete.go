@@ -1,14 +1,14 @@
-package agents
+package groups
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/iwind/TeaGo/actions"
 )
 
-type DeleteGroupAction actions.Action
+type DeleteAction actions.Action
 
 // 删除分组
-func (this *DeleteGroupAction) Run(params struct {
+func (this *DeleteAction) Run(params struct {
 	GroupId string
 }) {
 	// 删除agent中的groupId

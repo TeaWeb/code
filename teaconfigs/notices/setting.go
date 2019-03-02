@@ -116,7 +116,13 @@ func (this *NoticeSetting) Notify(level NoticeLevel, message string, counter fun
 	if !found {
 		return
 	}
-	for _, r := range config.Receivers {
+	this.NotifyReceivers(level, config.Receivers, message, counter)
+	return
+}
+
+// 发送通知给一组接收者
+func (this *NoticeSetting) NotifyReceivers(level NoticeLevel, receivers []*NoticeReceiver, message string, counter func(receiverId string, minutes int) int) (receiverIds []string) {
+	for _, r := range receivers {
 		if !r.On {
 			continue
 		}
@@ -148,5 +154,6 @@ func (this *NoticeSetting) Notify(level NoticeLevel, message string, counter fun
 			}
 		}(raw, mediaType, r.User)
 	}
+
 	return
 }

@@ -1,14 +1,14 @@
-package agents
+package groups
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/iwind/TeaGo/actions"
 )
 
-type AddGroupAction actions.Action
+type AddAction actions.Action
 
 // 添加分组
-func (this *AddGroupAction) Run(params struct {
+func (this *AddAction) Run(params struct {
 	From string
 }) {
 	this.Data["from"] = params.From
@@ -17,7 +17,7 @@ func (this *AddGroupAction) Run(params struct {
 }
 
 // 提交保存
-func (this *AddGroupAction) RunPost(params struct {
+func (this *AddAction) RunPost(params struct {
 	Name string
 	Must *actions.Must
 }) {

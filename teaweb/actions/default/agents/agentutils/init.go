@@ -74,12 +74,36 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 		if len(linkNames) > 0 {
 			fullMessage += "\n位置：" + strings.Join(linkNames, "/")
 		}
-		receiverIds := setting.Notify(level, fullMessage, func(receiverId string, minutes int) int {
-			return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
-				"agent.agentId": agent.Id,
-				"agent.appId":   "",
-			}, minutes)
-		})
+
+		// 查找分组，如果分组中有通知设置，则使用分组中的通知设置
+		isNotified := false
+		receiverIds := []string{}
+		groupId := ""
+		if len(agent.GroupIds) > 0 {
+			groupId = agent.GroupIds[0]
+		}
+		group := agents.SharedGroupConfig().FindGroup(groupId)
+		receivers, found := group.NoticeSetting[level]
+		if found && len(receivers) > 0 {
+			isNotified = true
+			receiverIds = setting.NotifyReceivers(level, receivers, fullMessage, func(receiverId string, minutes int) int {
+				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+					"agent.agentId": agent.Id,
+					"agent.appId":   "",
+				}, minutes)
+			})
+		}
+
+		// 默认通知媒介
+		if !isNotified {
+			receiverIds = setting.Notify(level, fullMessage, func(receiverId string, minutes int) int {
+				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+					"agent.agentId": agent.Id,
+					"agent.appId":   "",
+				}, minutes)
+			})
+		}
+
 		if len(receiverIds) > 0 {
 			noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
 		}

@@ -1,19 +1,17 @@
 package agents
 
 import (
-	"github.com/go-yaml/yaml"
-	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/logs"
+	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/iwind/TeaGo/utils/string"
 )
 
 // Agent分组
 type Group struct {
-	Id    string `yaml:"id" json:"id"`
-	On    bool   `yaml:"on" json:"on"`
-	Name  string `yaml:"name" json:"name"`
-	Index int    `yaml:"index" json:"index"`
+	Id            string                                            `yaml:"id" json:"id"`
+	On            bool                                              `yaml:"on" json:"on"`
+	Name          string                                            `yaml:"name" json:"name"`
+	Index         int                                               `yaml:"index" json:"index"`
+	NoticeSetting map[notices.NoticeLevel][]*notices.NoticeReceiver `yaml:"noticeSetting" json:"noticeSetting"`
 }
 
 // 获取新分组
@@ -25,113 +23,35 @@ func NewGroup(name string) *Group {
 	}
 }
 
-// 分组配置
-type GroupConfig struct {
-	Filename string   `yaml:"filename" json:"filename"`
-	Groups   []*Group `yaml:"groups" json:"groups"`
+// 添加通知接收者
+func (this *Group) AddNoticeReceiver(level notices.NoticeLevel, receiver *notices.NoticeReceiver) {
+	if this.NoticeSetting == nil {
+		this.NoticeSetting = map[notices.NoticeLevel][]*notices.NoticeReceiver{}
+	}
+	receivers, found := this.NoticeSetting[level]
+	if !found {
+		receivers = []*notices.NoticeReceiver{}
+	}
+	receivers = append(receivers, receiver)
+	this.NoticeSetting[level] = receivers
 }
 
-// 取得公用的配置
-func SharedGroupConfig() *GroupConfig {
-	config := &GroupConfig{
-		Filename: "agents/group.conf",
-		Groups:   []*Group{},
+// 删除通知接收者
+func (this *Group) RemoveNoticeReceiver(level notices.NoticeLevel, receiverId string) {
+	if this.NoticeSetting == nil {
+		return
 	}
-	file := files.NewFile(Tea.ConfigFile(config.Filename))
-	if !file.Exists() {
-		return config
-	}
-	data, err := file.ReadAll()
-	if err != nil {
-		logs.Error(err)
-		return config
+	receivers, found := this.NoticeSetting[level]
+	if !found {
+		return
 	}
 
-	err = yaml.Unmarshal(data, config)
-	if err != nil {
-		logs.Error(err)
-	}
-	return config
-}
-
-// 获取所有分组，包括默认分组
-func (this *GroupConfig) FindAllGroups() []*Group {
-	result := []*Group{}
-	result = append(result, &Group{
-		Name: "默认分组",
-		Id:   "",
-		On:   true,
-	})
-	result = append(result, this.Groups...)
-
-	return result
-}
-
-// 添加分组
-func (this *GroupConfig) AddGroup(group *Group) {
-	this.Groups = append(this.Groups, group)
-}
-
-// 删除分组
-func (this *GroupConfig) RemoveGroup(groupId string) {
-	result := []*Group{}
-	for _, g := range this.Groups {
-		if g.Id == groupId {
+	result := []*notices.NoticeReceiver{}
+	for _, r := range receivers {
+		if r.Id == receiverId {
 			continue
 		}
-		result = append(result, g)
+		result = append(result, r)
 	}
-	this.Groups = result
-}
-
-// 保存
-func (this *GroupConfig) Save() error {
-	writer, err := files.NewWriter(Tea.ConfigFile(this.Filename))
-	if err != nil {
-		return err
-	}
-	defer writer.Close()
-	_, err = writer.WriteYAML(this)
-	return err
-}
-
-// 查找分组
-func (this *GroupConfig) FindGroup(groupId string) *Group {
-	for index, g := range this.Groups {
-		if g.Id == groupId {
-			g.Index = index
-			return g
-		}
-	}
-	return nil
-}
-
-// 移动位置
-func (this *GroupConfig) Move(fromIndex int, toIndex int) {
-	if fromIndex < 0 || fromIndex >= len(this.Groups) {
-		return
-	}
-	if toIndex < 0 || toIndex >= len(this.Groups) {
-		return
-	}
-	if fromIndex == toIndex {
-		return
-	}
-
-	group := this.Groups[fromIndex]
-	newList := []*Group{}
-	for i := 0; i < len(this.Groups); i ++ {
-		if i == fromIndex {
-			continue
-		}
-		if fromIndex > toIndex && i == toIndex {
-			newList = append(newList, group)
-		}
-		newList = append(newList, this.Groups[i])
-		if fromIndex < toIndex && i == toIndex {
-			newList = append(newList, group)
-		}
-	}
-
-	this.Groups = newList
+	this.NoticeSetting[level] = result
 }

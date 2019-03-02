@@ -169,7 +169,7 @@ func (this *AccessLogger) wait() {
 					end = total
 				}
 
-				logs.Println("dump", end-offset, "access logs ...")
+				// logs.Println("dump", end-offset, "access logs ...")
 				docSlice := newDocs[offset:end]
 
 				// 分析
@@ -188,7 +188,7 @@ func (this *AccessLogger) wait() {
 					logs.Error(err)
 					return
 				}
-				logs.Println("done")
+				//logs.Println("done")
 				docSlice = []interface{}{}
 
 				offset = end

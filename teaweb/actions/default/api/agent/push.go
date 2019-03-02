@@ -108,8 +108,10 @@ func (this *PushAction) Run(params struct{}) {
 				logs.Error(err)
 			}
 
-			// 通过媒介发送通知
 			setting := notices.SharedNoticeSetting()
+
+			// 通过媒介发送通知
+
 			fullMessage := "消息：" + message + "\n时间：" + timeutil.Format("Y-m-d H:i:s", t)
 			linkNames := []string{}
 			for _, l := range agentutils.FindNoticeLinks(notice) {
@@ -118,13 +120,37 @@ func (this *PushAction) Run(params struct{}) {
 			if len(linkNames) > 0 {
 				fullMessage += "\n位置：" + strings.Join(linkNames, "/")
 			}
-			receiverIds := setting.Notify(level, fullMessage, func(receiverId string, minutes int) int {
-				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
-					"agent.agentId": agent.Id,
-					"agent.appId":   appId,
-					"agent.itemId":  itemId,
-				}, minutes)
-			})
+
+			// 查找分组，如果分组中有通知设置，则使用分组中的通知设置
+			isNotified := false
+			receiverIds := []string{}
+			groupId := ""
+			if len(agent.GroupIds) > 0 {
+				groupId = agent.GroupIds[0]
+			}
+			group := agents.SharedGroupConfig().FindGroup(groupId)
+			receivers, found := group.NoticeSetting[level]
+			if found && len(receivers) > 0 {
+				isNotified = true
+				receiverIds = setting.NotifyReceivers(level, receivers, fullMessage, func(receiverId string, minutes int) int {
+					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+						"agent.agentId": agent.Id,
+						"agent.appId":   appId,
+						"agent.itemId":  itemId,
+					}, minutes)
+				})
+			}
+
+			// 全局通知
+			if !isNotified {
+				receiverIds = setting.Notify(level, fullMessage, func(receiverId string, minutes int) int {
+					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+						"agent.agentId": agent.Id,
+						"agent.appId":   appId,
+						"agent.itemId":  itemId,
+					}, minutes)
+				})
+			}
 			if len(receiverIds) > 0 {
 				noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
 			}

@@ -1,14 +1,14 @@
-package agents
+package groups
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/iwind/TeaGo/actions"
 )
 
-type MoveGroupAction actions.Action
+type MoveAction actions.Action
 
 // 移动分组位置
-func (this *MoveGroupAction) Run(params struct {
+func (this *MoveAction) Run(params struct {
 	FromIndex int
 	ToIndex   int
 }) {

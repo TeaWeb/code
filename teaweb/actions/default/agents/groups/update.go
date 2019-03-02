@@ -1,14 +1,14 @@
-package agents
+package groups
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/iwind/TeaGo/actions"
 )
 
-type UpdateGroupAction actions.Action
+type UpdateAction actions.Action
 
 // 分组ID
-func (this *UpdateGroupAction) Run(params struct {
+func (this *UpdateAction) Run(params struct {
 	GroupId string
 }) {
 	group := agents.SharedGroupConfig().FindGroup(params.GroupId)
@@ -22,7 +22,7 @@ func (this *UpdateGroupAction) Run(params struct {
 }
 
 // 提交保存
-func (this *UpdateGroupAction) RunPost(params struct {
+func (this *UpdateAction) RunPost(params struct {
 	GroupId string
 	Name    string
 	Must    *actions.Must
