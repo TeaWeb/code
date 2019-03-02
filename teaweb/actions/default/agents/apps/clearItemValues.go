@@ -19,20 +19,22 @@ func (this *ClearItemValuesAction) Run(params struct {
 		this.Fail("找不到Agent")
 	}
 
-	app := agent.FindApp(params.AppId)
-	if app == nil {
-		this.Fail("找不到App")
-	}
+	if params.AppId != "system" { // 非系统App
+		app := agent.FindApp(params.AppId)
+		if app == nil {
+			this.Fail("找不到App")
+		}
 
-	item := app.FindItem(params.ItemId)
-	if item == nil {
-		this.Fail("找不到Item")
+		item := app.FindItem(params.ItemId)
+		if item == nil {
+			this.Fail("找不到Item")
+		}
 	}
 
 	query := teamongo.NewAgentValueQuery()
 	query.Agent(agent.Id)
-	query.Attr("appId", app.Id)
-	query.Attr("itemId", item.Id)
+	query.Attr("appId", params.AppId)
+	query.Attr("itemId", params.ItemId)
 	err := query.Delete()
 	if err != nil {
 		this.Fail("清除失败：" + err.Error())
