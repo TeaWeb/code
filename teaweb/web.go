@@ -1,6 +1,7 @@
 package teaweb
 
 import (
+	"compress/gzip"
 	"fmt"
 	_ "github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconst"
@@ -49,6 +50,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/sessions"
 	"github.com/iwind/TeaGo/types"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -116,6 +118,30 @@ func Start() {
 
 		Get("/", new(index.IndexAction)).
 		Get("/logout", new(logout.IndexAction)).
+		Get("/css/semantic.min.css", func(req *http.Request, writer http.ResponseWriter) {
+			cssFile := files.NewFile(Tea.Root + "/public/css/semantic.min.css")
+			data, err := cssFile.ReadAll()
+			if err != nil {
+				return
+			}
+
+			gzipWriter, err := gzip.NewWriterLevel(writer, gzip.BestCompression)
+			if err != nil {
+				writer.Write(data)
+				return
+			}
+			defer gzipWriter.Close()
+
+			header := writer.Header()
+			header.Set("Content-Encoding", "gzip")
+			header.Set("Transfer-Encoding", "chunked")
+			header.Set("Vary", "Accept-Encoding")
+			header.Set("Accept-encoding", "gzip, deflate, br")
+			header.Set("Content-Type", "text/css; charset=utf-8")
+			header.Set("Last-Modified", "Sat, 02 Mar 2015 09:31:16 GMT")
+
+			gzipWriter.Write(data)
+		}).
 
 		EndAll().
 
