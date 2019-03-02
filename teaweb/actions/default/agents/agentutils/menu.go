@@ -40,11 +40,12 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	isWaiting := CheckAgentIsWaiting("local")
 	topSubName := ""
 	if lists.ContainsAny([]string{"/agents/board", "/agents/menu"}, action.Request.URL.Path) {
-		topSubName = "<span>(可拖动排序)</span>"
+		topSubName = ""
 	}
 	menu := menuGroup.FindMenu("", "默认分组"+topSubName)
 	if isWaiting {
-		menu.Add("本地", "已连接", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/groups"))
+		item := menu.Add("本地", "已连接", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/groups"))
+		item.SubColor = "green"
 	} else {
 		menu.Add("本地", "", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/groups"))
 	}
@@ -74,6 +75,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 				item := menu.Add(agent.Name, "已连接", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
 				item.Id = agent.Id
 				item.IsSortable = true
+				item.SubColor = "green"
 			} else if !agent.On {
 				item := menu.Add(agent.Name, "未启用", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
 				item.Id = agent.Id

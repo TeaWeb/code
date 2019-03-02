@@ -49,9 +49,9 @@ func (this *IndexAction) Run(params struct{}) {
 	}
 
 	// 默认分组
-	countDefaultAgents := 1
+	countDefaultAgents := 0
 	for _, agent := range allAgents {
-		if len(agent.GroupIds) == 0 {
+		if len(agent.GroupIds) == 0 && len(agent.Id) > 0 {
 			countDefaultAgents ++
 		}
 	}

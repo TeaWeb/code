@@ -129,16 +129,18 @@ func (this *PushAction) Run(params struct{}) {
 				groupId = agent.GroupIds[0]
 			}
 			group := agents.SharedGroupConfig().FindGroup(groupId)
-			receivers, found := group.NoticeSetting[level]
-			if found && len(receivers) > 0 {
-				isNotified = true
-				receiverIds = setting.NotifyReceivers(level, receivers, fullMessage, func(receiverId string, minutes int) int {
-					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
-						"agent.agentId": agent.Id,
-						"agent.appId":   appId,
-						"agent.itemId":  itemId,
-					}, minutes)
-				})
+			if group != nil {
+				receivers, found := group.NoticeSetting[level]
+				if found && len(receivers) > 0 {
+					isNotified = true
+					receiverIds = setting.NotifyReceivers(level, receivers, fullMessage, func(receiverId string, minutes int) int {
+						return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+							"agent.agentId": agent.Id,
+							"agent.appId":   appId,
+							"agent.itemId":  itemId,
+						}, minutes)
+					})
+				}
 			}
 
 			// 全局通知

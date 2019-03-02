@@ -9,4 +9,5 @@ type MenuItem struct {
 	IsActive   bool   `json:"isActive"`
 	Icon       string `json:"icon"`
 	IsSortable bool   `json:"isSortable"`
+	SubColor   string `json:"subColor"`
 }

@@ -42,7 +42,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 	}
 	if hasServer {
 		if action.Request.URL.Path == "/proxy/board" {
-			menu.Name = "代理服务 <span>(可拖动排序)</span>"
+			menu.Name = "代理服务"
 		} else {
 			menu.Name = "代理服务"
 		}

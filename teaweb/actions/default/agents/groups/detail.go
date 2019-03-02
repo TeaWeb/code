@@ -2,7 +2,10 @@ package groups
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -25,6 +28,27 @@ func (this *DetailAction) Run(params struct {
 		}
 		this.Data["group"] = group
 	}
+
+	// Agents列表
+	groupAgents := []maps.Map{}
+	agentList, err := agents.SharedAgentList()
+	if err != nil {
+		logs.Error(err)
+	} else {
+		for _, a := range agentList.FindAllAgents() {
+			if (len(a.GroupIds) == 0 && len(params.GroupId) == 0) || lists.Contains(a.GroupIds, params.GroupId) {
+				groupAgents = append(groupAgents, maps.Map{
+					"on":        a.On,
+					"id":        a.Id,
+					"name":      a.Name,
+					"host":      a.Host,
+					"isWaiting": agentutils.CheckAgentIsWaiting(a.Id),
+				})
+			}
+		}
+	}
+
+	this.Data["agents"] = groupAgents
 
 	this.Show()
 }
