@@ -1,12 +1,14 @@
 package apps
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"net/http"
@@ -29,6 +31,7 @@ func (this *AddItemAction) Run(params struct {
 	this.Data["dataFormats"] = agents.AllSourceDataFormats()
 	this.Data["operators"] = agents.AllThresholdOperators()
 	this.Data["noticeLevels"] = notices.AllNoticeLevels()
+	this.Data["actions"] = agents.AllActions()
 
 	this.Show()
 }
@@ -63,6 +66,7 @@ func (this *AddItemAction) RunPost(params struct {
 	CondValues         []string
 	CondNoticeLevels   []uint
 	CondNoticeMessages []string
+	CondActions        []string
 
 	Must *actions.Must
 }) {
@@ -153,7 +157,7 @@ func (this *AddItemAction) RunPost(params struct {
 
 	// 阈值设置
 	for index, param := range params.CondParams {
-		if index < len(params.CondValues) && index < len(params.CondOps) && index < len(params.CondValues) && index < len(params.CondNoticeLevels) && index < len(params.CondNoticeMessages) {
+		if index < len(params.CondValues) && index < len(params.CondOps) && index < len(params.CondValues) && index < len(params.CondNoticeLevels) && index < len(params.CondNoticeMessages) && index < len(params.CondActions) {
 			// 校验
 			op := params.CondOps[index]
 			value := params.CondValues[index]
@@ -164,12 +168,21 @@ func (this *AddItemAction) RunPost(params struct {
 				}
 			}
 
+			// 动作
+			actionJSON := params.CondActions[index]
+			actionList := []map[string]interface{}{}
+			err := json.Unmarshal([]byte(actionJSON), &actionList)
+			if err != nil {
+				logs.Error(err)
+			}
+
 			t := agents.NewThreshold()
 			t.Param = param
 			t.Operator = op
 			t.Value = value
 			t.NoticeLevel = types.Uint8(params.CondNoticeLevels[index])
 			t.NoticeMessage = params.CondNoticeMessages[index]
+			t.Actions = actionList
 			item.AddThreshold(t)
 		}
 	}

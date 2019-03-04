@@ -31,7 +31,6 @@ func NewNoticeMediaConfig() *NoticeMediaConfig {
 
 // 校验
 func (this *NoticeMediaConfig) Validate() error {
-	teautils.JSONMap(this.Options)
 	return nil
 }
 

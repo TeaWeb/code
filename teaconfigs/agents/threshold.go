@@ -9,18 +9,20 @@ import (
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/robertkrimen/otto"
+	"github.com/syndtr/goleveldb/leveldb/errors"
 	"regexp"
 	"strings"
 )
 
 // 阈值定义
 type Threshold struct {
-	Id            string              `yaml:"id" json:"id"`                       // ID
-	Param         string              `yaml:"param" json:"param"`                 // 参数
-	Operator      ThresholdOperator   `yaml:"operator" json:"operator"`           // 运算符
-	Value         string              `yaml:"value" json:"value"`                 // 对比值
-	NoticeLevel   notices.NoticeLevel `yaml:"noticeLevel" json:"noticeLevel"`     // 通知级别
-	NoticeMessage string              `yaml:"noticeMessage" json:"noticeMessage"` // 通知消息
+	Id            string                   `yaml:"id" json:"id"`                       // ID
+	Param         string                   `yaml:"param" json:"param"`                 // 参数
+	Operator      ThresholdOperator        `yaml:"operator" json:"operator"`           // 运算符
+	Value         string                   `yaml:"value" json:"value"`                 // 对比值
+	NoticeLevel   notices.NoticeLevel      `yaml:"noticeLevel" json:"noticeLevel"`     // 通知级别
+	NoticeMessage string                   `yaml:"noticeMessage" json:"noticeMessage"` // 通知消息
+	Actions       []map[string]interface{} `yaml:"actions" json:"actions"`             // 动作配置
 
 	regValue   *regexp.Regexp
 	floatValue float64
@@ -44,6 +46,7 @@ func (this *Threshold) Validate() error {
 	} else if this.Operator == ThresholdOperatorGt || this.Operator == ThresholdOperatorGte || this.Operator == ThresholdOperatorLt || this.Operator == ThresholdOperatorLte {
 		this.floatValue = types.Float64(this.Value)
 	}
+
 	return nil
 }
 
@@ -152,4 +155,48 @@ func (this *Threshold) Eval(value interface{}) string {
 	}
 
 	return paramValue
+}
+
+// 执行动作
+func (this *Threshold) RunActions(params map[string]string) error {
+	if len(this.Actions) == 0 {
+		return nil
+	}
+
+	for _, a := range this.Actions {
+		code, found := a["code"]
+		if !found {
+			return errors.New("action 'code' not found")
+		}
+
+		options, found := a["options"]
+		if !found {
+			return errors.New("action 'options' not found")
+		}
+		optionsMap, ok := options.(map[string]interface{})
+		if !ok {
+			return errors.New("action 'options' should be a valid map")
+		}
+
+		action := FindAction(types.String(code))
+		if action == nil {
+			return errors.New("action for '" + types.String(code) + "' not found")
+		}
+
+		instance := action["instance"]
+		err := teautils.MapToObjectJSON(optionsMap, &instance)
+		if err != nil {
+			return err
+		}
+
+		output, err := instance.(ActionInterface).Run(params)
+		if err != nil {
+			return err
+		}
+		if len(output) > 0 {
+			logs.Println("[threshold]run actions:", output)
+		}
+	}
+
+	return nil
 }

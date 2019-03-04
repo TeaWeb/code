@@ -61,3 +61,17 @@ func TestThreshold_Eval(t *testing.T) {
 		},
 	}))
 }
+
+func TestThreshold_RunActions(t *testing.T) {
+	threshold := NewThreshold()
+	threshold.Actions = []map[string]interface{}{
+		{
+			"code": "script",
+			"options": map[string]interface{}{
+				"scriptType": "path",
+				"path":       "1",
+			},
+		},
+	}
+	t.Log(threshold.RunActions(nil))
+}
