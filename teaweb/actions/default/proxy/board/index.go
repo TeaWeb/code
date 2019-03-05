@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/board/scripts"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
@@ -94,6 +95,9 @@ func (this *IndexAction) RunPost(params struct {
 		if err != nil {
 			logs.Error(err)
 		}
+
+		// 重启统计服务
+		proxyutils.ReloadServerStats(server.Id)
 	}
 
 	if len(board.Charts) == 0 {

@@ -8,7 +8,6 @@ import (
 	"github.com/iwind/TeaGo/utils/time"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"runtime"
 	"sync"
 	"time"
@@ -28,7 +27,7 @@ type AccessLogger struct {
 	outputBandWidth int64
 	inputBandWidth  int64
 
-	collectionCacheMap    map[string]*mongo.Collection
+	collectionCacheMap    map[string]*teamongo.Collection
 	collectionCacheLocker sync.Mutex
 }
 
@@ -39,7 +38,7 @@ type AccessLogItem struct {
 func NewAccessLogger() *AccessLogger {
 	logger := &AccessLogger{
 		queue:              make(chan *AccessLogItem, 10240),
-		collectionCacheMap: map[string]*mongo.Collection{},
+		collectionCacheMap: map[string]*teamongo.Collection{},
 	}
 
 	go logger.wait()
@@ -60,7 +59,10 @@ func (this *AccessLogger) client() *mongo.Client {
 	return teamongo.SharedClient()
 }
 
-func (this *AccessLogger) collection() *mongo.Collection {
+func (this *AccessLogger) collection() *teamongo.Collection {
+	this.collectionCacheLocker.Lock()
+	defer this.collectionCacheLocker.Unlock()
+
 	collName := "logs." + timeutil.Format("Ymd")
 	coll, found := this.collectionCacheMap[collName]
 	if found {
@@ -68,71 +70,24 @@ func (this *AccessLogger) collection() *mongo.Collection {
 	}
 
 	// 构建索引
-	coll = this.client().Database("teaweb").Collection(collName)
-	indexes := coll.Indexes()
-	{
-		_, err := indexes.CreateOne(context.Background(), mongo.IndexModel{
-			Keys: map[string]interface{}{
-				"serverId": 1,
-			},
-			Options: options.Index().SetBackground(true),
-		})
-		if err != nil {
-			logs.Error(err)
-		}
-	}
-	{
-		_, err := indexes.CreateOne(context.Background(), mongo.IndexModel{
-			Keys: map[string]interface{}{
-				"status":   1,
-				"serverId": 1,
-			},
-			Options: options.Index().SetBackground(true),
-		})
-		if err != nil {
-			logs.Error(err)
-		}
-	}
-	{
-		_, err := indexes.CreateOne(context.Background(), mongo.IndexModel{
-			Keys: map[string]interface{}{
-				"remoteAddr": 1,
-				"serverId":   1,
-			},
-			Options: options.Index().SetBackground(true),
-		})
-		if err != nil {
-			logs.Error(err)
-		}
-	}
-	{
-		_, err := indexes.CreateOne(context.Background(), mongo.IndexModel{
-			Keys: map[string]interface{}{
-				"hasErrors": 1,
-				"serverId":  1,
-			},
-			Options: options.Index().SetBackground(true),
-		})
-		if err != nil {
-			logs.Error(err)
-		}
-	}
-	{
-		_, err := indexes.CreateOne(context.Background(), mongo.IndexModel{
-			Keys: map[string]interface{}{
-				"apiPath":  1,
-				"serverId": 1,
-			},
-			Options: options.Index().SetBackground(true),
-		})
-		if err != nil {
-			logs.Error(err)
-		}
-	}
+	coll = teamongo.FindCollection(collName)
+	coll.CreateIndex(map[string]bool{
+		"serverId": true,
+	})
+	coll.CreateIndex(map[string]bool{
+		"status":   true,
+		"serverId": true,
+	})
+	coll.CreateIndex(map[string]bool{
+		"remoteAddr": true,
+		"serverId":   true,
+	})
+	coll.CreateIndex(map[string]bool{
+		"hasErrors": true,
+		"serverId":  true,
+	})
 
-	this.collectionCacheLocker.Lock()
 	this.collectionCacheMap[collName] = coll
-	this.collectionCacheLocker.Unlock()
 
 	return coll
 }
