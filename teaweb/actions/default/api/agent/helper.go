@@ -35,7 +35,7 @@ func (this *Helper) BeforeAction(action actions.ActionObject) bool {
 	if portIndex > 0 {
 		addr = addr[:portIndex]
 	}
-	if !agent.AllowAll && !lists.Contains(agent.Allow, addr) {
+	if !agent.IsLocal() && !agent.AllowAll && !lists.Contains(agent.Allow, addr) {
 		action.Fail("Access Denied 005")
 	}
 
