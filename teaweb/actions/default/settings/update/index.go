@@ -22,7 +22,7 @@ func (this *IndexAction) Run(params struct{}) {
 
 // 开始检查
 func (this *IndexAction) RunPost() {
-	url := "http://plus.teaos.cn/services/version?version=" + teaconst.TeaVersion
+	url := "http://teaos.cn/services/version?version=" + teaconst.TeaVersion
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
