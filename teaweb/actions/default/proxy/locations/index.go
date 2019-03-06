@@ -38,6 +38,7 @@ func (this *IndexAction) Run(params struct {
 			"gzipLevel":         location.GzipLevel,
 			"cachePolicy":       location.CachePolicyObject(),
 			"websocket":         location.Websocket != nil && location.Websocket.On,
+			"backends":          location.Backends,
 		})
 	}
 
