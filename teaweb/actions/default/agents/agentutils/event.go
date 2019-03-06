@@ -9,7 +9,7 @@ type Event struct {
 	Data interface{} `json:"data"`
 }
 
-var eventQueueMap = map[string]map[chan *Event]bool{} // agentId => []chan => bool
+var eventQueueMap = map[string]map[chan *Event]string{} // agentId => []chan => string
 var eventQueueLocker = sync.Mutex{}
 
 // 新Agent事件
@@ -21,15 +21,15 @@ func NewAgentEvent(name string, data interface{}) *Event {
 }
 
 // 等待Agent事件
-func WaitAgentQueue(agentId string, c chan *Event) {
+func WaitAgentQueue(agentId string, agentVersion string, c chan *Event) {
 	eventQueueLocker.Lock()
 	defer eventQueueLocker.Unlock()
 	_, ok := eventQueueMap[agentId]
 	if ok {
-		eventQueueMap[agentId][c] = true
+		eventQueueMap[agentId][c] = agentVersion
 	} else {
-		eventQueueMap[agentId] = map[chan *Event]bool{
-			c: true,
+		eventQueueMap[agentId] = map[chan *Event]string{
+			c: agentVersion,
 		}
 	}
 }
@@ -60,10 +60,15 @@ func PostAgentEvent(agentId string, event *Event) {
 	}
 }
 
-// 是否正在运行
-func CheckAgentIsWaiting(agentId string) bool {
+// 检查Agent是否正在运行
+func CheckAgentIsWaiting(agentId string) (version string, isWaiting bool) {
 	eventQueueLocker.Lock()
 	defer eventQueueLocker.Unlock()
-	queue, found := eventQueueMap[agentId]
-	return found && len(queue) > 0
+	queue, _ := eventQueueMap[agentId]
+	if len(queue) > 0 {
+		for _, v := range queue {
+			return v, true
+		}
+	}
+	return "", false
 }

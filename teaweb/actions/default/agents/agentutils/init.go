@@ -33,7 +33,7 @@ func checkConnecting() {
 			runtimeAgent := FindAgentRuntime(agent)
 
 			// 监控连通性
-			isWaiting := CheckAgentIsWaiting(agent.Id)
+			_, isWaiting := CheckAgentIsWaiting(agent.Id)
 			if !isWaiting {
 				runtimeAgent.CountDisconnections ++
 

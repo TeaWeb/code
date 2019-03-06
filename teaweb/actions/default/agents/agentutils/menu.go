@@ -37,7 +37,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 		actionCode = "notices"
 	}
 
-	isWaiting := CheckAgentIsWaiting("local")
+	_, isWaiting := CheckAgentIsWaiting("local")
 	topSubName := ""
 	if lists.ContainsAny([]string{"/agents/board", "/agents/menu"}, action.Request.URL.Path) {
 		topSubName = ""
@@ -56,7 +56,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 		logs.Error(err)
 	} else {
 		for _, agent := range agentList.FindAllAgents() {
-			isWaiting := CheckAgentIsWaiting(agent.Id)
+			_, isWaiting := CheckAgentIsWaiting(agent.Id)
 
 			var menu *utils.Menu = nil
 			if len(agent.GroupIds) > 0 {

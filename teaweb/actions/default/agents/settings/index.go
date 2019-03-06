@@ -2,6 +2,7 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -21,6 +22,7 @@ func (this *IndexAction) Run(params struct {
 		return
 	}
 
+	this.Data["agentVersion"], this.Data["agentIsWaiting"] = agentutils.CheckAgentIsWaiting(agent.Id)
 	this.Data["agent"] = agent
 
 	// 分组

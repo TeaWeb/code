@@ -11,9 +11,10 @@ type PullAction actions.Action
 // 拉取事件
 func (this *PullAction) Run(params struct{}) {
 	agentId := this.Context.Get("agent").(*agents.AgentConfig).Id
+	agentVersion := this.Request.Header.Get("Tea-Agent-Version")
 
 	c := make(chan *agentutils.Event)
-	agentutils.WaitAgentQueue(agentId, c)
+	agentutils.WaitAgentQueue(agentId, agentVersion, c)
 
 	// 监控是否中断请求
 	go func() {
