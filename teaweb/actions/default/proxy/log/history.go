@@ -5,9 +5,10 @@ import (
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/time"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/net/context"
 	"time"
 )
@@ -48,15 +49,35 @@ func (this *HistoryAction) Run(params struct {
 		for i := 0; i < 60; i ++ {
 			day := timeutil.Format("Ymd", time.Now().Add(time.Duration(-i*24)*time.Hour))
 			collName := "logs." + day
-			result := teamongo.FindCollection(collName).FindOne(context.Background(), map[string]interface{}{
+
+			cursor, err := teamongo.FindCollection(collName).Find(context.Background(), map[string]interface{}{
 				"serverId": server.Id,
-			})
-			m := map[string]interface{}{}
-			err := result.Decode(&m)
-			days = append(days, maps.Map{
-				"day": day,
-				"has": err != mongo.ErrNoDocuments,
-			})
+			}, options.Find().
+				SetLimit(1).
+				SetProjection(map[string]interface{}{
+					"_id": 1,
+				}))
+			if err != nil {
+				logs.Error(err)
+				days = append(days, maps.Map{
+					"day": day,
+					"has": false,
+				})
+				continue
+			}
+			if cursor.Next(context.Background()) {
+				days = append(days, maps.Map{
+					"day": day,
+					"has": true,
+				})
+			} else {
+				days = append(days, maps.Map{
+					"day": day,
+					"has": false,
+				})
+			}
+
+			cursor.Close(context.Background())
 		}
 	}
 

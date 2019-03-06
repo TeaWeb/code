@@ -2,8 +2,8 @@ package proxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 )
 
 type IndexAction actions.Action
@@ -12,7 +12,12 @@ type IndexAction actions.Action
 func (this *IndexAction) Run(params struct {
 }) {
 	// 跳转到第一个
-	servers := teaconfigs.LoadServerConfigsFromDir(Tea.ConfigDir())
+	serverList, err := teaconfigs.SharedServerList()
+	if err != nil {
+		logs.Error(err)
+		return
+	}
+	servers := serverList.FindAllServers()
 	if len(servers) > 0 {
 		this.RedirectURL("/proxy/board?serverId=" + servers[0].Id)
 	} else {
