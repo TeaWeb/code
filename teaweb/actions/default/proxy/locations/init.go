@@ -20,6 +20,7 @@ func init() {
 			Post("/delete", new(DeleteAction)).
 			Post("/moveUp", new(MoveUpAction)).
 			Post("/moveDown", new(MoveDownAction)).
+			Post("/move", new(MoveAction)).
 			Get("/detail", new(DetailAction)).
 			Get("/headers", new(HeadersAction)).
 			Get("/rewrite", new(RewriteAction)).

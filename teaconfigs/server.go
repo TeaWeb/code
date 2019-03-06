@@ -517,3 +517,33 @@ func (this *ServerConfig) FindBackendList(locationId string, websocket bool) (ba
 	}
 	return this, nil
 }
+
+// 移动位置
+func (this *ServerConfig) MoveLocation(fromIndex int, toIndex int) {
+	if fromIndex < 0 || fromIndex >= len(this.Locations) {
+		return
+	}
+	if toIndex < 0 || toIndex >= len(this.Locations) {
+		return
+	}
+	if fromIndex == toIndex {
+		return
+	}
+
+	location := this.Locations[fromIndex]
+	newList := []*LocationConfig{}
+	for i := 0; i < len(this.Locations); i ++ {
+		if i == fromIndex {
+			continue
+		}
+		if fromIndex > toIndex && i == toIndex {
+			newList = append(newList, location)
+		}
+		newList = append(newList, this.Locations[i])
+		if fromIndex < toIndex && i == toIndex {
+			newList = append(newList, location)
+		}
+	}
+
+	this.Locations = newList
+}

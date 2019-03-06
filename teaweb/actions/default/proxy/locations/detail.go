@@ -36,6 +36,7 @@ func (this *DetailAction) Run(params struct {
 		"cachePolicy": location.CachePolicy,
 		"rewrite":     location.Rewrite,
 		"websocket":   location.Websocket,
+		"backends":    location.Backends,
 	}
 	this.Data["server"] = server
 

@@ -40,6 +40,7 @@ func (this *UpdateAction) Run(params struct {
 		"headers":     location.Headers,
 		"cachePolicy": location.CachePolicy,
 		"rewrite":     location.Rewrite,
+		"backends":    location.Backends,
 	}
 	this.Data["from"] = params.From
 

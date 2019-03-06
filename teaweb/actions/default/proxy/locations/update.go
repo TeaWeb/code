@@ -51,6 +51,7 @@ func (this *UpdateAction) Run(params struct {
 		"fastcgi":     location.Fastcgi,
 		"cachePolicy": location.CachePolicy,
 		"websocket":   location.Websocket,
+		"backends":    location.Backends,
 	}
 
 	this.Show()
