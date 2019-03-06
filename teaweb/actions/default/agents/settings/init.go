@@ -16,6 +16,7 @@ func init() {
 			Helper(new(Helper)).
 			Get("", new(IndexAction)).
 			GetPost("/update", new(UpdateAction)).
+			Get("/install", new(InstallAction)).
 			EndAll()
 	})
 }
