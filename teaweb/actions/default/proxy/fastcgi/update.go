@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
+	"regexp"
 )
 
 type UpdateAction actions.Action
@@ -32,11 +33,12 @@ func (this *UpdateAction) Run(params struct {
 	}
 
 	m := maps.Map{
-		"on":       fastcgi.On,
-		"id":       fastcgi.Id,
-		"pass":     fastcgi.Pass,
-		"poolSize": fastcgi.PoolSize,
-		"params":   fastcgi.Params,
+		"on":              fastcgi.On,
+		"id":              fastcgi.Id,
+		"pass":            fastcgi.Pass,
+		"poolSize":        fastcgi.PoolSize,
+		"params":          fastcgi.Params,
+		"pathInfoPattern": fastcgi.PathInfoPattern,
 	}
 	if fastcgi.ReadTimeout != "0s" {
 		m["readTimeoutSeconds"] = int(fastcgi.ReadTimeoutDuration().Seconds())
@@ -56,14 +58,15 @@ func (this *UpdateAction) Run(params struct {
 
 // 修改
 func (this *UpdateAction) RunPost(params struct {
-	ServerId    string
-	LocationId  string
-	On          bool
-	Pass        string
-	ReadTimeout int
-	ParamNames  []string
-	ParamValues []string
-	PoolSize    int
+	ServerId        string
+	LocationId      string
+	On              bool
+	Pass            string
+	ReadTimeout     int
+	ParamNames      []string
+	ParamValues     []string
+	PoolSize        int
+	PathInfoPattern string
 
 	FastcgiId string
 
@@ -74,6 +77,14 @@ func (this *UpdateAction) RunPost(params struct {
 		Require("请输入Fastcgi地址").
 		Field("poolSize", params.PoolSize).
 		Gte(0, "连接池尺寸不能小于0")
+
+	// PATH_INFO
+	if len(params.PathInfoPattern) > 0 {
+		_, err := regexp.Compile(params.PathInfoPattern)
+		if err != nil {
+			this.FailField("pathInfoPattern", "PATH_INFO匹配规则错误："+err.Error())
+		}
+	}
 
 	paramsMap := map[string]string{}
 	for index, paramName := range params.ParamNames {
@@ -102,6 +113,7 @@ func (this *UpdateAction) RunPost(params struct {
 	fastcgi.ReadTimeout = fmt.Sprintf("%ds", params.ReadTimeout)
 	fastcgi.Params = paramsMap
 	fastcgi.PoolSize = params.PoolSize
+	fastcgi.PathInfoPattern = params.PathInfoPattern
 	err = server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())

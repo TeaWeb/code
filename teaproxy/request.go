@@ -1306,14 +1306,41 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	}
 
 	// 处理SCRIPT_FILENAME
-	scriptFilename := env.GetString("SCRIPT_FILENAME")
-	if len(scriptFilename) > 0 && (strings.Index(scriptFilename, "/") < 0 && strings.Index(scriptFilename, "\\") < 0) {
-		env["SCRIPT_FILENAME"] = env.GetString("DOCUMENT_ROOT") + Tea.DS + scriptFilename
+	scriptPath := env.GetString("SCRIPT_FILENAME")
+	if len(scriptPath) > 0 && (strings.Index(scriptPath, "/") < 0 && strings.Index(scriptPath, "\\") < 0) {
+		env["SCRIPT_FILENAME"] = env.GetString("DOCUMENT_ROOT") + Tea.DS + scriptPath
 	}
+	scriptFilename := filepath.Base(this.raw.URL.Path)
+
+	// PATH_INFO
+	pathInfoReg := this.fastcgi.PathInfoRegexp()
+	pathInfo := ""
+	if pathInfoReg != nil {
+		matches := pathInfoReg.FindStringSubmatch(this.raw.URL.Path)
+		countMatches := len(matches)
+		if countMatches == 1 {
+			pathInfo = matches[0]
+		} else if countMatches == 2 {
+			pathInfo = matches[1]
+		} else if countMatches > 2 {
+			scriptFilename = matches[1]
+			pathInfo = matches[2]
+		}
+
+		if !env.Has("PATH_INFO") {
+			env["PATH_INFO"] = pathInfo
+		}
+	}
+
+	this.addVarMapping(map[string]string{
+		"fastcgi.documentRoot": env.GetString("DOCUMENT_ROOT"),
+		"fastcgi.filename":     scriptFilename,
+		"fastcgi.pathInfo":     pathInfo,
+	})
 
 	params := map[string]string{}
 	for key, value := range env {
-		params[key] = types.String(value)
+		params[key] = this.Format(types.String(value))
 	}
 
 	for k, v := range this.raw.Header {
@@ -1346,8 +1373,9 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	}
 
 	if len(stderr) > 0 {
-		logs.Error(errors.New("Fastcgi Error: " + string(stderr)))
-		this.addError(errors.New("Fastcgi Error: " + string(stderr)))
+		err := errors.New("Fastcgi Error: " + strings.TrimSpace(string(stderr)) + " script: " + maps.NewMap(params).GetString("SCRIPT_FILENAME"))
+		logs.Error(err)
+		this.addError(err)
 	}
 
 	defer resp.Body.Close()

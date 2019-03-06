@@ -13,7 +13,6 @@ import (
 )
 
 // Fastcgi配置
-// 参考：http://nginx.org/en/docs/http/ngx_http_fastcgi_module.html
 type FastcgiConfig struct {
 	shared.HeaderList `yaml:",inline"`
 
@@ -24,18 +23,20 @@ type FastcgiConfig struct {
 	// 支持unix:/tmp/php-fpm.sock ...
 	Pass string `yaml:"pass" json:"pass"`
 
-	Index       string            `yaml:"index" json:"index"`             //@TODO
-	Params      map[string]string `yaml:"params" json:"params"`           //@TODO
-	ReadTimeout string            `yaml:"readTimeout" json:"readTimeout"` // @TODO 读取超时时间
-	SendTimeout string            `yaml:"sendTimeout" json:"sendTimeout"` // @TODO 发送超时时间
-	ConnTimeout string            `yaml:"connTimeout" json:"connTimeout"` // @TODO 连接超时时间
-	PoolSize    int               `yaml:"poolSize" json:"poolSize"`       // 连接池尺寸
+	Index           string            `yaml:"index" json:"index"`                     //@TODO
+	Params          map[string]string `yaml:"params" json:"params"`                   //@TODO
+	ReadTimeout     string            `yaml:"readTimeout" json:"readTimeout"`         // @TODO 读取超时时间
+	SendTimeout     string            `yaml:"sendTimeout" json:"sendTimeout"`         // @TODO 发送超时时间
+	ConnTimeout     string            `yaml:"connTimeout" json:"connTimeout"`         // @TODO 连接超时时间
+	PoolSize        int               `yaml:"poolSize" json:"poolSize"`               // 连接池尺寸
+	PathInfoPattern string            `yaml:"pathInfoPattern" json:"pathInfoPattern"` // PATH_INFO匹配正则
 
 	network string // 协议：tcp, unix
 	address string // 地址
 
-	paramsMap   maps.Map
-	readTimeout time.Duration
+	paramsMap      maps.Map
+	readTimeout    time.Duration
+	pathInfoRegexp *regexp.Regexp
 }
 
 // 获取新对象
@@ -107,14 +108,21 @@ func (this *FastcgiConfig) Validate() error {
 		return err
 	}
 
+	// PATH_INFO
+	if len(this.PathInfoPattern) > 0 {
+		reg, err := regexp.Compile(this.PathInfoPattern)
+		if err != nil {
+			return err
+		}
+		this.pathInfoRegexp = reg
+	}
+
 	return nil
 }
 
 // 过滤参数
 func (this *FastcgiConfig) FilterParams(req *http.Request) maps.Map {
 	params := maps.NewMap(this.paramsMap)
-
-	//@TODO 处理参数中的${varName}变量
 
 	// 自动添加参数
 	script := params.GetString("SCRIPT_FILENAME")
@@ -155,4 +163,9 @@ func (this *FastcgiConfig) Address() string {
 func (this *FastcgiConfig) Param(paramName string) string {
 	v, _ := this.Params[paramName]
 	return v
+}
+
+// PATH_INFO正则
+func (this *FastcgiConfig) PathInfoRegexp() *regexp.Regexp {
+	return this.pathInfoRegexp
 }
