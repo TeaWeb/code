@@ -1,7 +1,7 @@
 package forms
 
 import (
-	"golang.org/x/net/html"
+	"html"
 	"net/http"
 	"strings"
 )

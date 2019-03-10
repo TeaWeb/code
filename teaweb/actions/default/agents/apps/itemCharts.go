@@ -25,6 +25,15 @@ func (this *ItemChartsAction) Run(params struct {
 	this.Data["item"] = item
 	this.Data["intervalSeconds"] = item.IntervalDuration().Seconds()
 
+	source := item.Source()
+	if source != nil {
+		this.Data["sourceName"] = source.Name()
+		this.Data["hasDefaultCharts"] = len(source.Charts()) > 0
+	} else {
+		this.Data["sourceName"] = ""
+		this.Data["hasDefaultCharts"] = false
+	}
+
 	this.Show()
 }
 
@@ -72,7 +81,7 @@ widget.run = function () {
 			}
 		} else {
 			options = map[string]interface{}{
-				"name":    c.Name + "<span class=\"ops\"><a href=\"/agents/apps/updateItemChart?agentId=" + params.AgentId + "&appId=" + params.AppId + "&itemId=" + params.ItemId + "&chartId=" + c.Id + "&from=" + params.From + "\">[修改]</a> &nbsp;<a href=\"\" onclick=\"return Tea.Vue.deleteChart('" + c.Id + "')\">[删除]</a></span>",
+				"name":    c.Name + "<span class=\"ops\"><a href=\"/agents/apps/updateItemChart?agentId=" + params.AgentId + "&appId=" + params.AppId + "&itemId=" + params.ItemId + "&chartId=" + c.Id + "&from=" + params.From + "\" title=\"修改\"><i class=\"icon pencil\"></i></a> &nbsp;<a href=\"\" onclick=\"return Tea.Vue.deleteChart('" + c.Id + "')\" title=\"删除\"><i class=\"icon remove\"></i></a></span>",
 				"columns": c.Columns,
 			}
 		}

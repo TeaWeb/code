@@ -39,6 +39,7 @@ func init() {
 			Post("/deleteItemChart", new(DeleteItemChartAction)).
 			GetPost("/updateItemChart", new(UpdateItemChartAction)).
 			Post("/clearItemValues", new(ClearItemValuesAction)).
+			Post("/addDefaultCharts", new(AddDefaultChartsAction)).
 			EndAll()
 	})
 }

@@ -16,13 +16,14 @@ import (
 
 // Script文件数据源
 type ScriptSource struct {
+	Source `yaml:",inline"`
+
 	Path       string                `yaml:"path" json:"path"`
 	ScriptType string                `yaml:"scriptType" json:"scriptType"` // 脚本类型，可以为path, code
 	ScriptLang string                `yaml:"scriptLang" json:"scriptLang"` // 脚本语言
 	Script     string                `yaml:"script" json:"script"`         // 脚本代码
 	Env        []*shared.EnvVariable `yaml:"env" json:"env"`               // 环境变量设置
 	Cwd        string                `yaml:"cwd" json:"cwd"`
-	DataFormat SourceDataFormat      `yaml:"dataFormat" json:"dataFormat"` // 数据格式
 }
 
 // 获取新对象
@@ -50,11 +51,6 @@ func (this *ScriptSource) Code() string {
 // 描述
 func (this *ScriptSource) Description() string {
 	return "通过执行本地的Shell脚本文件获取数据"
-}
-
-// 数据格式
-func (this *ScriptSource) DataFormatCode() SourceDataFormat {
-	return this.DataFormat
 }
 
 // 格式化脚本

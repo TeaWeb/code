@@ -2,7 +2,7 @@ package forms
 
 import (
 	"github.com/iwind/TeaGo/types"
-	"golang.org/x/net/html"
+	"html"
 	"net/http"
 )
 

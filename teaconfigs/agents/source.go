@@ -1,30 +1,51 @@
 package agents
 
-import "github.com/TeaWeb/code/teaconfigs/forms"
+import (
+	"github.com/TeaWeb/code/teaconfigs/forms"
+	"github.com/TeaWeb/code/teaconfigs/widgets"
+)
 
-// 数据源接口定义
-type SourceInterface interface {
-	// 名称
-	Name() string
+// 数据源基础定义
+type Source struct {
+	DataFormat SourceDataFormat `yaml:"dataFormat" json:"dataFormat"` // 数据格式
+}
 
-	// 代号
-	Code() string
+// 代号
+func (this *Source) Code() string {
+	return ""
+}
 
-	// 描述
-	Description() string
+// 获得数据格式
+func (this *Source) DataFormatCode() SourceDataFormat {
+	return this.DataFormat
+}
 
-	// 校验
-	Validate() error
+// 描述
+func (this *Source) Description() string {
+	return ""
+}
 
-	// 执行
-	Execute(params map[string]string) (value interface{}, err error)
+// 校验
+func (this *Source) Validate() error {
+	return nil
+}
 
-	// 获得数据格式
-	DataFormatCode() SourceDataFormat
+// 显示信息
+func (this *Source) Presentation() *forms.Presentation {
+	return nil
+}
 
-	// 表单信息
-	Form() *forms.Form
+// 数据变量定义
+func (this *Source) Variables() []*SourceVariable {
+	return nil
+}
 
-	// 显示信息
-	Presentation() *forms.Presentation
+// 阈值
+func (this *Source) Thresholds() []*Threshold {
+	return nil
+}
+
+// 图表
+func (this *Source) Charts() []*widgets.Chart {
+	return nil
 }

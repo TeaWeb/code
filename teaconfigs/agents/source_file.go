@@ -8,8 +8,9 @@ import (
 
 // 数据文件
 type FileSource struct {
-	Path       string           `yaml:"path" json:"path"`
-	DataFormat SourceDataFormat `yaml:"dataFormat" json:"dataFormat"` // 数据格式
+	Source `yaml:",inline"`
+
+	Path string `yaml:"path" json:"path"`
 }
 
 // 获取新对象
@@ -39,11 +40,6 @@ func (this *FileSource) Code() string {
 // 描述
 func (this *FileSource) Description() string {
 	return "通过读取本地文件获取数据"
-}
-
-// 数据格式
-func (this *FileSource) DataFormatCode() SourceDataFormat {
-	return this.DataFormat
 }
 
 // 执行

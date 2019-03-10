@@ -8,6 +8,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -33,7 +34,16 @@ func (this *UpdateItemAction) Run(params struct {
 	this.Data["item"] = item
 
 	this.Data["from"] = params.From
-	this.Data["sources"] = agents.AllDataSources()
+
+	// 数据源
+	this.Data["sources"] = lists.Map(agents.AllDataSources(), func(k int, v interface{}) interface{} {
+		m := v.(maps.Map)
+		instance := m["instance"].(agents.SourceInterface)
+		m["variables"] = instance.Variables()
+		m["thresholds"] = instance.Thresholds()
+		return m
+	})
+
 	this.Data["methods"] = []string{http.MethodGet, http.MethodPost, http.MethodPut}
 	this.Data["dataFormats"] = agents.AllSourceDataFormats()
 	this.Data["operators"] = agents.AllThresholdOperators()

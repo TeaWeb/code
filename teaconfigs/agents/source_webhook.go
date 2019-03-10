@@ -16,10 +16,11 @@ import (
 
 // WebHook
 type WebHookSource struct {
-	URL        string           `yaml:"url" json:"url"`
-	Timeout    string           `yaml:"timeout" json:"timeout"`
-	Method     string           `yaml:"method" json:"method"`         // 请求方法
-	DataFormat SourceDataFormat `yaml:"dataFormat" json:"dataFormat"` // 数据格式
+	Source `yaml:",inline"`
+
+	URL     string `yaml:"url" json:"url"`
+	Timeout string `yaml:"timeout" json:"timeout"`
+	Method  string `yaml:"method" json:"method"` // 请求方法
 
 	timeoutDuration time.Duration
 }
@@ -58,11 +59,6 @@ func (this *WebHookSource) Code() string {
 // 描述
 func (this *WebHookSource) Description() string {
 	return "通过HTTP或者HTTPS接口获取数据"
-}
-
-// 数据格式
-func (this *WebHookSource) DataFormatCode() SourceDataFormat {
-	return this.DataFormat
 }
 
 // 执行

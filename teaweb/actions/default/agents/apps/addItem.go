@@ -8,6 +8,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -33,7 +34,13 @@ func (this *AddItemAction) Run(params struct {
 	this.Data["actions"] = agents.AllActions()
 
 	// 数据源
-	this.Data["sources"] = agents.AllDataSources()
+	this.Data["sources"] = lists.Map(agents.AllDataSources(), func(k int, v interface{}) interface{} {
+		m := v.(maps.Map)
+		instance := m["instance"].(agents.SourceInterface)
+		m["variables"] = instance.Variables()
+		m["thresholds"] = instance.Thresholds()
+		return m
+	})
 
 	groups1 := []*forms.Group{}
 	groups2 := []*forms.Group{}

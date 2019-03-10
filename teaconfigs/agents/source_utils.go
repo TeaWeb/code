@@ -18,9 +18,17 @@ func AllDataSources() []maps.Map {
 
 // 注册内置的数据源信息
 func RegisterAllDataSources() {
+	// basic
 	RegisterDataSource(NewScriptSource(), SourceCategoryBasic)
 	RegisterDataSource(NewWebHookSource(), SourceCategoryBasic)
 	RegisterDataSource(NewFileSource(), SourceCategoryBasic)
+
+	// common
+	RegisterDataSource(NewCPUSource(), SourceCategoryCommon)
+	RegisterDataSource(NewMemorySource(), SourceCategoryCommon)
+	RegisterDataSource(NewLoadSource(), SourceCategoryCommon)
+	RegisterDataSource(NewNetworkSource(), SourceCategoryCommon)
+	RegisterDataSource(NewDiskSource(), SourceCategoryCommon)
 }
 
 // 单个数据源信息
