@@ -1,13 +1,13 @@
 package teastats
 
 import (
+	"errors"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"sync"
 	"time"

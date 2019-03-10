@@ -1,9 +1,9 @@
 package agents
 
 import (
+	"errors"
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/iwind/TeaGo/files"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
 // 数据文件

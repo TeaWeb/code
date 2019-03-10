@@ -1,7 +1,7 @@
 package notices
 
 import (
-	"github.com/syndtr/goleveldb/leveldb/errors"
+	"errors"
 	"net/smtp"
 	"strings"
 )

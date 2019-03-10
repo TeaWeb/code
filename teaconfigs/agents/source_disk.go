@@ -60,10 +60,15 @@ func (this *DiskSource) Execute(params map[string]string) (value interface{}, er
 			continue
 		}
 		result = append(result, maps.Map{
-			"name":    partition.Mountpoint,
-			"used":    usage.Used,
-			"total":   usage.Total,
-			"percent": usage.UsedPercent,
+			"name":          partition.Mountpoint,
+			"used":          usage.Used,
+			"free":          usage.Free,
+			"total":         usage.Total,
+			"percent":       usage.UsedPercent,
+			"inodesUsed":    usage.InodesUsed,
+			"inodesFree":    usage.InodesFree,
+			"inodesTotal":   usage.InodesTotal,
+			"inodesPercent": usage.InodesUsedPercent,
 		})
 	}
 
@@ -85,7 +90,7 @@ func (this *DiskSource) Variables() []*SourceVariable {
 	return []*SourceVariable{
 		{
 			Code:        "partitions",
-			Description: "分析信息",
+			Description: "分区信息",
 		},
 		{
 			Code:        "partitions.$.name",
@@ -100,8 +105,28 @@ func (this *DiskSource) Variables() []*SourceVariable {
 			Description: "已使用空间尺寸（字节）",
 		},
 		{
+			Code:        "partitions.$.free",
+			Description: "剩余空间尺寸（字节）",
+		},
+		{
 			Code:        "partitions.$.percent",
 			Description: "已使用百分比",
+		},
+		{
+			Code:        "partitions.$.inodesTotal",
+			Description: "inodes总数",
+		},
+		{
+			Code:        "partitions.$.inodesUsed",
+			Description: "已使用inodes数量",
+		},
+		{
+			Code:        "partitions.$.inodesFree",
+			Description: "剩余inodes数量",
+		},
+		{
+			Code:        "partitions.$.inodesPercent",
+			Description: "inodes使用百分比",
 		},
 	}
 }

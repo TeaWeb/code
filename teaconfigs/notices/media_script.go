@@ -2,12 +2,12 @@ package notices
 
 import (
 	"bytes"
+	"errors"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 	"os/exec"
 	"runtime"
 	"strings"

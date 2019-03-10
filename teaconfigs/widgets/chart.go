@@ -1,9 +1,9 @@
 package widgets
 
 import (
+	"errors"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/utils/string"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
 // Chart接口

@@ -1,11 +1,13 @@
 package agents
 
 import (
+	"errors"
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/shirou/gopsutil/load"
+	"runtime"
 )
 
 // 负载
@@ -35,6 +37,11 @@ func (this *LoadSource) Description() string {
 
 // 执行
 func (this *LoadSource) Execute(params map[string]string) (value interface{}, err error) {
+	if runtime.GOOS == "windows" {
+		err = errors.New("'windows' platform is not supported for '" + this.Code() + "' yet")
+		return
+	}
+
 	stat, err := load.Avg()
 	if err != nil || stat == nil {
 		return
@@ -167,4 +174,9 @@ chart.render();
 	}
 
 	return charts
+}
+
+// 支持的平台
+func (this *LoadSource) Platforms() []string {
+	return []string{"darwin", "linux"}
 }

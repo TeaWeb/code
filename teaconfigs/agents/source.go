@@ -49,3 +49,8 @@ func (this *Source) Thresholds() []*Threshold {
 func (this *Source) Charts() []*widgets.Chart {
 	return nil
 }
+
+// 支持的平台
+func (this *Source) Platforms() []string {
+	return []string{"darwin", "linux", "windows"}
+}

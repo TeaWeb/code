@@ -2,10 +2,10 @@ package agents
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 	"strings"
 )
 

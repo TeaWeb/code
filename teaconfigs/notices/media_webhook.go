@@ -1,8 +1,8 @@
 package notices
 
 import (
+	"errors"
 	"github.com/TeaWeb/code/teaconst"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"

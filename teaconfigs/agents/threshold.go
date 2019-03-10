@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/notices"
@@ -9,7 +10,6 @@ import (
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/robertkrimen/otto"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 	"regexp"
 	"strings"
 )

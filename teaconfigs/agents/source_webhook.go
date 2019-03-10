@@ -2,10 +2,10 @@ package agents
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconst"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io"
 	"io/ioutil"
 	"net/http"

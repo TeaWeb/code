@@ -39,4 +39,7 @@ type SourceInterface interface {
 
 	// 图表
 	Charts() []*widgets.Chart
+
+	// 支持的平台
+	Platforms() []string
 }

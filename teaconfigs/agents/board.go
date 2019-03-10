@@ -1,10 +1,10 @@
 package agents
 
 import (
+	"errors"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
 // 看板图表定义

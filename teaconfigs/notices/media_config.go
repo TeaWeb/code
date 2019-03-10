@@ -1,10 +1,10 @@
 package notices
 
 import (
+	"errors"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 	"time"
 )
 
