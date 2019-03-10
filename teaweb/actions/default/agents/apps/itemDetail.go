@@ -29,14 +29,22 @@ func (this *ItemDetailAction) Run(params struct {
 
 	this.Data["item"] = item
 
+	this.Data["sourceOptions"] = nil
+	this.Data["sourcePresentation"] = ""
 	this.Data["source"] = nil
 	source := item.Source()
 	if source != nil {
-		this.Data["source"] = maps.Map{
+		this.Data["sourceOptions"] = maps.Map{
 			"summary":    agents.FindDataSource(source.Code()),
 			"options":    source,
 			"dataFormat": agents.FindSourceDataFormat(source.DataFormatCode()),
 		}
+
+		this.Data["source"] = source
+
+		p := source.Presentation()
+		p.CSS = "<style type=\"text/css\">\n" + p.CSS + "\n</style>\n"
+		this.Data["sourcePresentation"] = p
 	}
 
 	this.Data["noticeLevels"] = notices.AllNoticeLevels()

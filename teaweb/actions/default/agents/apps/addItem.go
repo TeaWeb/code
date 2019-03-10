@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconfigs/notices"
-	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
@@ -26,12 +26,47 @@ func (this *AddItemAction) Run(params struct {
 	agentutils.InitAppData(this, params.AgentId, params.AppId, "monitor")
 
 	this.Data["from"] = params.From
-	this.Data["sources"] = agents.AllDataSources()
 	this.Data["methods"] = []string{http.MethodGet, http.MethodPost, http.MethodPut}
 	this.Data["dataFormats"] = agents.AllSourceDataFormats()
 	this.Data["operators"] = agents.AllThresholdOperators()
 	this.Data["noticeLevels"] = notices.AllNoticeLevels()
 	this.Data["actions"] = agents.AllActions()
+
+	// 数据源
+	this.Data["sources"] = agents.AllDataSources()
+
+	groups1 := []*forms.Group{}
+	groups2 := []*forms.Group{}
+	css := ""
+	javascript := ""
+
+	for _, source := range agents.AllDataSources() {
+		form := source["instance"].(agents.SourceInterface).Form()
+		if form == nil {
+			continue
+		}
+		form.Compose()
+
+		css += form.CSS
+		javascript += form.Javascript
+
+		countGroups := len(form.Groups)
+		if countGroups == 0 {
+			continue
+		} else if countGroups == 1 {
+			groups1 = append(groups1, form.Groups[0])
+		} else {
+			groups1 = append(groups1, form.Groups[0])
+			for i := 1; i < countGroups; i ++ {
+				groups2 = append(groups2, form.Groups[i])
+			}
+		}
+	}
+
+	this.Data["formGroups1"] = groups1
+	this.Data["formGroups2"] = groups2
+	this.Data["formCSS"] = css
+	this.Data["formJavascript"] = javascript
 
 	this.Show()
 }
@@ -43,20 +78,6 @@ func (this *AddItemAction) RunPost(params struct {
 	Name       string
 	SourceCode string
 	On         bool
-
-	ScriptType      string
-	ScriptPath      string
-	ScriptLang      string
-	ScriptCode      string
-	ScriptCwd       string
-	ScriptEnvNames  []string
-	ScriptEnvValues []string
-
-	WebhookURL     string
-	WebhookMethod  string
-	WebhookTimeout uint
-
-	FilePath string
 
 	DataFormat uint8
 	Interval   uint
@@ -94,62 +115,21 @@ func (this *AddItemAction) RunPost(params struct {
 	item.SourceCode = params.SourceCode
 	item.SourceOptions = map[string]interface{}{}
 
-	switch params.SourceCode {
-	case "script":
-		if params.ScriptType == "path" {
-			params.Must.
-				Field("scriptPath", params.ScriptPath).
-				Require("请输入脚本路径")
-		} else if params.ScriptType == "code" {
-			params.Must.
-				Field("scriptCode", params.ScriptCode).
-				Require("请输入脚本代码")
-		} else {
-			params.Must.
-				Field("scriptPath", params.ScriptPath).
-				Require("请输入脚本路径")
-		}
+	// 获取参数值
+	instance := agents.FindDataSourceInstance(params.SourceCode, map[string]interface{}{})
+	form := instance.Form()
+	values, errField, err := form.ApplyRequest(this.Request)
+	if err != nil {
+		this.FailField(errField, err.Error())
+	}
 
-		source := agents.NewScriptSource()
-		source.ScriptType = params.ScriptType
-		source.Path = params.ScriptPath
-		source.ScriptLang = params.ScriptLang
-		source.Script = params.ScriptCode
-		source.Cwd = params.ScriptCwd
-		source.DataFormat = params.DataFormat
+	values["dataFormat"] = params.DataFormat
+	item.SourceOptions = values
 
-		for index, envName := range params.ScriptEnvNames {
-			if index < len(params.ScriptEnvValues) {
-				source.AddEnv(envName, params.ScriptEnvValues[index])
-			}
-		}
-
-		teautils.ObjectToMapJSON(source, &item.SourceOptions)
-	case "webhook":
-		params.Must.
-			Field("webhookURL", params.WebhookURL).
-			Require("请输入URL").
-			Match("(?i)^(http|https)://", "URL地址必须以http或https开头").
-			Field("webhookMethod", params.WebhookMethod).
-			Require("请选择请求方法")
-
-		source := agents.NewWebHookSource()
-		source.URL = params.WebhookURL
-		source.Method = params.WebhookMethod
-		source.Timeout = fmt.Sprintf("%ds", params.WebhookTimeout)
-		source.DataFormat = params.DataFormat
-
-		teautils.ObjectToMapJSON(source, &item.SourceOptions)
-	case "file":
-		params.Must.
-			Field("filePath", params.FilePath).
-			Require("请输入数据文件路径")
-
-		source := agents.NewFileSource()
-		source.Path = params.FilePath
-		source.DataFormat = params.DataFormat
-
-		teautils.ObjectToMapJSON(source, &item.SourceOptions)
+	// 测试
+	err = item.Validate()
+	if err != nil {
+		this.Fail("校验失败：" + err.Error())
 	}
 
 	// 刷新间隔
@@ -188,7 +168,7 @@ func (this *AddItemAction) RunPost(params struct {
 	}
 
 	app.AddItem(item)
-	err := agent.Save()
+	err = agent.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

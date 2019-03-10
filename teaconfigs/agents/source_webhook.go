@@ -3,8 +3,8 @@ package agents
 import (
 	"bytes"
 	"fmt"
+	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconst"
-	"github.com/iwind/TeaGo/maps"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io"
 	"io/ioutil"
@@ -119,11 +119,90 @@ func (this *WebHookSource) Execute(params map[string]string) (value interface{},
 	return DecodeSource(respBytes, this.DataFormat)
 }
 
-// 获取简要信息
-func (this *WebHookSource) Summary() maps.Map {
-	return maps.Map{
-		"name":        this.Name(),
-		"code":        this.Code(),
-		"description": this.Description(),
+// 选项表单
+func (this *WebHookSource) Form() *forms.Form {
+	form := forms.NewForm(this.Code())
+
+	{
+		group := form.NewGroup()
+
+		{
+			field := forms.NewTextField("URL", "")
+			field.Code = "url"
+			field.IsRequired = true
+			field.Placeholder = "http://..."
+			field.MaxLength = 100
+			field.ValidateCode = `
+if (value.length == 0) {
+	throw new Error("请输入URL")
+}
+
+if (!value.match(/^(http|https):\/\//i)) {
+	throw new Error("URL地址必须以http或https开头");
+}
+`
+			group.Add(field)
+		}
+
+		{
+			field := forms.NewOptions("请求方法", "")
+			field.Code = "method"
+			field.IsRequired = true
+			field.AddOption("GET", "GET")
+			field.AddOption("POST", "POST")
+			field.AddOption("PUT", "PUT")
+			field.Attr("style", "width:10em")
+			field.ValidateCode = `
+if (value.length == 0) {
+	throw new Error("请选择请求方法");
+}
+`
+			group.Add(field)
+		}
+	}
+
+	{
+		group := form.NewGroup()
+
+		{
+			field := forms.NewTextField("请求超时", "Timeout")
+			field.Code = "timeout"
+			field.Value = 10
+			field.MaxLength = 10
+			field.RightLabel = "秒"
+			field.Attr("style", "width:5em")
+			field.ValidateCode = `
+var intValue = parseInt(value);
+if (isNaN(intValue)) {
+	throw new Error("超时时间需要是一个整数");
+}
+
+return intValue + "s"
+`
+			field.InitCode = `
+return value.replace("s", "");
+`
+			group.Add(field)
+		}
+	}
+
+	return form
+}
+
+func (this *WebHookSource) Presentation() *forms.Presentation {
+	return &forms.Presentation{
+		HTML: `
+<tr>
+	<td>URL</td>
+	<td>{{source.url}}</td>
+</tr>
+<tr>
+	<td>请求方法</td>
+	<td>{{source.method}}</td>
+</tr>
+<tr>
+	<td>请求超时<em>（Timeout）</em></td>
+	<td>{{source.timeout}}</td>
+</tr>`,
 	}
 }

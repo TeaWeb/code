@@ -2,11 +2,11 @@ package agents
 
 import (
 	"bytes"
+	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"os/exec"
@@ -153,19 +153,111 @@ func (this *ScriptSource) Execute(params map[string]string) (value interface{}, 
 	return DecodeSource(stdout.Bytes(), this.DataFormat)
 }
 
-// 获取简要信息
-func (this *ScriptSource) Summary() maps.Map {
-	return maps.Map{
-		"name":        this.Name(),
-		"code":        this.Code(),
-		"description": this.Description(),
-	}
-}
-
 // 添加环境变量
 func (this *ScriptSource) AddEnv(name, value string) {
 	this.Env = append(this.Env, &shared.EnvVariable{
 		Name:  name,
 		Value: value,
 	})
+}
+
+// 选项表单
+func (this *ScriptSource) Form() *forms.Form {
+	form := forms.NewForm(this.Code())
+	{
+		group := form.NewGroup()
+		{
+			field := forms.NewScriptBox("脚本", "")
+			field.Code = this.Code()
+			field.IsRequired = true
+			field.InitCode = `return {
+	"scriptType": values.scriptType,
+	"scriptCode": values.script,
+	"scriptLang": values.scriptLang,
+	"scriptPath": values.path
+}`
+			group.Add(field)
+		}
+	}
+
+	{
+		group := form.NewGroup()
+		{
+			field := forms.NewTextField("当前工作目录", "CWD")
+			field.Code = "cwd"
+			field.MaxLength = 100
+			group.Add(field)
+		}
+
+		{
+			field := forms.NewEnvBox("环境变量", "ENV")
+			field.Code = "env"
+			group.Add(field)
+		}
+	}
+
+	form.ValidateCode = `
+if (values.script.scriptType == "path") {
+	if (values.script.scriptPath.length == 0) {
+		return FieldError("scriptPath", "请输入脚本路径")
+	}
+} else {
+	if (values.script.scriptCode.length == 0) {
+		return FieldError("scriptCode", "请输入脚本代码");
+	}
+}
+
+return {
+	"cwd": values.cwd,
+	"env": values.env,
+	"scriptType": values.script.scriptType,
+	"script": values.script.scriptCode,
+	"scriptLang": values.script.scriptLang,
+	"path": values.script.scriptPath
+}
+`
+
+	return form
+}
+
+// 显示界面
+func (this *ScriptSource) Presentation() *forms.Presentation {
+	p := forms.NewPresentation()
+	p.HTML = `
+ <tr v-if="source.scriptType == 'path' || source.scriptType == null || source.scriptType.length == 0">
+	<td>脚本路径</td>
+	<td>
+		{{source.path}}
+	</td>
+</tr>
+<tr v-if="source.scriptType == 'code'">
+	<td>脚本代码</td>
+	<td>
+		<div id="script-code-editor"></div>
+	</td>
+</tr>
+<tr>
+	<td>当前工作目录<em>（CWD）</em></td>
+	<td>
+		<span v-if="source.cwd.length > 0">{{source.cwd}}</span>
+		<span v-if="source.cwd.length == 0" class="disabled">没有设置</span>
+	</td>
+</tr>
+<tr>
+	<td>环境变量<em>（ENV）</em></td>
+	<td>
+		<span v-if="source.env != null && source.env.length > 0" class="ui label small" v-for="(var1, index) in source.env">
+			<em>{{var1.name}}</em>: {{var1.value}}
+			<a href="" @click.prevent="removeEnv(index)"></a>
+		</span>
+		<span v-if="source.env == null || source.env.length == 0" class="disabled">没有设置</span>
+	</td>
+</tr>
+`
+	p.Javascript = `
+if (this.source.scriptType == "code") {
+	this.loadCodeEditor(this.source.scriptLang, this.source.script);
+}
+`
+	return p
 }

@@ -1,8 +1,8 @@
 package agents
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/maps"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
@@ -64,11 +64,36 @@ func (this *FileSource) Execute(params map[string]string) (value interface{}, er
 	return DecodeSource(data, this.DataFormat)
 }
 
-// 获取简要信息
-func (this *FileSource) Summary() maps.Map {
-	return maps.Map{
-		"name":        this.Name(),
-		"code":        this.Code(),
-		"description": this.Description(),
+// 选项表单
+func (this *FileSource) Form() *forms.Form {
+	form := forms.NewForm(this.Code())
+	group := form.NewGroup()
+
+	{
+		field := forms.NewTextField("数据文件路径", "")
+		field.IsRequired = true
+		field.Code = "path"
+		field.ValidateCode = `
+if (value.length == 0) {
+	throw new Error("请输入数据文件路径");
+}
+
+return value;
+`
+
+		group.Add(field)
+	}
+
+	return form
+}
+
+// 显示信息
+func (this *FileSource) Presentation() *forms.Presentation {
+	return &forms.Presentation{
+		HTML: `
+<tr>
+	<td>数据文件路径</td>
+	<td>{{source.path}}</td>
+</tr>`,
 	}
 }

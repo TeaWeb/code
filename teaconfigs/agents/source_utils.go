@@ -1,0 +1,67 @@
+package agents
+
+import (
+	"github.com/TeaWeb/code/teautils"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
+	"reflect"
+	"sync"
+)
+
+// 获取所有的数据源信息
+var allDataSources = []maps.Map{}
+var allDataSourcesLocker = sync.Mutex{}
+
+func AllDataSources() []maps.Map {
+	return allDataSources
+}
+
+// 注册内置的数据源信息
+func RegisterAllDataSources() {
+	RegisterDataSource(NewScriptSource(), SourceCategoryBasic)
+	RegisterDataSource(NewWebHookSource(), SourceCategoryBasic)
+	RegisterDataSource(NewFileSource(), SourceCategoryBasic)
+}
+
+// 单个数据源信息
+func RegisterDataSource(dataSource SourceInterface, category SourceCategory) {
+	allDataSourcesLocker.Lock()
+	defer allDataSourcesLocker.Unlock()
+
+	m := maps.Map{
+		"name":        dataSource.Name(),
+		"code":        dataSource.Code(),
+		"description": dataSource.Description(),
+		"type":        reflect.TypeOf(dataSource).Elem(),
+		"instance":    dataSource,
+		"category":    category,
+	}
+	allDataSources = append(allDataSources, m)
+}
+
+// 查找单个数据源信息
+func FindDataSource(code string) maps.Map {
+	for _, summary := range AllDataSources() {
+		if summary["code"] == code {
+			return summary
+		}
+	}
+	return nil
+}
+
+// 查找单个数据源实例
+func FindDataSourceInstance(code string, options map[string]interface{}) SourceInterface {
+	for _, summary := range AllDataSources() {
+		if summary["code"] == code {
+			instance := reflect.New(summary["type"].(reflect.Type)).Interface().(SourceInterface)
+			if options != nil {
+				err := teautils.MapToObjectJSON(options, instance)
+				if err != nil {
+					logs.Error(err)
+				}
+			}
+			return instance
+		}
+	}
+	return nil
+}

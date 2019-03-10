@@ -19,6 +19,7 @@ func init() {
 			GetPost("/delete", new(DeleteAction)).
 			Post("/move", new(MoveAction)).
 			Get("/menu", new(MenuAction)).
+			GetPost("/form", new(FormAction)).
 			EndAll()
 	})
 }
