@@ -37,7 +37,9 @@ func (this *ConnectionsSource) Description() string {
 func (this *ConnectionsSource) Execute(params map[string]string) (value interface{}, err error) {
 	stat, err := net.Connections("all")
 	if err != nil {
-		return nil, err
+		return maps.Map{
+			"connections": 0,
+		}, err
 	}
 
 	value = maps.Map{

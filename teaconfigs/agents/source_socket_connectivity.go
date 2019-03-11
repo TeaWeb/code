@@ -191,5 +191,16 @@ chart.render();
 
 // 显示信息
 func (this *SocketConnectivitySource) Presentation() *forms.Presentation {
-	return nil
+	p := forms.NewPresentation()
+	p.HTML = `
+<tr>
+	<td>目标地址</td>
+	<td>{{source.address}}</td>
+</tr>
+<tr>
+	<td>网络协议</td>
+	<td>{{source.network.toUpperCase()}}</td>
+</tr>
+`
+	return p
 }

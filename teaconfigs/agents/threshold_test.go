@@ -50,6 +50,20 @@ func TestThreshold_Test(t *testing.T) {
 	}))
 }
 
+func TestThreshold_Test2(t *testing.T) {
+	threshold := NewThreshold()
+	threshold.Param = "${changes}"
+	threshold.Operator = ThresholdOperatorEq
+	threshold.Value = "true"
+	err := threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(threshold.Test(maps.Map{
+		"changes": true,
+	}))
+}
+
 func TestThreshold_Eval(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${data.hello.world.0} * 100 / ${data.hello.world.1}"

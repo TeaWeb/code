@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// 日期相关
+// Ping
 type PingSource struct {
 	Source `yaml:",inline"`
 

@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/robertkrimen/otto"
@@ -128,6 +129,16 @@ func (this *Threshold) Eval(value interface{}) string {
 			}
 			return ""
 		case map[string]interface{}:
+			result, found := v[varName]
+			if found {
+				return types.String(result)
+			}
+			result = teautils.Get(v, strings.Split(varName, "."))
+			if result == nil {
+				return ""
+			}
+			return types.String(result)
+		case maps.Map:
 			result, found := v[varName]
 			if found {
 				return types.String(result)

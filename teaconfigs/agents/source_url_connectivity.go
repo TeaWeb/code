@@ -264,5 +264,20 @@ chart.render();
 
 // 显示信息
 func (this *URLConnectivitySource) Presentation() *forms.Presentation {
-	return nil
+	p := forms.NewPresentation()
+	p.HTML = `
+<tr>
+	<td>URL</td>
+	<td>{{source.url}}</td>
+</tr>
+<tr>
+	<td>请求方法</td>
+	<td>{{source.method}}</td>
+</tr>
+<tr>
+	<td>请求超时</td>
+	<td>{{source.timeout}}s</td>
+</tr>
+`
+	return p
 }

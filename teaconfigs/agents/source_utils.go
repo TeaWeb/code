@@ -36,6 +36,8 @@ func RegisterAllDataSources() {
 	RegisterDataSource(NewSocketConnectivitySource(), SourceCategoryCommon)
 	RegisterDataSource(NewDNSSource(), SourceCategoryCommon)
 	RegisterDataSource(NewPingSource(), SourceCategoryCommon)
+	RegisterDataSource(NewAppProcessesSource(), SourceCategoryCommon)
+	RegisterDataSource(NewFileChangeSource(), SourceCategoryCommon)
 }
 
 // 单个数据源信息

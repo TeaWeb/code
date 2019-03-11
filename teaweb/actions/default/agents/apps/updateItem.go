@@ -41,6 +41,7 @@ func (this *UpdateItemAction) Run(params struct {
 		instance := m["instance"].(agents.SourceInterface)
 		m["variables"] = instance.Variables()
 		m["thresholds"] = instance.Thresholds()
+		m["platforms"] = instance.Platforms()
 		return m
 	})
 

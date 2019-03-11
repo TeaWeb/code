@@ -8,7 +8,7 @@ import (
 	"github.com/shirou/gopsutil/process"
 )
 
-// 日期相关
+// 进程数
 type ProcessesSource struct {
 	Source `yaml:",inline"`
 }
@@ -37,7 +37,9 @@ func (this *ProcessesSource) Description() string {
 func (this *ProcessesSource) Execute(params map[string]string) (value interface{}, err error) {
 	stat, err := process.Pids()
 	if err != nil {
-		return nil, err
+		return maps.Map{
+			"processes": 0,
+		}, err
 	}
 
 	value = maps.Map{
