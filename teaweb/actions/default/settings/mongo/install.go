@@ -102,7 +102,7 @@ func (this *InstallAction) RunPost(params struct{}) {
 		}
 	}
 
-	resp, err := http.Get("http://teaos.cn/downloads/mongodb.json")
+	resp, err := http.Get("http://dl.teaos.cn/mongodb.json")
 	if err != nil {
 		this.Fail("发生错误：", err.Error())
 	}
@@ -141,7 +141,8 @@ func (this *InstallAction) RunPost(params struct{}) {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	url := "http://teaos.cn/downloads/" + fileName
+	url := "http://dl.teaos.cn/" + fileName
+
 	downloader.Add(url, "", target+".tmp")
 	downloader.OnProgress(func(item *nets.DownloaderItem) {
 		installStatus = "download"
