@@ -3,6 +3,7 @@ package agents
 import (
 	"github.com/iwind/TeaGo/maps"
 	"testing"
+	"time"
 )
 
 func TestThreshold_Test(t *testing.T) {
@@ -59,6 +60,14 @@ func TestThreshold_Eval(t *testing.T) {
 				"world": []string{"1", "2", "3", "4", "5"},
 			},
 		},
+	}))
+}
+
+func TestThreshold_Eval_Date(t *testing.T) {
+	threshold := NewThreshold()
+	threshold.Param = "new Date().getTime() / 1000 - ${timestamp}"
+	t.Log(threshold.Eval(map[string]interface{}{
+		"timestamp": time.Now().Unix() - 10,
 	}))
 }
 

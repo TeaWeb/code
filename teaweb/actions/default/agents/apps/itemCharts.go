@@ -105,6 +105,7 @@ widget.run = function () {
 		App:   app,
 		Item:  item,
 	})
+
 	err := engine.RunCode(widgetCode)
 	if err != nil {
 		logs.Error(err)

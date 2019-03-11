@@ -1,12 +1,12 @@
 package widgets
 
 import (
+	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
-	"gopkg.in/yaml.v2"
 	"time"
 )
 

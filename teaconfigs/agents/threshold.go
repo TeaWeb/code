@@ -141,7 +141,7 @@ func (this *Threshold) Eval(value interface{}) string {
 		return s
 	})
 
-	// 支持加减乘除余
+	// 支持加、减、乘、除、余
 	if len(paramValue) > 0 {
 		if strings.ContainsAny(paramValue, "+-*/%") {
 			vm := otto.New()

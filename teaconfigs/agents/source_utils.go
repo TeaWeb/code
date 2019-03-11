@@ -29,7 +29,13 @@ func RegisterAllDataSources() {
 	RegisterDataSource(NewLoadSource(), SourceCategoryCommon)
 	RegisterDataSource(NewNetworkSource(), SourceCategoryCommon)
 	RegisterDataSource(NewDiskSource(), SourceCategoryCommon)
+	RegisterDataSource(NewConnectionsSource(), SourceCategoryCommon)
+	RegisterDataSource(NewProcessesSource(), SourceCategoryCommon)
+	RegisterDataSource(NewDateSource(), SourceCategoryCommon)
+	RegisterDataSource(NewURLConnectivitySource(), SourceCategoryCommon)
+	RegisterDataSource(NewSocketConnectivitySource(), SourceCategoryCommon)
 	RegisterDataSource(NewDNSSource(), SourceCategoryCommon)
+	RegisterDataSource(NewPingSource(), SourceCategoryCommon)
 }
 
 // 单个数据源信息
