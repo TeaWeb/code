@@ -34,8 +34,10 @@ func (this *ItemDetailAction) Run(params struct {
 	this.Data["source"] = nil
 	source := item.Source()
 	if source != nil {
+		summary := agents.FindDataSource(source.Code())
+		summary["variables"] = source.Variables()
 		this.Data["sourceOptions"] = maps.Map{
-			"summary":    agents.FindDataSource(source.Code()),
+			"summary":    summary,
 			"options":    source,
 			"dataFormat": agents.FindSourceDataFormat(source.DataFormatCode()),
 		}

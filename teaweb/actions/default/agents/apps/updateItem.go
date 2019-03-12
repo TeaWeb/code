@@ -36,14 +36,20 @@ func (this *UpdateItemAction) Run(params struct {
 	this.Data["from"] = params.From
 
 	// 数据源
+	hasPluginSource := false
 	this.Data["sources"] = lists.Map(agents.AllDataSources(), func(k int, v interface{}) interface{} {
 		m := v.(maps.Map)
 		instance := m["instance"].(agents.SourceInterface)
 		m["variables"] = instance.Variables()
 		m["thresholds"] = instance.Thresholds()
 		m["platforms"] = instance.Platforms()
+
+		if m["category"] == agents.SourceCategoryPlugin {
+			hasPluginSource = true
+		}
 		return m
 	})
+	this.Data["hasPluginSource"] = hasPluginSource
 
 	this.Data["methods"] = []string{http.MethodGet, http.MethodPost, http.MethodPut}
 	this.Data["dataFormats"] = agents.AllSourceDataFormats()

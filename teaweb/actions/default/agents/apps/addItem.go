@@ -34,14 +34,20 @@ func (this *AddItemAction) Run(params struct {
 	this.Data["actions"] = agents.AllActions()
 
 	// 数据源
+	hasPluginSource := false
 	this.Data["sources"] = lists.Map(agents.AllDataSources(), func(k int, v interface{}) interface{} {
 		m := v.(maps.Map)
 		instance := m["instance"].(agents.SourceInterface)
 		m["variables"] = instance.Variables()
 		m["thresholds"] = instance.Thresholds()
 		m["platforms"] = instance.Platforms()
+
+		if m["category"] == agents.SourceCategoryPlugin {
+			hasPluginSource = true
+		}
 		return m
 	})
+	this.Data["hasPluginSource"] = hasPluginSource
 
 	groups1 := []*forms.Group{}
 	groups2 := []*forms.Group{}

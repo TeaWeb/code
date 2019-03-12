@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/maps"
 )
 
 type UpdateItemChartAction actions.Action
@@ -35,6 +36,15 @@ func (this *UpdateItemChartAction) Run(params struct {
 	this.Data["item"] = item
 	this.Data["chart"] = chart
 	this.Data["chartTypes"] = widgets.AllChartTypes
+
+	source := agents.FindDataSource(item.SourceCode)
+	if source != nil {
+		this.Data["selectedSource"] = maps.Map{
+			"variables": source["instance"].(agents.SourceInterface).Variables(),
+		}
+	} else {
+		this.Data["selectedSource"] = nil
+	}
 
 	this.Show()
 }
