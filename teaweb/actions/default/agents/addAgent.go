@@ -19,13 +19,14 @@ func (this *AddAgentAction) Run(params struct{}) {
 
 // 提价保存
 func (this *AddAgentAction) RunPost(params struct {
-	Name       string
-	Host       string
-	GroupId    string
-	AllowAllIP bool
-	IPs        []string `alias:"ips"`
-	On         bool
-	Must       *actions.Must
+	Name                string
+	Host                string
+	GroupId             string
+	AllowAllIP          bool
+	IPs                 []string `alias:"ips"`
+	On                  bool
+	CheckDisconnections bool
+	Must                *actions.Must
 }) {
 	params.Must.
 		Field("name", params.Name).
@@ -48,6 +49,7 @@ func (this *AddAgentAction) RunPost(params struct {
 	agent.AllowAll = params.AllowAllIP
 	agent.Allow = params.IPs
 	agent.Key = stringutil.Rand(32)
+	agent.CheckDisconnections = params.CheckDisconnections
 	err = agent.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())

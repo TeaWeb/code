@@ -19,6 +19,7 @@ type AgentConfig struct {
 	Allow               []string     `yaml:"allow" json:"allow"`                             // 允许的IP地址
 	Apps                []*AppConfig `yaml:"apps" json:"apps"`                               // Apps
 	Version             uint         `yaml:"version" json:"version"`                         // 版本
+	CheckDisconnections bool         `yaml:"checkDisconnections" json:"checkDisconnections"` // 是否检查离线
 	CountDisconnections int          `yaml:"countDisconnections" json:"countDisconnections"` // 错误次数
 	GroupIds            []string     `yaml:"groupIds" json:"groupIds"`                       // 分组IDs
 }
@@ -26,8 +27,9 @@ type AgentConfig struct {
 // 获取新对象
 func NewAgentConfig() *AgentConfig {
 	return &AgentConfig{
-		On: true,
-		Id: stringutil.Rand(16),
+		On:                  true,
+		Id:                  stringutil.Rand(16),
+		CheckDisconnections: true,
 	}
 }
 

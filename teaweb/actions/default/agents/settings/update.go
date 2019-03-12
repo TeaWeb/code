@@ -31,15 +31,16 @@ func (this *UpdateAction) Run(params struct {
 
 // 提交保存
 func (this *UpdateAction) RunPost(params struct {
-	AgentId    string
-	Name       string
-	Host       string
-	GroupId    string
-	AllowAllIP bool
-	IPs        []string `alias:"ips"`
-	On         bool
-	Key        string
-	Must       *actions.Must
+	AgentId             string
+	Name                string
+	Host                string
+	GroupId             string
+	AllowAllIP          bool
+	IPs                 []string `alias:"ips"`
+	On                  bool
+	Key                 string
+	CheckDisconnections bool
+	Must                *actions.Must
 }) {
 	params.Must.
 		Field("name", params.Name).
@@ -64,6 +65,7 @@ func (this *UpdateAction) RunPost(params struct {
 	agent.AllowAll = params.AllowAllIP
 	agent.Allow = params.IPs
 	agent.Key = params.Key
+	agent.CheckDisconnections = params.CheckDisconnections
 	err := agent.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())

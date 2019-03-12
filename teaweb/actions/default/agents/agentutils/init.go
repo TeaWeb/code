@@ -26,7 +26,7 @@ func checkConnecting() {
 			return
 		}
 		for _, agent := range agentList.FindAllAgents() {
-			if !agent.On {
+			if !agent.On || !agent.CheckDisconnections {
 				continue
 			}
 
