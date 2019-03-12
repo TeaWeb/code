@@ -22,7 +22,16 @@ func (this *IndexAction) Run(params struct {
 		return
 	}
 
-	this.Data["agentVersion"], this.Data["agentIsWaiting"] = agentutils.CheckAgentIsWaiting(agent.Id)
+	state, isWaiting := agentutils.CheckAgentIsWaiting(agent.Id)
+	if isWaiting {
+		this.Data["agentVersion"] = state.Version
+		this.Data["agentSpeed"] = state.Speed
+		this.Data["agentIsWaiting"] = true
+	} else {
+		this.Data["agentVersion"] = ""
+		this.Data["agentSpeed"] = 0
+		this.Data["agentIsWaiting"] = false
+	}
 	this.Data["agent"] = agent
 
 	// 分组

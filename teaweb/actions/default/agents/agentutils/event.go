@@ -9,7 +9,13 @@ type Event struct {
 	Data interface{} `json:"data"`
 }
 
-var eventQueueMap = map[string]map[chan *Event]string{} // agentId => []chan => string
+// Agent状态
+type State struct {
+	Version string  // 版本号
+	Speed   float64 // 连接速度，ms
+}
+
+var eventQueueMap = map[string]map[chan *Event]*State{} // agentId => { chan => State }
 var eventQueueLocker = sync.Mutex{}
 
 // 新Agent事件
@@ -21,15 +27,21 @@ func NewAgentEvent(name string, data interface{}) *Event {
 }
 
 // 等待Agent事件
-func WaitAgentQueue(agentId string, agentVersion string, c chan *Event) {
+func WaitAgentQueue(agentId string, agentVersion string, speed float64, c chan *Event) {
 	eventQueueLocker.Lock()
 	defer eventQueueLocker.Unlock()
-	_, ok := eventQueueMap[agentId]
-	if ok {
-		eventQueueMap[agentId][c] = agentVersion
+	_, found := eventQueueMap[agentId]
+	if found {
+		eventQueueMap[agentId][c] = &State{
+			Version: agentVersion,
+			Speed:   speed,
+		}
 	} else {
-		eventQueueMap[agentId] = map[chan *Event]string{
-			c: agentVersion,
+		eventQueueMap[agentId] = map[chan *Event]*State{
+			c: {
+				Version: agentVersion,
+				Speed:   speed,
+			},
 		}
 	}
 }
@@ -61,7 +73,7 @@ func PostAgentEvent(agentId string, event *Event) {
 }
 
 // 检查Agent是否正在运行
-func CheckAgentIsWaiting(agentId string) (version string, isWaiting bool) {
+func CheckAgentIsWaiting(agentId string) (state *State, isWaiting bool) {
 	eventQueueLocker.Lock()
 	defer eventQueueLocker.Unlock()
 	queue, _ := eventQueueMap[agentId]
@@ -70,5 +82,5 @@ func CheckAgentIsWaiting(agentId string) (version string, isWaiting bool) {
 			return v, true
 		}
 	}
-	return "", false
+	return nil, false
 }

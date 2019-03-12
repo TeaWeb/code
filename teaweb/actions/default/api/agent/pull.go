@@ -4,6 +4,8 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/types"
+	"time"
 )
 
 type PullAction actions.Action
@@ -12,9 +14,14 @@ type PullAction actions.Action
 func (this *PullAction) Run(params struct{}) {
 	agentId := this.Context.Get("agent").(*agents.AgentConfig).Id
 	agentVersion := this.Request.Header.Get("Tea-Agent-Version")
+	nano := this.Request.Header.Get("Tea-Agent-Nano")
+	speed := float64(0)
+	if len(nano) > 0 {
+		speed = float64(time.Now().UnixNano()-types.Int64(nano)) / 1000000
+	}
 
 	c := make(chan *agentutils.Event)
-	agentutils.WaitAgentQueue(agentId, agentVersion, c)
+	agentutils.WaitAgentQueue(agentId, agentVersion, speed, c)
 
 	// 监控是否中断请求
 	go func() {
