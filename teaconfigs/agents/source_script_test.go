@@ -49,3 +49,31 @@ echo 123
 
 	t.Log(v)
 }
+
+func TestScriptSource_Execute_Interpreter(t *testing.T) {
+	source := NewScriptSource()
+	source.DataFormat = SourceDataFormatSingeLine
+	source.ScriptType = "code"
+	source.Script = `
+echo 123
+`
+	v, err := source.Execute(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(v)
+}
+
+func TestScriptSource_Execute_Interpreter2(t *testing.T) {
+	source := NewScriptSource()
+	source.DataFormat = SourceDataFormatSingeLine
+	source.ScriptType = "path"
+	source.Path = "/opt/test/cpu.sh"
+	v, err := source.Execute(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(v)
+}

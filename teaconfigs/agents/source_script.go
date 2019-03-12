@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
 	"os/exec"
@@ -57,6 +58,16 @@ func (this *ScriptSource) Description() string {
 func (this *ScriptSource) FormattedScript() string {
 	script := this.Script
 	script = strings.Replace(script, "\r", "", -1)
+
+	// 是否有解释器
+	if lists.Contains([]string{"darwin", "linux", "unix"}, runtime.GOOS) {
+		if !strings.HasPrefix(strings.TrimSpace(script), "#!") {
+			script = "#!/usr/bin/env bash\n" + script
+		} else {
+			script = strings.TrimLeft(script, " \r\n\t")
+		}
+	}
+
 	return script
 }
 
@@ -108,7 +119,21 @@ func (this *ScriptSource) Execute(params map[string]string) (value interface{}, 
 		return nil, errors.New("path or script should not be empty")
 	}
 
-	cmd := exec.Command(currentPath)
+	// 检查shell
+	var cmd *exec.Cmd = nil
+	if lists.Contains([]string{"darwin", "linux", "unix"}, runtime.GOOS) {
+		data, err := files.NewFile(currentPath).ReadAll()
+		if err == nil {
+			if !strings.HasPrefix(strings.TrimSpace(string(data)), "#!") {
+				cmd = exec.Command("sh", currentPath)
+			}
+		}
+		if cmd == nil {
+			cmd = exec.Command(currentPath)
+		}
+	} else {
+		cmd = exec.Command(currentPath)
+	}
 
 	if len(this.Env) > 0 {
 		for _, env := range this.Env {
