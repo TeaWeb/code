@@ -5,6 +5,7 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 )
 
+// 通过YAML把map转换为object
 func MapToObjectYAML(fromMap map[string]interface{}, toPtr interface{}) error {
 	data, err := yaml.Marshal(fromMap)
 	if err != nil {

@@ -2,6 +2,7 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
@@ -111,7 +112,7 @@ widget.run = function () {
 		logs.Error(err)
 	}
 
-	this.Data["charts"] = engine.Charts()
+	this.Data["charts"] = teautils.ConvertJSONObjectSafely(engine.Charts())
 	this.Data["output"] = engine.Output()
 	this.Success()
 }

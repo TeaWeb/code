@@ -169,6 +169,7 @@ func (this *PushAction) Run(params struct{}) {
 			Value:       v,
 			Error:       m.GetString("error"),
 			NoticeLevel: level,
+			CreatedAt:   time.Now().Unix(),
 		}
 		if threshold != nil {
 			value.Threshold = threshold.Expression()

@@ -13,7 +13,8 @@ type Value struct {
 	AgentId     string              `bson:"agentId" json:"agentId"`         // Agent ID
 	AppId       string              `bson:"appId" json:"appId"`             // App ID
 	ItemId      string              `bson:"itemId" json:"itemId"`           // 监控项ID
-	Timestamp   int64               `bson:"timestamp" json:"timestamp"`     // 时间戳
+	Timestamp   int64               `bson:"timestamp" json:"timestamp"`     // Agent时间戳
+	CreatedAt   int64               `bson:"createdAt" json:"createdAt"`     // Master时间戳
 	Value       interface{}         `bson:"value" json:"value"`             // 值，可以是个标量，或者一个组合的值
 	Error       string              `bson:"error" json:"error"`             // 错误信息
 	NoticeLevel notices.NoticeLevel `bson:"noticeLevel" json:"noticeLevel"` // 通知级别
