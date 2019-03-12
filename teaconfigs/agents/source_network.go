@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// CPU使用量
+// 网络带宽等信息
 type NetworkSource struct {
 	Source `yaml:",inline"`
 
@@ -41,7 +41,7 @@ func (this *NetworkSource) Code() string {
 
 // 描述
 func (this *NetworkSource) Description() string {
-	return "网络信息"
+	return "网络接口、带宽信息"
 }
 
 // 执行

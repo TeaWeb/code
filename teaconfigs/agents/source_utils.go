@@ -38,6 +38,8 @@ func RegisterAllDataSources() {
 	RegisterDataSource(NewPingSource(), SourceCategoryCommon)
 	RegisterDataSource(NewAppProcessesSource(), SourceCategoryCommon)
 	RegisterDataSource(NewFileChangeSource(), SourceCategoryCommon)
+
+	// plugin
 }
 
 // 单个数据源信息

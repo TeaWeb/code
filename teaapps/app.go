@@ -24,7 +24,6 @@ type App struct {
 
 	Processes  []*Process    `json:"processes"`
 	Operations []*Operation  `json:"operations"`
-	Monitors   []*Monitor    `json:"monitors"`
 	Statistics []*Statistics `json:"statistics"`
 	Logs       []*Log        `json:"logs"`
 
@@ -44,7 +43,7 @@ func (this *App) ResetProcesses() {
 }
 
 // 添加进程，不包括子进程
-func (this *App) AddProcess(process ... *Process) {
+func (this *App) AddProcess(process ...*Process) {
 	this.Processes = append(this.Processes, process ...)
 }
 
@@ -169,9 +168,6 @@ func (this *App) LoadFromInterface(a *apps.App) {
 
 	// Operations TODO
 	this.Operations = []*Operation{}
-
-	// Monitors TODO
-	this.Monitors = []*Monitor{}
 
 	// Statistics TODO
 	this.Statistics = []*Statistics{}

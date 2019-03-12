@@ -106,7 +106,7 @@ func (this *LoadSource) Charts() []*widgets.Chart {
 		chart.Columns = 2
 		chart.Type = "javascript"
 		chart.Options = maps.Map{
-			"Code": `
+			"code": `
 var chart = new charts.LineChart();
 
 var query = new values.Query();

@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// 负载
+// 文件系统信息
 type DiskSource struct {
 	Source `yaml:",inline"`
 }
