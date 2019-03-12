@@ -17,6 +17,7 @@ func init() {
 			Get("", new(IndexAction)).
 			GetPost("/addAgent", new(AddAgentAction)).
 			GetPost("/delete", new(DeleteAction)).
+			Post("/deleteAgents", new(DeleteAgentsAction)).
 			Post("/move", new(MoveAction)).
 			Get("/menu", new(MenuAction)).
 			GetPost("/form", new(FormAction)).
