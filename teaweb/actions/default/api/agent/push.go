@@ -90,7 +90,7 @@ func (this *PushAction) Run(params struct{}) {
 		}
 
 		v := m.Get("value")
-		level, message := item.TestValue(v)
+		threshold, level, message := item.TestValue(v)
 
 		// 通知消息
 		if level != notices.NoticeLevelNone {
@@ -102,6 +102,9 @@ func (this *PushAction) Run(params struct{}) {
 				AppId:   appId,
 				ItemId:  itemId,
 				Level:   level,
+			}
+			if threshold != nil {
+				notice.Agent.Threshold = threshold.Expression()
 			}
 			err = noticeutils.NewNoticeQuery().Insert(notice)
 			if err != nil {
@@ -166,6 +169,9 @@ func (this *PushAction) Run(params struct{}) {
 			Value:       v,
 			Error:       m.GetString("error"),
 			NoticeLevel: level,
+		}
+		if threshold != nil {
+			value.Threshold = threshold.Expression()
 		}
 		value.SetTime(t)
 

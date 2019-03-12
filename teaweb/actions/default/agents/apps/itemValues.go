@@ -76,6 +76,7 @@ func (this *ItemValuesAction) RunPost(params struct {
 			"value":       value.Value,
 			"error":       value.Error,
 			"noticeLevel": notices.FindNoticeLevel(value.NoticeLevel),
+			"threshold":   value.Threshold,
 		}
 	})
 	this.Success()

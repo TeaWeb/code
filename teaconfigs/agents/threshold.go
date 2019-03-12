@@ -211,3 +211,8 @@ func (this *Threshold) RunActions(params map[string]string) error {
 
 	return nil
 }
+
+// 取得描述文本
+func (this *Threshold) Expression() string {
+	return this.Param + " " + this.Operator + " " + this.Value
+}

@@ -29,11 +29,12 @@ type ProxyCond struct {
 
 // Agent条件
 type AgentCond struct {
-	AgentId string `bson:"agentId" json:"agentId"`
-	AppId   string `bson:"appId" json:"appId"`
-	TaskId  string `bson:"taskId" json:"taskId"`
-	ItemId  string `bson:"itemId" json:"itemId"`
-	Level   uint8  `bson:"level" json:"level"`
+	AgentId   string `bson:"agentId" json:"agentId"`
+	AppId     string `bson:"appId" json:"appId"`
+	TaskId    string `bson:"taskId" json:"taskId"`
+	ItemId    string `bson:"itemId" json:"itemId"`
+	Level     uint8  `bson:"level" json:"level"`
+	Threshold string `bson:"bson" json:"threshold"`
 }
 
 // 获取通知对象

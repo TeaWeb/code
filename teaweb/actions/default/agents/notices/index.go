@@ -64,6 +64,9 @@ func (this *IndexAction) Run(params struct {
 		this.Data["notices"] = lists.Map(ones, func(k int, v interface{}) interface{} {
 			notice := v.(*notices.Notice)
 			isAgent := len(notice.Agent.AgentId) > 0
+			if len(notice.Agent.Threshold) > 0 {
+				notice.Message += " [触发阈值：" + notice.Agent.Threshold + "]"
+			}
 			m := maps.Map{
 				"id":       notice.Id,
 				"isAgent":  isAgent,

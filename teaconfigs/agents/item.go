@@ -84,20 +84,20 @@ func (this *Item) Source() SourceInterface {
 }
 
 // 检查某个值对应的通知级别
-func (this *Item) TestValue(value interface{}) (level notices.NoticeLevel, message string) {
+func (this *Item) TestValue(value interface{}) (threshold *Threshold, level notices.NoticeLevel, message string) {
 	if len(this.Thresholds) == 0 {
-		return notices.NoticeLevelNone, ""
+		return nil, notices.NoticeLevelNone, ""
 	}
 	for _, t := range this.Thresholds {
 		if t.Test(value) {
 			if len(t.NoticeMessage) > 0 {
-				return t.NoticeLevel, t.NoticeMessage
+				return t, t.NoticeLevel, t.NoticeMessage
 			} else {
-				return t.NoticeLevel, t.Param + " " + t.Operator + " " + t.Value
+				return t, t.NoticeLevel, t.Param + " " + t.Operator + " " + t.Value
 			}
 		}
 	}
-	return notices.NoticeLevelNone, ""
+	return nil, notices.NoticeLevelNone, ""
 }
 
 // 添加图表
