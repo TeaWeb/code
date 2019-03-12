@@ -10,6 +10,7 @@ func init() {
 			Get("", new(IndexAction)).
 			Get("/pull", new(PullAction)).
 			Put("/push", new(PushAction)).
+			Get("/upgrade", new(UpgradeAction)).
 			EndAll()
 	})
 }
