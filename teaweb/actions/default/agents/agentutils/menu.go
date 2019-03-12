@@ -55,7 +55,10 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	if err != nil {
 		logs.Error(err)
 	} else {
-		for _, agent := range agentList.FindAllAgents() {
+		allAgents := agentList.FindAllAgents()
+		counterMapping := map[string]int{} // groupId => count
+		maxCount := 50
+		for _, agent := range allAgents {
 			_, isWaiting := CheckAgentIsWaiting(agent.Id)
 
 			var menu *utils.Menu = nil
@@ -66,9 +69,38 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 				} else {
 					menu = menuGroup.FindMenu(group.Id, group.Name)
 					menu.Index = group.Index
+
+					// 计算数量
+					_, found := counterMapping[group.Id]
+					if found {
+						counterMapping[group.Id] ++
+					} else {
+						counterMapping[group.Id] = 1
+					}
+					if counterMapping[group.Id] > maxCount {
+						if counterMapping[group.Id] == maxCount+1 {
+							menu.AddSpecial("[更多主机]", "", "/agents/groups/detail?groupId="+group.Id, false)
+						}
+						continue
+					}
 				}
 			} else {
 				menu = menuGroup.FindMenu("", "默认分组"+topSubName)
+
+				// 计算数量
+				groupId := ""
+				_, found := counterMapping[groupId]
+				if found {
+					counterMapping[groupId] ++
+				} else {
+					counterMapping[groupId] = 1
+				}
+				if counterMapping[groupId] > maxCount {
+					if counterMapping[groupId] == maxCount+1 {
+						menu.AddSpecial("[更多主机]", "", "/agents/groups/detail?groupId="+groupId, false)
+					}
+					continue
+				}
 			}
 
 			if isWaiting {
