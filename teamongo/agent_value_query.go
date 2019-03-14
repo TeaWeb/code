@@ -223,6 +223,18 @@ func (this *AgentValueQuery) Find() (*agents.Value, error) {
 	return result.(*agents.Value), nil
 }
 
+// 查找多个数据
+func (this *AgentValueQuery) FindAll() ([]*agents.Value, error) {
+	result, err := this.Action(ValueQueryActionFindAll).Execute()
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, nil
+	}
+	return result.([]*agents.Value), nil
+}
+
 // 插入新数据
 func (this *AgentValueQuery) Insert(value *agents.Value) error {
 	if value == nil {

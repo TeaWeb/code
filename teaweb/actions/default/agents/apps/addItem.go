@@ -103,6 +103,8 @@ func (this *AddItemAction) RunPost(params struct {
 	CondNoticeMessages []string
 	CondActions        []string
 
+	RecoverSuccesses int
+
 	Must *actions.Must
 }) {
 	agent := agents.NewAgentConfigFromId(params.AgentId)
@@ -146,8 +148,9 @@ func (this *AddItemAction) RunPost(params struct {
 		this.Fail("校验失败：" + err.Error())
 	}
 
-	// 刷新间隔
+	// 刷新间隔等其他选项
 	item.Interval = fmt.Sprintf("%ds", params.Interval)
+	item.RecoverSuccesses = params.RecoverSuccesses
 
 	// 阈值设置
 	for index, param := range params.CondParams {

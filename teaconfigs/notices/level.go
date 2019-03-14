@@ -69,3 +69,8 @@ func FindNoticeLevel(level NoticeLevel) maps.Map {
 	}
 	return FindNoticeLevel(NoticeLevelInfo)
 }
+
+// 判断是否为失败级别
+func IsFailureLevel(level NoticeLevel) bool {
+	return level == NoticeLevelWarning || level == NoticeLevelError
+}

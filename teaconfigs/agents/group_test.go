@@ -27,3 +27,9 @@ func TestSharedGroupConfig_Remove(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestSharedGroupConfig2(t *testing.T) {
+	config := SharedGroupConfig()
+	//logs.PrintAsJSON(config, t)
+	logs.PrintAsJSON(config.FindGroup(""), t)
+}

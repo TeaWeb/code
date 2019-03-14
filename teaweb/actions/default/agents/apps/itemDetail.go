@@ -27,6 +27,11 @@ func (this *ItemDetailAction) Run(params struct {
 		this.Fail("找不到要查看的Item")
 	}
 
+	// recover success
+	if item.RecoverSuccesses <= 0 {
+		item.RecoverSuccesses = 1
+	}
+
 	this.Data["item"] = item
 
 	this.Data["sourceOptions"] = nil

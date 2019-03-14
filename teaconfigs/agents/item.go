@@ -9,14 +9,15 @@ import (
 
 // 数据指标项
 type Item struct {
-	On            bool                   `yaml:"on" json:"on"`
-	Id            string                 `yaml:"id" json:"id"`
-	Name          string                 `yaml:"name" json:"name"`
-	SourceCode    string                 `yaml:"sourceCode" json:"sourceCode"`       // 数据源代号
-	SourceOptions map[string]interface{} `yaml:"sourceOptions" json:"sourceOptions"` // 数据源选项
-	Interval      string                 `yaml:"interval" json:"interval"`           // 刷新间隔
-	Thresholds    []*Threshold           `yaml:"thresholds" json:"thresholds"`       // 阈值设置
-	Charts        []*widgets.Chart       `yaml:"charts" json:"charts"`               // 图表
+	On               bool                   `yaml:"on" json:"on"`
+	Id               string                 `yaml:"id" json:"id"`
+	Name             string                 `yaml:"name" json:"name"`
+	SourceCode       string                 `yaml:"sourceCode" json:"sourceCode"`             // 数据源代号
+	SourceOptions    map[string]interface{} `yaml:"sourceOptions" json:"sourceOptions"`       // 数据源选项
+	Interval         string                 `yaml:"interval" json:"interval"`                 // 刷新间隔
+	Thresholds       []*Threshold           `yaml:"thresholds" json:"thresholds"`             // 阈值设置
+	Charts           []*widgets.Chart       `yaml:"charts" json:"charts"`                     // 图表
+	RecoverSuccesses int                    `yaml:"recoverSuccesses" json:"recoverSuccesses"` // 恢复的成功次数
 
 	source           SourceInterface
 	intervalDuration time.Duration

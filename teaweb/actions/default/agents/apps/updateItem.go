@@ -31,6 +31,9 @@ func (this *UpdateItemAction) Run(params struct {
 	if item == nil {
 		this.Fail("找不到要修改的监控项")
 	}
+	if item.RecoverSuccesses <= 0 {
+		item.RecoverSuccesses = 1
+	}
 	this.Data["item"] = item
 
 	this.Data["from"] = params.From
@@ -117,6 +120,8 @@ func (this *UpdateItemAction) RunPost(params struct {
 	CondNoticeMessages []string
 	CondActions        []string
 
+	RecoverSuccesses int
+
 	Must *actions.Must
 }) {
 	agent := agents.NewAgentConfigFromId(params.AgentId)
@@ -158,8 +163,9 @@ func (this *UpdateItemAction) RunPost(params struct {
 	values["dataFormat"] = params.DataFormat
 	item.SourceOptions = values
 
-	// 刷新间隔
+	// 刷新间隔等其他选项
 	item.Interval = fmt.Sprintf("%ds", params.Interval)
+	item.RecoverSuccesses = params.RecoverSuccesses
 
 	// 阈值设置
 	item.Thresholds = []*agents.Threshold{}
