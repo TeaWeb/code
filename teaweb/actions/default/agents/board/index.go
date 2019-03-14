@@ -74,8 +74,9 @@ func (this *IndexAction) RunPost(params struct {
 		var chartName string
 		if app.IsSystem {
 			chartName = chart.Name
+			chartName = chart.Name + "<span class=\"ops\"><a href=\"/agents/apps/itemValues?agentId=" + agent.Id + "&appId=" + app.Id + "&itemId=" + item.Id + "\" title=\"查看数值记录\"><i class=\"icon external small\"></i></a></span>"
 		} else {
-			chartName = chart.Name + "<span class=\"ops\"><a href=\"\" title=\"从看板移除\" onclick=\"return Tea.Vue.removeChart('" + c.AppId + "', '" + c.ItemId + "', '" + c.ChartId + "')\"><i class=\"icon remove small\"></i></a></span>"
+			chartName = chart.Name + "<span class=\"ops\"><a href=\"\" title=\"从看板移除\" onclick=\"return Tea.Vue.removeChart('" + c.AppId + "', '" + c.ItemId + "', '" + c.ChartId + "')\"><i class=\"icon remove small\"></i></a> &nbsp; <a href=\"/agents/apps/itemValues?agentId=" + agent.Id + "&appId=" + app.Id + "&itemId=" + item.Id + "\" title=\"查看数值记录\"><i class=\"icon external small\"></i></a></span>"
 		}
 		code, err := o.AsJavascript(maps.Map{
 			"name":    chartName,
