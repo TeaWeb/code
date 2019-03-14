@@ -7,6 +7,7 @@ import (
 )
 
 // 去除导致不能转换特殊内容的问题
+// 当前不支持struct
 func ConvertJSONObjectSafely(obj interface{}) interface{} {
 	if obj == nil {
 		return nil
@@ -18,14 +19,6 @@ func ConvertJSONObjectSafely(obj interface{}) interface{} {
 		for _, k := range v.MapKeys() {
 			k1 := k.Interface()
 			v1 := v.MapIndex(k)
-
-			// NaN
-			if v1.Interface() != nil && reflect.TypeOf(v1.Interface()).Kind() == reflect.Float64 {
-				if math.IsNaN(v1.Interface().(float64)) {
-					result[types.String(k1)] = float64(0)
-					continue
-				}
-			}
 
 			// interface{} key => string key
 			result[types.String(k1)] = ConvertJSONObjectSafely(v1.Interface())
@@ -40,6 +33,10 @@ func ConvertJSONObjectSafely(obj interface{}) interface{} {
 			result = append(result, ConvertJSONObjectSafely(v1.Interface()))
 		}
 		return result
+	case reflect.Float64:
+		if math.IsNaN(obj.(float64)) {
+			return 0
+		}
 	default:
 		return obj
 	}
