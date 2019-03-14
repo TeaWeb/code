@@ -102,6 +102,7 @@ func (this *AddItemAction) RunPost(params struct {
 	CondNoticeLevels   []uint
 	CondNoticeMessages []string
 	CondActions        []string
+	CondMaxFails       []int
 
 	RecoverSuccesses int
 
@@ -154,7 +155,13 @@ func (this *AddItemAction) RunPost(params struct {
 
 	// 阈值设置
 	for index, param := range params.CondParams {
-		if index < len(params.CondValues) && index < len(params.CondOps) && index < len(params.CondValues) && index < len(params.CondNoticeLevels) && index < len(params.CondNoticeMessages) && index < len(params.CondActions) {
+		if index < len(params.CondValues) &&
+			index < len(params.CondOps) &&
+			index < len(params.CondValues) &&
+			index < len(params.CondNoticeLevels) &&
+			index < len(params.CondNoticeMessages) &&
+			index < len(params.CondActions) &&
+			index < len(params.CondMaxFails) {
 			// 校验
 			op := params.CondOps[index]
 			value := params.CondValues[index]
@@ -180,6 +187,7 @@ func (this *AddItemAction) RunPost(params struct {
 			t.NoticeLevel = types.Uint8(params.CondNoticeLevels[index])
 			t.NoticeMessage = params.CondNoticeMessages[index]
 			t.Actions = actionList
+			t.MaxFails = params.CondMaxFails[index]
 			item.AddThreshold(t)
 		}
 	}

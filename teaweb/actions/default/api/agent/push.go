@@ -144,37 +144,71 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	// 通知消息
 	setting := notices.SharedNoticeSetting()
 
+	isNotified := false
 	if level != notices.NoticeLevelNone {
-		notice := notices.NewNotice()
-		notice.SetTime(t)
-		notice.Message = message
-		notice.Agent = notices.AgentCond{
-			AgentId: agent.Id,
-			AppId:   appId,
-			ItemId:  itemId,
-			Level:   level,
-		}
-		if threshold != nil {
-			notice.Agent.Threshold = threshold.Expression()
-		}
-		err := noticeutils.NewNoticeQuery().Insert(notice)
-		if err != nil {
-			logs.Error(err)
+		// 是否发送通知
+		shouldNotify := true
+
+		// 检查最近N此数值是否都是同类错误
+		if threshold != nil && threshold.MaxFails > 1 {
+			query := teamongo.NewAgentValueQuery()
+			query.Agent(agent.Id)
+			query.App(app.Id)
+			query.Item(item.Id)
+			query.Desc("_id")
+			query.Limit(int64(threshold.MaxFails) - 1)
+			values, err := query.FindAll()
+			if err != nil {
+				logs.Error(err)
+			} else {
+				if len(values) != threshold.MaxFails-1 { // 未达到连续失败次数
+					shouldNotify = false
+				} else {
+					for _, v := range values {
+						if v.ThresholdId != threshold.Id || v.IsNotified {
+							shouldNotify = false
+							break
+						}
+					}
+				}
+			}
 		}
 
-		// 通过媒介发送通知
-		fullMessage := "消息：" + message + "\n时间：" + timeutil.Format("Y-m-d H:i:s", t)
-		linkNames := []string{}
-		for _, l := range agentutils.FindNoticeLinks(notice) {
-			linkNames = append(linkNames, types.String(l["name"]))
-		}
-		if len(linkNames) > 0 {
-			fullMessage += "\n位置：" + strings.Join(linkNames, "/")
-		}
+		// 发送通知
+		if shouldNotify {
+			isNotified = true
 
-		receiverIds := this.notifyMessage(agent, appId, itemId, setting, level, fullMessage)
-		if len(receiverIds) > 0 {
-			noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
+			notice := notices.NewNotice()
+			notice.SetTime(t)
+			notice.Message = message
+			notice.Agent = notices.AgentCond{
+				AgentId: agent.Id,
+				AppId:   appId,
+				ItemId:  itemId,
+				Level:   level,
+			}
+			if threshold != nil {
+				notice.Agent.Threshold = threshold.Expression()
+			}
+			err := noticeutils.NewNoticeQuery().Insert(notice)
+			if err != nil {
+				logs.Error(err)
+			}
+
+			// 通过媒介发送通知
+			fullMessage := "消息：" + message + "\n时间：" + timeutil.Format("Y-m-d H:i:s", t)
+			linkNames := []string{}
+			for _, l := range agentutils.FindNoticeLinks(notice) {
+				linkNames = append(linkNames, types.String(l["name"]))
+			}
+			if len(linkNames) > 0 {
+				fullMessage += "\n位置：" + strings.Join(linkNames, "/")
+			}
+
+			receiverIds := this.notifyMessage(agent, appId, itemId, setting, level, fullMessage)
+			if len(receiverIds) > 0 {
+				noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
+			}
 		}
 	}
 
@@ -188,8 +222,10 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 		Error:       m.GetString("error"),
 		NoticeLevel: level,
 		CreatedAt:   time.Now().Unix(),
+		IsNotified:  isNotified,
 	}
 	if threshold != nil {
+		value.ThresholdId = threshold.Id
 		value.Threshold = threshold.Expression()
 	}
 	value.SetTime(t)

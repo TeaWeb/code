@@ -24,7 +24,7 @@ type Threshold struct {
 	NoticeLevel   notices.NoticeLevel      `yaml:"noticeLevel" json:"noticeLevel"`     // 通知级别
 	NoticeMessage string                   `yaml:"noticeMessage" json:"noticeMessage"` // 通知消息
 	Actions       []map[string]interface{} `yaml:"actions" json:"actions"`             // 动作配置
-	MaxFails      int                      `yaml:"maxFails" json:"maxFails"`           // 允许的最大失败次数 TODO 需要实现
+	MaxFails      int                      `yaml:"maxFails" json:"maxFails"`           // 连续失败次数
 
 	regValue   *regexp.Regexp
 	floatValue float64

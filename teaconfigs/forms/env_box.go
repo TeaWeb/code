@@ -53,6 +53,7 @@ this.confirmAddEnv = function () {
 	if (this.envAddingName.length == 0) {
 		alert("请输入变量名");
 		this.$find("form input[name='envAddingName']").focus();
+		return;
 	}
 	this.env.push({
 		"name": this.envAddingName,
@@ -91,7 +92,7 @@ this.cancelEnv = function () {
 		<button class="ui button" type="button" @click="confirmAddEnv()">添加</button>
 	</div>
 	<div class="ui field" style="padding-left:0;padding-right:0">
-		<a href="" @click.prevent="cancelEnv()"><i class="icon remove"></i></a>
+		<a href="" @click.prevent="cancelEnv()" title="删除"><i class="icon remove"></i></a>
 	</div>
 </div>
 <div class="ui field">

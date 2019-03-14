@@ -18,6 +18,8 @@ type Value struct {
 	Value       interface{}         `bson:"value" json:"value"`             // 值，可以是个标量，或者一个组合的值
 	Error       string              `bson:"error" json:"error"`             // 错误信息
 	NoticeLevel notices.NoticeLevel `bson:"noticeLevel" json:"noticeLevel"` // 通知级别
+	IsNotified  bool                `bson:"isNotified" json:"isNotified"`   // 是否已通知
+	ThresholdId string              `bson:"thresholdId" json:"thresholdId"` // 阈值ID
 	Threshold   string              `bson:"threshold" json:"threshold"`     // 阈值描述
 	TimeFormat  struct {
 		Year   string `bson:"year" json:"year"`
