@@ -26,6 +26,7 @@ func (this *AddAgentAction) RunPost(params struct {
 	IPs                 []string `alias:"ips"`
 	On                  bool
 	CheckDisconnections bool
+	AutoUpdates         bool
 	Must                *actions.Must
 }) {
 	params.Must.
@@ -50,6 +51,7 @@ func (this *AddAgentAction) RunPost(params struct {
 	agent.Allow = params.IPs
 	agent.Key = stringutil.Rand(32)
 	agent.CheckDisconnections = params.CheckDisconnections
+	agent.AutoUpdates = params.AutoUpdates
 	err = agent.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())

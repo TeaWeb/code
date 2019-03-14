@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/types"
+	"math"
 	"time"
 )
 
@@ -17,7 +18,10 @@ func (this *PullAction) Run(params struct{}) {
 	nano := this.Request.Header.Get("Tea-Agent-Nano")
 	speed := float64(0)
 	if len(nano) > 0 {
-		speed = float64(time.Now().UnixNano()-types.Int64(nano)) / 1000000
+		speed = math.Ceil(float64(time.Now().UnixNano()-types.Int64(nano))*1000/1000000) / 1000
+		if speed < 0 {
+			speed = -speed
+		}
 	}
 
 	c := make(chan *agentutils.Event)

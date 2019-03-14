@@ -40,6 +40,7 @@ func (this *UpdateAction) RunPost(params struct {
 	On                  bool
 	Key                 string
 	CheckDisconnections bool
+	AutoUpdates         bool
 	Must                *actions.Must
 }) {
 	params.Must.
@@ -66,6 +67,7 @@ func (this *UpdateAction) RunPost(params struct {
 	agent.Allow = params.IPs
 	agent.Key = params.Key
 	agent.CheckDisconnections = params.CheckDisconnections
+	agent.AutoUpdates = params.AutoUpdates
 	err := agent.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())

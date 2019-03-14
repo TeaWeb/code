@@ -41,7 +41,7 @@ func (this *ItemValuesAction) RunPost(params struct {
 	AppId   string
 	ItemId  string
 	LastId  string
-	Level   int
+	Level   notices.NoticeLevel
 }) {
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {
@@ -58,7 +58,11 @@ func (this *ItemValuesAction) RunPost(params struct {
 	query.Action(teamongo.ValueQueryActionFindAll)
 
 	if params.Level > 0 {
-		query.Attr("noticeLevel", params.Level)
+		if params.Level == notices.NoticeLevelInfo {
+			query.Attr("noticeLevel", []interface{}{notices.NoticeLevelInfo, notices.NoticeLevelNone})
+		} else {
+			query.Attr("noticeLevel", params.Level)
+		}
 	}
 
 	if len(params.LastId) > 0 {

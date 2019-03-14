@@ -22,6 +22,7 @@ type AgentConfig struct {
 	CheckDisconnections bool         `yaml:"checkDisconnections" json:"checkDisconnections"` // 是否检查离线
 	CountDisconnections int          `yaml:"countDisconnections" json:"countDisconnections"` // 错误次数
 	GroupIds            []string     `yaml:"groupIds" json:"groupIds"`                       // 分组IDs
+	AutoUpdates         bool         `yaml:"autoUpdates" json:"autoUpdates"`                 // 是否开启自动更新
 }
 
 // 获取新对象
