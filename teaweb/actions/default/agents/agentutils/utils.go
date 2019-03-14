@@ -1,6 +1,7 @@
 package agentutils
 
 import (
+	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/iwind/TeaGo/maps"
@@ -29,7 +30,7 @@ func FindNoticeLinks(notice *notices.Notice) (links []maps.Map) {
 					if item != nil {
 						links = append(links, maps.Map{
 							"name": item.Name,
-							"url":  "/agents/apps/itemDetail?agentId=" + agent.Id + "&appId=" + app.Id + "&itemId=" + item.Id,
+							"url":  "/agents/apps/itemValues?agentId=" + agent.Id + "&appId=" + app.Id + "&itemId=" + item.Id + "&level=" + fmt.Sprintf("%d", notice.Agent.Level),
 						})
 					}
 				}

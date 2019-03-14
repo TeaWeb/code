@@ -19,6 +19,7 @@ func (this *ItemValuesAction) Run(params struct {
 	AgentId string
 	AppId   string
 	ItemId  string
+	Level   int
 }) {
 	app := agentutils.InitAppData(this, params.AgentId, params.AppId, "monitor")
 	item := app.FindItem(params.ItemId)
@@ -28,6 +29,8 @@ func (this *ItemValuesAction) Run(params struct {
 	}
 
 	this.Data["item"] = item
+	this.Data["levels"] = notices.AllNoticeLevels()
+	this.Data["selectedLevel"] = params.Level
 
 	this.Show()
 }
@@ -38,6 +41,7 @@ func (this *ItemValuesAction) RunPost(params struct {
 	AppId   string
 	ItemId  string
 	LastId  string
+	Level   int
 }) {
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {
@@ -52,6 +56,10 @@ func (this *ItemValuesAction) RunPost(params struct {
 	query.Limit(100)
 	query.Desc("_id")
 	query.Action(teamongo.ValueQueryActionFindAll)
+
+	if params.Level > 0 {
+		query.Attr("noticeLevel", params.Level)
+	}
 
 	if len(params.LastId) > 0 {
 		lastObjectId, err := primitive.ObjectIDFromHex(params.LastId)

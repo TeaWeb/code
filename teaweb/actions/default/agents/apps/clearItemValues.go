@@ -13,6 +13,7 @@ func (this *ClearItemValuesAction) Run(params struct {
 	AgentId string
 	AppId   string
 	ItemId  string
+	Level   int
 }) {
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {
@@ -35,6 +36,9 @@ func (this *ClearItemValuesAction) Run(params struct {
 	query.Agent(agent.Id)
 	query.Attr("appId", params.AppId)
 	query.Attr("itemId", params.ItemId)
+	if params.Level > 0 {
+		query.Attr("noticeLevel", params.Level)
+	}
 	err := query.Delete()
 	if err != nil {
 		this.Fail("清除失败：" + err.Error())
