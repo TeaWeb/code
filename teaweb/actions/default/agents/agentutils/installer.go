@@ -271,6 +271,12 @@ func (this *Installer) Start() error {
 			}
 
 			this.log("finished")
+
+			// 试着安装启动脚本，不提示错误信息
+			if this.AuthUsername == "root" {
+				this.installService(sftpClient, client)
+			}
+
 			return nil
 		}
 	}
@@ -300,4 +306,46 @@ func (this *Installer) runCmdOnSSH(client *ssh.Client, cmd string) (stdoutBytes 
 // 记录日志
 func (this *Installer) log(message string) {
 	this.Logs = append(this.Logs, message)
+}
+
+// 安装服务脚本
+func (this *Installer) installService(sftpClient *sftp.Client, client *ssh.Client) {
+	file, err := sftpClient.Create("/etc/init.d/teaweb-agent")
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	_, err = file.Write([]byte(`#! /bin/bash
+#
+# teaweb       TeaWeb agent management
+#
+# chkconfig: 2345 40 90
+# description: TeaWeb agent management
+
+# teaweb agent install dir
+INSTALL_DIR="` + this.Dir + `/agent"
+
+export TEAROOT=${INSTALL_DIR}
+
+case "$1" in
+start)
+    ${INSTALL_DIR}/bin/teaweb-agent start
+    ;;
+stop)
+    ${INSTALL_DIR}/bin/teaweb-agent stop
+    ;;
+restart)
+    ${INSTALL_DIR}/bin/teaweb-agent restart
+    ;;
+*)
+    echo $"Usage: $0 {start|stop|restart}"
+    exit 2
+esac`))
+	if err != nil {
+		return
+	}
+
+	this.runCmdOnSSH(client, "chmod u+x /etc/init.d/teaweb-agent")
+	this.runCmdOnSSH(client, "chkconfig --add teaweb-agent")
+	this.runCmdOnSSH(client, "systemctl daemon-reload")
 }
