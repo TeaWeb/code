@@ -15,3 +15,14 @@ func TestAppProcessesSource_Execute(t *testing.T) {
 
 	logs.PrintAsJSON(value, t)
 }
+
+func TestAppProcessesSource_Execute2(t *testing.T) {
+	source := NewAppProcessesSource()
+	source.CmdlineKeyword = "mysql123"
+	value, err := source.Execute(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	logs.PrintAsJSON(value, t)
+}

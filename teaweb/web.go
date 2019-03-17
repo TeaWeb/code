@@ -9,6 +9,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/apps"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/board"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/cluster"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/groups"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/notices"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/settings"

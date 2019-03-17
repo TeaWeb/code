@@ -16,6 +16,7 @@ func NewCommandExecutor() *CommandExecutor {
 	return &CommandExecutor{}
 }
 
+// 添加命令
 func (this *CommandExecutor) Add(command string, arg ...string) {
 	this.commands = append(this.commands, &Command{
 		Name: command,
@@ -23,18 +24,19 @@ func (this *CommandExecutor) Add(command string, arg ...string) {
 	})
 }
 
+// 执行命令
 func (this *CommandExecutor) Run() (output string, err error) {
 	if len(this.commands) == 0 {
 		return "", errors.New("no commands no run")
 	}
 	var lastCmd *exec.Cmd = nil
-	var data []byte = nil
+	var lastData []byte = nil
 	for _, command := range this.commands {
 		cmd := exec.Command(command.Name, command.Args ...)
-		buf := bytes.NewBuffer([]byte{})
-		cmd.Stdout = buf
+		stdout := bytes.NewBuffer([]byte{})
+		cmd.Stdout = stdout
 		if lastCmd != nil {
-			cmd.Stdin = bytes.NewBuffer(data)
+			cmd.Stdin = bytes.NewBuffer(lastData)
 		}
 		err = cmd.Start()
 		if err != nil {
@@ -45,10 +47,10 @@ func (this *CommandExecutor) Run() (output string, err error) {
 		if err != nil {
 			return "", err
 		}
-		data = buf.Bytes()
+		lastData = stdout.Bytes()
 
 		lastCmd = cmd
 	}
 
-	return string(bytes.TrimSpace(data)), nil
+	return string(bytes.TrimSpace(lastData)), nil
 }

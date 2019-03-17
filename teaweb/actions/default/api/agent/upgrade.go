@@ -13,7 +13,12 @@ type UpgradeAction actions.Action
 
 // 升级信息
 func (this *UpgradeAction) Run(params struct{}) {
-	agentId := this.Context.Get("agent").(*agents.AgentConfig).Id
+	agent := this.Context.Get("agent").(*agents.AgentConfig)
+	if !agent.On {
+		this.Fail("agent is not on")
+	}
+
+	agentId := agent.Id
 	agentVersion := this.Request.Header.Get("Tea-Agent-Version")
 	agentOS := this.Request.Header.Get("Tea-Agent-Os")
 	agentArch := this.Request.Header.Get("Tea-Agent-Arch")

@@ -28,6 +28,11 @@ type PushAction actions.Action
 func (this *PushAction) Run(params struct{}) {
 	agent := this.Context.Get("agent").(*agents.AgentConfig)
 
+	// 是否未启用
+	if !agent.On {
+		this.Success()
+	}
+
 	data, err := ioutil.ReadAll(this.Request.Body)
 	if err != nil {
 		logs.Error(err)

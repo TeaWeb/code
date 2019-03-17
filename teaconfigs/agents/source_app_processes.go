@@ -69,7 +69,7 @@ func (this *AppProcessesSource) Form() *forms.Form {
 	{
 		group := form.NewGroup()
 		{
-			field  := forms.NewTextField("命令行匹配关键词", "Cmdline")
+			field := forms.NewTextField("命令行匹配关键词", "Cmdline")
 			field.IsRequired = true
 			field.Code = "cmdlineKeyword"
 			field.Comment = "比如mysql、mongod之类的能匹配你要监控的进程命令行的关键词"

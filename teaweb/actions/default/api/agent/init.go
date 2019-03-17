@@ -11,6 +11,9 @@ func init() {
 			Get("/pull", new(PullAction)).
 			Put("/push", new(PushAction)).
 			Get("/upgrade", new(UpgradeAction)).
+			EndAll().
+			// 不需要认证的API
+			Get("/api/agent/ip", new(IpAction)).
 			EndAll()
 	})
 }

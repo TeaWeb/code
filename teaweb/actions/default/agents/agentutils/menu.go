@@ -44,10 +44,10 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	}
 	menu := menuGroup.FindMenu("", "默认分组"+topSubName)
 	if isWaiting {
-		item := menu.Add("本地", "已连接", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/groups"))
+		item := menu.Add("本地", "已连接", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/cluster/add", "/agents/groups"))
 		item.SubColor = "green"
 	} else {
-		menu.Add("本地", "", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/groups"))
+		menu.Add("本地", "", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/cluster/add", "/agents/groups"))
 	}
 
 	// agent列表
@@ -125,7 +125,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 		menu := menuGroup.FindMenu("operations", "[操作]")
 		menu.AlwaysActive = true
 		menu.Index = 10000
-		menu.Add("[添加新主机]", "", "/agents/addAgent", action.HasPrefix("/agents/addAgent"))
+		menu.Add("[添加新主机]", "", "/agents/addAgent", action.HasPrefix("/agents/addAgent", "/agents/cluster/add"))
 		menu.Add("[分组管理]", "", "/agents/groups", action.HasPrefix("/agents/groups"))
 	}
 
@@ -133,7 +133,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	utils.SetSubMenu(action, menuGroup)
 
 	// Tabbar
-	if !action.HasPrefix("/agents/addAgent", "/agents/groups") {
+	if !action.HasPrefix("/agents/addAgent", "/agents/cluster/add", "/agents/groups") {
 		agent := agents.NewAgentConfigFromId(agentId)
 
 		tabbar := utils.NewTabbar()
