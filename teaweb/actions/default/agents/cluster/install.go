@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -17,8 +18,15 @@ func (this *InstallAction) Run(params struct {
 	GroupId  string
 	Port     int
 	Username string
+	AuthType string
 	Password string
+	Key      string
 }) {
+	// 禁止demo
+	if teaconst.DemoEnabled {
+		this.Fail("DEMO版本无法操作")
+	}
+
 	if len(params.Hosts) == 0 {
 		this.Data["states"] = []interface{}{}
 		this.Success()
@@ -41,7 +49,9 @@ func (this *InstallAction) Run(params struct {
 			installer.GroupId = params.GroupId
 			installer.Dir = params.Dir
 			installer.AuthUsername = params.Username
+			installer.AuthType = params.AuthType
 			installer.AuthPassword = params.Password
+			installer.AuthKey = []byte(params.Key)
 			err := installer.Start()
 			result := maps.Map{
 				"addr":        host,

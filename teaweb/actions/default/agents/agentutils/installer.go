@@ -7,31 +7,36 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/knownhosts"
 	"io"
 	"net"
 	"os"
-	"os/user"
-	"runtime"
 	"strings"
 	"time"
 )
 
 // 安装器
+type SSHAuthType = string
+
+const (
+	SSHAuthTypePassword = "password"
+	SSHAuthTypeKey      = "key"
+)
+
 type Installer struct {
 	Master       string
 	Dir          string
 	Host         string
 	Port         int
 	AuthUsername string
+	AuthType     SSHAuthType
 	AuthPassword string
+	AuthKey      []byte
 	Timeout      time.Duration
 	GroupId      string
 
@@ -46,7 +51,9 @@ type Installer struct {
 
 // 获取新对象
 func NewInstaller() *Installer {
-	return &Installer{}
+	return &Installer{
+		AuthType: SSHAuthTypePassword,
+	}
 }
 
 // 安装Agent
@@ -62,30 +69,30 @@ func (this *Installer) Start() error {
 	}
 
 	var hostKeyCallback ssh.HostKeyCallback = nil
-	if lists.Contains([]string{"linux", "darwin"}, runtime.GOOS) {
-		user1, err := user.Current()
-		if err == nil {
-			file := user1.HomeDir + "/.ssh/known_hosts"
-			if files.NewFile(file).Exists() {
-				callback, err := knownhosts.New(file)
-				if err != nil {
-					logs.Error(err)
-				} else {
-					hostKeyCallback = callback
-				}
-			}
-		}
-	}
+
+	// 不使用known_hosts
 
 	if hostKeyCallback == nil {
 		hostKeyCallback = func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 			return nil
 		}
 	}
+
+	var authMethod ssh.AuthMethod = nil
+	if this.AuthType == SSHAuthTypePassword {
+		authMethod = ssh.Password(this.AuthPassword)
+	} else {
+		signer, err := ssh.ParsePrivateKey(this.AuthKey)
+		if err != nil {
+			return err
+		}
+		authMethod = ssh.PublicKeys(signer)
+	}
+
 	config := &ssh.ClientConfig{
 		User: this.AuthUsername,
 		Auth: []ssh.AuthMethod{
-			ssh.Password(this.AuthPassword),
+			authMethod,
 		},
 		HostKeyCallback: hostKeyCallback,
 		Timeout:         this.Timeout,
