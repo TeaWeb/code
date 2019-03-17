@@ -25,6 +25,16 @@ func CountUnreadNoticesForAgent(agentId string) int {
 	}
 }
 
+// 删除Agent相关通知
+func DeleteNoticesForAgent(agentId string) error {
+	return NewNoticeQuery().
+		Agent(&notices.AgentCond{
+			AgentId: agentId,
+		}).
+		Action(NoticeQueryActionCount).
+		Delete()
+}
+
 // 获取所有未读通知数
 func CountUnreadNotices() int {
 	countNotices, err := NewNoticeQuery().

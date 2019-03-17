@@ -3,6 +3,7 @@ package agents
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
@@ -40,6 +41,12 @@ func (this *DeleteAgentsAction) Run(params struct {
 		if err != nil {
 			logs.Error(err)
 			continue
+		}
+
+		// 删除通知
+		err = noticeutils.DeleteNoticesForAgent(agent.Id)
+		if err != nil {
+			logs.Error(err)
 		}
 
 		// 通知更新
