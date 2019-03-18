@@ -53,8 +53,8 @@ func (this *Threshold) Validate() error {
 }
 
 // 将此条件应用于阈值，检查是否匹配
-func (this *Threshold) Test(value interface{}) bool {
-	paramValue := this.Eval(value)
+func (this *Threshold) Test(value interface{}, oldValue interface{}) bool {
+	paramValue := this.Eval(value, oldValue)
 
 	switch this.Operator {
 	case ThresholdOperatorRegexp:
@@ -92,13 +92,25 @@ func (this *Threshold) Test(value interface{}) bool {
 }
 
 // 执行数值运算，使用Javascript语法
-func (this *Threshold) Eval(value interface{}) string {
-	paramValue := teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(this.Param, func(s string) string {
+func (this *Threshold) Eval(value interface{}, old interface{}) string {
+	return this.EvalParam(this.Param, value, old)
+}
+
+// 使用某个参数执行数值运算，使用Javascript语法
+func (this *Threshold) EvalParam(param string, value interface{}, old interface{}) string {
+	if old == nil {
+		old = value
+	}
+	paramValue := teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(param, func(s string) string {
 		if value == nil {
 			return ""
 		}
 
 		varName := s[2 : len(s)-1]
+		if strings.HasPrefix(varName, "OLD.") {
+			logs.Println("param:", varName[4:])
+			return this.EvalParam("${"+varName[4:]+"}", old, nil)
+		}
 		switch v := value.(type) {
 		case string:
 			if varName == "0" {
@@ -159,7 +171,7 @@ func (this *Threshold) Eval(value interface{}) string {
 			vm := otto.New()
 			v, err := vm.Run(paramValue)
 			if err != nil {
-				logs.Error(err)
+				logs.Error(errors.New("eval \"" + paramValue + "\":" + err.Error()))
 			} else {
 				paramValue = v.String()
 			}

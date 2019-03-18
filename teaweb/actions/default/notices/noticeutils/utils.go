@@ -115,3 +115,40 @@ func UpdateNoticeReceivers(id primitive.ObjectID, receiverIds []string) {
 		logs.Error(err)
 	}
 }
+
+// 计算同样的消息数量
+func ExistNoticesWithHash(hash string, cond map[string]interface{}, duration time.Duration) bool {
+	query := NewNoticeQuery()
+	query.Attr("messageHash", hash)
+	for k, v := range cond {
+		query.Attr(k, v)
+	}
+	query.Gt("timestamp", float64(time.Now().Unix())-duration.Seconds())
+	query.Desc("_id")
+	notice, err := query.Find()
+	if err != nil {
+		logs.Error(err)
+		return false
+	}
+	if notice == nil {
+		return false
+	}
+
+	// 中间是否有success级别的
+	query2 := NewNoticeQuery()
+	for k, v := range cond {
+		query2.Attr(k, v)
+	}
+	if len(notice.Proxy.ServerId) > 0 {
+		query2.Attr("proxy.level", notices.NoticeLevelSuccess)
+		query2.Gt("_id", notice.Id)
+	} else if len(notice.Agent.AgentId) > 0 {
+		query2.Attr("agent.level", notices.NoticeLevelSuccess)
+		query2.Gt("_id", notice.Id)
+	}
+	result, err := query2.Find()
+	if err != nil {
+		logs.Error(err)
+	}
+	return result == nil
+}

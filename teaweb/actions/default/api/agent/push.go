@@ -138,6 +138,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	setting := notices.SharedNoticeSetting()
 
 	isNotified := false
+
 	if level != notices.NoticeLevelNone {
 		// 是否发送通知
 		shouldNotify := true
@@ -183,24 +184,39 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 			if threshold != nil {
 				notice.Agent.Threshold = threshold.Expression()
 			}
-			err := noticeutils.NewNoticeQuery().Insert(notice)
-			if err != nil {
-				logs.Error(err)
+			notice.Hash()
+
+			if notices.IsFailureLevel(level) {
+				// 同样的消息短时间内只发送一条
+				if noticeutils.ExistNoticesWithHash(notice.MessageHash, map[string]interface{}{
+					"agent.agentId": agent.Id,
+					"agent.appId":   appId,
+					"agent.itemId":  itemId,
+				}, 1*time.Hour) {
+					shouldNotify = false
+				}
 			}
 
-			// 通过媒介发送通知
-			fullMessage := "消息：" + message + "\n时间：" + timeutil.Format("Y-m-d H:i:s", t)
-			linkNames := []string{}
-			for _, l := range agentutils.FindNoticeLinks(notice) {
-				linkNames = append(linkNames, types.String(l["name"]))
-			}
-			if len(linkNames) > 0 {
-				fullMessage += "\n位置：" + strings.Join(linkNames, "/")
-			}
+			if shouldNotify {
+				err := noticeutils.NewNoticeQuery().Insert(notice)
+				if err != nil {
+					logs.Error(err)
+				}
 
-			receiverIds := this.notifyMessage(agent, appId, itemId, setting, level, fullMessage, false)
-			if len(receiverIds) > 0 {
-				noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
+				// 通过媒介发送通知
+				fullMessage := "消息：" + message + "\n时间：" + timeutil.Format("Y-m-d H:i:s", t)
+				linkNames := []string{}
+				for _, l := range agentutils.FindNoticeLinks(notice) {
+					linkNames = append(linkNames, types.String(l["name"]))
+				}
+				if len(linkNames) > 0 {
+					fullMessage += "\n位置：" + strings.Join(linkNames, "/")
+				}
+
+				receiverIds := this.notifyMessage(agent, appId, itemId, setting, level, fullMessage, false)
+				if len(receiverIds) > 0 {
+					noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
+				}
 			}
 		}
 	}
@@ -277,6 +293,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 				ItemId:  itemId,
 				Level:   notices.NoticeLevelSuccess,
 			}
+			notice.Hash()
 			err := noticeutils.NewNoticeQuery().Insert(notice)
 			if err != nil {
 				logs.Error(err)

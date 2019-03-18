@@ -3,7 +3,13 @@ package agents
 import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"sync"
 )
+
+// Agent列表是否有变化
+var agentListChanged = false
+var agentList = []*AgentConfig{}
+var agentListLocker = sync.Mutex{}
 
 // Agent列表
 type AgentList struct {
@@ -33,6 +39,25 @@ func SharedAgentList() (*AgentList, error) {
 		return nil, err
 	}
 	return agentList, nil
+}
+
+// 取得AgentId列表
+func SharedAgents() []*AgentConfig {
+	agentListLocker.Lock()
+	defer agentListLocker.Unlock()
+
+	if !agentListChanged && len(agentList) > 0 {
+		return agentList
+	}
+
+	agentList = []*AgentConfig{}
+	list, _ := SharedAgentList()
+	for _, agent := range list.FindAllAgents() {
+		agentList = append(agentList, agent)
+	}
+
+	agentListChanged = false
+	return agentList
 }
 
 // 添加Agent
@@ -67,6 +92,8 @@ func (this *AgentList) FindAllAgents() []*AgentConfig {
 
 // 保存
 func (this *AgentList) Save() error {
+	agentListChanged = true
+
 	writer, err := files.NewWriter(Tea.ConfigFile("agents/agentlist.conf"))
 	if err != nil {
 		return err

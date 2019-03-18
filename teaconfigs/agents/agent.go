@@ -116,6 +116,8 @@ func (this *AgentConfig) Filename() string {
 
 // 保存
 func (this *AgentConfig) Save() error {
+	agentListChanged = true // 标记列表改变
+
 	dirFile := files.NewFile(Tea.ConfigFile("agents"))
 	if !dirFile.Exists() {
 		dirFile.Mkdir()
@@ -133,6 +135,8 @@ func (this *AgentConfig) Save() error {
 
 // 删除
 func (this *AgentConfig) Delete() error {
+	agentListChanged = true // 标记列表改变
+	
 	f := files.NewFile(Tea.ConfigFile("agents/" + this.Filename()))
 	return f.Delete()
 }

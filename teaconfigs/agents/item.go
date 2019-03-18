@@ -90,7 +90,7 @@ func (this *Item) TestValue(value interface{}) (threshold *Threshold, level noti
 		return nil, notices.NoticeLevelNone, ""
 	}
 	for _, t := range this.Thresholds {
-		if t.Test(value) {
+		if t.Test(value, nil) {
 			if len(t.NoticeMessage) > 0 {
 				return t, t.NoticeLevel, t.NoticeMessage
 			} else {

@@ -7,7 +7,6 @@ import (
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/logs"
 	"net/http"
 )
 
@@ -51,72 +50,67 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	}
 
 	// agent列表
-	agentList, err := agents.SharedAgentList()
-	if err != nil {
-		logs.Error(err)
-	} else {
-		allAgents := agentList.FindAllAgents()
-		counterMapping := map[string]int{} // groupId => count
-		maxCount := 50
-		for _, agent := range allAgents {
-			_, isWaiting := CheckAgentIsWaiting(agent.Id)
+	allAgents := agents.SharedAgents()
+	counterMapping := map[string]int{} // groupId => count
+	maxCount := 50
+	for _, agent := range allAgents {
+		_, isWaiting := CheckAgentIsWaiting(agent.Id)
 
-			var menu *utils.Menu = nil
-			if len(agent.GroupIds) > 0 {
-				group := agents.SharedGroupConfig().FindGroup(agent.GroupIds[0])
-				if group == nil {
-					menu = menuGroup.FindMenu("", "默认分组"+topSubName)
-				} else {
-					menu = menuGroup.FindMenu(group.Id, group.Name)
-					menu.Index = group.Index
-
-					// 计算数量
-					_, found := counterMapping[group.Id]
-					if found {
-						counterMapping[group.Id] ++
-					} else {
-						counterMapping[group.Id] = 1
-					}
-					if counterMapping[group.Id] > maxCount {
-						if counterMapping[group.Id] == maxCount+1 {
-							menu.AddSpecial("[更多主机]", "", "/agents/groups/detail?groupId="+group.Id, false)
-						}
-						continue
-					}
-				}
-			} else {
+		var menu *utils.Menu = nil
+		if len(agent.GroupIds) > 0 {
+			group := agents.SharedGroupConfig().FindGroup(agent.GroupIds[0])
+			if group == nil {
 				menu = menuGroup.FindMenu("", "默认分组"+topSubName)
+			} else {
+				menu = menuGroup.FindMenu(group.Id, group.Name)
+				menu.Index = group.Index
 
 				// 计算数量
-				groupId := ""
-				_, found := counterMapping[groupId]
+				_, found := counterMapping[group.Id]
 				if found {
-					counterMapping[groupId] ++
+					counterMapping[group.Id] ++
 				} else {
-					counterMapping[groupId] = 1
+					counterMapping[group.Id] = 1
 				}
-				if counterMapping[groupId] > maxCount {
-					if counterMapping[groupId] == maxCount+1 {
-						menu.AddSpecial("[更多主机]", "", "/agents/groups/detail?groupId="+groupId, false)
+				if counterMapping[group.Id] > maxCount {
+					if counterMapping[group.Id] == maxCount+1 {
+						menu.AddSpecial("[更多主机]", "", "/agents/groups/detail?groupId="+group.Id, false)
 					}
 					continue
 				}
 			}
+		} else {
+			menu = menuGroup.FindMenu("", "默认分组"+topSubName)
 
-			if isWaiting {
-				item := menu.Add(agent.Name, "已连接", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
-				item.Id = agent.Id
-				item.IsSortable = true
-				item.SubColor = "green"
-			} else if !agent.On {
-				item := menu.Add(agent.Name, "未启用", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
-				item.Id = agent.Id
-				item.IsSortable = true
+			// 计算数量
+			groupId := ""
+			_, found := counterMapping[groupId]
+			if found {
+				counterMapping[groupId] ++
 			} else {
-				item := menu.Add(agent.Name, "", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
-				item.Id = agent.Id
-				item.IsSortable = true
+				counterMapping[groupId] = 1
 			}
+			if counterMapping[groupId] > maxCount {
+				if counterMapping[groupId] == maxCount+1 {
+					menu.AddSpecial("[更多主机]", "", "/agents/groups/detail?groupId="+groupId, false)
+				}
+				continue
+			}
+		}
+
+		if isWaiting {
+			item := menu.Add(agent.Name, "已连接", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+			item.Id = agent.Id
+			item.IsSortable = true
+			item.SubColor = "green"
+		} else if !agent.On {
+			item := menu.Add(agent.Name, "未启用", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+			item.Id = agent.Id
+			item.IsSortable = true
+		} else {
+			item := menu.Add(agent.Name, "", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+			item.Id = agent.Id
+			item.IsSortable = true
 		}
 	}
 
