@@ -7,11 +7,12 @@ import (
 
 // App定义
 type AppConfig struct {
-	Id            string                                            `yaml:"id" json:"id"`       // ID
-	On            bool                                              `yaml:"on" json:"on"`       // 是否启用
-	Tasks         []*TaskConfig                                     `yaml:"tasks" json:"tasks"` // 任务设置
-	Items         []*Item                                           `yaml:"item" json:"items"`  // 监控项
-	Name          string                                            `yaml:"name" json:"name"`   // 名称
+	Id    string        `yaml:"id" json:"id"`       // ID
+	On    bool          `yaml:"on" json:"on"`       // 是否启用
+	Tasks []*TaskConfig `yaml:"tasks" json:"tasks"` // 任务设置
+	Items []*Item       `yaml:"item" json:"items"`  // 监控项
+	Name  string        `yaml:"name" json:"name"`   // 名称
+
 	NoticeSetting map[notices.NoticeLevel][]*notices.NoticeReceiver `yaml:"noticeSetting" json:"noticeSetting"`
 }
 

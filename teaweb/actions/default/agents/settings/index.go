@@ -1,4 +1,4 @@
-package apps
+package settings
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
@@ -12,6 +12,8 @@ type IndexAction actions.Action
 func (this *IndexAction) Run(params struct {
 	AgentId string
 }) {
+	this.Data["selectedTab"] = "detail"
+
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {
 		this.Fail("找不到Agent")

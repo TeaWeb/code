@@ -27,6 +27,8 @@ type AgentConfig struct {
 	GroupIds            []string     `yaml:"groupIds" json:"groupIds"`                       // 分组IDs
 	AutoUpdates         bool         `yaml:"autoUpdates" json:"autoUpdates"`                 // 是否开启自动更新
 	AppsIsInitialized   bool         `yaml:"appsIsInitialized" json:"appsIsInitialized"`     // 是否已经初始化App
+
+	NoticeSetting map[notices.NoticeLevel][]*notices.NoticeReceiver `yaml:"noticeSetting" json:"noticeSetting"`
 }
 
 // 获取新对象
@@ -702,4 +704,46 @@ chart.render();
 			}
 		}
 	}
+}
+
+// 添加通知接收者
+func (this *AgentConfig) AddNoticeReceiver(level notices.NoticeLevel, receiver *notices.NoticeReceiver) {
+	if this.NoticeSetting == nil {
+		this.NoticeSetting = map[notices.NoticeLevel][]*notices.NoticeReceiver{}
+	}
+	receivers, found := this.NoticeSetting[level]
+	if !found {
+		receivers = []*notices.NoticeReceiver{}
+	}
+	receivers = append(receivers, receiver)
+	this.NoticeSetting[level] = receivers
+}
+
+// 删除通知接收者
+func (this *AgentConfig) RemoveNoticeReceiver(level notices.NoticeLevel, receiverId string) {
+	if this.NoticeSetting == nil {
+		return
+	}
+	receivers, found := this.NoticeSetting[level]
+	if !found {
+		return
+	}
+
+	result := []*notices.NoticeReceiver{}
+	for _, r := range receivers {
+		if r.Id == receiverId {
+			continue
+		}
+		result = append(result, r)
+	}
+	this.NoticeSetting[level] = result
+}
+
+// 获取通知接收者数量
+func (this *AgentConfig) CountNoticeReceivers() int {
+	count := 0
+	for _, receivers := range this.NoticeSetting {
+		count += len(receivers)
+	}
+	return count
 }

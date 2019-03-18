@@ -314,6 +314,23 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 		}
 	}
 
+	// 查找Agent的通知设置
+	if !isNotified {
+		for _, receiverLevel := range receiverLevels {
+			receivers, found := agent.NoticeSetting[receiverLevel]
+			if found && len(receivers) > 0 {
+				isNotified = true
+				receiverIds = setting.NotifyReceivers(level, receivers, message, func(receiverId string, minutes int) int {
+					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+						"agent.agentId": agent.Id,
+						"agent.appId":   appId,
+						"agent.itemId":  itemId,
+					}, minutes)
+				})
+			}
+		}
+	}
+
 	// 查找分组的通知设置
 	if !isNotified {
 		groupId := ""

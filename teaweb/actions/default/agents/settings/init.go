@@ -1,4 +1,4 @@
-package apps
+package settings
 
 import (
 	"github.com/TeaWeb/code/teaweb/configs"
@@ -17,6 +17,9 @@ func init() {
 			Get("", new(IndexAction)).
 			GetPost("/update", new(UpdateAction)).
 			Get("/install", new(InstallAction)).
+			Get("/noticeReceivers", new(NoticeReceiversAction)).
+			GetPost("/addNoticeReceivers", new(AddNoticeReceiversAction)).
+			Post("/deleteNoticeReceivers", new(DeleteNoticeReceiversAction)).
 			EndAll()
 	})
 }

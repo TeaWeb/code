@@ -1,4 +1,4 @@
-package apps
+package settings
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
@@ -11,6 +11,8 @@ type InstallAction actions.Action
 func (this *InstallAction) Run(params struct {
 	AgentId string
 }) {
+	this.Data["selectedTab"] = "install"
+
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {
 		this.Fail("找不到Agent")
