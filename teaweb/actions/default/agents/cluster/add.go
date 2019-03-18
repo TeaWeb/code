@@ -32,7 +32,13 @@ func (this *AddAction) Run(params struct{}) {
 	}
 
 	// 分组信息
-	this.Data["groups"] = agents.SharedGroupConfig().Groups
+	groups := agents.SharedGroupConfig().Groups
+	if len(groups) == 0 {
+		def := agents.NewGroup("默认分组")
+		def.Id = ""
+		groups = append(groups, def)
+	}
+	this.Data["groups"] = groups
 
 	this.Show()
 }

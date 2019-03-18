@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/shirou/gopsutil/mem"
+	"runtime"
 )
 
 // 内存使用量
@@ -47,8 +48,10 @@ func (this *MemorySource) Execute(params map[string]string) (value interface{}, 
 
 	// 重新计算内存
 	if stat.Total > 0 {
-		stat.Used = stat.Total - stat.Free - stat.Buffers - stat.Cached
-		stat.UsedPercent = float64(stat.Used) * 100 / float64(stat.Total)
+		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+			stat.Used = stat.Total - stat.Free - stat.Buffers - stat.Cached
+			stat.UsedPercent = float64(stat.Used) * 100 / float64(stat.Total)
+		}
 	}
 
 	value = map[string]interface{}{

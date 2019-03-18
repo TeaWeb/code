@@ -2,6 +2,7 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
@@ -36,7 +37,12 @@ func (this *IndexAction) RunPost(params struct {
 	// 添加默认App
 	if agent != nil && !agent.AppsIsInitialized {
 		agent.AddDefaultApps()
-		agent.Save()
+		err := agent.Save()
+
+		// 通知更新
+		if err == nil {
+			agentutils.PostAgentEvent(agent.Id, agentutils.NewAgentEvent("UPDATE_AGENT", maps.Map{}))
+		}
 	}
 
 	board := agents.NewAgentBoard(params.AgentId)
