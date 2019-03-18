@@ -1,14 +1,18 @@
 package agents
 
-import "github.com/iwind/TeaGo/utils/string"
+import (
+	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/iwind/TeaGo/utils/string"
+)
 
 // App定义
 type AppConfig struct {
-	Id    string        `yaml:"id" json:"id"`       // ID
-	On    bool          `yaml:"on" json:"on"`       // 是否启用
-	Tasks []*TaskConfig `yaml:"tasks" json:"tasks"` // 任务设置
-	Items []*Item       `yaml:"item" json:"items"`  // 监控项
-	Name  string        `yaml:"name" json:"name"`   // 名称
+	Id            string                                            `yaml:"id" json:"id"`       // ID
+	On            bool                                              `yaml:"on" json:"on"`       // 是否启用
+	Tasks         []*TaskConfig                                     `yaml:"tasks" json:"tasks"` // 任务设置
+	Items         []*Item                                           `yaml:"item" json:"items"`  // 监控项
+	Name          string                                            `yaml:"name" json:"name"`   // 名称
+	NoticeSetting map[notices.NoticeLevel][]*notices.NoticeReceiver `yaml:"noticeSetting" json:"noticeSetting"`
 }
 
 // 获取新对象
@@ -126,4 +130,46 @@ func (this *AppConfig) FindItem(itemId string) *Item {
 		}
 	}
 	return nil
+}
+
+// 添加通知接收者
+func (this *AppConfig) AddNoticeReceiver(level notices.NoticeLevel, receiver *notices.NoticeReceiver) {
+	if this.NoticeSetting == nil {
+		this.NoticeSetting = map[notices.NoticeLevel][]*notices.NoticeReceiver{}
+	}
+	receivers, found := this.NoticeSetting[level]
+	if !found {
+		receivers = []*notices.NoticeReceiver{}
+	}
+	receivers = append(receivers, receiver)
+	this.NoticeSetting[level] = receivers
+}
+
+// 删除通知接收者
+func (this *AppConfig) RemoveNoticeReceiver(level notices.NoticeLevel, receiverId string) {
+	if this.NoticeSetting == nil {
+		return
+	}
+	receivers, found := this.NoticeSetting[level]
+	if !found {
+		return
+	}
+
+	result := []*notices.NoticeReceiver{}
+	for _, r := range receivers {
+		if r.Id == receiverId {
+			continue
+		}
+		result = append(result, r)
+	}
+	this.NoticeSetting[level] = result
+}
+
+// 获取通知接收者数量
+func (this *AppConfig) CountNoticeReceivers() int {
+	count := 0
+	for _, receivers := range this.NoticeSetting {
+		count += len(receivers)
+	}
+	return count
 }

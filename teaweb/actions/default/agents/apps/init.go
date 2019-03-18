@@ -40,6 +40,9 @@ func init() {
 			GetPost("/updateItemChart", new(UpdateItemChartAction)).
 			Post("/clearItemValues", new(ClearItemValuesAction)).
 			Post("/addDefaultCharts", new(AddDefaultChartsAction)).
+			Get("/noticeReceivers", new(NoticeReceiversAction)).
+			GetPost("/addNoticeReceivers", new(AddNoticeReceiversAction)).
+			Post("/deleteNoticeReceivers", new(DeleteNoticeReceiversAction)).
 			EndAll()
 	})
 }

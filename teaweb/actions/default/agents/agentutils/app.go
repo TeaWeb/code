@@ -27,13 +27,14 @@ func InitAppData(actionWrapper actions.ActionWrapper, agentId string, appId stri
 
 	action.Data["agentId"] = agentId
 	action.Data["app"] = maps.Map{
-		"id":                 app.Id,
-		"name":               app.Name,
-		"on":                 app.On,
-		"countItems":         len(app.Items),
-		"countBootTasks":     len(app.FindBootingTasks()),
-		"countScheduleTasks": len(app.FindSchedulingTasks()),
-		"countManualTasks":   len(app.FindManualTasks()),
+		"id":                   app.Id,
+		"name":                 app.Name,
+		"on":                   app.On,
+		"countItems":           len(app.Items),
+		"countBootTasks":       len(app.FindBootingTasks()),
+		"countScheduleTasks":   len(app.FindSchedulingTasks()),
+		"countManualTasks":     len(app.FindManualTasks()),
+		"countNoticeReceivers": app.CountNoticeReceivers(),
 	}
 	action.Data["selectedTabbar"] = tabbar
 
