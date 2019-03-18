@@ -20,7 +20,7 @@ func InitAppData(actionWrapper actions.ActionWrapper, agentId string, appId stri
 		action.Fail("找不到Agent")
 	}
 
-	app := FindAgentApp(agent, appId)
+	app := agent.FindApp(appId)
 	if app == nil {
 		action.Fail("找不到App")
 	}
@@ -34,7 +34,6 @@ func InitAppData(actionWrapper actions.ActionWrapper, agentId string, appId stri
 		"countBootTasks":     len(app.FindBootingTasks()),
 		"countScheduleTasks": len(app.FindSchedulingTasks()),
 		"countManualTasks":   len(app.FindManualTasks()),
-		"isSystem":           app.IsSystem,
 	}
 	action.Data["selectedTabbar"] = tabbar
 

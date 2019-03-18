@@ -1,7 +1,6 @@
 package agents
 
 import (
-	"errors"
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
@@ -38,7 +37,11 @@ func (this *LoadSource) Description() string {
 // 执行
 func (this *LoadSource) Execute(params map[string]string) (value interface{}, err error) {
 	if runtime.GOOS == "windows" {
-		err = errors.New("'windows' platform is not supported for '" + this.Code() + "' yet")
+		value = map[string]interface{}{
+			"load1":  0,
+			"load5":  0,
+			"load15": 0,
+		}
 		return
 	}
 

@@ -135,26 +135,27 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	// Tabbar
 	if !action.HasPrefix("/agents/addAgent", "/agents/cluster/add", "/agents/groups") {
 		agent := agents.NewAgentConfigFromId(agentId)
+		if agent != nil {
+			tabbar := utils.NewTabbar()
 
-		tabbar := utils.NewTabbar()
+			// 看板和Apps
+			tabbar.Add("看板", "", "/agents/board?agentId="+agentId, "dashboard", action.HasPrefix("/agents/board"))
+			tabbar.Add("Apps", fmt.Sprintf("%d", len(agent.Apps)), "/agents/apps?agentId="+agentId, "gem outline", action.HasPrefix("/agents/apps"))
 
-		// 看板和Apps
-		tabbar.Add("看板", "", "/agents/board?agentId="+agentId, "dashboard", action.HasPrefix("/agents/board"))
-		tabbar.Add("Apps", fmt.Sprintf("%d", len(agent.Apps)+len(FindAgentRuntime(agent).FindSystemApps())), "/agents/apps?agentId="+agentId, "gem outline", action.HasPrefix("/agents/apps"))
+			// 通知
+			countUnreadNotices := noticeutils.CountUnreadNoticesForAgent(agentId)
+			if countUnreadNotices > 0 {
+				tabbar.Add("通知", fmt.Sprintf("%d", countUnreadNotices), "/agents/notices?agentId="+agentId, "bell blink orange", action.HasPrefix("/agents/notices"))
+			} else {
+				tabbar.Add("通知", fmt.Sprintf("%d", countUnreadNotices), "/agents/notices?agentId="+agentId, "bell", action.HasPrefix("/agents/notices"))
+			}
 
-		// 通知
-		countUnreadNotices := noticeutils.CountUnreadNoticesForAgent(agentId)
-		if countUnreadNotices > 0 {
-			tabbar.Add("通知", fmt.Sprintf("%d", countUnreadNotices), "/agents/notices?agentId="+agentId, "bell blink orange", action.HasPrefix("/agents/notices"))
-		} else {
-			tabbar.Add("通知", fmt.Sprintf("%d", countUnreadNotices), "/agents/notices?agentId="+agentId, "bell", action.HasPrefix("/agents/notices"))
+			// 设置和删除
+			if agentId != "local" {
+				tabbar.Add("设置", "", "/agents/settings?agentId="+agentId, "setting", action.HasPrefix("/agents/settings"))
+				tabbar.Add("删除", "", "/agents/delete?agentId="+agentId, "trash", action.HasPrefix("/agents/delete"))
+			}
+			utils.SetTabbar(actionWrapper, tabbar)
 		}
-
-		// 设置和删除
-		if agentId != "local" {
-			tabbar.Add("设置", "", "/agents/settings?agentId="+agentId, "setting", action.HasPrefix("/agents/settings"))
-			tabbar.Add("删除", "", "/agents/delete?agentId="+agentId, "trash", action.HasPrefix("/agents/delete"))
-		}
-		utils.SetTabbar(actionWrapper, tabbar)
 	}
 }

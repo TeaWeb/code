@@ -2,7 +2,6 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
@@ -34,23 +33,20 @@ func (this *IndexAction) RunPost(params struct {
 		this.Fail("找不到Agent")
 	}
 
-	board := agents.NewAgentBoard(params.AgentId)
-	if agent == nil {
-		this.Fail("无法读取Board配置")
+	// 添加默认App
+	if agent != nil && !agent.AppsIsInitialized {
+		agent.AddDefaultApps()
+		agent.Save()
 	}
 
-	// 系统提供的Chart
-	for _, app := range agentutils.FindAgentRuntime(agent).FindSystemApps() {
-		for _, item := range app.Items {
-			for _, c := range item.Charts {
-				board.AddChart(app.Id, item.Id, c.Id)
-			}
-		}
+	board := agents.NewAgentBoard(params.AgentId)
+	if board == nil {
+		this.Fail("无法读取Board配置")
 	}
 
 	engine := scripts.NewEngine()
 	for _, c := range board.Charts {
-		app := agentutils.FindAgentApp(agent, c.AppId)
+		app := agent.FindApp(c.AppId)
 		if app == nil || !app.On {
 			continue
 		}
@@ -71,13 +67,7 @@ func (this *IndexAction) RunPost(params struct {
 			continue
 		}
 
-		var chartName string
-		if app.IsSystem {
-			chartName = chart.Name
-			chartName = chart.Name + "<span class=\"ops\"><a href=\"/agents/apps/itemValues?agentId=" + agent.Id + "&appId=" + app.Id + "&itemId=" + item.Id + "\" title=\"查看数值记录\"><i class=\"icon external small\"></i></a></span>"
-		} else {
-			chartName = chart.Name + "<span class=\"ops\"><a href=\"\" title=\"从看板移除\" onclick=\"return Tea.Vue.removeChart('" + c.AppId + "', '" + c.ItemId + "', '" + c.ChartId + "')\"><i class=\"icon remove small\"></i></a> &nbsp; <a href=\"/agents/apps/itemValues?agentId=" + agent.Id + "&appId=" + app.Id + "&itemId=" + item.Id + "\" title=\"查看数值记录\"><i class=\"icon external small\"></i></a></span>"
-		}
+		var chartName = chart.Name + "<span class=\"ops\"><a href=\"\" title=\"从看板移除\" onclick=\"return Tea.Vue.removeChart('" + c.AppId + "', '" + c.ItemId + "', '" + c.ChartId + "')\"><i class=\"icon remove small\"></i></a> &nbsp; <a href=\"/agents/apps/itemValues?agentId=" + agent.Id + "&appId=" + app.Id + "&itemId=" + item.Id + "\" title=\"查看数值记录\"><i class=\"icon external small\"></i></a></span>"
 		code, err := o.AsJavascript(maps.Map{
 			"name":    chartName,
 			"columns": chart.Columns,

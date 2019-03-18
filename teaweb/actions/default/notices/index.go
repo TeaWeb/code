@@ -3,7 +3,6 @@ package notices
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
-	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -80,7 +79,7 @@ func (this *IndexAction) Run(params struct {
 						"url":  "/agents/board?agentId=" + agent.Id,
 					})
 
-					app := agentutils.FindAgentApp(agent, notice.Agent.AppId)
+					app := agent.FindApp(notice.Agent.AppId)
 					if app != nil {
 						links = append(links, maps.Map{
 							"name": app.Name,

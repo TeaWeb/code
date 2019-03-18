@@ -17,7 +17,7 @@ func FindNoticeLinks(notice *notices.Notice) (links []maps.Map) {
 				"url":  "/agents/board?agentId=" + agent.Id,
 			})
 
-			app := FindAgentApp(agent, notice.Agent.AppId)
+			app := agent.FindApp(notice.Agent.AppId)
 			if app != nil {
 				links = append(links, maps.Map{
 					"name": app.Name,

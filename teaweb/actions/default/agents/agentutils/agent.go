@@ -23,15 +23,3 @@ func FindAgentRuntime(agentConfig *agents.AgentConfig) *agents.AgentConfig {
 	}
 	return agentConfig
 }
-
-func FindAgentApp(agent *agents.AgentConfig, appId string) *agents.AppConfig {
-	app := agent.FindApp(appId)
-	if app != nil {
-		return app
-	}
-	app = FindAgentRuntime(agent).FindApp(appId)
-	if app != nil {
-		app.IsSystem = true
-	}
-	return app
-}

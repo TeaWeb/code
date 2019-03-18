@@ -50,7 +50,7 @@ func (this *ItemChartsAction) RunPost(params struct {
 		this.Fail("找不到Agent")
 	}
 
-	app := agentutils.FindAgentApp(agent, params.AppId)
+	app := agent.FindApp(params.AppId)
 	if app == nil {
 		this.Fail("找不到App")
 	}
@@ -74,18 +74,11 @@ widget.run = function () {
 			continue
 		}
 
-		var options map[string]interface{}
-		if app.IsSystem {
-			options = map[string]interface{}{
-				"name":    c.Name,
-				"columns": c.Columns,
-			}
-		} else {
-			options = map[string]interface{}{
-				"name":    c.Name + "<span class=\"ops\"><a href=\"/agents/apps/updateItemChart?agentId=" + params.AgentId + "&appId=" + params.AppId + "&itemId=" + params.ItemId + "&chartId=" + c.Id + "&from=" + params.From + "\" title=\"修改\"><i class=\"icon pencil\"></i></a> &nbsp;<a href=\"\" onclick=\"return Tea.Vue.deleteChart('" + c.Id + "')\" title=\"删除\"><i class=\"icon remove\"></i></a></span>",
-				"columns": c.Columns,
-			}
+		var options = map[string]interface{}{
+			"name":    c.Name + "<span class=\"ops\"><a href=\"/agents/apps/updateItemChart?agentId=" + params.AgentId + "&appId=" + params.AppId + "&itemId=" + params.ItemId + "&chartId=" + c.Id + "&from=" + params.From + "\" title=\"修改\"><i class=\"icon pencil\"></i></a> &nbsp;<a href=\"\" onclick=\"return Tea.Vue.deleteChart('" + c.Id + "')\" title=\"删除\"><i class=\"icon remove\"></i></a></span>",
+			"columns": c.Columns,
 		}
+
 		code, err := o.AsJavascript(options)
 
 		if err != nil {

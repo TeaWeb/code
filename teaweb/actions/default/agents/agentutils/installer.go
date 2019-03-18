@@ -206,6 +206,7 @@ func (this *Installer) Start() error {
 	agent.AllowAll = true
 	agent.On = true
 	agent.Key = stringutil.Rand(32)
+	agent.AddDefaultApps()
 	if len(this.GroupId) > 0 {
 		agent.AddGroup(this.GroupId)
 	}

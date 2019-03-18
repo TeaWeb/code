@@ -85,18 +85,6 @@ func (this *PushAction) Run(params struct{}) {
 		}
 	} else if eventDomain == "ItemEvent" { // 监控项事件
 		this.processItemEvent(agent, m, t)
-	} else if eventDomain == "SystemAppsEvent" { // 系统App事件：CPU、内存等
-		result := struct {
-			Apps []*agents.AppConfig
-		}{}
-		err = json.Unmarshal(data, &result)
-		if err != nil {
-			logs.Error(err)
-		} else {
-			agentRuntime := agentutils.FindAgentRuntime(agent)
-			agentRuntime.ResetSystemApps()
-			agentRuntime.AddApps(result.Apps)
-		}
 	}
 
 	this.Success()
@@ -133,7 +121,7 @@ func (this *PushAction) selectProcessEventCollection(agentId string) *teamongo.C
 func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, t time.Time) {
 	appId := m.GetString("appId")
 	itemId := m.GetString("itemId")
-	app := agentutils.FindAgentApp(agent, appId)
+	app := agent.FindApp(appId)
 	if app == nil {
 		this.Success()
 	}

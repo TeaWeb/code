@@ -84,3 +84,13 @@ func FindDataSourceInstance(code string, options map[string]interface{}) SourceI
 	}
 	return nil
 }
+
+// 将Source转换为Map
+func ConvertSourceToMap(source SourceInterface) map[string]interface{} {
+	m := map[string]interface{}{}
+	err := teautils.ObjectToMapJSON(source, &m)
+	if err != nil {
+		logs.Error(err)
+	}
+	return m
+}

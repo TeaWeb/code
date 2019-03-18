@@ -45,7 +45,7 @@ func (this *MonitorAction) RunPost(params struct {
 		this.Fail("找不到Agent")
 	}
 
-	app := agentutils.FindAgentApp(agent, params.AppId)
+	app := agent.FindApp(params.AppId)
 	if app == nil {
 		this.Fail("找不到App")
 	}

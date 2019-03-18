@@ -52,6 +52,7 @@ func (this *AddAgentAction) RunPost(params struct {
 	agent.Key = stringutil.Rand(32)
 	agent.CheckDisconnections = params.CheckDisconnections
 	agent.AutoUpdates = params.AutoUpdates
+	agent.AddDefaultApps()
 	err = agent.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())

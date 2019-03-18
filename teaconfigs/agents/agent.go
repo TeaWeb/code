@@ -1,10 +1,13 @@
 package agents
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 )
 
@@ -23,6 +26,7 @@ type AgentConfig struct {
 	CountDisconnections int          `yaml:"countDisconnections" json:"countDisconnections"` // 错误次数
 	GroupIds            []string     `yaml:"groupIds" json:"groupIds"`                       // 分组IDs
 	AutoUpdates         bool         `yaml:"autoUpdates" json:"autoUpdates"`                 // 是否开启自动更新
+	AppsIsInitialized   bool         `yaml:"appsIsInitialized" json:"appsIsInitialized"`     // 是否已经初始化App
 }
 
 // 获取新对象
@@ -192,30 +196,6 @@ func (this *AgentConfig) FindItem(itemId string) (appConfig *AppConfig, item *It
 	return nil, nil
 }
 
-// 清除系统App
-func (this *AgentConfig) ResetSystemApps() {
-	result := []*AppConfig{}
-	for _, app := range this.Apps {
-		if app.IsSystem {
-			continue
-		}
-		result = append(result, app)
-	}
-	this.Apps = result
-}
-
-// 取得系统App列表
-func (this *AgentConfig) FindSystemApps() []*AppConfig {
-	result := []*AppConfig{}
-	for _, app := range this.Apps {
-		if !app.IsSystem {
-			continue
-		}
-		result = append(result, app)
-	}
-	return result
-}
-
 // 添加分组
 func (this *AgentConfig) AddGroup(groupId string) {
 	if lists.Contains(this.GroupIds, groupId) {
@@ -234,4 +214,492 @@ func (this *AgentConfig) RemoveGroup(groupId string) {
 		result = append(result, g)
 	}
 	this.GroupIds = result
+}
+
+// 添加内置的App
+func (this *AgentConfig) AddDefaultApps() {
+	this.AppsIsInitialized = true
+	{
+		app := NewAppConfig()
+		app.Name = "系统"
+		this.AddApp(app)
+
+		board := NewAgentBoard(this.Id)
+
+		// 添加到看板
+		defer func() {
+			board.Save()
+		}()
+
+		// cpu
+		{
+			// item
+			item := NewItem()
+			item.Id = "cpu.usage"
+			item.Name = "CPU使用量（%）"
+			item.Interval = "60s"
+
+			source := NewCPUSource()
+			source.DataFormat = SourceDataFormatJSON
+			item.SourceCode = source.Code()
+			item.SourceOptions = ConvertSourceToMap(source)
+			app.AddItem(item)
+
+			// 阈值
+			threshold1 := NewThreshold()
+			threshold1.Param = "${usage.avg}"
+			threshold1.Value = "80"
+			threshold1.NoticeLevel = notices.NoticeLevelWarning
+			threshold1.Operator = ThresholdOperatorGte
+			item.AddThreshold(threshold1)
+
+			// chart
+			chart := widgets.NewChart()
+			chart.Id = "cpu.chart1"
+			chart.Name = "CPU使用量（%）"
+			chart.Columns = 2
+			chart.Type = "javascript"
+			chart.Options = maps.Map{
+				"code": `
+var chart = new charts.LineChart();
+chart.max = 100;
+
+var query = new values.Query();
+query.limit(30)
+var ones = query.desc().cache(60).findAll();
+ones.reverse();
+
+var lines = [];
+
+{
+	var line = new charts.Line();
+	line.color = colors.ARRAY[0];
+	line.isFilled = true;
+	line.values = [];
+	lines.push(line);
+}
+
+ones.$each(function (k, v) {
+	lines[0].values.push(v.value.usage.avg);
+	
+	var minute = v.timeFormat.minute.substring(8);
+	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+});
+
+chart.addLines(lines);
+chart.render();
+`,
+			}
+			item.AddChart(chart)
+			board.AddChart(app.Id, item.Id, chart.Id)
+		}
+
+		// load
+		{
+			// item
+			item := NewItem()
+			item.Id = "cpu.load"
+			item.Name = "负载（Load）"
+			item.Interval = "60s"
+
+			source := NewLoadSource()
+			source.DataFormat = SourceDataFormatJSON
+			item.SourceCode = source.Code()
+			item.SourceOptions = ConvertSourceToMap(source)
+
+			app.AddItem(item)
+
+			// 阈值
+			{
+				threshold1 := NewThreshold()
+				threshold1.Param = "${load5}"
+				threshold1.Value = "10"
+				threshold1.NoticeLevel = notices.NoticeLevelWarning
+				threshold1.Operator = ThresholdOperatorGte
+				item.AddThreshold(threshold1)
+			}
+
+			{
+				threshold2 := NewThreshold()
+				threshold2.Param = "${load5}"
+				threshold2.Value = "20"
+				threshold2.NoticeLevel = notices.NoticeLevelError
+				threshold2.Operator = ThresholdOperatorGte
+				item.AddThreshold(threshold2)
+			}
+
+			// chart
+			chart := widgets.NewChart()
+			chart.Id = "cpu.load.chart1"
+			chart.Name = "负载（Load）"
+			chart.Columns = 2
+			chart.Type = "javascript"
+			chart.Options = maps.Map{
+				"code": `
+var chart = new charts.LineChart();
+
+var query = new values.Query();
+query.limit(30)
+var ones = query.desc().cache(60).findAll();
+ones.reverse();
+
+var lines = [];
+
+{
+	var line = new charts.Line();
+	line.name = "1分钟";
+	line.color = colors.ARRAY[0];
+	line.isFilled = true;
+	line.values = [];
+	lines.push(line);
+}
+
+{
+	var line = new charts.Line();
+	line.name = "5分钟";
+	line.color = colors.BROWN;
+	line.isFilled = false;
+	line.values = [];
+	lines.push(line);
+}
+
+{
+	var line = new charts.Line();
+	line.name = "15分钟";
+	line.color = colors.RED;
+	line.isFilled = false;
+	line.values = [];
+	lines.push(line);
+}
+
+var maxValue = 1;
+
+ones.$each(function (k, v) {
+	lines[0].values.push(v.value.load1);
+	lines[1].values.push(v.value.load5);
+	lines[2].values.push(v.value.load15);
+
+	if (v.value.load1 > maxValue) {
+		maxValue = Math.ceil(v.value.load1 / 2) * 2;
+	}
+	if (v.value.load5 > maxValue) {
+		maxValue = Math.ceil(v.value.load5 / 2) * 2;
+	}
+	if (v.value.load15 > maxValue) {
+		maxValue = Math.ceil(v.value.load15 / 2) * 2;
+	}
+	
+	var minute = v.timeFormat.minute.substring(8);
+	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+});
+
+chart.addLines(lines);
+chart.max = maxValue;
+chart.render();
+`,
+			}
+			item.AddChart(chart)
+			board.AddChart(app.Id, item.Id, chart.Id)
+		}
+
+		// memory usage
+		{
+			//item
+			item := NewItem()
+			item.Id = "memory.usage"
+			item.Name = "内存使用量"
+			item.Interval = "60s"
+
+			source := NewMemorySource()
+			source.DataFormat = SourceDataFormatJSON
+			item.SourceCode = source.Code()
+			item.SourceOptions = ConvertSourceToMap(source)
+
+			app.AddItem(item)
+
+			// 阈值
+			{
+				threshold1 := NewThreshold()
+				threshold1.Param = "${usage.virtualPercent}"
+				threshold1.Value = "80"
+				threshold1.NoticeLevel = notices.NoticeLevelWarning
+				threshold1.Operator = ThresholdOperatorGte
+				item.AddThreshold(threshold1)
+			}
+
+			// chart
+			{
+				chart := widgets.NewChart()
+				chart.Id = "memory.usage.chart1"
+				chart.Name = "内存使用量（%）"
+				chart.Columns = 2
+				chart.Type = "javascript"
+				chart.Options = maps.Map{
+					"code": `
+var chart = new charts.LineChart();
+
+var query = new values.Query();
+query.limit(30)
+var ones = query.desc().cache(60).findAll();
+ones.reverse();
+
+var lines = [];
+
+{
+	var line = new charts.Line();
+	line.color = colors.ARRAY[0];
+	line.isFilled = true;
+	line.values = [];
+	lines.push(line);
+}
+
+ones.$each(function (k, v) {
+	lines[0].values.push(v.value.usage.virtualPercent);
+
+	var minute = v.timeFormat.minute.substring(8);
+	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+});
+
+chart.addLines(lines);
+chart.max = 100;
+chart.render();
+`,
+				}
+				item.AddChart(chart)
+				board.AddChart(app.Id, item.Id, chart.Id)
+			}
+
+			{
+				chart := widgets.NewChart()
+				chart.Id = "memory.usage.chart2"
+				chart.Name = "当前内存使用量"
+				chart.Columns = 1
+				chart.Type = "javascript"
+				chart.Options = maps.Map{
+					"code": `
+var chart = new charts.StackBarChart();
+
+var latest = new values.Query().latest(1);
+var hasWarning = false;
+if (latest.length > 0) {
+	hasWarning = (latest[0].value.usage.swapPercent > 50) || (latest[0].value.usage.virtualPercent > 80);
+	chart.values = [ 
+		[latest[0].value.usage.swapUsed, latest[0].value.usage.swapTotal - latest[0].value.usage.swapUsed],
+		[latest[0].value.usage.virtualUsed, latest[0].value.usage.virtualTotal - latest[0].value.usage.virtualUsed]
+	];
+	chart.labels = [ "虚拟内存（" +  (Math.round(latest[0].value.usage.swapUsed * 10) / 10) + "G/" + Math.round(latest[0].value.usage.swapTotal) + "G"  + "）", "物理内存（" + (Math.round(latest[0].value.usage.virtualUsed * 10) / 10)+ "G/" + Math.round(latest[0].value.usage.virtualTotal)  + "G"  + "）"];
+} else {
+	chart.values = [ [0, 0], [0, 0] ];
+	chart.labels = [ "虚拟内存", "物理内存" ];
+}
+if (hasWarning) {
+	chart.colors = [ colors.RED, colors.GREEN ];
+} else {
+	chart.colors = [ colors.BROWN, colors.GREEN ];
+}
+chart.render();
+`,
+				}
+				item.AddChart(chart)
+				board.AddChart(app.Id, item.Id, chart.Id)
+			}
+		}
+
+		// clock
+		{
+			// item
+			item := NewItem()
+			item.Id = "clock"
+			item.Name = "时钟"
+			item.Interval = "60s"
+
+			// 阈值
+			{
+				threshold := NewThreshold()
+				threshold.Param = "new Date().getTime() / 1000 - ${timestamp}"
+				threshold.Value = "300"
+				threshold.NoticeLevel = notices.NoticeLevelWarning
+				threshold.Operator = ThresholdOperatorGte
+				threshold.NoticeMessage = "主机时间出现很大偏差"
+				item.AddThreshold(threshold)
+			}
+
+			source := NewDateSource()
+			source.DataFormat = SourceDataFormatJSON
+			item.SourceCode = source.Code()
+			item.SourceOptions = ConvertSourceToMap(source)
+
+			app.AddItem(item)
+
+			// 时钟
+			{
+				chart := widgets.NewChart()
+				chart.Id = "clock"
+				chart.Name = "时钟"
+				chart.Columns = 1
+				chart.Type = "javascript"
+				chart.Options = maps.Map{
+					"code": `
+var chart = new charts.Clock();
+var latest = new values.Query().latest(1);
+if (latest.length > 0) {
+	chart.timestamp = parseInt(new Date().getTime() / 1000) - (latest[0].createdAt - latest[0].value.timestamp);
+}
+chart.render();
+`,
+				}
+				item.AddChart(chart)
+				board.AddChart(app.Id, item.Id, chart.Id)
+			}
+		}
+
+		// network out && network in
+		{
+			// item
+			item := NewItem()
+			item.Id = "network.usage"
+			item.Name = "网络相关"
+			item.Interval = "60s"
+
+			{
+				threshold := NewThreshold()
+				threshold.Param = "${stat.avgSentBytes}"
+				threshold.Operator = ThresholdOperatorGte
+				threshold.Value = "13107200"
+				threshold.NoticeLevel = notices.NoticeLevelWarning
+				threshold.NoticeMessage = "流量超过100M/s"
+				item.AddThreshold(threshold)
+			}
+
+			source := NewNetworkSource()
+			source.DataFormat = SourceDataFormatJSON
+			item.SourceCode = source.Code()
+			item.SourceOptions = ConvertSourceToMap(source)
+
+			app.AddItem(item)
+
+			// 图表
+			{
+				chart := widgets.NewChart()
+				chart.Id = "network.usage.received"
+				chart.Name = "出口带宽（M/s）"
+				chart.Columns = 2
+				chart.Type = "javascript"
+				chart.Options = maps.Map{
+					"code": `
+var chart = new charts.LineChart();
+
+var line = new charts.Line();
+line.isFilled = true;
+
+var ones = new values.Query().cache(60).latest(60);
+ones.reverse();
+ones.$each(function (k, v) {
+	line.values.push(Math.round(v.value.stat.avgSentBytes / 1024 / 1024 * 100) / 100);
+	
+	var minute = v.timeFormat.minute.substring(8);
+	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+});
+var maxValue = line.values.$max();
+if (maxValue < 1) {
+	chart.max = 1;
+} else if (maxValue < 5) {
+	chart.max = 5;
+} else if (maxValue < 10) {
+	chart.max = 10;
+}
+
+chart.addLine(line);
+chart.render();
+`,
+				}
+				item.AddChart(chart)
+				board.AddChart(app.Id, item.Id, chart.Id)
+			}
+
+			{
+				chart := widgets.NewChart()
+				chart.Id = "network.usage.sent"
+				chart.Name = "入口带宽（M/s）"
+				chart.Columns = 2
+				chart.Type = "javascript"
+				chart.Options = maps.Map{
+					"code": `
+var chart = new charts.LineChart();
+
+var line = new charts.Line();
+line.isFilled = true;
+
+var ones = new values.Query().cache(60).latest(60);
+ones.reverse();
+ones.$each(function (k, v) {
+	line.values.push(Math.round(v.value.stat.avgReceivedBytes / 1024 / 1024 * 100) / 100);
+	
+	var minute = v.timeFormat.minute.substring(8);
+	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+});
+var maxValue = line.values.$max();
+if (maxValue < 1) {
+	chart.max = 1;
+} else if (maxValue < 5) {
+	chart.max = 5;
+} else if (maxValue < 10) {
+	chart.max = 10;
+}
+
+chart.addLine(line);
+chart.render();
+`,
+				}
+				item.AddChart(chart)
+				board.AddChart(app.Id, item.Id, chart.Id)
+			}
+		}
+
+		// disk
+		{
+			// item
+			item := NewItem()
+			item.Id = "disk.usage"
+			item.Name = "文件系统"
+			item.Interval = "120s"
+
+			source := NewDiskSource()
+			source.DataFormat = SourceDataFormatJSON
+			item.SourceCode = source.Code()
+			item.SourceOptions = ConvertSourceToMap(source)
+
+			app.AddItem(item)
+
+			// 图表
+			{
+				chart := widgets.NewChart()
+				chart.Id = "disk.usage.chart1"
+				chart.Name = "文件系统"
+				chart.Columns = 2
+				chart.Type = "javascript"
+				chart.Options = maps.Map{
+					"code": `
+var chart = new charts.StackBarChart();
+chart.values = [];
+chart.labels = [];
+
+var latest = new values.Query().cache(120).latest(1);
+if (latest.length > 0) {
+	var partitions = latest[0].value.partitions;
+	partitions.$each(function (k, v) {
+		chart.values.push([v.used, v.total - v.used]);
+		chart.labels.push(v.name + "（" + (Math.round(v.used / 1024 / 1024 / 1024 * 100) / 100)+ "G/" + (Math.round(v.total / 1024 / 1024 / 1024 * 100) / 100) +"G）");
+	});
+}
+
+chart.colors = [ colors.BROWN, colors.GREEN ];
+chart.render();
+`,
+				}
+				item.AddChart(chart)
+				board.AddChart(app.Id, item.Id, chart.Id)
+			}
+		}
+	}
 }
