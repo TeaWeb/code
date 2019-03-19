@@ -35,7 +35,10 @@ func TestNewClientPool(t *testing.T) {
 					client := SharedClientPool.client("123456", "127.0.0.1:9991", 30*time.Second, 0, 0)
 					resp, err := client.Do(req)
 					if err != nil {
-						t.Fatal(err)
+						failLocker.Lock()
+						fails++
+						failLocker.Unlock()
+						return
 					}
 					defer resp.Body.Close()
 
