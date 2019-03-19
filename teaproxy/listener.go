@@ -102,7 +102,7 @@ func (this *Listener) handle(writer http.ResponseWriter, rawRequest *http.Reques
 	req.method = rawRequest.Method
 	req.uri = rawRequest.URL.RequestURI()
 	req.rawScheme = this.scheme
-	req.scheme = "http" // @TODO 支持 https
+	req.scheme = "http"
 	req.serverName = serverName
 	req.serverAddr = this.config.Address
 	req.root = server.Root

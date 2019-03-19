@@ -2,12 +2,12 @@ package teaproxy
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
@@ -234,12 +234,13 @@ func TestRequest_FormatPerformance(t *testing.T) {
 	req.scheme = "http"
 
 	count := 10000
-	rand.Seed(time.Now().UnixNano())
 	before := time.Now()
 	result := ""
 	for i := 0; i < count; i ++ {
-		source := "hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test} /hello"
-		result = req.Format(source)
+		for n := 0; n < 5; n ++ {
+			source := "hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test} /hello " + fmt.Sprintf("%d", i)
+			result = req.Format(source)
+		}
 	}
 
 	cost := int(float64(count) / time.Since(before).Seconds())
@@ -374,6 +375,125 @@ func TestRequest_RewriteVariables(t *testing.T) {
 	for _, header := range req.headers {
 		t.Log("headers:", header.Name, ":", header.Value)
 	}
+}
+
+func TestPerformanceConfigure(t *testing.T) {
+	rawReq, err := http.NewRequest("GET", "http://www.example.com/hello/world?name=Lu&age=20", bytes.NewBuffer([]byte("hello=world")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	server := teaconfigs.NewServerConfig()
+
+	backend := teaconfigs.NewBackendConfig()
+	backend.Address = "127.0.0.1:1234"
+	server.AddBackend(backend)
+
+	{
+		h := shared.NewHeaderConfig()
+		h.Name = "TeaVersion"
+		h.Value = "${teaVersion}"
+		server.AddHeader(h)
+	}
+
+	{
+		h := shared.NewHeaderConfig()
+		h.Name = "TeaPort"
+		h.Value = "${remotePort}"
+		server.AddHeader(h)
+	}
+
+	{
+		h := shared.NewHeaderConfig()
+		h.Name = "TeaFile"
+		h.Value = "${requestFilename}"
+		server.AddHeader(h)
+	}
+
+	{
+		h := shared.NewHeaderConfig()
+		h.Name = "Scheme"
+		h.Value = "${scheme}"
+		server.AddHeader(h)
+	}
+
+	err = server.Validate()
+
+	count := 10000
+	before := time.Now()
+
+	for i := 0; i < count; i ++ {
+		req := NewRequest(rawReq)
+		req.uri = "/hello/world?charset=utf-8"
+		req.host = "www.example.com"
+		req.headers = []*shared.HeaderConfig{}
+
+		err = req.configure(server, 0)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+	}
+
+	cost := time.Since(before).Seconds()
+	t.Log(float64(count)/cost, "qps")
+}
+
+func TestPerformanceFormatHeaders(t *testing.T) {
+	rawReq, err := http.NewRequest("GET", "http://www.example.com/hello/world?name=Lu&age=20", bytes.NewBuffer([]byte("hello=world")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	server := teaconfigs.NewServerConfig()
+
+	backend := teaconfigs.NewBackendConfig()
+	backend.Address = "127.0.0.1:1234"
+	server.AddBackend(backend)
+
+	{
+		h := shared.NewHeaderConfig()
+		h.Name = "TeaVersion"
+		h.Value = "${teaVersion}"
+		server.AddHeader(h)
+	}
+
+	{
+		h := shared.NewHeaderConfig()
+		h.Name = "TeaPort"
+		h.Value = "${remotePort}"
+		server.AddHeader(h)
+	}
+
+	{
+		h := shared.NewHeaderConfig()
+		h.Name = "TeaFile"
+		h.Value = "${requestFilename}"
+		server.AddHeader(h)
+	}
+
+	{
+		h := shared.NewHeaderConfig()
+		h.Name = "Scheme"
+		h.Value = "${scheme}"
+		server.AddHeader(h)
+	}
+
+	err = server.Validate()
+
+	count := 10000
+	before := time.Now()
+
+	for i := 0; i < count; i ++ {
+		req := NewRequest(rawReq)
+		req.uri = "/hello/world?charset=utf-8"
+		req.host = "www.example.com"
+		req.headers = []*shared.HeaderConfig{}
+
+		server.FormatHeaders(req.Format)
+	}
+
+	cost := time.Since(before).Seconds()
+	t.Log(float64(count)/cost, "qps")
 }
 
 func TestPerformanceBackend(t *testing.T) {

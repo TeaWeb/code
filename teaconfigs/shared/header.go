@@ -59,7 +59,7 @@ func (this *HeaderConfig) Match(statusCode int) bool {
 
 // 设置StatusMap
 func (this *HeaderConfig) Copy() *HeaderConfig {
-	newHeader := NewHeaderConfig()
+	newHeader := &HeaderConfig{}
 	newHeader.Id = this.Id
 	newHeader.On = this.On
 	newHeader.Always = this.Always
