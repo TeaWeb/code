@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"errors"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/iwind/TeaGo/utils/string"
@@ -85,20 +86,24 @@ func (this *Item) Source() SourceInterface {
 }
 
 // 检查某个值对应的通知级别
-func (this *Item) TestValue(value interface{}, oldValue interface{}) (threshold *Threshold, level notices.NoticeLevel, message string) {
+func (this *Item) TestValue(value interface{}, oldValue interface{}) (threshold *Threshold, level notices.NoticeLevel, message string, err error) {
 	if len(this.Thresholds) == 0 {
-		return nil, notices.NoticeLevelNone, ""
+		return nil, notices.NoticeLevelNone, "", nil
 	}
 	for _, t := range this.Thresholds {
-		if t.Test(value, oldValue) {
+		b, testErr := t.Test(value, oldValue)
+		if testErr != nil {
+			return nil, notices.NoticeLevelNone, "", errors.New("[threshold] " + testErr.Error())
+		}
+		if b {
 			if len(t.NoticeMessage) > 0 {
-				return t, t.NoticeLevel, t.NoticeMessage
+				return t, t.NoticeLevel, t.NoticeMessage, nil
 			} else {
-				return t, t.NoticeLevel, t.Param + " " + t.Operator + " " + t.Value
+				return t, t.NoticeLevel, t.Param + " " + t.Operator + " " + t.Value, nil
 			}
 		}
 	}
-	return nil, notices.NoticeLevelNone, ""
+	return nil, notices.NoticeLevelNone, "", nil
 }
 
 // 添加图表

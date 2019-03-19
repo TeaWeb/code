@@ -7,7 +7,6 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/robertkrimen/otto"
@@ -53,54 +52,58 @@ func (this *Threshold) Validate() error {
 }
 
 // 将此条件应用于阈值，检查是否匹配
-func (this *Threshold) Test(value interface{}, oldValue interface{}) bool {
-	paramValue := this.Eval(value, oldValue)
+func (this *Threshold) Test(value interface{}, oldValue interface{}) (ok bool, err error) {
+	paramValue, err := this.Eval(value, oldValue)
+	if err != nil {
+		return false, err
+	}
 
 	switch this.Operator {
 	case ThresholdOperatorRegexp:
 		if this.regValue == nil {
-			return false
+			return false, nil
 		}
-		return this.regValue.MatchString(types.String(paramValue))
+		return this.regValue.MatchString(types.String(paramValue)), nil
 	case ThresholdOperatorNotRegexp:
 		if this.regValue == nil {
-			return false
+			return false, nil
 		}
-		return !this.regValue.MatchString(types.String(paramValue))
+		return !this.regValue.MatchString(types.String(paramValue)), nil
 	case ThresholdOperatorGt:
-		return types.Float64(paramValue) > this.floatValue
+		return types.Float64(paramValue) > this.floatValue, nil
 	case ThresholdOperatorGte:
-		return types.Float64(paramValue) >= this.floatValue
+		return types.Float64(paramValue) >= this.floatValue, nil
 	case ThresholdOperatorLt:
-		return types.Float64(paramValue) < this.floatValue
+		return types.Float64(paramValue) < this.floatValue, nil
 	case ThresholdOperatorLte:
-		return types.Float64(paramValue) <= this.floatValue
+		return types.Float64(paramValue) <= this.floatValue, nil
 	case ThresholdOperatorEq:
-		return paramValue == this.Value
+		return paramValue == this.Value, nil
 	case ThresholdOperatorNot:
-		return paramValue != this.Value
+		return paramValue != this.Value, nil
 	case ThresholdOperatorPrefix:
-		return strings.HasPrefix(types.String(paramValue), this.Value)
+		return strings.HasPrefix(types.String(paramValue), this.Value), nil
 	case ThresholdOperatorSuffix:
-		return strings.HasSuffix(types.String(paramValue), this.Value)
+		return strings.HasSuffix(types.String(paramValue), this.Value), nil
 	case ThresholdOperatorContains:
-		return strings.Contains(types.String(paramValue), this.Value)
+		return strings.Contains(types.String(paramValue), this.Value), nil
 	case ThresholdOperatorNotContains:
-		return !strings.Contains(types.String(paramValue), this.Value)
+		return !strings.Contains(types.String(paramValue), this.Value), nil
 	}
-	return false
+	return false, nil
 }
 
 // 执行数值运算，使用Javascript语法
-func (this *Threshold) Eval(value interface{}, old interface{}) string {
+func (this *Threshold) Eval(value interface{}, old interface{}) (string, error) {
 	return this.EvalParam(this.Param, value, old)
 }
 
 // 使用某个参数执行数值运算，使用Javascript语法
-func (this *Threshold) EvalParam(param string, value interface{}, old interface{}) string {
+func (this *Threshold) EvalParam(param string, value interface{}, old interface{}) (string, error) {
 	if old == nil {
 		old = value
 	}
+	var resultErr error = nil
 	paramValue := teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(param, func(s string) string {
 		if value == nil {
 			return ""
@@ -110,9 +113,17 @@ func (this *Threshold) EvalParam(param string, value interface{}, old interface{
 
 		// 支持${OLD}和${OLD.xxx}
 		if varName == "OLD" {
-			return this.EvalParam("${0}", old, nil)
+			result, err := this.EvalParam("${0}", old, nil)
+			if err != nil {
+				resultErr = err
+			}
+			return result
 		} else if strings.HasPrefix(varName, "OLD.") {
-			return this.EvalParam("${"+varName[4:]+"}", old, nil)
+			result, err := this.EvalParam("${"+varName[4:]+"}", old, nil)
+			if err != nil {
+				resultErr = err
+			}
+			return result
 		}
 
 		switch v := value.(type) {
@@ -139,32 +150,14 @@ func (this *Threshold) EvalParam(param string, value interface{}, old interface{
 				return "0"
 			}
 			return "0"
-		case []interface{}:
-			index := types.Int(varName)
-			if index >= 0 && index < len(v) {
-				return types.String(v[index])
-			}
-			return ""
-		case map[string]interface{}:
-			result, found := v[varName]
-			if found {
+		default:
+			if types.IsSlice(value) || types.IsMap(value) {
+				result := teautils.Get(v, strings.Split(varName, "."))
+				if result == nil {
+					return ""
+				}
 				return types.String(result)
 			}
-			result = teautils.Get(v, strings.Split(varName, "."))
-			if result == nil {
-				return ""
-			}
-			return types.String(result)
-		case maps.Map:
-			result, found := v[varName]
-			if found {
-				return types.String(result)
-			}
-			result = teautils.Get(v, strings.Split(varName, "."))
-			if result == nil {
-				return ""
-			}
-			return types.String(result)
 		}
 		return s
 	})
@@ -175,14 +168,25 @@ func (this *Threshold) EvalParam(param string, value interface{}, old interface{
 			vm := otto.New()
 			v, err := vm.Run(paramValue)
 			if err != nil {
-				logs.Error(errors.New("\"" + this.Expression() + "\": eval \"" + paramValue + "\":" + err.Error()))
+				return "", errors.New("\"" + this.Expression() + "\": eval \"" + paramValue + "\":" + err.Error())
+			} else {
+				paramValue = v.String()
+			}
+		}
+
+		// javascript
+		if strings.HasPrefix(paramValue, "javascript:") {
+			vm := otto.New()
+			v, err := vm.Run(paramValue[len("javascript:")+1:])
+			if err != nil {
+				return "", errors.New("\"" + this.Expression() + "\": eval \"" + paramValue + "\":" + err.Error())
 			} else {
 				paramValue = v.String()
 			}
 		}
 	}
 
-	return paramValue
+	return paramValue, resultErr
 }
 
 // 执行动作

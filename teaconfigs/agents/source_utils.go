@@ -38,6 +38,7 @@ func RegisterAllDataSources() {
 	RegisterDataSource(NewPingSource(), SourceCategoryCommon)
 	RegisterDataSource(NewAppProcessesSource(), SourceCategoryCommon)
 	RegisterDataSource(NewFileChangeSource(), SourceCategoryCommon)
+	RegisterDataSource(NewMySQLSource(), SourceCategoryCommon)
 
 	// plugin
 }

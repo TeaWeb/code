@@ -77,6 +77,21 @@ func TestThreshold_Eval(t *testing.T) {
 	}, nil))
 }
 
+func TestThreshold_Array(t *testing.T) {
+	threshold := NewThreshold()
+	t.Log(threshold.EvalParam("${0.a.b.0.d}", []maps.Map{
+		{
+			"a": maps.Map{
+				"b": []interface{}{
+					maps.Map{
+						"d": "123",
+					},
+				},
+			},
+		},
+	}, nil))
+}
+
 func TestThreshold_Eval_Date(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "new Date().getTime() / 1000 - ${timestamp}"

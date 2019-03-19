@@ -3,6 +3,7 @@ package agentutils
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/iwind/TeaGo/Tea"
@@ -10,7 +11,6 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
-	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"io"
@@ -78,22 +78,36 @@ func (this *Installer) Start() error {
 		}
 	}
 
-	var authMethod ssh.AuthMethod = nil
+	methods := []ssh.AuthMethod{}
 	if this.AuthType == SSHAuthTypePassword {
-		authMethod = ssh.Password(this.AuthPassword)
-	} else {
-		signer, err := ssh.ParsePrivateKey(this.AuthKey)
-		if err != nil {
-			return err
+		{
+			authMethod := ssh.Password(this.AuthPassword)
+			methods = append(methods, authMethod)
 		}
-		authMethod = ssh.PublicKeys(signer)
+
+		{
+			authMethod := ssh.KeyboardInteractive(func(user, instruction string, questions []string, echos []bool) (answers []string, err error) {
+				if len(questions) == 0 {
+					return []string{}, nil
+				}
+				return []string{this.AuthPassword}, nil
+			})
+			methods = append(methods, authMethod)
+		}
+	} else {
+		{
+			signer, err := ssh.ParsePrivateKey(this.AuthKey)
+			if err != nil {
+				return err
+			}
+			authMethod := ssh.PublicKeys(signer)
+			methods = append(methods, authMethod)
+		}
 	}
 
 	config := &ssh.ClientConfig{
-		User: this.AuthUsername,
-		Auth: []ssh.AuthMethod{
-			authMethod,
-		},
+		User:            this.AuthUsername,
+		Auth:            methods,
 		HostKeyCallback: hostKeyCallback,
 		Timeout:         this.Timeout,
 	}

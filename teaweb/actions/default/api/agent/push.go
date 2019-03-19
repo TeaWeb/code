@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
@@ -140,7 +141,13 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	if oldValue == nil {
 		oldValue = v
 	}
-	threshold, level, message := item.TestValue(v, oldValue)
+	threshold, level, message, err := item.TestValue(v, oldValue)
+	if err != nil {
+		logs.Error(errors.New(item.Name + " " + err.Error()))
+		if len(m.GetString("error")) == 0 {
+			m["error"] = err.Error()
+		}
+	}
 
 	// 通知消息
 	setting := notices.SharedNoticeSetting()
