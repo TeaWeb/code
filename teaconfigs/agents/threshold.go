@@ -90,7 +90,10 @@ func (this *Threshold) testParam(param string, shouldLoop bool, value interface{
 		if dollarIndex == 0 {
 			if types.IsSlice(value) {
 				lists.Each(value, func(k int, v interface{}) {
-					indexParam := fmt.Sprintf("%d.", k) + strings.Join(pieces[dollarIndex+1:], ".")
+					indexParam := fmt.Sprintf("%d", k)
+					if len(pieces) > 1 {
+						indexParam += "." + strings.Join(pieces[dollarIndex+1:], ".")
+					}
 					newParam := strings.Replace(param, "${"+this.loopVar+"}", "${"+indexParam+"}", -1)
 					ok1, err1 := this.testParam(newParam, false, value, oldValue)
 					if ok1 {

@@ -135,6 +135,39 @@ func TestThreshold_EVAL_Dollar(t *testing.T) {
 	t.Log(threshold.Test("abc", nil))
 }
 
+func TestThreshold_EVAL_Dollar2(t *testing.T) {
+	threshold := NewThreshold()
+	threshold.Param = "${$.percent}"
+	threshold.Operator = ThresholdOperatorGt
+	threshold.Value = "81"
+	threshold.Validate()
+	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
+	t.Log(threshold.Test([]maps.Map{
+		{
+			"percent": 30,
+		},
+		{
+			"percent": 60,
+		},
+		{
+			"percent": 82,
+		},
+		{
+			"percent": 50,
+		},
+	}, nil))
+}
+
+func TestThreshold_EVAL_Dollar3(t *testing.T) {
+	threshold := NewThreshold()
+	threshold.Param = "${$}"
+	threshold.Operator = ThresholdOperatorGt
+	threshold.Value = "3"
+	threshold.Validate()
+	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
+	t.Log(threshold.Test([]int{1, 2, 3, 4}, nil))
+}
+
 func TestThreshold_Old(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${rows} - ${OLD.rows234}"
