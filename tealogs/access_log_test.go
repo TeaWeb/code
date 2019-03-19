@@ -268,13 +268,20 @@ func TestAccessLog_Format(t *testing.T) {
 }
 
 func TestAccessLog_ParseGEO(t *testing.T) {
+	{
+		accessLog := &AccessLog{
+			RemoteAddr: "111.197.204.174",
+		}
+		accessLog.parseGeoIP()
+	}
+
+	before := time.Now()
 	accessLog := &AccessLog{
 		RemoteAddr: "183.131.156.10",
 	}
-
-	//ip := net.ParseIP("183.131.156.10")
-	//ip := net.ParseIP("111.197.204.174")
 	accessLog.parseGeoIP()
+	cost := time.Since(before).Seconds()
 
 	t.Logf("%#v", accessLog.Extend.Geo)
+	t.Log(1 / cost)
 }

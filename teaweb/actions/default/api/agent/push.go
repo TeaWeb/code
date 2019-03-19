@@ -118,6 +118,7 @@ func (this *PushAction) selectProcessEventCollection(agentId string) *teamongo.C
 	return coll
 }
 
+// 处理监控项事件
 func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, t time.Time) {
 	appId := m.GetString("appId")
 	itemId := m.GetString("itemId")
@@ -132,7 +133,14 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	}
 
 	v := m.Get("value")
-	threshold, level, message := item.TestValue(v)
+	oldValue, err := this.findLatestAgentValue(agent.Id, appId, itemId)
+	if err != nil {
+		logs.Error(err)
+	}
+	if oldValue == nil {
+		oldValue = v
+	}
+	threshold, level, message := item.TestValue(v, oldValue)
 
 	// 通知消息
 	setting := notices.SharedNoticeSetting()
@@ -239,7 +247,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	}
 	value.SetTime(t)
 
-	err := teamongo.NewAgentValueQuery().Insert(value)
+	err = teamongo.NewAgentValueQuery().Insert(value)
 	if err != nil {
 		logs.Error(err)
 	}
@@ -304,6 +312,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	}
 }
 
+// 通知消息
 func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, itemId string, setting *notices.NoticeSetting, level notices.NoticeLevel, message string, isSuccess bool) []string {
 	isNotified := false
 	receiverIds := []string{}
@@ -386,4 +395,22 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 	}
 
 	return receiverIds
+}
+
+// 查找最近的一次数值记录
+func (this *PushAction) findLatestAgentValue(agentId string, appId string, itemId string) (interface{}, error) {
+	query := teamongo.NewAgentValueQuery()
+	query.Agent(agentId)
+	query.App(appId)
+	query.Item(itemId)
+	query.Attr("error", "")
+	query.Desc("_id")
+	v, err := query.Find()
+	if err != nil {
+		return nil, err
+	}
+	if v == nil {
+		return nil, nil
+	}
+	return v.Value, nil
 }

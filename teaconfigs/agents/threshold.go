@@ -107,10 +107,14 @@ func (this *Threshold) EvalParam(param string, value interface{}, old interface{
 		}
 
 		varName := s[2 : len(s)-1]
-		if strings.HasPrefix(varName, "OLD.") {
-			logs.Println("param:", varName[4:])
+
+		// 支持${OLD}和${OLD.xxx}
+		if varName == "OLD" {
+			return this.EvalParam("${0}", old, nil)
+		} else if strings.HasPrefix(varName, "OLD.") {
 			return this.EvalParam("${"+varName[4:]+"}", old, nil)
 		}
+
 		switch v := value.(type) {
 		case string:
 			if varName == "0" {
@@ -171,7 +175,7 @@ func (this *Threshold) EvalParam(param string, value interface{}, old interface{
 			vm := otto.New()
 			v, err := vm.Run(paramValue)
 			if err != nil {
-				logs.Error(errors.New("eval \"" + paramValue + "\":" + err.Error()))
+				logs.Error(errors.New("\"" + this.Expression() + "\": eval \"" + paramValue + "\":" + err.Error()))
 			} else {
 				paramValue = v.String()
 			}

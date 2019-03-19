@@ -95,6 +95,14 @@ func TestThreshold_Old(t *testing.T) {
 	}, ))
 }
 
+func TestThreshold_Old2(t *testing.T) {
+	threshold := NewThreshold()
+	threshold.Param = "Math.abs(${0} - ${OLD})"
+	threshold.Operator = ThresholdOperatorEq
+	threshold.Value = "333"
+	t.Log(threshold.Test(123, 456, ))
+}
+
 func TestThreshold_RunActions(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Actions = []map[string]interface{}{
