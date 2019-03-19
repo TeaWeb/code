@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
@@ -13,6 +14,9 @@ import (
 	"regexp"
 	"strings"
 )
+
+// 参数值正则
+var thresholdRegexpParamNamedVariable = regexp.MustCompile("\\${[$\\w.-]+}")
 
 // 阈值定义
 type Threshold struct {
@@ -27,6 +31,9 @@ type Threshold struct {
 
 	regValue   *regexp.Regexp
 	floatValue float64
+
+	shouldLoop bool   // 是否应该循环测试，如果包含名为$（dollar符号）的变量，则表示是循环测试
+	loopVar    string // 要循环的变量
 }
 
 // 新阈值对象
@@ -48,12 +55,72 @@ func (this *Threshold) Validate() error {
 		this.floatValue = types.Float64(this.Value)
 	}
 
+	// 检查参数值
+	for _, v := range thresholdRegexpParamNamedVariable.FindAllStringSubmatch(this.Param, -1) {
+		varName := v[0][2 : len(v[0])-1]
+		pieces := strings.Split(varName, ".")
+		if lists.Contains(pieces, "$") {
+			this.shouldLoop = true
+			this.loopVar = varName
+			break
+		}
+	}
+
 	return nil
 }
 
 // 将此条件应用于阈值，检查是否匹配
 func (this *Threshold) Test(value interface{}, oldValue interface{}) (ok bool, err error) {
-	paramValue, err := this.Eval(value, oldValue)
+	return this.testParam(this.Param, this.shouldLoop, value, oldValue)
+}
+
+// 检查阈值，但指定更多的参数
+func (this *Threshold) testParam(param string, shouldLoop bool, value interface{}, oldValue interface{}) (ok bool, err error) {
+	// 处理$（dollar符号）
+	if shouldLoop {
+		pieces := strings.Split(this.loopVar, ".")
+		dollarIndex := 0
+		for index, piece := range pieces {
+			if piece == "$" {
+				dollarIndex = index
+				break
+			}
+		}
+
+		if dollarIndex == 0 {
+			if types.IsSlice(value) {
+				lists.Each(value, func(k int, v interface{}) {
+					indexParam := fmt.Sprintf("%d.", k) + strings.Join(pieces[dollarIndex+1:], ".")
+					newParam := strings.Replace(param, "${"+this.loopVar+"}", "${"+indexParam+"}", -1)
+					ok1, err1 := this.testParam(newParam, false, value, oldValue)
+					if ok1 {
+						ok = ok1
+						err = err1
+					}
+				})
+				return
+			}
+		} else {
+			newValue := teautils.Get(value, pieces[:dollarIndex])
+			if types.IsSlice(newValue) {
+				lists.Each(newValue, func(k int, v interface{}) {
+					indexParam := strings.Join(pieces[:dollarIndex], ".") + "." + fmt.Sprintf("%d.", k) + strings.Join(pieces[dollarIndex+1:], ".")
+
+					newParam := strings.Replace(param, "${"+this.loopVar+"}", "${"+indexParam+"}", -1)
+					ok1, err1 := this.testParam(newParam, false, value, oldValue)
+					if ok1 {
+						ok = ok1
+						err = err1
+					}
+				})
+				return
+			}
+		}
+
+		return false, nil
+	}
+
+	paramValue, err := this.EvalParam(param, value, oldValue)
 	if err != nil {
 		return false, err
 	}
@@ -177,7 +244,7 @@ func (this *Threshold) EvalParam(param string, value interface{}, old interface{
 		// javascript
 		if strings.HasPrefix(paramValue, "javascript:") {
 			vm := otto.New()
-			v, err := vm.Run(paramValue[len("javascript:")+1:])
+			v, err := vm.Run(paramValue[len("javascript:"):])
 			if err != nil {
 				return "", errors.New("\"" + this.Expression() + "\": eval \"" + paramValue + "\":" + err.Error())
 			} else {

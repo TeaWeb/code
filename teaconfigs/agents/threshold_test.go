@@ -100,6 +100,41 @@ func TestThreshold_Eval_Date(t *testing.T) {
 	}, nil))
 }
 
+func TestThreshold_Eval_Javascript(t *testing.T) {
+	threshold := NewThreshold()
+	threshold.Param = "javascript:new Date().getTime() / 1000 - ${timestamp}"
+	t.Log(threshold.Eval(map[string]interface{}{
+		"timestamp": time.Now().Unix() - 10,
+	}, nil))
+}
+
+func TestThreshold_EVAL_Dollar(t *testing.T) {
+	threshold := NewThreshold()
+	threshold.Param = "${a.$.percent}"
+	threshold.Operator = ThresholdOperatorGt
+	threshold.Value = "81"
+	threshold.Validate()
+	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
+	t.Log(threshold.Test(maps.Map{
+		"a": []maps.Map{
+			{
+				"percent": 30,
+			},
+			{
+				"percent": 60,
+			},
+			{
+				"percent": 82,
+			},
+			{
+				"percent": 50,
+			},
+		},
+	}, nil))
+
+	t.Log(threshold.Test("abc", nil))
+}
+
 func TestThreshold_Old(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${rows} - ${OLD.rows234}"
