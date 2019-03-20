@@ -15,7 +15,7 @@ var SharedClientPool = NewClientPool()
 // 客户端池
 type ClientPool struct {
 	clientsMap map[string]*http.Client // backend id => client
-	locker     sync.Mutex
+	locker     sync.RWMutex
 }
 
 // 获取新对象
@@ -26,16 +26,16 @@ func NewClientPool() *ClientPool {
 }
 
 // 根据地址获取客户端
-func (this *ClientPool) client(backendId string, address string, connectionTimeout time.Duration, readTimeout time.Duration, maxConnections uint) *http.Client {
-	this.locker.Lock()
-	defer this.locker.Unlock()
-
+func (this *ClientPool) client(backendId string, address string, connectionTimeout time.Duration, readTimeout time.Duration, maxConnections int32) *http.Client {
 	key := backendId + "_" + address
 
+	this.locker.RLock()
 	client, found := this.clientsMap[key]
 	if found {
+		defer this.locker.RUnlock()
 		return client
 	}
+	this.locker.RUnlock()
 
 	// 超时时间
 	if connectionTimeout <= 0 {
@@ -68,7 +68,10 @@ func (this *ClientPool) client(backendId string, address string, connectionTimeo
 			return &RedirectError{}
 		},
 	}
+
+	this.locker.Lock()
 	this.clientsMap[key] = c
+	this.locker.Unlock()
 
 	return c
 }

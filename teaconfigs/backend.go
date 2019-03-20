@@ -4,7 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/utils/string"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -22,17 +22,15 @@ type BackendConfig struct {
 	IsBackup     bool      `yaml:"backup" json:"isBackup"`                       // 是否为备份
 	FailTimeout  string    `yaml:"failTimeout" json:"failTimeout"`               // 连接失败超时
 	ReadTimeout  string    `yaml:"readTimeout" json:"readTimeout"`               // 读取超时时间
-	MaxFails     uint      `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
-	CurrentFails uint      `yaml:"currentFails" json:"currentFails"`             // 当前已失败次数
-	MaxConns     uint      `yaml:"maxConns" json:"maxConns"`                     // 最大并发连接数
-	CurrentConns uint      `yaml:"currentConns" json:"currentConns"`             // 当前连接数
+	MaxFails     int32     `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
+	CurrentFails int32     `yaml:"currentFails" json:"currentFails"`             // 当前已失败次数
+	MaxConns     int32     `yaml:"maxConns" json:"maxConns"`                     // 最大并发连接数
+	CurrentConns int32     `yaml:"currentConns" json:"currentConns"`             // 当前连接数
 	IsDown       bool      `yaml:"down" json:"isDown"`                           // 是否下线
 	DownTime     time.Time `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
 
 	failTimeoutDuration time.Duration
 	readTimeoutDuration time.Duration
-	failsLocker         sync.Mutex
-	connsLocker         sync.Mutex
 }
 
 // 获取新对象
@@ -98,29 +96,17 @@ func (this *BackendConfig) CandidateWeight() uint {
 }
 
 // 增加错误次数
-func (this *BackendConfig) IncreaseFails() uint {
-	this.failsLocker.Lock()
-	defer this.failsLocker.Unlock()
-
-	this.CurrentFails ++
-
+func (this *BackendConfig) IncreaseFails() int32 {
+	atomic.AddInt32(&this.CurrentFails, 1)
 	return this.CurrentFails
 }
 
 // 增加连接数
 func (this *BackendConfig) IncreaseConn() {
-	this.connsLocker.Lock()
-	defer this.connsLocker.Unlock()
-
-	this.CurrentConns ++
+	atomic.AddInt32(&this.CurrentConns, 1)
 }
 
 // 减少连接数
 func (this *BackendConfig) DecreaseConn() {
-	this.connsLocker.Lock()
-	defer this.connsLocker.Unlock()
-
-	if this.CurrentConns > 0 {
-		this.CurrentConns --
-	}
+	atomic.AddInt32(&this.CurrentConns, -1)
 }

@@ -76,8 +76,8 @@ func (this *UpdateAction) RunPost(params struct {
 	Code        string
 	FailTimeout uint
 	ReadTimeout uint
-	MaxFails    uint
-	MaxConns    uint
+	MaxFails    int32
+	MaxConns    int32
 	IsBackup    bool
 	Must        *actions.Must
 }) {
