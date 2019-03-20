@@ -1,13 +1,13 @@
 package server
 
 import (
+	"github.com/TeaWeb/code/teaweb/actions/default/settings"
+	"github.com/iwind/TeaGo"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo"
-	"strings"
-	"github.com/TeaWeb/code/teaweb/actions/default/settings"
 	"github.com/iwind/TeaGo/utils/string"
+	"strings"
 )
 
 type HttpsUpdateAction actions.Action
@@ -52,7 +52,7 @@ func (this *HttpsUpdateAction) Run(params struct {
 
 	// cert file
 	if params.CertFile != nil {
-		certFilename := stringutil.Rand(16) + params.CertFile.Ext
+		certFilename := "ssl." + stringutil.Rand(16) + params.CertFile.Ext
 		_, err := params.CertFile.WriteToPath(Tea.ConfigFile(certFilename))
 		if err != nil {
 			this.Fail("证书文件上传失败，请检查configs/目录权限")
@@ -62,7 +62,7 @@ func (this *HttpsUpdateAction) Run(params struct {
 
 	// key file
 	if params.KeyFile != nil {
-		keyFilename := stringutil.Rand(16) + params.KeyFile.Ext
+		keyFilename := "ssl." + stringutil.Rand(16) + params.KeyFile.Ext
 		_, err := params.KeyFile.WriteToPath(Tea.ConfigFile(keyFilename))
 		if err != nil {
 			this.Fail("证书文件上传失败，请检查configs/目录权限")
