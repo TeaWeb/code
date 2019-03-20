@@ -23,6 +23,7 @@ func checkConnecting() {
 	duration := 60 * time.Second
 	maxDisconnections := 3
 	timers.Loop(duration, func(looper *timers.Looper) {
+		logs.Println("agents:", len(agents.SharedAgents()))
 		for _, agent := range agents.SharedAgents() {
 			if !agent.On || !agent.CheckDisconnections {
 				continue
@@ -36,7 +37,7 @@ func checkConnecting() {
 				runtimeAgent.CountDisconnections ++
 
 				if runtimeAgent.CountDisconnections > 0 && runtimeAgent.CountDisconnections%maxDisconnections == 0 { // 失去连接 N 次则提醒
-					sendDisconnectNotice(runtimeAgent)
+					sendDisconnectNotice(agent)
 				}
 			} else {
 				hasDisconnections := runtimeAgent.CountDisconnections >= maxDisconnections

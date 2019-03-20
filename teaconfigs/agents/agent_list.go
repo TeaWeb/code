@@ -60,6 +60,13 @@ func SharedAgents() []*AgentConfig {
 	return agentList
 }
 
+// 通知Agent变化
+func NotifyAgentsChange() {
+	agentListLocker.Lock()
+	defer agentListLocker.Unlock()
+	agentListChanged = true
+}
+
 // 添加Agent
 func (this *AgentList) AddAgent(agentFile string) {
 	this.Files = append(this.Files, agentFile)
@@ -92,7 +99,9 @@ func (this *AgentList) FindAllAgents() []*AgentConfig {
 
 // 保存
 func (this *AgentList) Save() error {
-	agentListChanged = true
+	defer func() {
+		NotifyAgentsChange()
+	}()
 
 	writer, err := files.NewWriter(Tea.ConfigFile("agents/agentlist.conf"))
 	if err != nil {

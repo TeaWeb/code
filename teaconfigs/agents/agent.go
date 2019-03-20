@@ -116,7 +116,9 @@ func (this *AgentConfig) Filename() string {
 
 // 保存
 func (this *AgentConfig) Save() error {
-	agentListChanged = true // 标记列表改变
+	defer func() {
+		NotifyAgentsChange() // 标记列表改变
+	}()
 
 	dirFile := files.NewFile(Tea.ConfigFile("agents"))
 	if !dirFile.Exists() {
@@ -135,8 +137,10 @@ func (this *AgentConfig) Save() error {
 
 // 删除
 func (this *AgentConfig) Delete() error {
-	agentListChanged = true // 标记列表改变
-	
+	defer func() {
+		NotifyAgentsChange() // 标记列表改变
+	}()
+
 	f := files.NewFile(Tea.ConfigFile("agents/" + this.Filename()))
 	return f.Delete()
 }
@@ -674,6 +678,16 @@ chart.render();
 			source.DataFormat = SourceDataFormatJSON
 			item.SourceCode = source.Code()
 			item.SourceOptions = ConvertSourceToMap(source)
+
+			{
+				threshold := NewThreshold()
+				threshold.Param = "${partitions.$.percent}"
+				threshold.Operator = ThresholdOperatorGt
+				threshold.Value = "80"
+				threshold.NoticeLevel = notices.NoticeLevelWarning
+				threshold.NoticeMessage = "某个分区已使用80%"
+				item.AddThreshold(threshold)
+			}
 
 			app.AddItem(item)
 

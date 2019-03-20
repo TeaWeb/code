@@ -2,6 +2,7 @@ package agents
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/forms"
+	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -134,6 +135,16 @@ func (this *DiskSource) Variables() []*SourceVariable {
 // 阈值
 func (this *DiskSource) Thresholds() []*Threshold {
 	result := []*Threshold{}
+
+	{
+		t := NewThreshold()
+		t.Param = "${partitions.$.percent}"
+		t.Operator = ThresholdOperatorGt
+		t.Value = "80"
+		t.NoticeLevel = notices.NoticeLevelWarning
+		t.NoticeMessage = "某个分区已使用80%"
+		result = append(result, t)
+	}
 
 	return result
 }
