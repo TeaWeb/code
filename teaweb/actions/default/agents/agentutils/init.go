@@ -23,7 +23,6 @@ func checkConnecting() {
 	duration := 60 * time.Second
 	maxDisconnections := 3
 	timers.Loop(duration, func(looper *timers.Looper) {
-		logs.Println("agents:", len(agents.SharedAgents()))
 		for _, agent := range agents.SharedAgents() {
 			if !agent.On || !agent.CheckDisconnections {
 				continue
