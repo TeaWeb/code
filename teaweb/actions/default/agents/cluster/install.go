@@ -39,12 +39,12 @@ func (this *InstallAction) Run(params struct {
 	stateLocker := sync.Mutex{}
 
 	for _, host := range params.Hosts {
-		func(host string) {
+		func(addr string) {
 			defer wg.Done()
 
 			installer := agentutils.NewInstaller()
 			installer.Port = params.Port
-			installer.Host = host
+			installer.Host = addr
 			installer.Master = params.Master
 			installer.GroupId = params.GroupId
 			installer.Dir = params.Dir
@@ -54,7 +54,7 @@ func (this *InstallAction) Run(params struct {
 			installer.AuthKey = []byte(params.Key)
 			err := installer.Start()
 			result := maps.Map{
-				"addr":        host,
+				"addr":        addr,
 				"name":        installer.HostName,
 				"ip":          installer.HostIP,
 				"isInstalled": installer.IsInstalled,
@@ -74,6 +74,6 @@ func (this *InstallAction) Run(params struct {
 	wg.Wait()
 
 	this.Data["states"] = states
-
+	
 	this.Success()
 }
