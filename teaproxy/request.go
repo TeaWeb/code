@@ -882,17 +882,33 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 		return nil
 	}
 
-	fp, err := os.OpenFile(filePath, os.O_RDONLY, 444)
-	if err != nil {
-		this.serverError(writer)
-		logs.Error(err)
-		this.addError(err)
-		return nil
+	var contentReader io.Reader = nil
+	if this.server.CacheStatic {
+		reader, shouldClose, err := ShareStaticDelivery.Read(filePath, stat)
+		if err != nil {
+			this.serverError(writer)
+			logs.Error(err)
+			this.addError(err)
+			return nil
+		}
+		contentReader = reader
+		if shouldClose {
+			defer contentReader.(*os.File).Close()
+		}
+	} else {
+		reader, err := os.OpenFile(filePath, os.O_RDONLY, 444)
+		if err != nil {
+			this.serverError(writer)
+			logs.Error(err)
+			this.addError(err)
+			return nil
+		}
+		contentReader = reader
+		defer reader.Close()
 	}
-	defer fp.Close()
 
 	writer.Prepare(stat.Size())
-	_, err = io.Copy(writer, fp)
+	_, err = io.Copy(writer, contentReader)
 
 	if err != nil {
 		if this.debug {

@@ -43,6 +43,7 @@ func (this *UpdateAction) RunPost(params struct {
 	GzipLevel       uint8
 	GzipMinLength   float64
 	GzipMinUnit     string
+	CacheStatic     bool
 	Must            *actions.Must
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
@@ -67,6 +68,7 @@ func (this *UpdateAction) RunPost(params struct {
 		server.GzipLevel = params.GzipLevel
 	}
 	server.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
+	server.CacheStatic = params.CacheStatic
 
 	err := server.Validate()
 	if err != nil {

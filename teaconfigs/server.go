@@ -70,6 +70,9 @@ type ServerConfig struct {
 	RealtimeBoard *Board `yaml:"realtimeBoard" json:"realtimeBoard"` // 即时看板
 	StatBoard     *Board `yaml:"statBoard" json:"statBoard"`         // 统计看板
 
+	// 是否开启静态文件加速
+	CacheStatic bool `yaml:"cacheStatic" json:"cacheStatic"`
+
 	maxBodySize   int64
 	gzipMinLength int64
 }
