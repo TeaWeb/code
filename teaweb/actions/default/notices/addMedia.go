@@ -40,6 +40,8 @@ func (this *AddMediaAction) RunPost(params struct {
 	ScriptEnvNames  []string
 	ScriptEnvValues []string
 
+	DingTalkWebhookURL string
+
 	TimeFromHour   int
 	TimeFromMinute int
 	TimeFromSecond int
@@ -120,6 +122,15 @@ func (this *AddMediaAction) RunPost(params struct {
 			}
 		}
 
+		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+	case notices.NoticeMediaTypeDingTalk:
+		params.Must.
+			Field("dingTalkWebhookURL", params.DingTalkWebhookURL).
+			Require("请输入Hook地址").
+			Match("^https:", "Hook地址必须以https://开头")
+
+		media := notices.NewNoticeDingTalkMedia()
+		media.WebhookURL = params.DingTalkWebhookURL
 		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
 	}
 

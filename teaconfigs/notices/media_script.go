@@ -126,3 +126,8 @@ func (this *NoticeScriptMedia) Send(user string, subject string, body string) (r
 
 	return stdout.Bytes(), nil
 }
+
+// 是否需要用户标识
+func (this *NoticeScriptMedia) RequireUser() bool {
+	return false
+}

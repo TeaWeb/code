@@ -6,9 +6,10 @@ import "github.com/iwind/TeaGo/maps"
 type NoticeMediaType = string
 
 const (
-	NoticeMediaTypeEmail   = "email"
-	NoticeMediaTypeWebhook = "webhook"
-	NoticeMediaTypeScript  = "script"
+	NoticeMediaTypeEmail    = "email"
+	NoticeMediaTypeWebhook  = "webhook"
+	NoticeMediaTypeScript   = "script"
+	NoticeMediaTypeDingTalk = "dingTalk"
 )
 
 // 所有媒介
@@ -38,6 +39,14 @@ func AllNoticeMediaTypes() []maps.Map {
 			"description":  "通过运行脚本发送通知",
 			"user":         "可以在脚本中使用${NoticeUser}来获取这个标识",
 		},
+		{
+			"name":         "钉钉群机器人",
+			"code":         NoticeMediaTypeDingTalk,
+			"supportsHTML": false,
+			"instance":     new(NoticeDingTalkMedia),
+			"description":  "通过钉钉群机器人发消息",
+			"user":         "要At（@）的群成员的手机号，多个手机号用英文逗号隔开，也可以为空",
+		},
 	}
 }
 
@@ -62,5 +71,9 @@ func FindNoticeMediaTypeName(mediaType string) string {
 
 // 媒介接口
 type NoticeMediaInterface interface {
+	// 发送
 	Send(user string, subject string, body string) (resp []byte, err error)
+
+	// 是否可以需要用户标识
+	RequireUser() bool
 }

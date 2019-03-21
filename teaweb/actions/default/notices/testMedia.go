@@ -31,10 +31,6 @@ func (this *TestMediaAction) RunPost(params struct {
 	User    string
 	Must    *actions.Must
 }) {
-	params.Must.
-		Field("user", params.User).
-		Require("请输入接收人标识")
-
 	setting := notices.SharedNoticeSetting()
 	media := setting.FindMedia(params.MediaId)
 	if media == nil {
@@ -44,6 +40,12 @@ func (this *TestMediaAction) RunPost(params struct {
 	rawMedia, err := media.Raw()
 	if err != nil {
 		this.Fail("发现配置错误：" + err.Error())
+	}
+
+	if rawMedia.RequireUser() {
+		params.Must.
+			Field("user", params.User).
+			Require("请输入接收人标识")
 	}
 
 	resp, err := rawMedia.Send(params.User, params.Subject, params.Body)

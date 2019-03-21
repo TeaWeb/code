@@ -42,3 +42,8 @@ func (this *NoticeEmailMedia) Send(user string, subject string, body string) (re
 
 	return nil, smtp.SendMail(this.SMTP, auth, this.From, []string{user}, msg)
 }
+
+// 是否需要用户标识
+func (this *NoticeEmailMedia) RequireUser() bool {
+	return true
+}

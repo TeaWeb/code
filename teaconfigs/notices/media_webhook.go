@@ -64,3 +64,8 @@ func (this *NoticeWebhookMedia) Send(user string, subject string, body string) (
 	data, err := ioutil.ReadAll(response.Body)
 	return data, err
 }
+
+// 是否需要用户标识
+func (this *NoticeWebhookMedia) RequireUser() bool {
+	return false
+}
