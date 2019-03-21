@@ -40,6 +40,7 @@ func (this *Listener) Start() {
 		Addr:    this.config.Address,
 		Handler: httpHandler,
 	}
+	this.server.SetKeepAlivesEnabled(true)
 
 	if this.config.Http {
 		logs.Println("start listener on", this.config.Address)

@@ -45,6 +45,8 @@ type HeaderListInterface interface {
 
 // HeaderList定义
 type HeaderList struct {
+	hasHeaders bool
+
 	// 添加的Headers
 	Headers []*HeaderConfig `yaml:"headers" json:"headers"`
 
@@ -54,6 +56,8 @@ type HeaderList struct {
 
 // 校验
 func (this *HeaderList) ValidateHeaders() error {
+	this.hasHeaders = len(this.Headers) > 0
+
 	for _, h := range this.Headers {
 		err := h.Validate()
 		if err != nil {
@@ -61,6 +65,11 @@ func (this *HeaderList) ValidateHeaders() error {
 		}
 	}
 	return nil
+}
+
+// 是否有Headers
+func (this *HeaderList) HasHeaders() bool {
+	return this.hasHeaders
 }
 
 // 取得所有的IgnoreHeader
@@ -164,7 +173,9 @@ func (this *HeaderList) FormatHeaders(formatter func(source string) string) []*H
 			continue
 		}
 		newHeader := h.Copy()
-		newHeader.Value = formatter(h.Value)
+		if h.hasVariables {
+			newHeader.Value = formatter(h.Value)
+		}
 		result = append(result, newHeader)
 	}
 	return result

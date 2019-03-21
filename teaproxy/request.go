@@ -163,7 +163,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 
 	// Header
-	if len(server.Headers) > 0 {
+	if server.HasHeaders() {
 		// 延迟执行，让Header有机会加入Backend, Fastcgi等信息
 		defer func() {
 			this.headers = append(this.headers, server.FormatHeaders(this.Format) ...)
@@ -261,7 +261,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 
 			// headers
-			if len(api.Headers) > 0 {
+			if api.HasHeaders() {
 				this.headers = append(this.headers, api.FormatHeaders(func(source string) string {
 					return this.Format(source)
 				}) ...)
@@ -328,7 +328,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				}
 			}
 
-			if len(location.Headers) > 0 {
+			if location.HasHeaders() {
 				this.headers = append(this.headers, location.FormatHeaders(this.Format) ...)
 			}
 
@@ -353,7 +353,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 						this.addVarMapping(varMapping)
 						this.rewriteId = rule.Id
 
-						if len(rule.Headers) > 0 {
+						if rule.HasHeaders() {
 							this.headers = append(this.headers, rule.FormatHeaders(func(source string) string {
 								return this.Format(source)
 							}) ...)
@@ -422,7 +422,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.backend = nil // 防止冲突
 				locationConfigured = true
 
-				if len(fastcgi.Headers) > 0 {
+				if fastcgi.HasHeaders() {
 					this.headers = append(this.headers, fastcgi.Headers ...)
 				}
 
@@ -458,7 +458,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.backend = backend
 				locationConfigured = true
 
-				if len(backend.Headers) > 0 {
+				if backend.HasHeaders() {
 					this.headers = append(this.headers, backend.Headers ...)
 				}
 
@@ -499,7 +499,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.addVarMapping(varMapping)
 				this.rewriteId = rule.Id
 
-				if len(rule.Headers) > 0 {
+				if rule.HasHeaders() {
 					this.headers = append(this.headers, rule.Headers ...)
 				}
 
@@ -564,7 +564,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		this.fastcgi = fastcgi
 		this.backend = nil // 防止冲突
 
-		if len(fastcgi.Headers) > 0 {
+		if fastcgi.HasHeaders() {
 			this.headers = append(this.headers, fastcgi.Headers ...)
 		}
 
@@ -608,7 +608,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	this.backend = backend
 
 	if backend != nil {
-		if len(backend.Headers) > 0 {
+		if backend.HasHeaders() {
 			this.headers = append(this.headers, backend.Headers ...)
 		}
 
@@ -1148,7 +1148,20 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		this.addError(err)
 		return nil
 	}
-	defer resp.Body.Close()
+	data := []byte{}
+	bodyRead := false
+	if resp.ContentLength > 0 && resp.ContentLength < 2048 { // 内容比较少的直接读取，以加快响应速度
+		bodyRead = true
+		data, err = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			this.serverError(writer)
+			logs.Error(err)
+			this.addError(err)
+		}
+	} else {
+		defer resp.Body.Close()
+	}
 
 	// 清除错误次数
 	if resp.StatusCode >= 200 {
@@ -1220,7 +1233,11 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		}
 	}
 
-	_, err = io.Copy(writer, resp.Body)
+	if bodyRead {
+		_, err = writer.Write(data)
+	} else {
+		_, err = io.Copy(writer, resp.Body)
+	}
 	if err != nil {
 		logs.Error(err)
 		this.addError(err)

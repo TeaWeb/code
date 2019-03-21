@@ -2,7 +2,10 @@ package shared
 
 import (
 	"github.com/iwind/TeaGo/utils/string"
+	"regexp"
 )
+
+var regexpNamedVariable = regexp.MustCompile("\\${[\\w.-]+}")
 
 // 头部信息定义
 type HeaderConfig struct {
@@ -13,7 +16,8 @@ type HeaderConfig struct {
 	Always bool   `yaml:"always" json:"always"` // 是否忽略状态码
 	Status []int  `yaml:"status" json:"status"` // 支持的状态码
 
-	statusMap map[int]bool
+	statusMap    map[int]bool
+	hasVariables bool
 }
 
 // 获取新Header对象
@@ -27,6 +31,7 @@ func NewHeaderConfig() *HeaderConfig {
 // 校验
 func (this *HeaderConfig) Validate() error {
 	this.statusMap = map[int]bool{}
+	this.hasVariables = regexpNamedVariable.MatchString(this.Value)
 
 	if this.Status == nil {
 		this.Status = []int{}
