@@ -13,7 +13,8 @@ var agentListLocker = sync.Mutex{}
 
 // Agent列表
 type AgentList struct {
-	Files []string `yaml:"files" json:"files"`
+	Files       []string `yaml:"files" json:"files"`
+	filesLocker sync.Mutex
 }
 
 // 取得Agent列表
@@ -69,6 +70,8 @@ func NotifyAgentsChange() {
 
 // 添加Agent
 func (this *AgentList) AddAgent(agentFile string) {
+	this.filesLocker.Lock()
+	defer this.filesLocker.Unlock()
 	this.Files = append(this.Files, agentFile)
 }
 

@@ -228,11 +228,6 @@ func (this *Installer) Start() error {
 	if err != nil {
 		return err
 	}
-	agentList.AddAgent(agent.Filename())
-	err = agentList.Save()
-	if err != nil {
-		return err
-	}
 
 	newAgentCreated := false
 	defer func() {
@@ -242,8 +237,10 @@ func (this *Installer) Start() error {
 			if err != nil {
 				logs.Error(err)
 			}
-
-			agentList.RemoveAgent(agent.Filename())
+		} else {
+			// 保存到列表
+			this.log("add agent to list");
+			agentList.AddAgent(agent.Filename())
 			err = agentList.Save()
 			if err != nil {
 				logs.Error(err)

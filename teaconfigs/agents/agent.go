@@ -141,6 +141,17 @@ func (this *AgentConfig) Delete() error {
 		NotifyAgentsChange() // 标记列表改变
 	}()
 
+	// 删除board
+	{
+		f := files.NewFile(Tea.ConfigFile("agents/board." + this.Id + ".conf"))
+		if f.Exists() {
+			err := f.Delete()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	f := files.NewFile(Tea.ConfigFile("agents/" + this.Filename()))
 	return f.Delete()
 }
