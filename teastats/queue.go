@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -154,7 +155,7 @@ func (this *Queue) Start(serverId string) {
 					// 简单的增长
 					item.Value = this.increase(oneValue.Value, item.Value)
 				}
-				teamongo.NewQuery("values.server."+serverId, new(Value)).
+				err := teamongo.NewQuery("values.server."+serverId, new(Value)).
 					Attr("_id", oneValue.Id).
 					Update(map[string]interface{}{
 						"$set": maps.Map{
@@ -162,6 +163,9 @@ func (this *Queue) Start(serverId string) {
 							"timestamp": item.Timestamp,
 						},
 					})
+				if err != nil {
+					logs.Error(err)
+				}
 			}
 		}
 	}()
@@ -288,12 +292,16 @@ func (this *Queue) increase(value maps.Map, inc maps.Map) maps.Map {
 		switch v2 := v1.(type) {
 		case int:
 			v1 = v2 + types.Int(v)
+		case int32:
+			v1 = v2 + types.Int32(v)
 		case int64:
 			v1 = v2 + types.Int64(v)
 		case float32:
 			v1 = v2 + types.Float32(v)
 		case float64:
 			v1 = v2 + types.Float64(v)
+		default:
+			logs.Println("[teastats]queue increase not match:", reflect.TypeOf(v1).Kind())
 		}
 		value[k] = v1
 	}
