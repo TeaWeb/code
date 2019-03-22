@@ -568,3 +568,21 @@ func (this *ServerConfig) MoveLocation(fromIndex int, toIndex int) {
 
 	this.Locations = newList
 }
+
+// 是否在引用某个代理
+func (this *ServerConfig) RefersProxy(proxyId string) (description string, referred bool) {
+	if this.Proxy == proxyId {
+		return "server", true
+	}
+	for _, l := range this.Locations {
+		if l.RefersProxy(proxyId) {
+			return l.Pattern, true
+		}
+	}
+	for _, r := range this.Rewrite {
+		if r.RefersProxy(proxyId) {
+			return r.Pattern, true
+		}
+	}
+	return "", false
+}

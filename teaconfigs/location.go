@@ -355,3 +355,16 @@ func (this *LocationConfig) SetPattern(pattern string, patternType int, caseInse
 func (this *LocationConfig) CachePolicyObject() *shared.CachePolicy {
 	return this.cachePolicy
 }
+
+// 是否在引用某个代理
+func (this *LocationConfig) RefersProxy(proxyId string) bool {
+	if this.Proxy == proxyId {
+		return true
+	}
+	for _, r := range this.Rewrite {
+		if r.RefersProxy(proxyId) {
+			return true
+		}
+	}
+	return false
+}

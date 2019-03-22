@@ -200,3 +200,8 @@ func (this *RewriteRule) RedirectMode() string {
 func (this *RewriteRule) AddCond(cond *RewriteCond) {
 	this.Cond = append(this.Cond, cond)
 }
+
+// 是否在引用某个代理
+func (this *RewriteRule) RefersProxy(proxyId string) bool {
+	return strings.HasPrefix(this.Replace, "proxy://"+proxyId)
+}

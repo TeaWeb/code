@@ -32,18 +32,29 @@ func (this *DeleteAction) RunPost(params struct {
 		this.Fail("找不到Server")
 	}
 
+	// 检查有没有被引用
+	serverList, err := teaconfigs.SharedServerList()
+	if err != nil {
+		this.Fail("删除失败：" + err.Error())
+	}
+	servers := serverList.FindAllServers()
+	for _, s := range servers {
+		if s.Id == server.Id {
+			continue
+		}
+		if description, referred := s.RefersProxy(server.Id); referred {
+			this.Fail("有别的代理服务在引用此代理服务：" + s.Description + "[" + description + "]，请删除引用后再次尝试")
+		}
+	}
+
 	// 删除统计数据
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	err := teamongo.FindCollection("values.server." + server.Id).Drop(ctx)
+	err = teamongo.FindCollection("values.server." + server.Id).Drop(ctx)
 	if err != nil {
 		this.Fail("删除统计数据失败：" + err.Error())
 	}
 
 	// 从list中删除
-	serverList, err := teaconfigs.SharedServerList()
-	if err != nil {
-		this.Fail("删除失败：" + err.Error())
-	}
 	serverList.RemoveServer(server.Filename)
 	err = serverList.Save()
 	if err != nil {
