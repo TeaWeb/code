@@ -3,14 +3,12 @@ package agents
 import (
 	"errors"
 	"fmt"
-	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
-	"github.com/robertkrimen/otto"
 	"regexp"
 	"strings"
 )
@@ -123,7 +121,7 @@ func (this *Threshold) testParam(param string, shouldLoop bool, value interface{
 		return false, nil
 	}
 
-	paramValue, err := this.EvalParam(param, value, oldValue)
+	paramValue, err := EvalParam(param, value, oldValue)
 	if err != nil {
 		return false, err
 	}
@@ -165,98 +163,7 @@ func (this *Threshold) testParam(param string, shouldLoop bool, value interface{
 
 // 执行数值运算，使用Javascript语法
 func (this *Threshold) Eval(value interface{}, old interface{}) (string, error) {
-	return this.EvalParam(this.Param, value, old)
-}
-
-// 使用某个参数执行数值运算，使用Javascript语法
-func (this *Threshold) EvalParam(param string, value interface{}, old interface{}) (string, error) {
-	if old == nil {
-		old = value
-	}
-	var resultErr error = nil
-	paramValue := teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(param, func(s string) string {
-		if value == nil {
-			return ""
-		}
-
-		varName := s[2 : len(s)-1]
-
-		// 支持${OLD}和${OLD.xxx}
-		if varName == "OLD" {
-			result, err := this.EvalParam("${0}", old, nil)
-			if err != nil {
-				resultErr = err
-			}
-			return result
-		} else if strings.HasPrefix(varName, "OLD.") {
-			result, err := this.EvalParam("${"+varName[4:]+"}", old, nil)
-			if err != nil {
-				resultErr = err
-			}
-			return result
-		}
-
-		switch v := value.(type) {
-		case string:
-			if varName == "0" {
-				return v
-			}
-			return ""
-		case int8, int16, int, int32, int64, uint8, uint16, uint, uint32, uint64:
-			if varName == "0" {
-				return fmt.Sprintf("%d", v)
-			}
-			return "0"
-		case float32, float64:
-			if varName == "0" {
-				return fmt.Sprintf("%f", v)
-			}
-			return "0"
-		case bool:
-			if varName == "0" {
-				if v {
-					return "1"
-				}
-				return "0"
-			}
-			return "0"
-		default:
-			if types.IsSlice(value) || types.IsMap(value) {
-				result := teautils.Get(v, strings.Split(varName, "."))
-				if result == nil {
-					return ""
-				}
-				return types.String(result)
-			}
-		}
-		return s
-	})
-
-	// 支持加、减、乘、除、余
-	if len(paramValue) > 0 {
-		if strings.ContainsAny(paramValue, "+-*/%") {
-			vm := otto.New()
-			v, err := vm.Run(paramValue)
-			if err != nil {
-				return "", errors.New("\"" + this.Expression() + "\": eval \"" + paramValue + "\":" + err.Error())
-			} else {
-				paramValue = v.String()
-			}
-		}
-
-		// javascript
-		if strings.HasPrefix(paramValue, "javascript:") {
-			vm := otto.New()
-			v, err := vm.Run(paramValue[len("javascript:"):])
-			if err != nil {
-				return "", errors.New("\"" + this.Expression() + "\": eval \"" + paramValue + "\":" + err.Error())
-			} else {
-				paramValue = v.String()
-			}
-		}
-	}
-
-	return paramValue, resultErr
+	return EvalParam(this.Param, value, old)
 }
 
 // 执行动作

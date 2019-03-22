@@ -78,8 +78,7 @@ func TestThreshold_Eval(t *testing.T) {
 }
 
 func TestThreshold_Array(t *testing.T) {
-	threshold := NewThreshold()
-	t.Log(threshold.EvalParam("${0.a.b.0.d}", []maps.Map{
+	t.Log(EvalParam("${0.a.b.0.d}", []maps.Map{
 		{
 			"a": maps.Map{
 				"b": []interface{}{

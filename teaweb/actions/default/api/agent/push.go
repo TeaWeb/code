@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teamongo"
@@ -148,6 +149,15 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 			m["error"] = err.Error()
 		}
 	}
+
+	// 处理消息中的变量
+	message = teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(message, func(s string) string {
+		result, err := agents.EvalParam(s, v, oldValue)
+		if err != nil {
+			logs.Error(err)
+		}
+		return result
+	})
 
 	// 通知消息
 	setting := notices.SharedNoticeSetting()
@@ -321,6 +331,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 
 // 通知消息
 func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, itemId string, setting *notices.NoticeSetting, level notices.NoticeLevel, message string, isSuccess bool) []string {
+
 	isNotified := false
 	receiverIds := []string{}
 
