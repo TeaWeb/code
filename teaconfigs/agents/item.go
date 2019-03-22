@@ -99,7 +99,7 @@ func (this *Item) TestValue(value interface{}, oldValue interface{}) (threshold 
 			if len(t.NoticeMessage) > 0 {
 				return t, t.NoticeLevel, t.NoticeMessage, nil
 			} else {
-				return t, t.NoticeLevel, t.Param + " " + t.Operator + " " + t.Value, nil
+				return t, t.NoticeLevel, "", nil
 			}
 		}
 	}

@@ -29,8 +29,14 @@ func (this *AddMediaAction) RunPost(params struct {
 	EmailPassword string
 	EmailFrom     string
 
-	WebhookURL    string
-	WebhookMethod string
+	WebhookURL          string
+	WebhookMethod       string
+	WebhookHeaderNames  []string
+	WebhookHeaderValues []string
+	WebhookContentType  string
+	WebhookParamNames   []string
+	WebhookParamValues  []string
+	WebhookBody         string
 
 	ScriptType      string
 	ScriptPath      string
@@ -93,6 +99,26 @@ func (this *AddMediaAction) RunPost(params struct {
 		media := notices.NewNoticeWebhookMedia()
 		media.URL = params.WebhookURL
 		media.Method = params.WebhookMethod
+		media.ContentType = params.WebhookContentType
+
+		if len(params.WebhookHeaderNames) > 0 {
+			for index, name := range params.WebhookHeaderNames {
+				if index < len(params.WebhookHeaderValues) {
+					media.AddHeader(name, params.WebhookHeaderValues[index])
+				}
+			}
+		}
+
+		if params.WebhookContentType == "params" {
+			for index, name := range params.WebhookParamNames {
+				if index < len(params.WebhookParamValues) {
+					media.AddParam(name, params.WebhookParamValues[index])
+				}
+			}
+		} else if params.WebhookContentType == "body" {
+			media.Body = params.WebhookBody
+		}
+
 		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
 	case notices.NoticeMediaTypeScript:
 		if params.ScriptType == "path" {

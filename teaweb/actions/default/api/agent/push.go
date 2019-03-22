@@ -159,6 +159,10 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 		return result
 	})
 
+	if threshold != nil && len(message) == 0 {
+		message = threshold.Expression()
+	}
+
 	// 通知消息
 	setting := notices.SharedNoticeSetting()
 

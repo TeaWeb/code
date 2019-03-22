@@ -27,6 +27,11 @@ func startTestServer() {
 			resp.Write([]byte("call " + req.URL.String()))
 		}).
 		Post("/webhook", func(req *http.Request, resp http.ResponseWriter) {
+			for k, v := range req.Header {
+				for _, v1 := range v {
+					resp.Write([]byte("Header " + k + " " + v1 + "\n"))
+				}
+			}
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
 				resp.Write([]byte("error:" + err.Error()))
