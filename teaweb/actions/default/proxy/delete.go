@@ -2,10 +2,13 @@ package proxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"golang.org/x/net/context"
+	"time"
 )
 
 type DeleteAction actions.Action
@@ -29,25 +32,29 @@ func (this *DeleteAction) RunPost(params struct {
 		this.Fail("找不到Server")
 	}
 
-	err := server.Delete()
+	// 删除统计数据
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	err := teamongo.FindCollection("values.server." + server.Id).Drop(ctx)
 	if err != nil {
-		logs.Error(err)
-		this.Fail("配置文件删除失败")
+		this.Fail("删除统计数据失败：" + err.Error())
 	}
 
 	// 从list中删除
 	serverList, err := teaconfigs.SharedServerList()
 	if err != nil {
-		logs.Error(err)
-	} else {
-		serverList.RemoveServer(server.Filename)
-		err = serverList.Save()
-		if err != nil {
-			logs.Error(err)
-		}
+		this.Fail("删除失败：" + err.Error())
+	}
+	serverList.RemoveServer(server.Filename)
+	err = serverList.Save()
+	if err != nil {
+		this.Fail("删除失败：" + err.Error())
 	}
 
-	// @TODO 删除对应的certificate file和certificate key file
+	err = server.Delete()
+	if err != nil {
+		logs.Error(err)
+		this.Fail("配置文件删除失败")
+	}
 
 	// 重启
 	proxyutils.NotifyChange()
