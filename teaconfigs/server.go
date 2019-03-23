@@ -90,6 +90,11 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 			continue
 		}
 
+		// sample
+		if configFile.Name() == "server.sample.www.proxy.conf" {
+			continue
+		}
+
 		config := &ServerConfig{}
 		err = reader.ReadYAML(config)
 		if err != nil {
