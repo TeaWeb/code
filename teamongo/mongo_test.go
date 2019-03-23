@@ -2,7 +2,11 @@ package teamongo
 
 import (
 	"context"
+	"fmt"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 	"testing"
 	"time"
 )
@@ -58,5 +62,40 @@ func TestFindCollection(t *testing.T) {
 			t.Log("not has")
 		}
 		t.Log(time.Since(before).Seconds(), "s")
+	}
+}
+
+func TestCollectionStat(t *testing.T) {
+	db := SharedClient().Database("teaweb")
+	cursor, err := db.ListCollections(context.Background(), maps.Map{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		m := maps.Map{}
+		err := cursor.Decode(&m)
+		if err != nil {
+			t.Fatal(err)
+		}
+		name := m["name"].(string)
+		t.Logf("%#v", name)
+
+		result := db.RunCommand(context.Background(), bsonx.Doc{{"collStats", bsonx.String(name)}, {"verbose", bsonx.Boolean(false)}})
+		if result.Err() != nil {
+			t.Fatal(result.Err())
+		}
+
+		m1 := maps.Map{}
+		err = result.Decode(&m1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		logs.PrintAsJSON(maps.Map{
+			"count": m1.GetInt("count"),
+			"size":  fmt.Sprintf("%.2fM", float64(m1.GetInt("size"))/1024/1024),
+			"ok":    m1.GetInt("ok"),
+		}, t)
 	}
 }
