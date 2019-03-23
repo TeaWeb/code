@@ -80,6 +80,18 @@ func (this *Board) RemoveChart(chartId string) {
 	this.Charts = result
 }
 
+// 删除App相关的所有图表
+func (this *Board) RemoveApp(appId string) {
+	result := []*BoardChart{}
+	for _, c := range this.Charts {
+		if c.AppId == appId {
+			continue
+		}
+		result = append(result, c)
+	}
+	this.Charts = result
+}
+
 // 保存
 func (this *Board) Save() error {
 	if len(this.Filename) == 0 {

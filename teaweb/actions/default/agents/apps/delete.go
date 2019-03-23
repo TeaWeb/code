@@ -19,6 +19,17 @@ func (this *DeleteAction) Run(params struct {
 		this.Fail("找不到要操作的Agent")
 	}
 
+	// 删除图表
+	board := agents.NewAgentBoard(agent.Id)
+	if board != nil {
+		board.RemoveApp(params.AppId)
+		err := board.Save()
+		if err != nil {
+			this.Fail("删除失败：" + err.Error())
+		}
+	}
+
+	// 删除App
 	agent.RemoveApp(params.AppId)
 	err := agent.Save()
 	if err != nil {
