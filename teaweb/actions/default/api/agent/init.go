@@ -9,7 +9,8 @@ func init() {
 			Helper(new(Helper)).
 			Get("", new(IndexAction)).
 			Get("/pull", new(PullAction)).
-			Put("/push", new(PushAction)).
+			Put("/push", new(PushAction)). // 兼容老版本Agent
+			Post("/push", new(PushAction)).
 			Get("/upgrade", new(UpgradeAction)).
 			EndAll().
 			// 不需要认证的API

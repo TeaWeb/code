@@ -29,6 +29,16 @@ func (this *DeleteItemChartAction) Run(params struct {
 		this.Fail("找不到要操作的Item")
 	}
 
+	// 从看板中删除
+	board := agents.NewAgentBoard(params.AgentId)
+	if board != nil {
+		board.RemoveChart(params.ChartId)
+		err := board.Save()
+		if err != nil {
+			this.Fail("删除失败：" + err.Error())
+		}
+	}
+
 	item.RemoveChart(params.ChartId)
 	err := agent.Save()
 	if err != nil {

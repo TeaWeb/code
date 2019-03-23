@@ -25,6 +25,25 @@ func (this *DeleteItemAction) Run(params struct {
 		this.Fail("找不到App")
 	}
 
+	item := app.FindItem(params.ItemId)
+	if item == nil {
+		this.Fail("找不到Item")
+	}
+
+	// 删除看板中相关图表
+	if len(item.Charts) > 0 {
+		board := agents.NewAgentBoard(params.AgentId)
+		if board != nil {
+			for _, c := range item.Charts {
+				board.RemoveChart(c.Id)
+			}
+			err := board.Save()
+			if err != nil {
+				this.Fail("删除失败：" + err.Error())
+			}
+		}
+	}
+
 	app.RemoveItem(params.ItemId)
 	err := agent.Save()
 	if err != nil {
