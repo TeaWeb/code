@@ -34,6 +34,6 @@ func TestCostAllPeriodFilter_Start(t *testing.T) {
 		filter.Filter(accessLog)
 	}
 
-	t.Log(filter.value)
+	t.Log(filter.values)
 	time.Sleep(1 * time.Second)
 }

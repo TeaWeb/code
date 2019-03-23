@@ -1,27 +1,28 @@
 package teastats
 
 import (
+	"fmt"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 )
 
-// 数值增长型的
+// 数值增长型的统计
 type CounterFilter struct {
-	looper   *timers.Looper
-	queue    *Queue
-	code     string
-	Period   ValuePeriod
-	params   map[string]string
-	value    maps.Map
-	lastTime time.Time
-	locker   sync.Mutex
+	looper     *timers.Looper
+	queue      *Queue
+	code       string
+	Period     ValuePeriod
+	valuesSize int
+	values     map[string]*CounterValue // param_time => value
+	locker     sync.Mutex
 
 	IncreaseFunc func(value maps.Map, inc maps.Map) maps.Map
 }
@@ -30,7 +31,8 @@ type CounterFilter struct {
 func (this *CounterFilter) StartFilter(code string, period ValuePeriod) {
 	this.code = code
 	this.Period = period
-	this.lastTime = time.Now()
+	this.values = map[string]*CounterValue{}
+	this.valuesSize = 100 // 缓存中不能超过一定数目，防止一次性提交过多
 
 	// 自动导入
 	duration := 1 * time.Second
@@ -59,80 +61,69 @@ func (this *CounterFilter) StartFilter(code string, period ValuePeriod) {
 }
 
 // 应用筛选器
-func (this *CounterFilter) ApplyFilter(accessLog *tealogs.AccessLog, params map[string]string, value map[string]interface{}) {
-	this.locker.Lock()
-	defer this.locker.Unlock()
+func (this *CounterFilter) ApplyFilter(accessLog *tealogs.AccessLog, params map[string]string, incrValue map[string]interface{}) {
+	key := this.encodeParams(params)
+	key.WriteString("@")
 
 	switch this.Period {
 	case ValuePeriodSecond:
-		if accessLog.Timestamp == this.lastTime.Unix() && this.equalParams(this.params, params) {
-			this.increase(value)
-		} else {
-			this.commit()
-			this.params = params
-			this.increase(value)
-			this.lastTime = accessLog.Time()
-		}
+		key.WriteString(fmt.Sprintf("%d", accessLog.Timestamp))
 	case ValuePeriodMinute:
-		if accessLog.Timestamp/60 == this.lastTime.Unix()/60 && this.equalParams(this.params, params) {
-			this.increase(value)
-		} else {
-			this.commit()
-			this.params = params
-			this.increase(value)
-			this.lastTime = accessLog.Time()
-		}
+		key.WriteString(fmt.Sprintf("%d", accessLog.Timestamp/60))
 	case ValuePeriodHour:
-		if accessLog.Timestamp/3600 == this.lastTime.Unix()/3600 && this.equalParams(this.params, params) {
-			this.increase(value)
-		} else {
-			this.commit()
-			this.params = params
-			this.increase(value)
-			this.lastTime = accessLog.Time()
-		}
+		key.WriteString(fmt.Sprintf("%d", accessLog.Timestamp/3600))
 	case ValuePeriodDay:
-		at := accessLog.Time()
-		if at.Year() == this.lastTime.Year() && at.Month() == this.lastTime.Month() && at.Day() == this.lastTime.Day() && this.equalParams(this.params, params) {
-			this.increase(value)
-		} else {
-			this.commit()
-			this.params = params
-			this.increase(value)
-			this.lastTime = accessLog.Time()
-		}
+		t := accessLog.Time()
+		key.WriteString(fmt.Sprintf("%d_%d_%d", t.Year(), t.Month(), t.Day()))
 	case ValuePeriodWeek:
-		at := accessLog.Time()
-		year1, week1 := at.ISOWeek()
-		year2, week2 := this.lastTime.ISOWeek()
-		if year1 == year2 && week1 == week2 && this.equalParams(this.params, params) {
-			this.increase(value)
-		} else {
-			this.commit()
-			this.params = params
-			this.increase(value)
-			this.lastTime = accessLog.Time()
-		}
+		t := accessLog.Time()
+		year, week := t.ISOWeek()
+		key.WriteString(fmt.Sprintf("%d_%d", year, week))
 	case ValuePeriodMonth:
-		at := accessLog.Time()
-		if at.Year() == this.lastTime.Year() && at.Month() == this.lastTime.Month() && this.equalParams(this.params, params) {
-			this.increase(value)
-		} else {
-			this.commit()
-			this.params = params
-			this.increase(value)
-			this.lastTime = accessLog.Time()
-		}
+		t := accessLog.Time()
+		key.WriteString(fmt.Sprintf("%d_%d", t.Year(), t.Month()))
 	case ValuePeriodYear:
-		at := accessLog.Time()
-		if at.Year() == this.lastTime.Year() && this.equalParams(this.params, params) {
-			this.increase(value)
-		} else {
-			this.commit()
-			this.params = params
-			this.increase(value)
-			this.lastTime = accessLog.Time()
+		t := accessLog.Time()
+		key.WriteString(fmt.Sprintf("%d", t.Year()))
+	}
+
+	keyString := key.String()
+
+	this.locker.Lock()
+	defer this.locker.Unlock()
+
+	value, found := this.values[keyString]
+	if found {
+		for k, v := range incrValue {
+			v1, ok := value.Value[k]
+			if !ok {
+				value.Value[k] = v
+				continue
+			}
+			switch v2 := v1.(type) {
+			case int:
+				v1 = v2 + types.Int(v)
+			case int32:
+				v1 = v2 + types.Int32(v)
+			case int64:
+				v1 = v2 + types.Int64(v)
+			case float32:
+				v1 = v2 + types.Float32(v)
+			case float64:
+				v1 = v2 + types.Float64(v)
+			}
+			value.Value[k] = v1
 		}
+	} else {
+		this.values[keyString] = &CounterValue{
+			Timestamp: accessLog.Timestamp,
+			Params:    params,
+			Value:     incrValue,
+		}
+	}
+
+	if len(this.values) > this.valuesSize {
+		this.commit()
 	}
 }
 
@@ -143,6 +134,8 @@ func (this *CounterFilter) StopFilter() {
 		this.looper = nil
 	}
 
+	this.locker.Lock()
+	defer this.locker.Unlock()
 	this.commit()
 }
 
@@ -273,12 +266,14 @@ func (this *CounterFilter) CheckNewIP(accessLog *tealogs.AccessLog, attachKey st
 
 // 提交
 func (this *CounterFilter) commit() {
-	if this.value != nil && len(this.value) > 0 {
-		if this.IncreaseFunc != nil {
-			this.value["$increase"] = this.IncreaseFunc
+	if len(this.values) > 0 {
+		for _, v := range this.values {
+			if this.IncreaseFunc != nil {
+				v.Value["$increase"] = this.IncreaseFunc
+			}
+			this.queue.Add(this.code, time.Unix(v.Timestamp, 0), this.Period, v.Params, v.Value)
 		}
-		this.queue.Add(this.code, this.lastTime, this.Period, this.params, this.value)
-		this.value = nil
+		this.values = map[string]*CounterValue{}
 	}
 }
 
@@ -302,34 +297,20 @@ func (this *CounterFilter) equalParams(params1 map[string]string, params2 map[st
 	return true
 }
 
-// 增加值
-// 只支持int, int32, int64, float32, float64
-func (this *CounterFilter) increase(inc maps.Map) {
-	if inc == nil {
-		return
+// 对参数进行编码
+func (this *CounterFilter) encodeParams(params map[string]string) *strings.Builder {
+	keys := []string{}
+	for key := range params {
+		keys = append(keys, key)
 	}
-	if this.value == nil {
-		this.value = inc
-		return
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+
+	result := &strings.Builder{}
+	for _, k := range keys {
+		result.WriteString(k + ":" + params[k])
+		result.WriteRune('|')
 	}
-	for k, v := range inc {
-		v1, ok := this.value[k]
-		if !ok {
-			this.value[k] = v
-			continue
-		}
-		switch v2 := v1.(type) {
-		case int:
-			v1 = v2 + types.Int(v)
-		case int32:
-			v1 = v2 + types.Int32(v)
-		case int64:
-			v1 = v2 + types.Int64(v)
-		case float32:
-			v1 = v2 + types.Float32(v)
-		case float64:
-			v1 = v2 + types.Float64(v)
-		}
-		this.value[k] = v1
-	}
+	return result
 }

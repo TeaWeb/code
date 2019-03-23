@@ -17,5 +17,5 @@ func TestIPAllPeriodFilter_Start(t *testing.T) {
 	accessLog.Timestamp = time.Now().Unix()
 	accessLog.RemoteAddr = "127.0.0.1:1234"
 	filter.Filter(accessLog)
-	t.Log(filter.value)
+	t.Log(filter.values)
 }

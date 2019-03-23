@@ -168,7 +168,7 @@ func init() {
 	}
 }
 
-// 获取访问日志的时间
+// 获取访问日志的请求时间
 func (this *AccessLog) Time() time.Time {
 	return time.Unix(this.Timestamp, 0)
 }
