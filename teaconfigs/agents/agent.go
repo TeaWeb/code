@@ -242,6 +242,7 @@ func (this *AgentConfig) AddDefaultApps() {
 	this.AppsIsInitialized = true
 	{
 		app := NewAppConfig()
+		app.Id = "system"
 		app.Name = "系统"
 		this.AddApp(app)
 

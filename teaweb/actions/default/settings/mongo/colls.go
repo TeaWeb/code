@@ -91,7 +91,7 @@ func (this *CollsAction) Run(params struct{}) {
 			recognizedNames = append(recognizedNames, name)
 			result = append(result, maps.Map{
 				"name":      name,
-				"type":      "监控数据",
+				"type":      "主机监控数据",
 				"canDelete": true,
 			})
 		}
