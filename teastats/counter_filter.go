@@ -303,7 +303,7 @@ func (this *CounterFilter) equalParams(params1 map[string]string, params2 map[st
 }
 
 // 增加值
-// 只支持int, int64, float32, float64
+// 只支持int, int32, int64, float32, float64
 func (this *CounterFilter) increase(inc maps.Map) {
 	if inc == nil {
 		return
@@ -321,6 +321,8 @@ func (this *CounterFilter) increase(inc maps.Map) {
 		switch v2 := v1.(type) {
 		case int:
 			v1 = v2 + types.Int(v)
+		case int32:
+			v1 = v2 + types.Int32(v)
 		case int64:
 			v1 = v2 + types.Int64(v)
 		case float32:

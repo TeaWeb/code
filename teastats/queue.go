@@ -275,7 +275,7 @@ func (this *Queue) Index(index []string) {
 }
 
 // 增加值
-// 只支持int, int64, float32, float64
+// 只支持int, int32, int64, float32, float64
 func (this *Queue) increase(value maps.Map, inc maps.Map) maps.Map {
 	if inc == nil {
 		return maps.Map{}
