@@ -43,6 +43,8 @@ type Query struct {
 	offset int64
 	size   int64
 
+	result []string
+
 	debug bool
 }
 
@@ -172,6 +174,11 @@ func (this *Query) Gt(field string, value interface{}) *Query {
 
 func (this *Query) Gte(field string, value interface{}) *Query {
 	this.Op("gte", field, value)
+	return this
+}
+
+func (this *Query) Result(field ...string) *Query {
+	this.result = append(this.result, field ...)
 	return this
 }
 
@@ -399,6 +406,13 @@ func (this *Query) FindAll() (result []interface{}, err error) {
 	}
 	if this.size > -1 {
 		opts = append(opts, options.Find().SetLimit(this.size))
+	}
+	if len(this.result) > 0 {
+		projection := map[string]interface{}{}
+		for _, field := range this.result {
+			projection[field] = 1
+		}
+		opts = append(opts, options.Find().SetProjection(projection))
 	}
 	if len(this.sorts) > 0 {
 		for _, sort := range this.sorts {

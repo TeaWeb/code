@@ -312,6 +312,14 @@ func (this *Engine) callLogExecuteQuery(call otto.FunctionCall) otto.Value {
 		}
 	}
 
+	// result
+	result := m.Get("result")
+	if types.IsSlice(result) {
+		lists.Each(result, func(k int, v interface{}) {
+			query.Result(types.String(v))
+		})
+	}
+
 	// timeFrom
 	timeFrom := m.GetInt64("timeFrom")
 	if timeFrom > 0 {

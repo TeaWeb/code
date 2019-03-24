@@ -21,11 +21,9 @@ var (
 type AccessLogger struct {
 	queue chan *AccessLogItem
 
-	logs            []*AccessLogItem
-	timestamp       int64
-	qps             int
-	outputBandWidth int64
-	inputBandWidth  int64
+	logs      []*AccessLogItem
+	timestamp int64
+	qps       int
 
 	collectionCacheMap    map[string]*teamongo.Collection
 	collectionCacheLocker sync.Mutex
@@ -162,16 +160,12 @@ func (this *AccessLogger) wait() {
 		item := <-this.queue
 		log := item.log
 
-		// 计算QPS和BandWidth
+		// 计算QPS
 		this.timestamp = log.Timestamp
-		if log.Timestamp == timestamp {
+		if log.Timestamp-timestamp <= 1 {
 			this.qps ++
-			this.inputBandWidth += log.RequestLength
-			this.outputBandWidth += log.BytesSent
 		} else {
 			this.qps = 1
-			this.inputBandWidth = log.RequestLength
-			this.outputBandWidth = log.BytesSent
 			timestamp = log.Timestamp
 		}
 
@@ -191,20 +185,6 @@ func (this *AccessLogger) Close() {
 func (this *AccessLogger) QPS() int {
 	if time.Now().Unix()-this.timestamp < 2 {
 		return this.qps
-	}
-	return 0
-}
-
-func (this *AccessLogger) InputBandWidth() int64 {
-	if time.Now().Unix()-this.timestamp < 2 {
-		return this.inputBandWidth
-	}
-	return 0
-}
-
-func (this *AccessLogger) OutputBandWidth() int64 {
-	if time.Now().Unix()-this.timestamp < 2 {
-		return this.outputBandWidth
 	}
 	return 0
 }

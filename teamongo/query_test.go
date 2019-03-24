@@ -2,6 +2,7 @@ package teamongo
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/audits"
+	"github.com/iwind/TeaGo/logs"
 	"testing"
 )
 
@@ -45,5 +46,5 @@ func TestQuery_Find(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("%#v", one)
+	logs.PrintAsJSON(one, t)
 }

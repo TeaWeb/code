@@ -97,6 +97,22 @@ func (this *CollsAction) Run(params struct{}) {
 		}
 	}
 
+	// 监控数据
+	{
+		reg := regexp.MustCompile("^logs\\.agent\\.")
+		for _, name := range names {
+			if !reg.MatchString(name) {
+				continue
+			}
+			recognizedNames = append(recognizedNames, name)
+			result = append(result, maps.Map{
+				"name":      name,
+				"type":      "主机任务运行日志",
+				"canDelete": true,
+			})
+		}
+	}
+
 	// 通知
 	{
 		reg := regexp.MustCompile("^notices$")
