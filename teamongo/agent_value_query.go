@@ -515,6 +515,10 @@ func (this *AgentValueQuery) selectColl(collectionName string) *Collection {
 	coll.CreateIndex(map[string]bool{
 		"itemId": true,
 	})
+	coll.CreateIndex(map[string]bool{
+		"appId":  true,
+		"itemId": true,
+	})
 	agentValueCollectionsMap[collectionName] = coll
 	return coll
 }
