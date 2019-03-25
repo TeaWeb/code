@@ -3,11 +3,8 @@ package tealogs
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teautils"
-	"github.com/TeaWeb/uaparser"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
-	"github.com/oschwald/geoip2-golang"
 	"github.com/pquerna/ffjson/ffjson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net"
@@ -17,10 +14,6 @@ import (
 	"strings"
 	"time"
 )
-
-var userAgentParser *uaparser.Parser
-var geoDB *geoip2.Reader
-var accessLogVars = map[string]string{}
 
 type AccessLog struct {
 	Id primitive.ObjectID `var:"id" bson:"_id" json:"id"` // 数据库存储的ID
@@ -142,30 +135,6 @@ type AccessLogGeoLocation struct {
 	TimeZone       string  `bson:"timeZone" json:"timeZone"`
 	AccuracyRadius uint16  `bson:"accuracyRadius" json:"accuracyRadius"`
 	MetroCode      uint    `bson:"metroCode" json:"metroCode"`
-}
-
-func init() {
-	var err error
-	userAgentParser, err = uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
-	if err != nil {
-		logs.Error(err)
-	}
-
-	geoDB, err = geoip2.Open(Tea.Root + "/resources/GeoLite2-City/GeoLite2-City.mmdb")
-	if err != nil {
-		logs.Error(err)
-	}
-
-	// 变量
-	reflectType := reflect.TypeOf(AccessLog{})
-	countField := reflectType.NumField()
-	for i := 0; i < countField; i ++ {
-		field := reflectType.Field(i)
-		value := field.Tag.Get("var")
-		if len(value) > 0 {
-			accessLogVars[value] = field.Name
-		}
-	}
 }
 
 // 获取访问日志的请求时间

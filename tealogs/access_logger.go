@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	accessLogger = NewAccessLogger()
+	accessLogger *AccessLogger = nil
 )
 
 // 访问日志记录器

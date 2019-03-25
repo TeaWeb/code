@@ -34,6 +34,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/backends"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/websocket"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/log"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/rewrite"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/ssl"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/stat"
@@ -56,6 +57,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -66,20 +68,36 @@ import (
 var server *TeaGo.Server
 
 func Start() {
+	// 当前ROOT
+	if !Tea.IsTesting() {
+		exePath := os.Args[0]
+		fullPath, err := filepath.Abs(exePath)
+		if err == nil {
+			Tea.UpdateRoot(filepath.Dir(filepath.Dir(fullPath)))
+		}
+	}
+
+	// 执行参数
 	if lookupArgs() {
 		return
 	}
 
 	// 信号
 	signalsChannel := make(chan os.Signal, 1024)
-	signal.Notify(signalsChannel, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
+	signal.Notify(signalsChannel, syscall.SIGINT, syscall.SIGHUP, syscall.SIGUSR1, syscall.SIGTERM)
 	go func() {
 		for {
 			sig := <-signalsChannel
 
-			// 重置
-			if sig == syscall.SIGHUP {
+			if sig == syscall.SIGHUP { // 重置
 				configs.SharedAdminConfig().Reset()
+			} else if sig == syscall.SIGUSR1 { // 刷新代理状态
+				err := teaproxy.SharedManager.Restart()
+				if err != nil {
+					logs.Println("[error]" + err.Error())
+				} else {
+					proxyutils.FinishChange()
+				}
 			} else {
 				if sig == syscall.SIGINT {
 					if server != nil {
@@ -170,8 +188,10 @@ func lookupArgs() bool {
 		fmt.Println("  -v", "\n     print version")
 		fmt.Println("  start", "\n     start the server")
 		fmt.Println("  stop", "\n     stop the server")
+		fmt.Println("  reload", "\n     reload all proxy servers config")
 		fmt.Println("  restart", "\n     restart the server")
-		fmt.Println("  reset", "\n     reset the server status")
+		fmt.Println("  reset", "\n     reset the server locker status")
+		fmt.Println("  status", "\n     print server status")
 		return true
 	} else if lists.Contains(args, "-v") { // 版本号
 		fmt.Println("TeaWeb v"+teaconst.TeaVersion, "(build: "+runtime.Version(), runtime.GOOS, runtime.GOARCH+")")
@@ -208,6 +228,30 @@ func lookupArgs() bool {
 		files.NewFile(Tea.Root + "/bin/pid").Delete()
 		fmt.Println("[teaweb]stopped ok, pid:", proc.Pid)
 
+		return true
+	} else if lists.Contains(args, "reload") { // 重新加载代理配置
+		pidString, err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").ReadAllString()
+		if err != nil {
+			logs.Error(err)
+			return true
+		}
+
+		pid := types.Int(pidString)
+		proc, err := os.FindProcess(pid)
+		if err != nil {
+			logs.Error(err)
+			return true
+		}
+		if proc == nil {
+			logs.Println("can not find process")
+			return true
+		}
+		err = proc.Signal(syscall.SIGUSR1)
+		if err != nil {
+			logs.Error(err)
+			return true
+		}
+		logs.Println("reload success")
 		return true
 	} else if lists.Contains(args, "restart") { // 重启
 		proc := checkPid()
@@ -251,6 +295,30 @@ func lookupArgs() bool {
 			return true
 		}
 		logs.Println("reset success")
+		return true
+	} else if lists.Contains(args, "status") { // 状态
+		pidString, err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").ReadAllString()
+		if err != nil {
+			logs.Error(err)
+			return true
+		}
+
+		pid := types.Int(pidString)
+		proc, err := os.FindProcess(pid)
+		if err != nil {
+			logs.Error(err)
+			return true
+		}
+		if proc == nil {
+			logs.Println("can not find process")
+			return true
+		}
+		err = proc.Signal(syscall.SIGHUP)
+		if err != nil {
+			logs.Error(err)
+			return true
+		}
+		logs.Println("TeaWeb is running, pid:" + pidString)
 		return true
 	}
 

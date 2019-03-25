@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
+	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
@@ -14,8 +15,10 @@ import (
 )
 
 func init() {
-	// 检查Agent连通性
-	checkConnecting()
+	TeaGo.BeforeStart(func(server *TeaGo.Server) {
+		// 检查Agent连通性
+		checkConnecting()
+	})
 }
 
 // 检查Agent连通性
