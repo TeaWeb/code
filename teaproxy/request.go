@@ -401,8 +401,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 							return this.configure(server, redirects)
 						case teaconfigs.RewriteTargetProxy:
 							proxyId := rule.TargetProxy()
-							server, found := FindServer(proxyId)
-							if !found {
+							server := SharedManager.FindServer(proxyId)
+							if server == nil {
 								return errors.New("server with '" + proxyId + "' not found")
 							}
 							if !server.On {
@@ -435,8 +435,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 			// proxy
 			if len(location.Proxy) > 0 {
-				server, found := FindServer(location.Proxy)
-				if !found {
+				server := SharedManager.FindServer(location.Proxy)
+				if server == nil {
 					return errors.New("server with '" + location.Proxy + "' not found")
 				}
 				if !server.On {
@@ -544,8 +544,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					return this.configure(server, redirects)
 				case teaconfigs.RewriteTargetProxy:
 					proxyId := rule.TargetProxy()
-					server, found := FindServer(proxyId)
-					if !found {
+					server := SharedManager.FindServer(proxyId)
+					if server == nil {
 						return errors.New("server with '" + proxyId + "' not found")
 					}
 					if !server.On {
@@ -577,8 +577,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 	// proxy
 	if len(server.Proxy) > 0 {
-		server, found := FindServer(server.Proxy)
-		if !found {
+		server := SharedManager.FindServer(server.Proxy)
+		if server == nil {
 			return errors.New("server with '" + server.Proxy + "' not found")
 		}
 		if !server.On {

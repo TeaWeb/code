@@ -9,7 +9,10 @@ import (
 type RestartAction actions.Action
 
 func (this *RestartAction) Run(params struct{}) {
-	teaproxy.Restart()
+	err := teaproxy.SharedManager.Restart()
+	if err != nil {
+		this.Fail("重启失败：" + err.Error())
+	}
 
 	proxyutils.FinishChange()
 

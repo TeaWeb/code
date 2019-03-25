@@ -26,6 +26,8 @@ func init() {
 			Get("/restart", new(RestartAction)).
 			Get("/cache", new(CacheAction)).
 			Post("/updateCache", new(UpdateCacheAction)).
+			Post("/startHttp", new(StartHttpAction)).
+			Post("/shutdownHttp", new(ShutdownHttpAction)).
 
 			EndAll()
 	})

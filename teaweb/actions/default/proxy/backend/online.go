@@ -20,7 +20,7 @@ func (this *OnlineAction) Run(params struct {
 		this.Fail("找不到Server")
 	}
 
-	runningServer, _ := teaproxy.FindServer(server.Id)
+	runningServer := teaproxy.SharedManager.FindServer(server.Id)
 	if runningServer != nil {
 		backendList, _ := runningServer.FindBackendList(params.LocationId, params.Websocket)
 		if backendList != nil {

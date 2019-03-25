@@ -49,7 +49,7 @@ func (this *Engine) SetContext(context *Context) {
 	this.context = context
 
 	if context.Server != nil {
-		runningServer, _ := teaproxy.FindServer(context.Server.Id)
+		runningServer := teaproxy.SharedManager.FindServer(context.Server.Id)
 
 		options := map[string]interface{}{
 			"isOn":        context.Server.On,
@@ -58,6 +58,7 @@ func (this *Engine) SetContext(context *Context) {
 			"filename":    context.Server.Filename,
 			"description": context.Server.Description,
 			"listen":      context.Server.Listen,
+			"http":        context.Server.Http,
 			"backends": lists.Map(context.Server.Backends, func(k int, v interface{}) interface{} {
 				backend := v.(*teaconfigs.BackendConfig)
 

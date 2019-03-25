@@ -18,7 +18,8 @@ func init() {
 			Prefix("/proxy/ssl").
 			Get("", new(IndexAction)).
 			GetPost("/update", new(UpdateAction)).
-			Prefix("").
+			Post("/startHttps", new(StartHttpsAction)).
+			Post("/shutdownHttps", new(ShutdownHttpsAction)).
 			EndAll()
 	})
 }

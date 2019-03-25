@@ -102,7 +102,8 @@ func Start() {
 		time.Sleep(1 * time.Second)
 
 		// 启动代理
-		teaproxy.Start()
+		teaproxy.SharedManager.Start()
+		teaproxy.SharedManager.Wait()
 	}()
 
 	// 启动测试服务器

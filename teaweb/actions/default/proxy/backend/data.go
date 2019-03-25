@@ -27,7 +27,7 @@ func (this *DataAction) Run(params struct {
 
 	normalBackends := []*teaconfigs.BackendConfig{}
 	backupBackends := []*teaconfigs.BackendConfig{}
-	runningServer, _ := teaproxy.FindServer(server.Id)
+	runningServer := teaproxy.SharedManager.FindServer(server.Id)
 	for _, backend := range backendList.AllBackends() {
 		// 是否下线以及错误次数
 		if runningServer != nil {

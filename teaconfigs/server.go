@@ -26,6 +26,7 @@ type ServerConfig struct {
 	Description string   `yaml:"description" json:"description"` // 描述
 	Name        []string `yaml:"name" json:"name"`               // 域名
 	Http        bool     `yaml:"http" json:"http"`               // 是否支持HTTP
+	IsDefault   bool     `yaml:"isDefault" json:"isDefault"`     // 是否默认的服务，找不到匹配域名时有限使用此配置
 
 	// 监听地址
 	Listen []string `yaml:"listen" json:"listen"`

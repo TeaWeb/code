@@ -59,6 +59,9 @@ func (this *RandomScheduling) Next(options maps.Map) CandidateInterface {
 	if this.count == 0 {
 		return nil
 	}
+	if this.count == 1 {
+		return this.array[0]
+	}
 	index := rand.Int() % int(this.count)
 	return this.array[index]
 }
