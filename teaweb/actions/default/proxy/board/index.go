@@ -3,6 +3,7 @@ package board
 import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaproxy"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/board/scripts"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
@@ -30,6 +31,8 @@ func (this *IndexAction) Run(params struct {
 		params.BoardType = "realtime"
 	}
 	this.Data["boardType"] = params.BoardType
+
+	this.Data["errs"] = teaproxy.SharedManager.FindServerErrors(params.ServerId)
 
 	this.Show()
 }

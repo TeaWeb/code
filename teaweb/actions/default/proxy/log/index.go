@@ -3,6 +3,7 @@ package log
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teaproxy"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 )
@@ -28,6 +29,8 @@ func (this *IndexAction) Run(params struct {
 	this.Data["server"] = server
 
 	this.Data["logType"] = params.LogType
+
+	this.Data["errs"] = teaproxy.SharedManager.FindServerErrors(params.ServerId)
 
 	proxyutils.AddServerMenu(this)
 

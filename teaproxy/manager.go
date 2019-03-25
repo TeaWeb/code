@@ -195,6 +195,24 @@ func (this *Manager) FindServer(serverId string) *teaconfigs.ServerConfig {
 	return nil
 }
 
+// 查找Server相关错误
+func (this *Manager) FindServerErrors(serverId string) []string {
+	this.locker.RLock()
+	defer this.locker.RUnlock()
+
+	errs := []string{}
+	for _, listener := range this.listeners {
+		if !listener.HasServer(serverId) {
+			continue
+		}
+		if listener.Error != nil {
+			errs = append(errs, listener.Error.Error())
+		}
+	}
+
+	return errs
+}
+
 // 重载配置
 func (this *Manager) Reload() error {
 	this.locker.Lock()

@@ -16,5 +16,5 @@ func (this *RestartAction) Run(params struct{}) {
 
 	proxyutils.FinishChange()
 
-	this.Success()
+	this.Refresh().Success()
 }

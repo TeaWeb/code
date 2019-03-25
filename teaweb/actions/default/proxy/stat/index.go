@@ -2,6 +2,7 @@ package board
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -22,6 +23,8 @@ func (this *IndexAction) Run(params struct {
 	}
 
 	this.Data["boardType"] = "stat"
+
+	this.Data["errs"] = teaproxy.SharedManager.FindServerErrors(params.ServerId)
 
 	this.View("/proxy/board/index.html")
 	this.Show()

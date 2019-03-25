@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -22,6 +23,8 @@ func (this *DetailAction) Run(params struct {
 
 	this.Data["selectedTab"] = "basic"
 	this.Data["server"] = server
+
+	this.Data["errs"] = teaproxy.SharedManager.FindServerErrors(params.ServerId)
 
 	this.Show()
 }
