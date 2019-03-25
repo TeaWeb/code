@@ -735,6 +735,10 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 		return nil
 	}
 
+	if !filepath.IsAbs(this.root) {
+		this.root = Tea.Root + Tea.DS + this.root
+	}
+
 	requestPath := this.uri
 	uri, err := url.ParseRequestURI(this.uri)
 	query := ""
@@ -2021,7 +2025,7 @@ func (this *Request) log() {
 		RequestTime:     this.requestTime,
 		RequestMethod:   this.requestMethod(),
 		RequestFilename: this.requestFilename(),
-		Scheme:          this.scheme,
+		Scheme:          this.rawScheme,
 		Proto:           this.requestProto(),
 		BytesSent:       this.responseWriter.SentBodyBytes(), // TODO 加上Header Size
 		BodyBytesSent:   this.responseWriter.SentBodyBytes(),
