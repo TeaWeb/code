@@ -2,6 +2,7 @@ package ssl
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -18,6 +19,7 @@ func (this *IndexAction) Run(params struct {
 
 	this.Data["selectedTab"] = "https"
 	this.Data["server"] = server
+	this.Data["errs"] = teaproxy.SharedManager.FindServerErrors(params.ServerId)
 
 	this.Show()
 }
