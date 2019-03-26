@@ -68,6 +68,16 @@ func (this *Board) FindChart(chartId string) *BoardChart {
 	return nil
 }
 
+// 查看是否有图表
+func (this *Board) HasChart(chartId string) bool {
+	for _, c := range this.Charts {
+		if c.ChartId == chartId {
+			return true
+		}
+	}
+	return false
+}
+
 // 删除图表
 func (this *Board) RemoveChart(chartId string) {
 	result := []*BoardChart{}

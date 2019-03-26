@@ -60,6 +60,9 @@ func (this *ItemChartsAction) RunPost(params struct {
 		this.Fail("找不到Item")
 	}
 
+	// 是否已加入到看板
+	board := agents.NewAgentBoard(params.AgentId)
+
 	widgetCode := `var widget = new widgets.Widget({
 	
 });
@@ -74,8 +77,18 @@ widget.run = function () {
 			continue
 		}
 
+		name := c.Name + "<span class=\"ops\"><a href=\"/agents/apps/updateItemChart?agentId=" + params.AgentId + "&appId=" + params.AppId + "&itemId=" + params.ItemId + "&chartId=" + c.Id + "&from=" + params.From + "\" title=\"修改\"><i class=\"icon pencil\"></i></a> &nbsp;<a href=\"\" onclick=\"return Tea.Vue.deleteChart('" + c.Id + "')\" title=\"删除\"><i class=\"icon remove\"></i></a>"
+
+		if board != nil && board.HasChart(c.Id) {
+			name += " &nbsp;<a href=\"\" title=\"从看板移除\" onclick=\"return Tea.Vue.removeChartFormBoard('" + c.Id + "')\"><i class=\"icon th\"></i></a>"
+		} else {
+			name += " &nbsp;<a href=\"\" title=\"添加到看板\" onclick=\"return Tea.Vue.addChartToBoard('" + c.Id + "')\"><i class=\"icon th\" style=\"color:#ccc\"></i></a>"
+		}
+
+		name += "</span>"
+
 		var options = map[string]interface{}{
-			"name":    c.Name + "<span class=\"ops\"><a href=\"/agents/apps/updateItemChart?agentId=" + params.AgentId + "&appId=" + params.AppId + "&itemId=" + params.ItemId + "&chartId=" + c.Id + "&from=" + params.From + "\" title=\"修改\"><i class=\"icon pencil\"></i></a> &nbsp;<a href=\"\" onclick=\"return Tea.Vue.deleteChart('" + c.Id + "')\" title=\"删除\"><i class=\"icon remove\"></i></a></span>",
+			"name":    name,
 			"columns": c.Columns,
 		}
 
