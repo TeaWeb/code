@@ -1867,6 +1867,16 @@ func (this *Request) IsWatching() bool {
 	return this.isWatching
 }
 
+// 设置URI
+func (this *Request) SetURI(uri string) {
+	this.uri = uri
+}
+
+// 设置Host
+func (this *Request) SetHost(host string) {
+	this.host = host
+}
+
 // 利用请求参数格式化字符串
 func (this *Request) Format(source string) string {
 	if len(source) == 0 {

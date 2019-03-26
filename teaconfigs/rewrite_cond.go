@@ -35,7 +35,7 @@ func NewRewriteCond() *RewriteCond {
 
 // 校验配置
 func (this *RewriteCond) Validate() error {
-	if this.Operator == RewriteOperatorRegexp {
+	if this.Operator == RewriteOperatorRegexp || this.Operator == RewriteOperatorNotRegexp {
 		reg, err := regexp.Compile(this.Value)
 		if err != nil {
 			return err
@@ -56,6 +56,11 @@ func (this *RewriteCond) Match(formatter func(source string) string) bool {
 			return false
 		}
 		return this.regValue.MatchString(paramValue)
+	case RewriteOperatorNotRegexp:
+		if this.regValue == nil {
+			return false
+		}
+		return !this.regValue.MatchString(paramValue)
 	case RewriteOperatorGt:
 		return types.Float64(paramValue) > this.floatValue
 	case RewriteOperatorGte:
@@ -74,6 +79,8 @@ func (this *RewriteCond) Match(formatter func(source string) string) bool {
 		return strings.HasSuffix(paramValue, this.Value)
 	case RewriteOperatorContains:
 		return strings.Contains(paramValue, this.Value)
+	case RewriteOperatorNotContains:
+		return !strings.Contains(paramValue, this.Value)
 	}
 	return false
 }

@@ -58,6 +58,30 @@ func TestRewriteCond(t *testing.T) {
 
 	{
 		cond := RewriteCond{
+			Param:    "/hello",
+			Operator: RewriteOperatorNotRegexp,
+			Value:    "abc",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(format string) string {
+			return format
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "/hello",
+			Operator: RewriteOperatorNotRegexp,
+			Value:    "/\\w+",
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(format string) string {
+			return format
+		}))
+	}
+
+	{
+		cond := RewriteCond{
 			Param:    "123",
 			Operator: RewriteOperatorGt,
 			Value:    "1",
@@ -217,6 +241,30 @@ func TestRewriteCond(t *testing.T) {
 			Param:    "/hello/world",
 			Operator: RewriteOperatorContains,
 			Value:    "wr",
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "/hello/world",
+			Operator: RewriteOperatorNotContains,
+			Value:    "HELLO",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RewriteCond{
+			Param:    "/hello/world",
+			Operator: RewriteOperatorNotContains,
+			Value:    "hello",
 		}
 		a.IsNil(cond.Validate())
 		a.IsFalse(cond.Match(func(source string) string {

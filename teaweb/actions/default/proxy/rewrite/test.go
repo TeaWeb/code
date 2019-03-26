@@ -2,7 +2,9 @@ package rewrite
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/actions"
+	"net/http"
 	"regexp"
 )
 
@@ -53,7 +55,7 @@ func (this *TestAction) Run(params struct {
 				cond.Operator = params.CondOps[index]
 				err := cond.Validate()
 				if err != nil {
-					this.Fail("过滤条件\"" + cond.Param + " " + cond.Value + "\"校验失败：" + err.Error())
+					this.Fail("匹配条件\"" + cond.Param + " " + cond.Value + "\"校验失败：" + err.Error())
 				}
 				rewriteRule.AddCond(cond)
 			}
@@ -65,8 +67,19 @@ func (this *TestAction) Run(params struct {
 		this.Fail("校验失败：" + err.Error())
 	}
 
+	rawReq, err := http.NewRequest(http.MethodGet, params.TestingPath, nil)
+	var req *teaproxy.Request = nil
+	if err == nil {
+		req = teaproxy.NewRequest(rawReq)
+		req.SetURI(params.TestingPath)
+		req.SetHost(rawReq.Host)
+	}
 	replace, mapping, ok := rewriteRule.Match(params.TestingPath, func(source string) string {
-		return source
+		if req == nil {
+			return source
+		} else {
+			return req.Format(source)
+		}
 	})
 	if ok {
 		this.Data["replace"] = replace

@@ -6,16 +6,18 @@ import "github.com/iwind/TeaGo/maps"
 type RewriteOperator = string
 
 const (
-	RewriteOperatorRegexp   = "regexp"
-	RewriteOperatorGt       = "gt"
-	RewriteOperatorGte      = "gte"
-	RewriteOperatorLt       = "lt"
-	RewriteOperatorLte      = "lte"
-	RewriteOperatorEq       = "eq"
-	RewriteOperatorNot      = "not"
-	RewriteOperatorPrefix   = "prefix"
-	RewriteOperatorSuffix   = "suffix"
-	RewriteOperatorContains = "contains"
+	RewriteOperatorRegexp      = "regexp"
+	RewriteOperatorNotRegexp   = "not regexp"
+	RewriteOperatorGt          = "gt"
+	RewriteOperatorGte         = "gte"
+	RewriteOperatorLt          = "lt"
+	RewriteOperatorLte         = "lte"
+	RewriteOperatorEq          = "eq"
+	RewriteOperatorNot         = "not"
+	RewriteOperatorPrefix      = "prefix"
+	RewriteOperatorSuffix      = "suffix"
+	RewriteOperatorContains    = "contains"
+	RewriteOperatorNotContains = "not contains"
 )
 
 // 所有的运算符
@@ -24,7 +26,12 @@ func AllRewriteOperators() []maps.Map {
 		{
 			"name":        "正则表达式匹配",
 			"op":          RewriteOperatorRegexp,
-			"description": "使用正则表达式匹配",
+			"description": "判断是否正则表达式匹配",
+		},
+		{
+			"name":        "正则表达式不匹配",
+			"op":          RewriteOperatorNotRegexp,
+			"description": "判断是否正则表达式不匹配",
 		},
 		{
 			"name":        "等于",
@@ -45,6 +52,11 @@ func AllRewriteOperators() []maps.Map {
 			"name":        "包含",
 			"op":          RewriteOperatorContains,
 			"description": "参数值包含另外一个字符串",
+		},
+		{
+			"name":        "不包含",
+			"op":          RewriteOperatorNotContains,
+			"description": "参数值不包含另外一个字符串",
 		},
 		{
 			"name":        "不等于",

@@ -238,7 +238,7 @@ func TestRequest_FormatPerformance(t *testing.T) {
 	result := ""
 	for i := 0; i < count; i ++ {
 		for n := 0; n < 5; n ++ {
-			source := "hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test} /hello " + fmt.Sprintf("%d", i)
+			source := "hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test} /hello " + fmt.Sprintf("%d", n)
 			result = req.Format(source)
 		}
 	}
@@ -600,4 +600,14 @@ func TestPerformanceStatic(t *testing.T) {
 	wg.Wait()
 
 	t.Log("success:", countSuccess, "fail:", countFail, "qps:", int(float64(countSuccess+countFail)/time.Since(beforeTime).Seconds()))
+}
+
+func TestRequest_Format2(t *testing.T) {
+	rawReq, err := http.NewRequest(http.MethodGet, "/hello?name=liu", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := NewRequest(rawReq)
+	req.uri = rawReq.URL.String()
+	t.Log("arg.name:", req.Format("${arg.name}"))
 }
