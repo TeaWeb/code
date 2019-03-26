@@ -126,6 +126,7 @@ func (this *AccessLogger) wait() {
 				docSlice := newDocs[offset:end]
 
 				// 分析
+				writingLogs := []interface{}{}
 				for _, doc := range docSlice {
 					accessLog := doc.(*AccessLog)
 					accessLog.Parse()
@@ -133,14 +134,23 @@ func (this *AccessLogger) wait() {
 
 					// 执行处理器
 					CallAccessLogHooks(accessLog)
+
+					// 是否写入
+					if accessLog.ShouldWrite() {
+						accessLog.CleanFields()
+						writingLogs = append(writingLogs, accessLog)
+					}
 				}
 
 				// 写入数据库
-				_, err := this.collection().InsertMany(context.Background(), docSlice)
-				if err != nil {
-					logs.Error(err)
-					return
+				if len(writingLogs) > 0 {
+					_, err := this.collection().InsertMany(context.Background(), writingLogs)
+					if err != nil {
+						logs.Error(err)
+						return
+					}
 				}
+
 				//logs.Println("done")
 				docSlice = []interface{}{}
 

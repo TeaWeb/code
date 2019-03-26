@@ -3,6 +3,7 @@ package tealogs
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/pquerna/ffjson/ffjson"
@@ -77,16 +78,20 @@ type AccessLog struct {
 	HasErrors bool     `var:"hasErrors" bson:"hasErrors" json:"hasErrors"` // 是否包含有错误信息
 
 	// 扩展
-	Extend struct {
-		File   AccessLogFile   `bson:"file" json:"file"`
-		Client AccessLogClient `bson:"client" json:"client"`
-		Geo    AccessLogGeo    `bson:"geo" json:"geo"`
-	} `bson:"extend" json:"extend"`
+	Extend *AccessLogExtend `bson:"extend" json:"extend"`
 
 	// 格式化的正则表达式
-	formatReg  *regexp.Regexp
-	headerReg  *regexp.Regexp
-	shouldStat bool // 是否应该统计
+	formatReg     *regexp.Regexp
+	headerReg     *regexp.Regexp
+	shouldStat    bool  // 是否应该统计
+	shouldWrite   bool  // 是否写入
+	writingFields []int // 写入的字段
+}
+
+type AccessLogExtend struct {
+	File   AccessLogFile   `bson:"file" json:"file"`
+	Client AccessLogClient `bson:"client" json:"client"`
+	Geo    AccessLogGeo    `bson:"geo" json:"geo"`
 }
 
 type AccessLogFile struct {
@@ -135,6 +140,11 @@ type AccessLogGeoLocation struct {
 	TimeZone       string  `bson:"timeZone" json:"timeZone"`
 	AccuracyRadius uint16  `bson:"accuracyRadius" json:"accuracyRadius"`
 	MetroCode      uint    `bson:"metroCode" json:"metroCode"`
+}
+
+// 获取新对象
+func NewAccessLog() *AccessLog {
+	return &AccessLog{}
 }
 
 // 获取访问日志的请求时间
@@ -287,6 +297,50 @@ func (this *AccessLog) ShouldStat() bool {
 // 设置是否支持统计
 func (this *AccessLog) SetShouldStat(b bool) {
 	this.shouldStat = b
+}
+
+// 是否支持写入
+func (this *AccessLog) ShouldWrite() bool {
+	return this.shouldWrite
+}
+
+// 设置是否写入
+func (this *AccessLog) SetShouldWrite(b bool) {
+	this.shouldWrite = b
+}
+
+// 设置写入的字段
+func (this *AccessLog) SetWritingFields(fields []int) {
+	this.writingFields = fields
+}
+
+// 清除不必要的的字段
+func (this *AccessLog) CleanFields() {
+	l := len(this.writingFields)
+	if l == 0 || (l == 1 && this.writingFields[0] == 0) {
+		return
+	}
+	for _, code := range AccessLogFieldsCodes {
+		if lists.ContainsInt(this.writingFields, code) {
+			continue
+		}
+		switch code {
+		case AccessLogFieldHeader:
+			this.Header = nil
+		case AccessLogFieldSentHeader:
+			this.SentHeader = nil
+		case AccessLogFieldArg:
+			this.Arg = nil
+		case AccessLogFieldCookie:
+			this.Cookie = nil
+		case AccessLogFieldExtend:
+			this.Extend = nil
+		case AccessLogFieldReferer:
+			this.Referer = ""
+		case AccessLogFieldUserAgent:
+			this.UserAgent = ""
+		}
+	}
 }
 
 func (this *AccessLog) parseMime() {

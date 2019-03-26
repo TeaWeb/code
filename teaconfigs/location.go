@@ -33,6 +33,8 @@ type LocationConfig struct {
 	// 日志
 	DisableAccessLog bool               `yaml:"disableAccessLog" json:"disableAccessLog"` // 是否禁用访问日志
 	AccessLog        []*AccessLogConfig `yaml:"accessLog" json:"accessLog"`               // 访问日志设置 TODO
+	AccessLogFields  []int              `yaml:"accessLogFields" json:"accessLogFields"`   // 访问日志保留的字段，如果为nil，则表示没有设置
+	DisableStat      bool               `yaml:"disableStat" json:"disableStat"`           // 是否禁用统计
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` // 允许的终端地址 @TODO

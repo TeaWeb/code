@@ -2,12 +2,14 @@ package locations
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/locationutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"regexp"
 	"strconv"
 )
@@ -29,6 +31,11 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["patternTypes"] = teaconfigs.AllLocationPatternTypes()
 	this.Data["usualCharsets"] = teautils.UsualCharsets
 	this.Data["charsets"] = teautils.AllCharsets
+	this.Data["accessLogFields"] = lists.Map(tealogs.AccessLogFields, func(k int, v interface{}) interface{} {
+		m := v.(maps.Map)
+		m["isChecked"] = len(location.AccessLogFields) == 0 || lists.ContainsInt(location.AccessLogFields, types.Int(m["code"]))
+		return m
+	})
 
 	this.Data["location"] = maps.Map{
 		"id":                location.Id,
@@ -42,6 +49,7 @@ func (this *UpdateAction) Run(params struct {
 		"charset":           location.Charset,
 		"maxBodySize":       location.MaxBodySize,
 		"enableAccessLog":   !location.DisableAccessLog,
+		"enableStat":        !location.DisableStat,
 		"gzipLevel":         location.GzipLevel,
 		"gzipMinLength":     location.GzipMinLength,
 
@@ -69,6 +77,8 @@ func (this *UpdateAction) RunPost(params struct {
 	MaxBodySize       float64
 	MaxBodyUnit       string
 	EnableAccessLog   bool
+	AccessLogFields   []int
+	EnableStat        bool
 	GzipLevel         int8
 	GzipMinLength     float64
 	GzipMinUnit       string
@@ -76,6 +86,8 @@ func (this *UpdateAction) RunPost(params struct {
 	IsReverse         bool
 	IsCaseInsensitive bool
 }) {
+	params.AccessLogFields = append(params.AccessLogFields, 0)
+
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
 		this.Fail("找不到Server")
@@ -100,6 +112,8 @@ func (this *UpdateAction) RunPost(params struct {
 	location.Charset = params.Charset
 	location.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
 	location.DisableAccessLog = !params.EnableAccessLog
+	location.AccessLogFields = params.AccessLogFields
+	location.DisableStat = !params.EnableStat
 	location.GzipLevel = params.GzipLevel
 	location.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
 

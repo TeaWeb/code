@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/uaparser"
 	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"testing"
@@ -284,4 +285,20 @@ func TestAccessLog_ParseGEO(t *testing.T) {
 
 	t.Logf("%#v", accessLog.Extend.Geo)
 	t.Log(1 / cost)
+}
+
+func TestAccessLog_CleanFields(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	accessLog := NewAccessLog()
+	accessLog.UserAgent = "123"
+	accessLog.Header = map[string][]string{}
+	accessLog.Cookie = map[string]string{}
+	accessLog.writingFields = []int{AccessLogFieldHeader, AccessLogFieldArg, AccessLogFieldCookie}
+	accessLog.CleanFields()
+	t.Log(accessLog.UserAgent)
+	t.Log(accessLog.Header)
+	t.Log(accessLog.Cookie)
+
+	a.IsNil(accessLog.Extend)
 }
