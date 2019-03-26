@@ -47,18 +47,19 @@ func (this *ClientPool) client(backendId string, address string, connectionTimeo
 			// 握手配置
 			return (&net.Dialer{
 				Timeout:   connectionTimeout,
-				KeepAlive: 120 * time.Second,
+				KeepAlive: 10 * time.Minute,
 				DualStack: true,
 			}).DialContext(ctx, network, address)
 		},
 		MaxIdleConns:          int(maxConnections), // 0表示不限
 		MaxIdleConnsPerHost:   1024,
-		IdleConnTimeout:       0, // 不限
+		IdleConnTimeout:       0,
 		ExpectContinueTimeout: 1 * time.Second,
 		TLSHandshakeTimeout:   0, // 不限
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
+		Proxy: nil,
 	}
 
 	c := &http.Client{

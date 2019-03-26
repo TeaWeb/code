@@ -40,7 +40,7 @@ func (this *CounterFilter) StartFilter(code string, period ValuePeriod) {
 	case ValuePeriodSecond:
 		duration = 1 * time.Second
 	case ValuePeriodMinute:
-		duration = 1 * time.Minute
+		duration = 30 * time.Second
 	case ValuePeriodHour:
 		duration = 5 * time.Minute
 	case ValuePeriodDay:

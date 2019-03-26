@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Scheme = uint8
@@ -178,8 +179,9 @@ func (this *Listener) Reload() error {
 	var err error
 
 	this.httpServer = &http.Server{
-		Addr:    this.Address,
-		Handler: httpHandler,
+		Addr:        this.Address,
+		Handler:     httpHandler,
+		IdleTimeout: 2 * time.Minute,
 	}
 	this.httpServer.SetKeepAlivesEnabled(true)
 
@@ -360,6 +362,14 @@ func (this *Listener) findNamedServer(name string) (serverConfig *teaconfigs.Ser
 	server := this.currentServers[0]
 	firstName := server.FirstName()
 	if len(firstName) > 0 {
+		this.namedServersLocker.Lock()
+		if len(this.namedServers) < maxNamedServers {
+			this.namedServers[name] = &NamedServer{
+				Name:   firstName,
+				Server: server,
+			}
+		}
+		this.namedServersLocker.Unlock()
 		return server, firstName
 	}
 

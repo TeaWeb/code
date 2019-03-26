@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/assert"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"testing"
@@ -65,7 +66,7 @@ func TestRequest_CallRoot(t *testing.T) {
 	a.IsNil(err)
 
 	a.Log("status:", writer.StatusCode())
-	a.Log("requestTime:", request.requestTime)
+	a.Log("requestTime:", request.requestCost)
 	a.Log("bytes send:", writer.SentBodyBytes())
 }
 
@@ -89,7 +90,7 @@ func TestRequest_CallBackend(t *testing.T) {
 	a.IsNil(err)
 
 	a.Log("status:", writer.StatusCode())
-	a.Log("requestTime:", request.requestTime)
+	a.Log("requestTime:", request.requestCost)
 	a.Log("bytes send:", writer.SentBodyBytes())
 }
 
@@ -119,7 +120,7 @@ func TestRequest_CallProxy(t *testing.T) {
 	a.IsNil(err)
 
 	a.Log("status:", writer.StatusCode())
-	a.Log("requestTime:", request.requestTime)
+	a.Log("requestTime:", request.requestCost)
 	a.Log("bytes send:", writer.SentBodyBytes())
 }
 
@@ -152,7 +153,7 @@ func TestRequest_CallFastcgi(t *testing.T) {
 	a.IsNil(err)
 
 	a.Log("status:", writer.StatusCode())
-	a.Log("requestTime:", request.requestTime)
+	a.Log("requestTime:", request.requestCost)
 	a.Log("bytes send:", writer.SentBodyBytes())
 }
 
@@ -185,7 +186,7 @@ func TestRequest_CallFastcgiPerformance(t *testing.T) {
 	a.IsNil(err)
 
 	a.Log("status:", writer.StatusCode())
-	a.Log("requestTime:", request.requestTime)
+	a.Log("requestTime:", request.requestCost)
 	a.Log("bytes send:", writer.SentBodyBytes())
 }
 
@@ -610,4 +611,24 @@ func TestRequest_Format2(t *testing.T) {
 	req := NewRequest(rawReq)
 	req.uri = rawReq.URL.String()
 	t.Log("arg.name:", req.Format("${arg.name}"))
+}
+
+func BenchmarkNewRequest(b *testing.B) {
+	rawReq, err := http.NewRequest(http.MethodGet, "/hello?name=liu", nil)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	var req *Request
+
+	for i := 0; i < b.N; i ++ {
+		req = NewRequest(rawReq)
+		_ = req
+	}
+}
+
+func BenchmarkParseURI(b *testing.B) {
+	for i := 0; i < b.N; i ++ {
+		url.ParseRequestURI("http://teaos.cn/hello?name=liu")
+	}
 }

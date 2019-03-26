@@ -63,6 +63,7 @@ func (this *AddAction) RunPost(params struct {
 				backendObject := teaconfigs.NewBackendConfig()
 				backendObject.Address = backend
 				backendObject.Scheme = "http"
+				backendObject.Weight = 10
 				server.AddBackend(backendObject)
 			}
 		}

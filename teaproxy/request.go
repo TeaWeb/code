@@ -97,13 +97,9 @@ type Request struct {
 	responseWriter   *ResponseWriter
 	responseCallback func(http.ResponseWriter)
 
-	requestFromTime    time.Time // 请求开始时间
-	requestTime        float64   // 请求耗时
-	requestTimeISO8601 string
-	requestTimeLocal   string
-	requestMsec        float64
-	requestTimestamp   int64
-	requestMaxSize     int64
+	requestFromTime time.Time // 请求开始时间
+	requestCost     float64   // 请求耗时
+	requestMaxSize  int64
 
 	isWatching        bool     // 是否在监控
 	requestData       []byte   // 导出的request，在监控请求的时候有用
@@ -120,15 +116,11 @@ type Request struct {
 func NewRequest(rawRequest *http.Request) *Request {
 	now := time.Now()
 	req := &Request{
-		varMapping:         map[string]string{},
-		raw:                rawRequest,
-		rawURI:             rawRequest.URL.RequestURI(),
-		requestFromTime:    now,
-		requestTimestamp:   now.Unix(),
-		requestTimeISO8601: now.Format("2006-01-02T15:04:05.000Z07:00"),
-		requestTimeLocal:   now.Format("2/Jan/2006:15:04:05 -0700"),
-		requestMsec:        float64(now.Unix()) + float64(now.Nanosecond())/1000000000,
-		enableAccessLog:    true,
+		varMapping:      map[string]string{},
+		raw:             rawRequest,
+		rawURI:          rawRequest.URL.RequestURI(),
+		requestFromTime: now,
+		enableAccessLog: true,
 	}
 
 	return req
@@ -1126,6 +1118,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	this.raw.RequestURI = ""
 
 	resp, err := client.Do(this.raw)
+
 	if err != nil {
 		urlError, ok := err.(*url.Error)
 		if ok {
@@ -1152,6 +1145,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		this.addError(err)
 		return nil
 	}
+
 	data := []byte{}
 	bodyRead := false
 	if resp.ContentLength > 0 && resp.ContentLength < 2048 { // 内容比较少的直接读取，以加快响应速度
@@ -1911,7 +1905,7 @@ func (this *Request) Format(source string) string {
 		case "requestLength":
 			return fmt.Sprintf("%d", this.requestLength())
 		case "requestTime":
-			return fmt.Sprintf("%.6f", this.requestTime)
+			return fmt.Sprintf("%.6f", this.requestCost)
 		case "requestMethod":
 			return this.requestMethod()
 		case "requestFilename":
@@ -1929,13 +1923,13 @@ func (this *Request) Format(source string) string {
 		case "statusMessage":
 			return http.StatusText(this.responseWriter.StatusCode())
 		case "timeISO8601":
-			return this.requestTimeISO8601
+			return this.requestFromTime.Format("2006-01-02T15:04:05.000Z07:00")
 		case "timeLocal":
-			return this.requestTimeLocal
+			return this.requestFromTime.Format("2/Jan/2006:15:04:05 -0700")
 		case "msec":
-			return fmt.Sprintf("%.6f", this.requestMsec)
+			return fmt.Sprintf("%.6f", float64(this.requestFromTime.Unix())+float64(this.requestFromTime.Nanosecond())/1000000000)
 		case "timestamp":
-			return fmt.Sprintf("%d", this.requestTimestamp)
+			return fmt.Sprintf("%d", this.requestFromTime.Unix())
 		case "host":
 			return this.host
 		case "referer":
@@ -2013,7 +2007,7 @@ func (this *Request) formatAll(sources []string) []string {
 // 记录日志
 func (this *Request) log() {
 	// 计算请求时间
-	this.requestTime = time.Since(this.requestFromTime).Seconds()
+	this.requestCost = time.Since(this.requestFromTime).Seconds()
 
 	if !this.enableAccessLog {
 		return
@@ -2032,7 +2026,7 @@ func (this *Request) log() {
 		RequestURI:      this.requestURI(),
 		RequestPath:     this.requestPath(),
 		RequestLength:   this.requestLength(),
-		RequestTime:     this.requestTime,
+		RequestTime:     this.requestCost,
 		RequestMethod:   this.requestMethod(),
 		RequestFilename: this.requestFilename(),
 		Scheme:          this.rawScheme,
@@ -2041,10 +2035,10 @@ func (this *Request) log() {
 		BodyBytesSent:   this.responseWriter.SentBodyBytes(),
 		Status:          this.responseWriter.StatusCode(),
 		StatusMessage:   "",
-		TimeISO8601:     this.requestTimeISO8601,
-		TimeLocal:       this.requestTimeLocal,
-		Msec:            this.requestMsec,
-		Timestamp:       this.requestTimestamp,
+		TimeISO8601:     this.requestFromTime.Format("2006-01-02T15:04:05.000Z07:00"),
+		TimeLocal:       this.requestFromTime.Format("2/Jan/2006:15:04:05 -0700"),
+		Msec:            float64(this.requestFromTime.Unix()) + float64(this.requestFromTime.Nanosecond())/1000000000,
+		Timestamp:       this.requestFromTime.Unix(),
 		Host:            this.host,
 		Referer:         this.requestReferer(),
 		UserAgent:       this.requestUserAgent(),

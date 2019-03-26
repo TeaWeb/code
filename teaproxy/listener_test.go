@@ -294,6 +294,7 @@ func TestListener_Reload_FindNamedServer(t *testing.T) {
 	for i := 0; i < count; i ++ {
 		listener.findNamedServer("teaos5.cn")
 		listener.findNamedServer("wx.teaos.cn")
+		//listener.findNamedServer("127.0.0.1:8881")
 	}
 	t.Logf("%f", float64(count)/time.Since(before).Seconds())
 }
