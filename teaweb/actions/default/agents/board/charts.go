@@ -28,6 +28,7 @@ func (this *ChartsAction) Run(params struct {
 		this.Fail("无法创建看板的配置文件")
 	}
 
+	chartMapping := map[string]maps.Map{}
 	for _, app := range agent.Apps {
 		if !app.On {
 			continue
@@ -46,7 +47,9 @@ func (this *ChartsAction) Run(params struct {
 				if !chart.On {
 					continue
 				}
-				charts = append(charts, maps.Map{
+
+				isUsing := board.FindChart(chart.Id) != nil
+				info := maps.Map{
 					"id":       chart.Id,
 					"name":     chart.Name,
 					"typeName": widgets.FindChartTypeName(chart.Type),
@@ -58,13 +61,26 @@ func (this *ChartsAction) Run(params struct {
 						"id":   item.Id,
 						"name": item.Name,
 					},
-					"isUsing": board.FindChart(chart.Id) != nil,
-				})
+					"isUsing": isUsing,
+				}
+				chartMapping[chart.Id] = info
+				charts = append(charts, info)
 			}
 		}
 	}
 
 	this.Data["charts"] = charts
+
+	usingCharts := []maps.Map{}
+	if board != nil {
+		for _, c := range board.Charts {
+			info, found := chartMapping[c.ChartId]
+			if found {
+				usingCharts = append(usingCharts, info)
+			}
+		}
+	}
+	this.Data["usingCharts"] = usingCharts
 
 	this.Show()
 }

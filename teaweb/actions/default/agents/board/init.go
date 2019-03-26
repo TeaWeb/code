@@ -18,6 +18,7 @@ func init() {
 			Get("/charts", new(ChartsAction)).
 			Post("/addChart", new(AddChartAction)).
 			Post("/removeChart", new(RemoveChartAction)).
+			Post("/moveChart", new(MoveChartAction)).
 			Post("/initDefaultApp", new(InitDefaultAppAction)).
 			EndAll()
 	})

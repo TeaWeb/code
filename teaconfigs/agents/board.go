@@ -115,3 +115,32 @@ func (this *Board) Save() error {
 	_, err = writer.WriteYAML(this)
 	return err
 }
+
+func (this *Board) MoveChart(fromIndex int, toIndex int) {
+	if fromIndex < 0 || fromIndex >= len(this.Charts) {
+		return
+	}
+	if toIndex < 0 || toIndex >= len(this.Charts) {
+		return
+	}
+	if fromIndex == toIndex {
+		return
+	}
+
+	chart := this.Charts[fromIndex]
+	newList := []*BoardChart{}
+	for i := 0; i < len(this.Charts); i ++ {
+		if i == fromIndex {
+			continue
+		}
+		if fromIndex > toIndex && i == toIndex {
+			newList = append(newList, chart)
+		}
+		newList = append(newList, this.Charts[i])
+		if fromIndex < toIndex && i == toIndex {
+			newList = append(newList, chart)
+		}
+	}
+
+	this.Charts = newList
+}
