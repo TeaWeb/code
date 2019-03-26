@@ -57,7 +57,7 @@ func (this *Threshold) Validate() error {
 	for _, v := range thresholdRegexpParamNamedVariable.FindAllStringSubmatch(this.Param, -1) {
 		varName := v[0][2 : len(v[0])-1]
 		pieces := strings.Split(varName, ".")
-		if lists.Contains(pieces, "$") {
+		if lists.ContainsString(pieces, "$") {
 			this.shouldLoop = true
 			this.loopVar = varName
 			break

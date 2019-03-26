@@ -219,7 +219,7 @@ func (this *AgentConfig) FindItem(itemId string) (appConfig *AppConfig, item *It
 
 // 添加分组
 func (this *AgentConfig) AddGroup(groupId string) {
-	if lists.Contains(this.GroupIds, groupId) {
+	if lists.ContainsString(this.GroupIds, groupId) {
 		return
 	}
 	this.GroupIds = append(this.GroupIds, groupId)

@@ -193,10 +193,10 @@ func lookupArgs() bool {
 		fmt.Println("  reset", "\n     reset the server locker status")
 		fmt.Println("  status", "\n     print server status")
 		return true
-	} else if lists.Contains(args, "-v") { // 版本号
+	} else if lists.ContainsString(args, "-v") { // 版本号
 		fmt.Println("TeaWeb v"+teaconst.TeaVersion, "(build: "+runtime.Version(), runtime.GOOS, runtime.GOARCH+")")
 		return true
-	} else if lists.Contains(args, "start") { // 启动
+	} else if lists.ContainsString(args, "start") { // 启动
 		proc := checkPid()
 		if proc != nil {
 			fmt.Println("[teaweb]already started, pid:", proc.Pid)
@@ -212,7 +212,7 @@ func lookupArgs() bool {
 		fmt.Println("[teaweb]started ok, pid:", cmd.Process.Pid)
 
 		return true
-	} else if lists.Contains(args, "stop") { // 停止
+	} else if lists.ContainsString(args, "stop") { // 停止
 		proc := checkPid()
 		if proc == nil {
 			fmt.Println("[teaweb]not started")
@@ -229,7 +229,7 @@ func lookupArgs() bool {
 		fmt.Println("[teaweb]stopped ok, pid:", proc.Pid)
 
 		return true
-	} else if lists.Contains(args, "reload") { // 重新加载代理配置
+	} else if lists.ContainsString(args, "reload") { // 重新加载代理配置
 		pidString, err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").ReadAllString()
 		if err != nil {
 			logs.Error(err)
@@ -253,7 +253,7 @@ func lookupArgs() bool {
 		}
 		logs.Println("reload success")
 		return true
-	} else if lists.Contains(args, "restart") { // 重启
+	} else if lists.ContainsString(args, "restart") { // 重启
 		proc := checkPid()
 		if proc != nil {
 			err := proc.Kill()
@@ -272,7 +272,7 @@ func lookupArgs() bool {
 		fmt.Println("[teaweb]restarted ok, pid:", cmd.Process.Pid)
 
 		return true
-	} else if lists.Contains(args, "reset") { // 重置
+	} else if lists.ContainsString(args, "reset") { // 重置
 		pidString, err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").ReadAllString()
 		if err != nil {
 			logs.Error(err)
@@ -296,7 +296,7 @@ func lookupArgs() bool {
 		}
 		logs.Println("reset success")
 		return true
-	} else if lists.Contains(args, "status") { // 状态
+	} else if lists.ContainsString(args, "status") { // 状态
 		pidString, err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").ReadAllString()
 		if err != nil {
 			logs.Error(err)

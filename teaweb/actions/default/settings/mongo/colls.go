@@ -164,7 +164,7 @@ func (this *CollsAction) Run(params struct{}) {
 
 	// 其他
 	for _, name := range names {
-		if lists.Contains(recognizedNames, name) {
+		if lists.ContainsString(recognizedNames, name) {
 			continue
 		}
 		result = append(result, maps.Map{

@@ -31,7 +31,7 @@ func (this *UpdatePolicyAction) Run(params struct {
 		"key":         policy.Key,
 		"type":        policy.Type,
 		"options":     policy.Options,
-		"hasAdvanced": policy.CapacitySize() > 0 || (policy.Life != "72h" && policy.LifeDuration() > 0) || (len(policy.Status) != 1 || !lists.Contains(policy.Status, 200)) || policy.MaxDataSize() > 0,
+		"hasAdvanced": policy.CapacitySize() > 0 || (policy.Life != "72h" && policy.LifeDuration() > 0) || (len(policy.Status) != 1 || !lists.ContainsInt(policy.Status, 200)) || policy.MaxDataSize() > 0,
 		"life":        policy.Life,
 		"status":      policy.Status,
 		"maxSize":     policy.MaxSize,

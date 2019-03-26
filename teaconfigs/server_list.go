@@ -55,7 +55,7 @@ func SharedServerList() (*ServerList, error) {
 
 // 添加Server
 func (this *ServerList) AddServer(serverFile string) {
-	if !lists.Contains(this.Files, serverFile) {
+	if !lists.ContainsString(this.Files, serverFile) {
 		this.Files = append(this.Files, serverFile)
 	}
 }

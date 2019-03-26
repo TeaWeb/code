@@ -219,12 +219,12 @@ func (this *AdminConfig) AddGrant(grant *AdminGrant) {
 // 检查是否允许IP
 func (this *AdminConfig) AllowIP(ip string) bool {
 	// deny
-	if len(this.Security.Deny) > 0 && lists.Contains(this.Security.Deny, ip) {
+	if len(this.Security.Deny) > 0 && lists.ContainsString(this.Security.Deny, ip) {
 		return false
 	}
 
 	// allow
-	if lists.Contains(this.Security.Allow, "all") || lists.Contains(this.Security.Allow, "0.0.0.0") || lists.Contains(this.Security.Allow, ip) {
+	if lists.ContainsString(this.Security.Allow, "all") || lists.ContainsString(this.Security.Allow, "0.0.0.0") || lists.ContainsString(this.Security.Allow, ip) {
 		return true
 	}
 

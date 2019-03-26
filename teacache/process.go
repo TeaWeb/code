@@ -85,7 +85,7 @@ func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter)
 	if len(cacheConfig.Status) == 0 {
 		cacheConfig.Status = []int{http.StatusOK}
 	}
-	if !lists.Contains(cacheConfig.Status, writer.StatusCode()) {
+	if !lists.ContainsInt(cacheConfig.Status, writer.StatusCode()) {
 		return true
 	}
 

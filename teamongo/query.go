@@ -484,7 +484,7 @@ func (this *Query) buildFilter() map[string]interface{} {
 						}
 					}
 				}
-				if lists.Contains([]string{"eq", "lt", "lte", "gt", "gte", "in", "nin", "ne"}, op) {
+				if lists.ContainsString([]string{"eq", "lt", "lte", "gt", "gte", "in", "nin", "ne"}, op) {
 					fieldQuery["$"+op] = value
 				}
 			}

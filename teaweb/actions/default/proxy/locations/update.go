@@ -105,7 +105,7 @@ func (this *UpdateAction) RunPost(params struct {
 
 	index := []string{}
 	for _, i := range params.Index {
-		if len(i) > 0 && !lists.Contains(index, i) {
+		if len(i) > 0 && !lists.ContainsString(index, i) {
 			index = append(index, i)
 		}
 	}

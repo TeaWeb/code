@@ -33,7 +33,7 @@ func (this *UpdateAvatarAction) RunPost(params struct {
 		this.Fail("请选择要上传的头像文件")
 	}
 
-	if !lists.Contains([]string{".jpg", ".jpeg", ".png", ".gif"}, params.AvatarFile.Ext) {
+	if !lists.ContainsString([]string{".jpg", ".jpeg", ".png", ".gif"}, params.AvatarFile.Ext) {
 		this.Fail("上传的图片文件格式不正确")
 	}
 

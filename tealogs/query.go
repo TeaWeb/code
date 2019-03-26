@@ -600,7 +600,7 @@ func (this *Query) buildFilter() map[string]interface{} {
 		for field, cond := range this.cond {
 			fieldQuery := map[string]interface{}{}
 			for op, value := range cond.(map[string]interface{}) {
-				if lists.Contains([]string{"eq", "lt", "lte", "gt", "gte", "in", "nin", "ne"}, op) {
+				if lists.ContainsString([]string{"eq", "lt", "lte", "gt", "gte", "in", "nin", "ne"}, op) {
 					fieldQuery["$"+op] = value
 				}
 			}

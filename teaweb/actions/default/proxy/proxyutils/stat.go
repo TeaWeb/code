@@ -25,7 +25,7 @@ func ReloadServerStats(serverId string) {
 				continue
 			}
 			for _, r := range chart.Requirements {
-				if lists.Contains(codes, r) {
+				if lists.ContainsString(codes, r) {
 					continue
 				}
 				codes = append(codes, r)

@@ -112,7 +112,7 @@ func FindFilter(code string) FilterInterface {
 	defer registerFilterLocker.Unlock()
 	for _, m := range AllStatFilters {
 		instance := m["instance"]
-		if lists.Contains(instance.(FilterInterface).Codes(), code) {
+		if lists.ContainsString(instance.(FilterInterface).Codes(), code) {
 			return reflect.New(reflect.Indirect(reflect.ValueOf(instance)).Type()).Interface().(FilterInterface)
 		}
 	}

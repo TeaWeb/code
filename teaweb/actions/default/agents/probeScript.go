@@ -33,7 +33,7 @@ func (this *ProbeScriptAction) Run(params struct {
 		}
 	}
 
-	this.Data["isAdded"] = lists.Contains(localProbeIds, params.ProbeId)
+	this.Data["isAdded"] = lists.ContainsString(localProbeIds, params.ProbeId)
 	this.Data["fromList"] = params.FromList
 	this.Data["probeId"] = params.ProbeId
 

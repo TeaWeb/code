@@ -243,7 +243,7 @@ func (this *API) IsWatching() bool {
 
 // 添加测试脚本
 func (this *API) AddScript(script *APIScript) {
-	if lists.Contains(this.TestScripts, script.Filename) {
+	if lists.ContainsString(this.TestScripts, script.Filename) {
 		return
 	}
 	this.TestScripts = append(this.TestScripts, script.Filename)
@@ -270,7 +270,7 @@ func (this *API) FindTestScripts() []*APIScript {
 
 // 查找单个脚本
 func (this *API) FindTestScript(filename string) *APIScript {
-	if !lists.Contains(this.TestScripts, filename) {
+	if !lists.ContainsString(this.TestScripts, filename) {
 		return nil
 	}
 
@@ -292,7 +292,7 @@ func (this *API) FindTestScript(filename string) *APIScript {
 
 // 删除测试脚本
 func (this *API) DeleteTestScript(filename string) error {
-	if lists.Contains(this.TestScripts, filename) {
+	if lists.ContainsString(this.TestScripts, filename) {
 		script := NewAPIScript()
 		script.Filename = filename
 		err := script.Delete()
@@ -324,7 +324,7 @@ func (this *API) AddTestCase(filename string) {
 	if len(filename) == 0 {
 		return
 	}
-	if lists.Contains(this.TestCaseFiles, filename) {
+	if lists.ContainsString(this.TestCaseFiles, filename) {
 		return
 	}
 	this.TestCaseFiles = append(this.TestCaseFiles, filename)
@@ -352,7 +352,7 @@ func (this *API) AddMock(filename string) {
 	if len(filename) == 0 {
 		return
 	}
-	if lists.Contains(this.MockFiles, filename) {
+	if lists.ContainsString(this.MockFiles, filename) {
 		return
 	}
 	this.MockFiles = append(this.MockFiles, filename)

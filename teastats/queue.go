@@ -97,7 +97,7 @@ func (this *Queue) Start(serverId string) {
 			if item == nil {
 				break
 			}
-			
+
 			// 是否已存在
 			findQuery := teamongo.NewQuery("values.server."+serverId, new(Value)).
 				Attr("item", item.Item)
@@ -312,12 +312,12 @@ func (this *Queue) increase(value maps.Map, inc maps.Map) maps.Map {
 // 对比字符串数组看是否相等
 func (this *Queue) equalStrings(strings1 []string, strings2 []string) bool {
 	for _, s1 := range strings1 {
-		if !lists.Contains(strings2, s1) {
+		if !lists.ContainsString(strings2, s1) {
 			return false
 		}
 	}
 	for _, s2 := range strings2 {
-		if !lists.Contains(strings1, s2) {
+		if !lists.ContainsString(strings1, s2) {
 			return false
 		}
 	}

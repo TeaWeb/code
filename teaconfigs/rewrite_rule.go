@@ -187,10 +187,10 @@ func (this *RewriteRule) ResetFlags() {
 
 // 跳转模式
 func (this *RewriteRule) RedirectMode() string {
-	if lists.Contains(this.Flags, RewriteFlagProxy) {
+	if lists.ContainsString(this.Flags, RewriteFlagProxy) {
 		return RewriteFlagProxy
 	}
-	if lists.Contains(this.Flags, RewriteFlagRedirect) {
+	if lists.ContainsString(this.Flags, RewriteFlagRedirect) {
 		return RewriteFlagRedirect
 	}
 	return RewriteFlagProxy

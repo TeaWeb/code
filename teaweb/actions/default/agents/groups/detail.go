@@ -36,7 +36,7 @@ func (this *DetailAction) Run(params struct {
 		logs.Error(err)
 	} else {
 		for _, a := range agentList.FindAllAgents() {
-			if (len(a.GroupIds) == 0 && len(params.GroupId) == 0) || lists.Contains(a.GroupIds, params.GroupId) {
+			if (len(a.GroupIds) == 0 && len(params.GroupId) == 0) || lists.ContainsString(a.GroupIds, params.GroupId) {
 				_, isWaiting := agentutils.CheckAgentIsWaiting(a.Id)
 				groupAgents = append(groupAgents, maps.Map{
 					"on":        a.On,

@@ -60,7 +60,7 @@ func (this *ScriptSource) FormattedScript() string {
 	script = strings.Replace(script, "\r", "", -1)
 
 	// 是否有解释器
-	if lists.Contains([]string{"darwin", "linux", "unix"}, runtime.GOOS) {
+	if lists.ContainsString([]string{"darwin", "linux", "unix"}, runtime.GOOS) {
 		if !strings.HasPrefix(strings.TrimSpace(script), "#!") {
 			script = "#!/usr/bin/env bash\n" + script
 		} else {
@@ -121,7 +121,7 @@ func (this *ScriptSource) Execute(params map[string]string) (value interface{}, 
 
 	// 检查shell
 	var cmd *exec.Cmd = nil
-	if lists.Contains([]string{"darwin", "linux", "unix"}, runtime.GOOS) {
+	if lists.ContainsString([]string{"darwin", "linux", "unix"}, runtime.GOOS) {
 		data, err := files.NewFile(currentPath).ReadAll()
 		if err == nil {
 			if !strings.HasPrefix(strings.TrimSpace(string(data)), "#!") {

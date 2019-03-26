@@ -82,7 +82,7 @@ func (this *HeaderList) AllIgnoreHeaders() []string {
 
 // 添加IgnoreHeader
 func (this *HeaderList) AddIgnoreHeader(name string) {
-	if !lists.Contains(this.IgnoreHeaders, name) {
+	if !lists.ContainsString(this.IgnoreHeaders, name) {
 		this.IgnoreHeaders = append(this.IgnoreHeaders, name)
 	}
 }
@@ -92,7 +92,7 @@ func (this *HeaderList) ContainsIgnoreHeader(name string) bool {
 	if len(this.IgnoreHeaders) == 0 {
 		return false
 	}
-	return lists.Contains(this.IgnoreHeaders, name)
+	return lists.ContainsString(this.IgnoreHeaders, name)
 }
 
 // 修改IgnoreHeader

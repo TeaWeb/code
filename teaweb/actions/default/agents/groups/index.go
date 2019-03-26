@@ -23,7 +23,7 @@ func (this *IndexAction) Run(params struct{}) {
 	for _, group := range agents.SharedGroupConfig().Groups {
 		countAgents := 0
 		for _, agent := range allAgents {
-			if lists.Contains(agent.GroupIds, group.Id) {
+			if lists.ContainsString(agent.GroupIds, group.Id) {
 				countAgents ++
 			}
 		}

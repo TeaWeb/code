@@ -12,7 +12,7 @@ type SecurityAction actions.Action
 func (this *SecurityAction) Run(params struct{}) {
 	admin := configs.SharedAdminConfig()
 	this.Data["security"] = admin.Security
-	this.Data["allowAll"] = lists.Contains(admin.Security.Allow, "all")
+	this.Data["allowAll"] = lists.ContainsString(admin.Security.Allow, "all")
 	this.Data["userIP"] = this.RequestRemoteIP()
 
 	this.Show()

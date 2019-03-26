@@ -330,7 +330,7 @@ func (this *Listener) findNamedServer(name string) (serverConfig *teaconfigs.Ser
 
 	// 精确查找
 	for _, server := range this.currentServers {
-		if lists.Contains(server.Name, name) {
+		if lists.ContainsString(server.Name, name) {
 			this.namedServersLocker.Lock()
 			if len(this.namedServers) < maxNamedServers {
 				this.namedServers[name] = &NamedServer{

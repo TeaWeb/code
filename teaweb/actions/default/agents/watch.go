@@ -24,14 +24,14 @@ func (this *WatchAction) Run(params struct {
 
 	isChanged := false
 	for _, appId := range params.AppIds {
-		if !lists.Contains(allAppIds, appId) {
+		if !lists.ContainsString(allAppIds, appId) {
 			isChanged = true
 			break
 		}
 	}
 	if !isChanged {
 		for _, appId := range allAppIds {
-			if !lists.Contains(params.AppIds, appId) {
+			if !lists.ContainsString(params.AppIds, appId) {
 				isChanged = true
 				break
 			}

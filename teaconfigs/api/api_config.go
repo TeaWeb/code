@@ -87,7 +87,7 @@ func (this *APIConfig) AddAPI(api *API) {
 	}
 
 	// 如果已包含文件名则不重复添加
-	if lists.Contains(this.Files, api.Filename) {
+	if lists.ContainsString(this.Files, api.Filename) {
 		return
 	}
 	this.Files = append(this.Files, api.Filename)
@@ -427,7 +427,7 @@ func (this *APIConfig) RemoveStatus(code string) {
 
 // 添加consumer
 func (this *APIConfig) AddConsumer(consumerFile string) {
-	if lists.Contains(this.ConsumerFiles, consumerFile) {
+	if lists.ContainsString(this.ConsumerFiles, consumerFile) {
 		return
 	}
 	this.ConsumerFiles = append(this.ConsumerFiles, consumerFile)
