@@ -17,7 +17,7 @@ func (this *TestAction) Run(params struct {
 	Username string
 	Password string
 }) {
-	config := configs.MongoConfig{
+	config := configs.MongoConnectionConfig{
 		Host:     params.Host,
 		Port:     params.Port,
 		Username: params.Username,

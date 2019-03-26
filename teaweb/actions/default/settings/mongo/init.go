@@ -24,6 +24,8 @@ func init() {
 			Post("/colls", new(CollsAction)).
 			Post("/collStat", new(CollStatAction)).
 			Post("/deleteColl", new(DeleteCollAction)).
+			Get("/clean", new(CleanAction)).
+			GetPost("/cleanUpdate", new(CleanUpdateAction)).
 			EndAll()
 	})
 }

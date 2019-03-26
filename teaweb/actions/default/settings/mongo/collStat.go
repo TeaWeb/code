@@ -38,9 +38,21 @@ func (this *CollStatAction) Run(params struct {
 		if m1.GetInt("ok") != 1 {
 			continue
 		}
+		size := float64(m1.GetInt("size"))
+		formattedSize := ""
+		if size < 1024 {
+			formattedSize = fmt.Sprintf("%.2fB", size)
+		} else if size < 1024*1024 {
+			formattedSize = fmt.Sprintf("%.2fKB", size/1024)
+		} else if size < 1024*1024*1024 {
+			formattedSize = fmt.Sprintf("%.2fMB", size/1024/1024)
+		} else {
+			formattedSize = fmt.Sprintf("%.2fGB", size/1024/1024/1024)
+		}
 		results[collName] = maps.Map{
-			"count": m1.GetInt("count"),
-			"size":  fmt.Sprintf("%.2fM", float64(m1.GetInt("size"))/1024/1024),
+			"count":         m1.GetInt("count"),
+			"size":          size,
+			"formattedSize": formattedSize,
 		}
 	}
 
