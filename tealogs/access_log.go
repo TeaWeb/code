@@ -317,7 +317,7 @@ func (this *AccessLog) SetWritingFields(fields []int) {
 // 清除不必要的的字段
 func (this *AccessLog) CleanFields() {
 	l := len(this.writingFields)
-	if l == 0 || (l == 1 && this.writingFields[0] == 0) {
+	if l == 0 {
 		return
 	}
 	for _, code := range AccessLogFieldsCodes {
