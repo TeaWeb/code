@@ -23,7 +23,6 @@ func (this *CreatePolicyAction) RunPost(params struct {
 	Key  string
 	Type string
 
-	IsAdvanced   bool
 	Capacity     float64
 	CapacityUnit string
 	Life         int
@@ -47,22 +46,16 @@ func (this *CreatePolicyAction) RunPost(params struct {
 	policy.Key = params.Key
 	policy.Type = params.Type
 
-	if params.IsAdvanced {
-		policy.Capacity = fmt.Sprintf("%.2f%s", params.Capacity, params.CapacityUnit)
-		policy.Life = fmt.Sprintf("%d%s", params.Life, params.LifeUnit)
-		for _, status := range params.StatusList {
-			i := types.Int(status)
-			if i >= 0 {
-				policy.Status = append(policy.Status, i)
-			}
+	policy.Capacity = fmt.Sprintf("%.2f%s", params.Capacity, params.CapacityUnit)
+	policy.Life = fmt.Sprintf("%d%s", params.Life, params.LifeUnit)
+	for _, status := range params.StatusList {
+		i := types.Int(status)
+		if i >= 0 {
+			policy.Status = append(policy.Status, i)
 		}
-		policy.MaxSize = fmt.Sprintf("%.2f%s", params.MaxSize, params.MaxSizeUnit)
-		policy.Status = params.StatusList
-	} else {
-		policy.Capacity = "0.00g"
-		policy.Life = "72h"
-		policy.Status = []int{200}
 	}
+	policy.MaxSize = fmt.Sprintf("%.2f%s", params.MaxSize, params.MaxSizeUnit)
+	policy.Status = params.StatusList
 
 	// 选项
 	if policy.Type == "file" {

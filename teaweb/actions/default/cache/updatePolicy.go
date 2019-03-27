@@ -5,7 +5,6 @@ import (
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 )
@@ -26,16 +25,15 @@ func (this *UpdatePolicyAction) Run(params struct {
 	policy.Validate()
 
 	this.Data["policy"] = maps.Map{
-		"filename":    policy.Filename,
-		"name":        policy.Name,
-		"key":         policy.Key,
-		"type":        policy.Type,
-		"options":     policy.Options,
-		"hasAdvanced": policy.CapacitySize() > 0 || (policy.Life != "72h" && policy.LifeDuration() > 0) || (len(policy.Status) != 1 || !lists.ContainsInt(policy.Status, 200)) || policy.MaxDataSize() > 0,
-		"life":        policy.Life,
-		"status":      policy.Status,
-		"maxSize":     policy.MaxSize,
-		"capacity":    policy.Capacity,
+		"filename": policy.Filename,
+		"name":     policy.Name,
+		"key":      policy.Key,
+		"type":     policy.Type,
+		"options":  policy.Options,
+		"life":     policy.Life,
+		"status":   policy.Status,
+		"maxSize":  policy.MaxSize,
+		"capacity": policy.Capacity,
 	}
 
 	this.Show()
@@ -47,7 +45,6 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 	Key      string
 	Type     string
 
-	IsAdvanced   bool
 	Capacity     float64
 	CapacityUnit string
 	Life         int
@@ -74,23 +71,16 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 	policy.Key = params.Key
 	policy.Type = params.Type
 
-	if params.IsAdvanced {
-		policy.Capacity = fmt.Sprintf("%.2f%s", params.Capacity, params.CapacityUnit)
-		policy.Life = fmt.Sprintf("%d%s", params.Life, params.LifeUnit)
-		for _, status := range params.StatusList {
-			i := types.Int(status)
-			if i >= 0 {
-				policy.Status = append(policy.Status, i)
-			}
+	policy.Capacity = fmt.Sprintf("%.2f%s", params.Capacity, params.CapacityUnit)
+	policy.Life = fmt.Sprintf("%d%s", params.Life, params.LifeUnit)
+	for _, status := range params.StatusList {
+		i := types.Int(status)
+		if i >= 0 {
+			policy.Status = append(policy.Status, i)
 		}
-		policy.MaxSize = fmt.Sprintf("%.2f%s", params.MaxSize, params.MaxSizeUnit)
-		policy.Status = params.StatusList
-	} else {
-		policy.Capacity = "0.00g"
-		policy.Life = "72h"
-		policy.MaxSize = "0.00m"
-		policy.Status = []int{200}
 	}
+	policy.MaxSize = fmt.Sprintf("%.2f%s", params.MaxSize, params.MaxSizeUnit)
+	policy.Status = params.StatusList
 
 	// 选项
 	if policy.Type == "file" {
