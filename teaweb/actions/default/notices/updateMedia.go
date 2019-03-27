@@ -61,6 +61,10 @@ func (this *UpdateMediaAction) RunPost(params struct {
 
 	DingTalkWebhookURL string
 
+	QyWeixinCorporateId string
+	QyWeixinAgentId     string
+	QyWeixinAppSecret   string
+
 	TimeFromHour   int
 	TimeFromMinute int
 	TimeFromSecond int
@@ -174,6 +178,20 @@ func (this *UpdateMediaAction) RunPost(params struct {
 
 		media := notices.NewNoticeDingTalkMedia()
 		media.WebhookURL = params.DingTalkWebhookURL
+		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+	case notices.NoticeMediaTypeQyWeixin:
+		params.Must.
+			Field("qyWeixinCorporateId", params.QyWeixinCorporateId).
+			Require("请输入企业ID").
+			Field("qyWeixinAgentId", params.QyWeixinAgentId).
+			Require("请输入应用AgentId").
+			Field("qyWeixinSecret", params.QyWeixinAppSecret).
+			Require("请输入应用Secret")
+
+		media := notices.NewNoticeQyWeixinMedia()
+		media.CorporateId = params.QyWeixinCorporateId
+		media.AgentId = params.QyWeixinAgentId
+		media.AppSecret = params.QyWeixinAppSecret
 		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
 	}
 

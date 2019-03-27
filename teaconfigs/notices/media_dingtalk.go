@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// 邮件媒介
+// 钉钉群机器人媒介
 type NoticeDingTalkMedia struct {
 	WebhookURL string `yaml:"webhookURL" json:"webhookURL"`
 }
