@@ -29,6 +29,7 @@ type Engine struct {
 	widgetCodes  map[string]maps.Map // "code" => { name, ..., definition:FUNCTION CODE }
 	context      *Context
 	output       []string
+	mongoEnabled bool
 }
 
 // 获取新引擎
@@ -39,6 +40,11 @@ func NewEngine() *Engine {
 	}
 	engine.init()
 	return engine
+}
+
+// 设置MongoDB是否可用
+func (this *Engine) SetMongo(b bool) {
+	this.mongoEnabled = b
 }
 
 // 设置上下文信息
@@ -118,7 +124,7 @@ func (this *Engine) SetContext(context *Context) {
 
 	// 可供使用的特性
 	features := []string{}
-	if teamongo.Test() == nil {
+	if this.mongoEnabled {
 		features = append(features, "mongo")
 	}
 	features = append(features, runtime.GOOS)

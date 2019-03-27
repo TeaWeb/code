@@ -2,6 +2,7 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
@@ -51,6 +52,8 @@ func (this *IndexAction) RunPost(params struct {
 	}
 
 	engine := scripts.NewEngine()
+	engine.SetMongo(teamongo.Test() == nil)
+
 	for _, c := range board.Charts {
 		app := agent.FindApp(c.AppId)
 		if app == nil || !app.On {
