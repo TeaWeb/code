@@ -19,11 +19,6 @@ func (this *IndexAction) Run(params struct {
 		this.Fail("找不到Agent")
 	}
 
-	if agent.IsLocal() {
-		this.RedirectURL("/agents/board")
-		return
-	}
-
 	state, isWaiting := agentutils.CheckAgentIsWaiting(agent.Id)
 	if isWaiting {
 		this.Data["agentVersion"] = state.Version
@@ -35,6 +30,7 @@ func (this *IndexAction) Run(params struct {
 		this.Data["agentIsWaiting"] = false
 	}
 	this.Data["agent"] = agent
+	this.Data["isLocal"] = agent.IsLocal()
 
 	// 分组
 	groupNames := []string{}

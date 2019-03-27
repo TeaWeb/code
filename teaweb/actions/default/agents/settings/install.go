@@ -18,12 +18,8 @@ func (this *InstallAction) Run(params struct {
 		this.Fail("找不到Agent")
 	}
 
-	if agent.IsLocal() {
-		this.RedirectURL("/agents/board")
-		return
-	}
-
 	this.Data["agent"] = agent
+	this.Data["isLocal"] = agent.IsLocal()
 
 	this.Show()
 }

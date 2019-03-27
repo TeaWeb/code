@@ -57,9 +57,7 @@ func (this *UpdateReceiverAction) RunPost(params struct {
 		Field("name", params.Name).
 		Require("请输入接收人名称").
 		Field("mediaId", params.MediaId).
-		Require("请选择使用的媒介").
-		Field("user", params.User).
-		Require("请输入接收人标识")
+		Require("请选择使用的媒介")
 
 	setting := notices.SharedNoticeSetting()
 	_, receiver := setting.FindReceiver(params.ReceiverId)
@@ -67,12 +65,27 @@ func (this *UpdateReceiverAction) RunPost(params struct {
 		this.Fail("找不到要修改的Receiver")
 	}
 
+	// 是否校验接收人
+	media := setting.FindMedia(params.MediaId)
+	if media == nil {
+		this.Fail("找不到媒介")
+	}
+	rawMedia, err := media.Raw()
+	if err != nil {
+		this.Fail("找不到媒介：" + err.Error())
+	}
+	if rawMedia.RequireUser() {
+		params.Must.
+			Field("name", params.Name).
+			Require("请输入接收人名称")
+	}
+
 	receiver.On = params.On
 	receiver.Name = params.Name
 	receiver.MediaId = params.MediaId
 	receiver.User = params.User
 
-	err := setting.Save()
+	err = setting.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

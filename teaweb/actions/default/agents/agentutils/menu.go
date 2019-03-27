@@ -145,8 +145,8 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 			}
 
 			// 设置和删除
+			tabbar.Add("设置", "", "/agents/settings?agentId="+agentId, "setting", action.HasPrefix("/agents/settings"))
 			if agentId != "local" {
-				tabbar.Add("设置", "", "/agents/settings?agentId="+agentId, "setting", action.HasPrefix("/agents/settings"))
 				tabbar.Add("删除", "", "/agents/delete?agentId="+agentId, "trash", action.HasPrefix("/agents/delete"))
 			}
 			utils.SetTabbar(actionWrapper, tabbar)
