@@ -45,7 +45,7 @@ func AllNoticeMediaTypes() []maps.Map {
 			"code":         NoticeMediaTypeDingTalk,
 			"supportsHTML": false,
 			"instance":     new(NoticeDingTalkMedia),
-			"description":  "通过钉钉群机器人发送通知消息",
+			"description":  "通过钉钉群机器人发送通知消息，<a href=\"http://teaos.cn/doc/notices/DingTalk.md\" target=\"_blank\">相关文档&raquo;</a>",
 			"user":         "要At（@）的群成员的手机号，多个手机号用英文逗号隔开，也可以为空",
 		},
 		{
@@ -53,7 +53,7 @@ func AllNoticeMediaTypes() []maps.Map {
 			"code":         NoticeMediaTypeQyWeixin,
 			"supportsHTML": false,
 			"instance":     new(NoticeQyWeixinMedia),
-			"description":  "通过企业微信应用发送通知消息",
+			"description":  "通过企业微信应用发送通知消息，<a href=\"http://teaos.cn/doc/notices/QyWeixin.md\" target=\"_blank\">相关文档&raquo;</a>",
 			"user":         "接收消息的成员的用户账号，多个成员用竖线（|）分隔，如果所有成员使用@all。留空表示所有成员。<a href=\"http://teaos.cn/doc/notices/QyWeixin.md#%E7%94%A8%E6%88%B7%E8%B4%A6%E5%8F%B7\" target=\"_blank\">如何查看成员的用户账号？</a>",
 		},
 	}

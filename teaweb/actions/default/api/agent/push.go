@@ -315,12 +315,19 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 			// 发送成功级别的通知
 			notice := notices.NewNotice()
 			notice.SetTime(t)
-			notice.Message = "监控项经过" + fmt.Sprintf("%d", recoverSuccesses) + "次刷新后，判定已恢复正常"
 			notice.Agent = notices.AgentCond{
 				AgentId: agent.Id,
 				AppId:   appId,
 				ItemId:  itemId,
 				Level:   notices.NoticeLevelSuccess,
+			}
+			notice.Message = "监控项经过" + fmt.Sprintf("%d", recoverSuccesses) + "次刷新后，判定已恢复正常"
+			linkNames := []string{}
+			for _, l := range agentutils.FindNoticeLinks(notice) {
+				linkNames = append(linkNames, types.String(l["name"]))
+			}
+			if len(linkNames) > 0 {
+				notice.Message += "\n位置：" + strings.Join(linkNames, "/")
 			}
 			notice.Hash()
 			err := noticeutils.NewNoticeQuery().Insert(notice)
