@@ -109,6 +109,7 @@ func (this *TestAction) Run(params struct {
 	}
 
 	engine := scripts.NewEngine()
+	engine.SetMongo(teamongo.Test() == nil)
 	engine.SetContext(&scripts.Context{
 		Server: server,
 	})

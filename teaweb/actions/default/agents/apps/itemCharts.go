@@ -2,6 +2,7 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
@@ -107,6 +108,7 @@ widget.run = function () {
 `
 
 	engine := scripts.NewEngine()
+	engine.SetMongo(teamongo.Test() == nil)
 	engine.SetContext(&scripts.Context{
 		Agent: agent,
 		App:   app,
