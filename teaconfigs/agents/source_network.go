@@ -192,7 +192,7 @@ func (this *NetworkSource) Thresholds() []*Threshold {
 		t.Operator = ThresholdOperatorGte
 		t.Value = "13107200"
 		t.NoticeLevel = notices.NoticeLevelWarning
-		t.NoticeMessage = "流量超过100M/s"
+		t.NoticeMessage = "当前出口流量超过100MBit/s"
 		result = append(result, t)
 	}
 

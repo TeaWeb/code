@@ -589,7 +589,7 @@ chart.render();
 				threshold.Operator = ThresholdOperatorGte
 				threshold.Value = "13107200"
 				threshold.NoticeLevel = notices.NoticeLevelWarning
-				threshold.NoticeMessage = "流量超过100M/s"
+				threshold.NoticeMessage = "当前出口流量超过100MBit/s"
 				item.AddThreshold(threshold)
 			}
 
