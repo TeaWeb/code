@@ -84,14 +84,14 @@ func Start() {
 
 	// 信号
 	signalsChannel := make(chan os.Signal, 1024)
-	signal.Notify(signalsChannel, syscall.SIGINT, syscall.SIGHUP, syscall.SIGUSR1, syscall.SIGTERM)
+	signal.Notify(signalsChannel, syscall.SIGINT, syscall.SIGHUP, syscall.Signal(0x1e) /**syscall.SIGUSR1**/, syscall.SIGTERM)
 	go func() {
 		for {
 			sig := <-signalsChannel
 
 			if sig == syscall.SIGHUP { // 重置
 				configs.SharedAdminConfig().Reset()
-			} else if sig == syscall.SIGUSR1 { // 刷新代理状态
+			} else if sig == syscall.Signal(0x1e) /**syscall.SIGUSR1**/ { // 刷新代理状态
 				err := teaproxy.SharedManager.Restart()
 				if err != nil {
 					logs.Println("[error]" + err.Error())
@@ -246,7 +246,7 @@ func lookupArgs() bool {
 			logs.Println("can not find process")
 			return true
 		}
-		err = proc.Signal(syscall.SIGUSR1)
+		err = proc.Signal(syscall.Signal(0x1e) /**syscall.SIGUSR1**/)
 		if err != nil {
 			logs.Error(err)
 			return true

@@ -5,8 +5,6 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/shirou/gopsutil/load"
-	"runtime"
 )
 
 // 负载
@@ -31,30 +29,7 @@ func (this *LoadSource) Code() string {
 
 // 描述
 func (this *LoadSource) Description() string {
-	return "系统负载信息（不支持Windows）"
-}
-
-// 执行
-func (this *LoadSource) Execute(params map[string]string) (value interface{}, err error) {
-	if runtime.GOOS == "windows" {
-		value = map[string]interface{}{
-			"load1":  0,
-			"load5":  0,
-			"load15": 0,
-		}
-		return
-	}
-
-	stat, err := load.Avg()
-	if err != nil || stat == nil {
-		return
-	}
-	value = map[string]interface{}{
-		"load1":  stat.Load1,
-		"load5":  stat.Load5,
-		"load15": stat.Load15,
-	}
-	return
+	return "系统负载信息"
 }
 
 // 表单信息
@@ -177,9 +152,4 @@ chart.render();
 	}
 
 	return charts
-}
-
-// 支持的平台
-func (this *LoadSource) Platforms() []string {
-	return []string{"darwin", "linux"}
 }
