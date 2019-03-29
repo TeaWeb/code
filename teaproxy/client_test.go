@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/valyala/fasthttp"
 	"io"
 	"io/ioutil"
 	"net"
@@ -12,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -199,37 +199,6 @@ func BenchmarkNewClientPool2(b *testing.B) {
 	}
 }
 
-func BenchmarkNewClientPool_FastHttp(b *testing.B) {
-	client := fasthttp.Client{}
-
-	for i := 0; i < b.N; i ++ {
-		req := &fasthttp.Request{}
-		req.SetRequestURI("http://127.0.0.1:9991")
-		req.Header.SetMethod(http.MethodGet)
-		resp := &fasthttp.Response{}
-		err := client.Do(req, resp)
-		if err == nil {
-
-		}
-	}
-}
-
-func TestNewClientPool_FastHttp(t *testing.T) {
-	client := fasthttp.Client{}
-
-	req := &fasthttp.Request{}
-	req.SetRequestURI("http://127.0.0.1:9991")
-	req.Header.SetMethod(http.MethodGet)
-
-	resp := &fasthttp.Response{}
-	err := client.Do(req, resp)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(string(resp.Body()))
-}
-
 func TestClient_Proxy(t *testing.T) {
 	mux := http.NewServeMux()
 
@@ -244,4 +213,75 @@ func TestClient_Proxy(t *testing.T) {
 		Addr:    "127.0.0.1:8890",
 	}
 	server.ListenAndServe()
+}
+
+func TestMultipleClient(t *testing.T) {
+	count := 100
+	n := 1000
+	t.Log(n, "threads")
+
+	wg := sync.WaitGroup{}
+	wg.Add(n)
+
+	dials := int32(0)
+	success := int64(0)
+
+	client1 := &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				atomic.AddInt32(&dials, 1)
+
+				return (&net.Dialer{
+					Timeout:   10 * time.Second,
+					KeepAlive: 10 * time.Minute,
+					DualStack: true,
+				}).DialContext(ctx, network, addr)
+			},
+			Proxy:                 nil,
+			MaxIdleConns:          0,
+			MaxIdleConnsPerHost:   1024,
+			IdleConnTimeout:       2 * time.Minute,
+			ExpectContinueTimeout: 1 * time.Second,
+			TLSHandshakeTimeout:   0, // 不限
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+			DisableCompression: true,
+		},
+	}
+
+	before := time.Now()
+	for j := 0; j < n; j ++ {
+		go func() {
+			defer wg.Done()
+
+			for i := 0; i < count; i ++ {
+				req, err := http.NewRequest("GET", "http://127.0.0.1:9991/", nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				resp, err := client1.Do(req)
+				if err == nil {
+					data := []byte{}
+					b := make([]byte, resp.ContentLength)
+					for {
+						n, err := resp.Body.Read(b)
+						if n > 0 {
+							data = append(data, b[:n]...)
+						}
+						if err != nil {
+							break
+						}
+					}
+
+					resp.Body.Close()
+					atomic.AddInt64(&success, 1)
+				}
+			}
+		}()
+	}
+	wg.Wait()
+
+	t.Log(float64(count*n) / time.Since(before).Seconds())
+	t.Log(dials, "dials", "success:", success)
 }

@@ -266,7 +266,7 @@ func (this *Listener) handle(writer http.ResponseWriter, rawRequest *http.Reques
 	req.index = server.Index
 	req.charset = server.Charset
 
-	// 查找Location
+	// 配置请求
 	err := req.configure(server, 0)
 	if err != nil {
 		req.serverError(responseWriter)

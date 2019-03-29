@@ -49,7 +49,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	}
 	this.raw.Header.Set("X-Forwarded-Host", this.host)
 	this.raw.Header.Set("X-Forwarded-Proto", this.raw.Proto)
-
+	this.raw.Header.Set("Connection", "keep-alive")
 	client := SharedClientPool.client(this.backend.Id, this.backend.Address, this.backend.FailTimeoutDuration(), this.backend.ReadTimeoutDuration(), this.backend.MaxConns)
 
 	this.raw.RequestURI = ""
@@ -87,13 +87,13 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	bodyRead := false
 	if resp.ContentLength > 0 && resp.ContentLength < 2048 { // 内容比较少的直接读取，以加快响应速度
 		bodyRead = true
-		data, err = ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			this.serverError(writer)
-			logs.Error(err)
-			this.addError(err)
+		contentData := make([]byte, resp.ContentLength)
+		n, _ := resp.Body.Read(contentData)
+		if n > 0 {
+			data = contentData[:n]
 		}
+		resp.ContentLength = int64(n)
+		resp.Body.Close()
 	} else {
 		defer resp.Body.Close()
 	}
@@ -180,4 +180,3 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	}
 	return nil
 }
-
