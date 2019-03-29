@@ -900,7 +900,7 @@ func (this *Request) requestCookie(name string) string {
 	if err != nil {
 		return ""
 	}
-	return cookie.Name
+	return cookie.Value
 }
 
 func (this *Request) requestQueryString() string {
