@@ -2,6 +2,7 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -43,6 +44,22 @@ func (this *DeleteItemChartAction) Run(params struct {
 	err := agent.Save()
 	if err != nil {
 		this.Fail("删除失败：" + err.Error())
+	}
+
+	// 同步
+	if app.IsSharedWithGroup {
+		agentutils.SyncApp(agent.Id, agent.GroupIds, app, nil, func(agent *agents.AgentConfig) error {
+			// 从看板中删除
+			board := agents.NewAgentBoard(agent.Id)
+			if board != nil {
+				board.RemoveChart(params.ChartId)
+				err := board.Save()
+				if err != nil {
+					this.Fail("删除失败：" + err.Error())
+				}
+			}
+			return nil
+		})
 	}
 
 	this.Success()

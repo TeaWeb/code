@@ -19,6 +19,11 @@ func (this *DeleteAction) Run(params struct {
 		this.Fail("找不到要操作的Agent")
 	}
 
+	app := agent.FindApp(params.AppId)
+	if app == nil {
+		this.Fail("找不到要删除的App")
+	}
+
 	// 删除图表
 	board := agents.NewAgentBoard(agent.Id)
 	if board != nil {
@@ -40,6 +45,11 @@ func (this *DeleteAction) Run(params struct {
 	agentutils.PostAgentEvent(agent.Id, agentutils.NewAgentEvent("REMOVE_APP", maps.Map{
 		"appId": params.AppId,
 	}))
+
+	app.IsSharedWithGroup = false
+	agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("REMOVE_APP", maps.Map{
+		"appId": params.AppId,
+	}), nil)
 
 	this.Success()
 }

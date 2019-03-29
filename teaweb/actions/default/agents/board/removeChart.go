@@ -2,6 +2,7 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -42,6 +43,11 @@ func (this *RemoveChartAction) Run(params struct {
 	err := board.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
+	}
+
+	// 同步
+	if app.IsSharedWithGroup {
+		agentutils.SyncRemoveChart(agent.Id, agent.GroupIds, app, params.ChartId)
 	}
 
 	this.Success()

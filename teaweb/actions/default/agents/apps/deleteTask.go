@@ -37,5 +37,13 @@ func (this *DeleteTaskAction) Run(params struct {
 		"taskId": params.TaskId,
 	}))
 
+	// 同步
+	if app.IsSharedWithGroup {
+		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("REMOVE_TASK", maps.Map{
+			"appId":  app.Id,
+			"taskId": params.TaskId,
+		}), nil)
+	}
+
 	this.Success()
 }

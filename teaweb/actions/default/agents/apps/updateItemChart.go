@@ -160,5 +160,10 @@ widget.run = function () {
 		this.Fail("保存失败：" + err.Error())
 	}
 
+	// 同步
+	if app.IsSharedWithGroup {
+		agentutils.SyncApp(agent.Id, agent.GroupIds, app, nil, nil)
+	}
+
 	this.Success()
 }

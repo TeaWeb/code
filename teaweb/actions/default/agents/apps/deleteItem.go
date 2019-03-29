@@ -56,5 +56,31 @@ func (this *DeleteItemAction) Run(params struct {
 		"itemId": params.ItemId,
 	}))
 
+	// 同步App
+	if app.IsSharedWithGroup {
+		err := agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("DELETE_ITEM", maps.Map{
+			"appId":  app.Id,
+			"itemId": params.ItemId,
+		}), func(agent *agents.AgentConfig) error {
+			// 删除看板中相关图表
+			if len(item.Charts) > 0 {
+				board := agents.NewAgentBoard(agent.Id)
+				if board != nil {
+					for _, c := range item.Charts {
+						board.RemoveChart(c.Id)
+					}
+					err := board.Save()
+					if err != nil {
+						this.Fail("删除失败：" + err.Error())
+					}
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			this.Fail("保存失败：" + err.Error())
+		}
+	}
+
 	this.Success()
 }

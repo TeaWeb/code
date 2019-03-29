@@ -174,5 +174,12 @@ func (this *AddTaskAction) RunPost(params struct {
 		"taskId": task.Id,
 	}))
 
+	if app.IsSharedWithGroup {
+		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("ADD_TASK", maps.Map{
+			"appId":  app.Id,
+			"taskId": task.Id,
+		}), nil)
+	}
+
 	this.Success()
 }

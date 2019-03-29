@@ -212,5 +212,13 @@ func (this *UpdateTaskAction) RunPost(params struct {
 		"taskId": params.TaskId,
 	}))
 
+	// 同步
+	if app.IsSharedWithGroup {
+		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("UPDATE_TASK", maps.Map{
+			"appId":  app.Id,
+			"taskId": params.TaskId,
+		}), nil)
+	}
+
 	this.Success()
 }

@@ -204,5 +204,12 @@ func (this *AddItemAction) RunPost(params struct {
 		"itemId": item.Id,
 	}))
 
+	if app.IsSharedWithGroup {
+		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("ADD_ITEM", maps.Map{
+			"appId":  app.Id,
+			"itemId": item.Id,
+		}), nil)
+	}
+
 	this.Success()
 }

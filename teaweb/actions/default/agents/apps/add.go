@@ -19,10 +19,11 @@ func (this *AddAction) Run(params struct {
 
 // 提交保存
 func (this *AddAction) RunPost(params struct {
-	AgentId string
-	Name    string
-	On      bool
-	Must    *actions.Must
+	AgentId           string
+	Name              string
+	On                bool
+	IsSharedWithGroup bool
+	Must              *actions.Must
 }) {
 	params.Must.
 		Field("name", params.Name).
@@ -36,6 +37,7 @@ func (this *AddAction) RunPost(params struct {
 	app := agents.NewAppConfig()
 	app.On = params.On
 	app.Name = params.Name
+	app.IsSharedWithGroup = params.IsSharedWithGroup
 	agent.AddApp(app)
 	err := agent.Save()
 	if err != nil {
@@ -46,6 +48,13 @@ func (this *AddAction) RunPost(params struct {
 	agentutils.PostAgentEvent(agent.Id, agentutils.NewAgentEvent("ADD_APP", maps.Map{
 		"appId": app.Id,
 	}))
+
+	// 同步
+	if app.IsSharedWithGroup {
+		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("ADD_APP", maps.Map{
+			"appId": app.Id,
+		}), nil)
+	}
 
 	this.Success()
 }

@@ -24,13 +24,14 @@ func (this *IndexAction) Run(params struct {
 	this.Data["apps"] = lists.Map(agent.Apps, func(k int, v interface{}) interface{} {
 		app := v.(*agents.AppConfig)
 		return maps.Map{
-			"on":              app.On,
-			"id":              app.Id,
-			"name":            app.Name,
-			"items":           app.Items,
-			"bootingTasks":    app.FindBootingTasks(),
-			"manualTasks":     app.FindManualTasks(),
-			"schedulingTasks": app.FindSchedulingTasks(),
+			"on":                app.On,
+			"id":                app.Id,
+			"name":              app.Name,
+			"items":             app.Items,
+			"bootingTasks":      app.FindBootingTasks(),
+			"manualTasks":       app.FindManualTasks(),
+			"schedulingTasks":   app.FindSchedulingTasks(),
+			"isSharedWithGroup": app.IsSharedWithGroup,
 		}
 	})
 

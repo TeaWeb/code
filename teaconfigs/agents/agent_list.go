@@ -42,7 +42,7 @@ func SharedAgentList() (*AgentList, error) {
 	return agentList, nil
 }
 
-// 取得AgentId列表
+// 取得AgentId列表，不包括Local
 func SharedAgents() []*AgentConfig {
 	agentListLocker.Lock()
 	defer agentListLocker.Unlock()
@@ -59,6 +59,12 @@ func SharedAgents() []*AgentConfig {
 
 	agentListChanged = false
 	return agentList
+}
+
+// 取得AgentId列表，包括Local
+func AllSharedAgents() []*AgentConfig {
+	agents := SharedAgents()
+	return append(agents, NewAgentConfigFromId("local"))
 }
 
 // 通知Agent变化

@@ -161,6 +161,21 @@ func (this *AgentConfig) AddApp(app *AppConfig) {
 	this.Apps = append(this.Apps, app)
 }
 
+// 替换App，如果不存在则增加
+func (this *AgentConfig) ReplaceApp(app *AppConfig) {
+	found := false
+	for index, a := range this.Apps {
+		if a.Id == app.Id {
+			this.Apps[index] = app
+			found = true
+			break
+		}
+	}
+	if !found {
+		this.Apps = append(this.Apps, app)
+	}
+}
+
 // 添加一组App
 func (this *AgentConfig) AddApps(apps []*AppConfig) {
 	this.Apps = append(this.Apps, apps ...)
@@ -186,6 +201,16 @@ func (this *AgentConfig) FindApp(appId string) *AppConfig {
 		}
 	}
 	return nil
+}
+
+// 判断是否有某个App
+func (this *AgentConfig) HasApp(appId string) bool {
+	for _, a := range this.Apps {
+		if a.Id == appId {
+			return true
+		}
+	}
+	return false
 }
 
 // YAML编码
@@ -235,6 +260,20 @@ func (this *AgentConfig) RemoveGroup(groupId string) {
 		result = append(result, g)
 	}
 	this.GroupIds = result
+}
+
+// 判断是否有某些分组
+func (this *AgentConfig) InGroups(groupIds []string) bool {
+	if len(this.GroupIds) == 0 && len(groupIds) == 0 {
+		return true
+	}
+	for _, groupId := range groupIds {
+		b := lists.ContainsString(this.GroupIds, groupId)
+		if b {
+			return true
+		}
+	}
+	return false
 }
 
 // 添加内置的App
