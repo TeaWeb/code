@@ -17,38 +17,52 @@ func TestLocationConfig_Match(t *testing.T) {
 	location.Pattern = "/hell"
 	a.IsNotError(location.Validate())
 
-	_, b := location.Match("/hello")
+	_, b := location.Match("/hello", func(source string) string {
+		return source
+	})
 	a.IsTrue(b)
 
 	location.Pattern = "/hello"
 	a.IsNotError(location.Validate())
 
-	_, b = location.Match("/hello")
+	_, b = location.Match("/hello", func(source string) string {
+		return source
+	})
 	a.IsTrue(b)
 
 	location.Pattern = "~ ^/\\w+$"
 	a.IsNotError(location.Validate())
-	_, b = location.Match("/hello")
+	_, b = location.Match("/hello", func(source string) string {
+		return source
+	})
 	a.IsTrue(b)
 
 	location.Pattern = "!~ ^/HELLO$"
 	a.IsNotError(location.Validate())
-	_, b = location.Match("/hello")
+	_, b = location.Match("/hello", func(source string) string {
+		return source
+	})
 	a.IsTrue(b)
 
 	location.Pattern = "~* ^/HELLO$"
 	a.IsNotError(location.Validate())
 
-	_, b = location.Match("/hello")
+	_, b = location.Match("/hello", func(source string) string {
+		return source
+	})
 	a.IsTrue(b)
 
 	location.Pattern = "!~* ^/HELLO$"
 	a.IsNotError(location.Validate())
-	_, b = location.Match("/hello")
+	_, b = location.Match("/hello", func(source string) string {
+		return source
+	})
 	a.IsFalse(b)
 
 	location.Pattern = "= /hello"
 	a.IsNotError(location.Validate())
-	_, b = location.Match("/hello")
+	_, b = location.Match("/hello", func(source string) string {
+		return source
+	})
 	a.IsTrue(b)
 }

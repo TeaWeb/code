@@ -8,7 +8,7 @@ import (
 )
 
 // 重写条件定义
-type RewriteCond struct {
+type RequestCond struct {
 	Id string `yaml:"id" json:"id"` // ID
 
 	// 要测试的字符串
@@ -17,7 +17,7 @@ type RewriteCond struct {
 	Param string `yaml:"param" json:"param"`
 
 	// 运算符
-	Operator RewriteOperator `yaml:"operator" json:"operator"`
+	Operator RequestCondOperator `yaml:"operator" json:"operator"`
 
 	// 对比
 	Value string `yaml:"value" json:"value"`
@@ -27,59 +27,59 @@ type RewriteCond struct {
 }
 
 // 取得新对象
-func NewRewriteCond() *RewriteCond {
-	return &RewriteCond{
+func NewRequestCond() *RequestCond {
+	return &RequestCond{
 		Id: stringutil.Rand(16),
 	}
 }
 
 // 校验配置
-func (this *RewriteCond) Validate() error {
-	if this.Operator == RewriteOperatorRegexp || this.Operator == RewriteOperatorNotRegexp {
+func (this *RequestCond) Validate() error {
+	if this.Operator == RequestCondOperatorRegexp || this.Operator == RequestCondOperatorNotRegexp {
 		reg, err := regexp.Compile(this.Value)
 		if err != nil {
 			return err
 		}
 		this.regValue = reg
-	} else if this.Operator == RewriteOperatorGt || this.Operator == RewriteOperatorGte || this.Operator == RewriteOperatorLt || this.Operator == RewriteOperatorLte {
+	} else if this.Operator == RequestCondOperatorGt || this.Operator == RequestCondOperatorGte || this.Operator == RequestCondOperatorLt || this.Operator == RequestCondOperatorLte {
 		this.floatValue = types.Float64(this.Value)
 	}
 	return nil
 }
 
 // 将此条件应用于请求，检查是否匹配
-func (this *RewriteCond) Match(formatter func(source string) string) bool {
+func (this *RequestCond) Match(formatter func(source string) string) bool {
 	paramValue := formatter(this.Param)
 	switch this.Operator {
-	case RewriteOperatorRegexp:
+	case RequestCondOperatorRegexp:
 		if this.regValue == nil {
 			return false
 		}
 		return this.regValue.MatchString(paramValue)
-	case RewriteOperatorNotRegexp:
+	case RequestCondOperatorNotRegexp:
 		if this.regValue == nil {
 			return false
 		}
 		return !this.regValue.MatchString(paramValue)
-	case RewriteOperatorGt:
+	case RequestCondOperatorGt:
 		return types.Float64(paramValue) > this.floatValue
-	case RewriteOperatorGte:
+	case RequestCondOperatorGte:
 		return types.Float64(paramValue) >= this.floatValue
-	case RewriteOperatorLt:
+	case RequestCondOperatorLt:
 		return types.Float64(paramValue) < this.floatValue
-	case RewriteOperatorLte:
+	case RequestCondOperatorLte:
 		return types.Float64(paramValue) <= this.floatValue
-	case RewriteOperatorEq:
+	case RequestCondOperatorEq:
 		return paramValue == this.Value
-	case RewriteOperatorNot:
+	case RequestCondOperatorNot:
 		return paramValue != this.Value
-	case RewriteOperatorPrefix:
+	case RequestCondOperatorPrefix:
 		return strings.HasPrefix(paramValue, this.Value)
-	case RewriteOperatorSuffix:
+	case RequestCondOperatorSuffix:
 		return strings.HasSuffix(paramValue, this.Value)
-	case RewriteOperatorContains:
+	case RequestCondOperatorContains:
 		return strings.Contains(paramValue, this.Value)
-	case RewriteOperatorNotContains:
+	case RequestCondOperatorNotContains:
 		return !strings.Contains(paramValue, this.Value)
 	}
 	return false

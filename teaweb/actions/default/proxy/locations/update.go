@@ -52,6 +52,7 @@ func (this *UpdateAction) Run(params struct {
 		"enableStat":        !location.DisableStat,
 		"gzipLevel":         location.GzipLevel,
 		"gzipMinLength":     location.GzipMinLength,
+		"conds":             location.Cond,
 
 		// 菜单用
 		"rewrite":     location.Rewrite,
@@ -61,6 +62,9 @@ func (this *UpdateAction) Run(params struct {
 		"websocket":   location.Websocket,
 		"backends":    location.Backends,
 	}
+
+	// 运算符
+	this.Data["operators"] = teaconfigs.AllRequestOperators()
 
 	this.Show()
 }
@@ -85,6 +89,10 @@ func (this *UpdateAction) RunPost(params struct {
 	On                bool
 	IsReverse         bool
 	IsCaseInsensitive bool
+
+	CondParams []string
+	CondOps    []string
+	CondValues []string
 }) {
 	params.AccessLogFields = append(params.AccessLogFields, 0)
 
@@ -103,6 +111,23 @@ func (this *UpdateAction) RunPost(params struct {
 		_, err := regexp.Compile(params.Pattern)
 		if err != nil {
 			this.Fail("正则表达式校验失败：" + err.Error())
+		}
+	}
+
+	location.Cond = []*teaconfigs.RequestCond{}
+	if len(params.CondParams) > 0 {
+		for index, param := range params.CondParams {
+			if index < len(params.CondOps) && index < len(params.CondValues) {
+				cond := teaconfigs.NewRequestCond()
+				cond.Param = param
+				cond.Value = params.CondValues[index]
+				cond.Operator = params.CondOps[index]
+				err := cond.Validate()
+				if err != nil {
+					this.Fail("过滤条件\"" + cond.Param + " " + cond.Value + "\"校验失败：" + err.Error())
+				}
+				location.AddCond(cond)
+			}
 		}
 	}
 

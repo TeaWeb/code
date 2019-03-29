@@ -81,7 +81,6 @@ func (this *Engine) SetContext(context *Context) {
 					"id":       backend.Id,
 					"isDown":   backend.IsDown,
 					"isBackup": backend.IsBackup,
-					"name":     backend.Name,
 					"address":  backend.Address,
 				}
 			}),

@@ -15,7 +15,6 @@ type BackendConfig struct {
 	On           bool      `yaml:"on" json:"on"`                                 // 是否启用
 	Id           string    `yaml:"id" json:"id"`                                 // ID
 	Code         string    `yaml:"code" json:"code"`                             // 代号
-	Name         []string  `yaml:"name" json:"name"`                             // 域名 TODO
 	Address      string    `yaml:"address" json:"address"`                       // 地址
 	Scheme       string    `yaml:"scheme" json:"scheme"`                         // 协议，http或者https
 	Weight       uint      `yaml:"weight" json:"weight"`                         // 权重

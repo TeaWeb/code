@@ -287,7 +287,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		if !location.On {
 			continue
 		}
-		if locationMatches, ok := location.Match(path); ok {
+		if locationMatches, ok := location.Match(path, this.Format); ok {
 			this.addVarMapping(locationMatches)
 
 			if len(location.Root) > 0 {

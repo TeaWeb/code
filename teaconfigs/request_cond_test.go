@@ -5,13 +5,13 @@ import (
 	"testing"
 )
 
-func TestRewriteCond(t *testing.T) {
+func TestRequestCond(t *testing.T) {
 	a := assert.NewAssertion(t)
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello",
-			Operator: RewriteOperatorRegexp,
+			Operator: RequestCondOperatorRegexp,
 			Value:    "abc",
 		}
 		a.IsNil(cond.Validate())
@@ -21,9 +21,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello",
-			Operator: RewriteOperatorRegexp,
+			Operator: RequestCondOperatorRegexp,
 			Value:    "/\\w+",
 		}
 		a.IsNil(cond.Validate())
@@ -33,9 +33,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/article/123.html",
-			Operator: RewriteOperatorRegexp,
+			Operator: RequestCondOperatorRegexp,
 			Value:    `^/article/\d+\.html$`,
 		}
 		a.IsNil(cond.Validate())
@@ -45,9 +45,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello",
-			Operator: RewriteOperatorRegexp,
+			Operator: RequestCondOperatorRegexp,
 			Value:    "[",
 		}
 		a.IsNotNil(cond.Validate())
@@ -57,9 +57,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello",
-			Operator: RewriteOperatorNotRegexp,
+			Operator: RequestCondOperatorNotRegexp,
 			Value:    "abc",
 		}
 		a.IsNil(cond.Validate())
@@ -69,9 +69,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello",
-			Operator: RewriteOperatorNotRegexp,
+			Operator: RequestCondOperatorNotRegexp,
 			Value:    "/\\w+",
 		}
 		a.IsNil(cond.Validate())
@@ -81,9 +81,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "123",
-			Operator: RewriteOperatorGt,
+			Operator: RequestCondOperatorGt,
 			Value:    "1",
 		}
 		a.IsNil(cond.Validate())
@@ -93,9 +93,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "123",
-			Operator: RewriteOperatorGt,
+			Operator: RequestCondOperatorGt,
 			Value:    "125",
 		}
 		a.IsNil(cond.Validate())
@@ -105,9 +105,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "125",
-			Operator: RewriteOperatorGte,
+			Operator: RequestCondOperatorGte,
 			Value:    "125",
 		}
 		a.IsNil(cond.Validate())
@@ -117,9 +117,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "125",
-			Operator: RewriteOperatorLt,
+			Operator: RequestCondOperatorLt,
 			Value:    "127",
 		}
 		a.IsNil(cond.Validate())
@@ -129,9 +129,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "125",
-			Operator: RewriteOperatorLte,
+			Operator: RequestCondOperatorLte,
 			Value:    "127",
 		}
 		a.IsNil(cond.Validate())
@@ -141,9 +141,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "125",
-			Operator: RewriteOperatorEq,
+			Operator: RequestCondOperatorEq,
 			Value:    "125",
 		}
 		a.IsNil(cond.Validate())
@@ -153,9 +153,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "125",
-			Operator: RewriteOperatorNot,
+			Operator: RequestCondOperatorNot,
 			Value:    "125",
 		}
 		a.IsNil(cond.Validate())
@@ -165,9 +165,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "125",
-			Operator: RewriteOperatorNot,
+			Operator: RequestCondOperatorNot,
 			Value:    "127",
 		}
 		a.IsNil(cond.Validate())
@@ -177,9 +177,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello/world",
-			Operator: RewriteOperatorPrefix,
+			Operator: RequestCondOperatorPrefix,
 			Value:    "/hello",
 		}
 		a.IsNil(cond.Validate())
@@ -189,9 +189,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello/world",
-			Operator: RewriteOperatorPrefix,
+			Operator: RequestCondOperatorPrefix,
 			Value:    "/hello2",
 		}
 		a.IsNil(cond.Validate())
@@ -201,9 +201,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello/world",
-			Operator: RewriteOperatorSuffix,
+			Operator: RequestCondOperatorSuffix,
 			Value:    "world",
 		}
 		a.IsNil(cond.Validate())
@@ -213,9 +213,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello/world",
-			Operator: RewriteOperatorSuffix,
+			Operator: RequestCondOperatorSuffix,
 			Value:    "world/",
 		}
 		a.IsNil(cond.Validate())
@@ -225,9 +225,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello/world",
-			Operator: RewriteOperatorContains,
+			Operator: RequestCondOperatorContains,
 			Value:    "wo",
 		}
 		a.IsNil(cond.Validate())
@@ -237,9 +237,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello/world",
-			Operator: RewriteOperatorContains,
+			Operator: RequestCondOperatorContains,
 			Value:    "wr",
 		}
 		a.IsNil(cond.Validate())
@@ -249,9 +249,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello/world",
-			Operator: RewriteOperatorNotContains,
+			Operator: RequestCondOperatorNotContains,
 			Value:    "HELLO",
 		}
 		a.IsNil(cond.Validate())
@@ -261,9 +261,9 @@ func TestRewriteCond(t *testing.T) {
 	}
 
 	{
-		cond := RewriteCond{
+		cond := RequestCond{
 			Param:    "/hello/world",
-			Operator: RewriteOperatorNotContains,
+			Operator: RequestCondOperatorNotContains,
 			Value:    "hello",
 		}
 		a.IsNil(cond.Validate())

@@ -49,6 +49,13 @@ type LocationConfig struct {
 	// websocket设置
 	Websocket *WebsocketConfig `yaml:"websocket" json:"websocket"`
 
+	// 开启的条件
+	// 语法为：cond param operator value 比如：
+	// - cond ${status} gte 200
+	// - cond ${arg.name} eq lily
+	// - cond ${requestPath} regexp .*\.png
+	Cond []*RequestCond `yaml:"cond" json:"cond"`
+
 	maxBodySize   int64
 	gzipMinLength int64
 
@@ -216,6 +223,14 @@ func (this *LocationConfig) Validate() error {
 		return err
 	}
 
+	// 校验条件
+	for _, cond := range this.Cond {
+		err := cond.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -254,7 +269,16 @@ func (this *LocationConfig) IsCaseInsensitive() bool {
 }
 
 // 判断是否匹配路径
-func (this *LocationConfig) Match(path string) (map[string]string, bool) {
+func (this *LocationConfig) Match(path string, formatter func(source string) string) (map[string]string, bool) {
+	// 判断条件
+	if len(this.Cond) > 0 {
+		for _, cond := range this.Cond {
+			if !cond.Match(formatter) {
+				return nil, false
+			}
+		}
+	}
+
 	if this.patternType == LocationPatternTypePrefix {
 		if this.reverse {
 			if this.caseInsensitive {
@@ -369,4 +393,9 @@ func (this *LocationConfig) RefersProxy(proxyId string) bool {
 		}
 	}
 	return false
+}
+
+// 添加过滤条件
+func (this *LocationConfig) AddCond(cond *RequestCond) {
+	this.Cond = append(this.Cond, cond)
 }

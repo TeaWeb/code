@@ -49,7 +49,7 @@ func (this *TestAction) Run(params struct {
 	if len(params.CondParams) > 0 {
 		for index, param := range params.CondParams {
 			if index < len(params.CondOps) && index < len(params.CondValues) {
-				cond := teaconfigs.NewRewriteCond()
+				cond := teaconfigs.NewRequestCond()
 				cond.Param = param
 				cond.Value = params.CondValues[index]
 				cond.Operator = params.CondOps[index]
@@ -68,13 +68,13 @@ func (this *TestAction) Run(params struct {
 	}
 
 	rawReq, err := http.NewRequest(http.MethodGet, params.TestingPath, nil)
-	var req *teaproxy.Request = nil
-	if err == nil {
-		req = teaproxy.NewRequest(rawReq)
-		req.SetURI(params.TestingPath)
-		req.SetHost(rawReq.Host)
+	if err != nil {
+		this.Fail("请输入正确的URL")
 	}
-	replace, mapping, ok := rewriteRule.Match(params.TestingPath, func(source string) string {
+	req := teaproxy.NewRequest(rawReq)
+	req.SetURI(params.TestingPath)
+	req.SetHost(rawReq.Host)
+	replace, mapping, ok := rewriteRule.Match(rawReq.URL.Path, func(source string) string {
 		if req == nil {
 			return source
 		} else {

@@ -38,7 +38,7 @@ type RewriteRule struct {
 	// - cond ${status} gte 200
 	// - cond ${arg.name} eq lily
 	// - cond ${requestPath} regexp .*\.png
-	Cond []*RewriteCond `yaml:"cond" json:"cond"`
+	Cond []*RequestCond `yaml:"cond" json:"cond"`
 
 	// 规则
 	// 语法为：pattern regexp 比如：
@@ -197,7 +197,7 @@ func (this *RewriteRule) RedirectMode() string {
 }
 
 // 添加过滤条件
-func (this *RewriteRule) AddCond(cond *RewriteCond) {
+func (this *RewriteRule) AddCond(cond *RequestCond) {
 	this.Cond = append(this.Cond, cond)
 }
 

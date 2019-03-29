@@ -64,7 +64,7 @@ func (this *UpdateAction) Run(params struct {
 	}
 
 	// 运算符
-	this.Data["operators"] = teaconfigs.AllRewriteOperators()
+	this.Data["operators"] = teaconfigs.AllRequestOperators()
 
 	// 当前Rewrite信息
 	rewriteList, err := server.FindRewriteList(params.LocationId)
@@ -161,11 +161,11 @@ func (this *UpdateAction) RunPost(params struct {
 		rewriteRule.AddFlag(params.RedirectMode, nil)
 	}
 
-	rewriteRule.Cond = []*teaconfigs.RewriteCond{}
+	rewriteRule.Cond = []*teaconfigs.RequestCond{}
 	if len(params.CondParams) > 0 {
 		for index, param := range params.CondParams {
 			if index < len(params.CondOps) && index < len(params.CondValues) {
-				cond := teaconfigs.NewRewriteCond()
+				cond := teaconfigs.NewRequestCond()
 				cond.Param = param
 				cond.Value = params.CondValues[index]
 				cond.Operator = params.CondOps[index]

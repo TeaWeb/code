@@ -63,7 +63,7 @@ func (this *AddAction) Run(params struct {
 	}
 
 	// 运算符
-	this.Data["operators"] = teaconfigs.AllRewriteOperators()
+	this.Data["operators"] = teaconfigs.AllRequestOperators()
 
 	this.Show()
 }
@@ -135,7 +135,7 @@ func (this *AddAction) RunPost(params struct {
 	if len(params.CondParams) > 0 {
 		for index, param := range params.CondParams {
 			if index < len(params.CondOps) && index < len(params.CondValues) {
-				cond := teaconfigs.NewRewriteCond()
+				cond := teaconfigs.NewRequestCond()
 				cond.Param = param
 				cond.Value = params.CondValues[index]
 				cond.Operator = params.CondOps[index]

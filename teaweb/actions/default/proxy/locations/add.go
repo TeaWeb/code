@@ -40,6 +40,9 @@ func (this *AddAction) Run(params struct {
 		return m
 	})
 
+	// 运算符
+	this.Data["operators"] = teaconfigs.AllRequestOperators()
+
 	this.Show()
 }
 
