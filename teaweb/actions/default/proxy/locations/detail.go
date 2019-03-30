@@ -24,6 +24,7 @@ func (this *DetailAction) Run(params struct {
 		"id":              location.Id,
 		"type":            location.PatternType(),
 		"pattern":         location.PatternString(),
+		"name":            location.Name,
 		"caseInsensitive": location.IsCaseInsensitive(),
 		"reverse":         location.IsReverse(),
 		"root":            location.Root,

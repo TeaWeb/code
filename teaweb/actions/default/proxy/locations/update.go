@@ -42,6 +42,7 @@ func (this *UpdateAction) Run(params struct {
 		"on":                location.On,
 		"pattern":           location.PatternString(),
 		"type":              location.PatternType(),
+		"name":              location.Name,
 		"isReverse":         location.IsReverse(),
 		"isCaseInsensitive": location.IsCaseInsensitive(),
 		"root":              location.Root,
@@ -75,6 +76,7 @@ func (this *UpdateAction) RunPost(params struct {
 	LocationId        string
 	Pattern           string
 	PatternType       int
+	Name              string
 	Root              string
 	Charset           string
 	Index             []string
@@ -133,6 +135,7 @@ func (this *UpdateAction) RunPost(params struct {
 
 	location.SetPattern(params.Pattern, params.PatternType, params.IsCaseInsensitive, params.IsReverse)
 	location.On = params.On
+	location.Name = params.Name
 	location.Root = params.Root
 	location.Charset = params.Charset
 	location.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit

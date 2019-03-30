@@ -26,6 +26,7 @@ func (this *IndexAction) Run(params struct {
 		locations = append(locations, maps.Map{
 			"on":                location.On,
 			"id":                location.Id,
+			"name":              location.Name,
 			"type":              location.PatternType(),
 			"pattern":           location.PatternString(),
 			"patternTypeName":   teaconfigs.FindLocationPatternTypeName(location.PatternType()),

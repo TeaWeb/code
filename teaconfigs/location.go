@@ -17,6 +17,7 @@ type LocationConfig struct {
 
 	On      bool   `yaml:"on" json:"on"`           // 是否开启
 	Id      string `yaml:"id" json:"id"`           // ID
+	Name    string `yaml:"name" json:"name"`       // 名称
 	Pattern string `yaml:"pattern" json:"pattern"` // 匹配规则
 
 	Async         bool                 `yaml:"async" json:"async"`                 // 是否异步请求 @TODO

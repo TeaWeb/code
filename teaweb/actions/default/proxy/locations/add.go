@@ -49,6 +49,7 @@ func (this *AddAction) Run(params struct {
 // 保存提交
 func (this *AddAction) RunPost(params struct {
 	ServerId          string
+	Name              string
 	Pattern           string
 	PatternType       int
 	Root              string
@@ -84,6 +85,7 @@ func (this *AddAction) RunPost(params struct {
 	location := teaconfigs.NewLocation()
 	location.SetPattern(params.Pattern, params.PatternType, params.IsCaseInsensitive, params.IsReverse)
 	location.On = params.On
+	location.Name = params.Name
 	location.Root = params.Root
 	location.Charset = params.Charset
 	location.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
