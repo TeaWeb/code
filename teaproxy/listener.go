@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -173,6 +174,10 @@ func (this *Listener) Reload() error {
 	// 如果没启动，则启动
 	httpHandler := http.NewServeMux()
 	httpHandler.HandleFunc("/", func(writer http.ResponseWriter, req *http.Request) {
+		// QPS计算
+		atomic.AddInt32(&qps, 1)
+
+		// 处理
 		this.handle(writer, req)
 	})
 

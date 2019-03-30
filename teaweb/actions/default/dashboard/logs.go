@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 )
@@ -22,7 +23,7 @@ func (this *LogsAction) Run(params struct{}) {
 		this.Data["logs"] = ones
 	}
 
-	this.Data["qps"] = tealogs.SharedLogger().QPS()
+	this.Data["qps"] = teaproxy.QPS
 
 	this.Success()
 }

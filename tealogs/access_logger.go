@@ -23,7 +23,6 @@ type AccessLogger struct {
 
 	logs      []*AccessLogItem
 	timestamp int64
-	qps       int
 
 	collectionCacheMap    map[string]*teamongo.Collection
 	collectionCacheLocker sync.Mutex
@@ -91,8 +90,6 @@ func (this *AccessLogger) collection() *teamongo.Collection {
 }
 
 func (this *AccessLogger) wait() {
-	timestamp := time.Now().Unix()
-
 	var docs = []interface{}{}
 	var docsLocker = sync.Mutex{}
 
@@ -170,15 +167,6 @@ func (this *AccessLogger) wait() {
 		item := <-this.queue
 		log := item.log
 
-		// 计算QPS
-		this.timestamp = log.Timestamp
-		if log.Timestamp-timestamp <= 1 {
-			this.qps ++
-		} else {
-			this.qps = 1
-			timestamp = log.Timestamp
-		}
-
 		docsLocker.Lock()
 		docs = append(docs, log)
 		docsLocker.Unlock()
@@ -190,11 +178,4 @@ func (this *AccessLogger) Close() {
 	if this.client() != nil {
 		this.client().Disconnect(context.Background())
 	}
-}
-
-func (this *AccessLogger) QPS() int {
-	if time.Now().Unix()-this.timestamp < 2 {
-		return this.qps
-	}
-	return 0
 }
