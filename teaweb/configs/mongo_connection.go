@@ -89,6 +89,31 @@ func (this *MongoConnectionConfig) URI() string {
 	return uri
 }
 
+// 组合后的URI，但是对URI进行掩码
+func (this *MongoConnectionConfig) URIMask() string {
+	uri := ""
+	if len(this.Scheme) > 0 {
+		uri += this.Scheme + "://"
+	} else {
+		uri += "mongodb://"
+	}
+
+	if len(this.Username) > 0 {
+		uri += this.Username
+		if len(this.Password) > 0 {
+			uri += ":" + strings.Repeat("*", len(this.Password))
+		}
+		uri += "@"
+	}
+
+	uri += this.Host
+	if this.Port > 0 {
+		uri += ":" + fmt.Sprintf("%d", this.Port)
+	}
+
+	return uri
+}
+
 // 保存修改后的MongoDB配置
 func (this *MongoConnectionConfig) Save() error {
 	config, _ := LoadMongoConfig()
