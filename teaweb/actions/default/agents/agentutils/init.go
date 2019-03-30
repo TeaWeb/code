@@ -58,7 +58,7 @@ func checkConnecting() {
 func sendDisconnectNotice(agent *agents.AgentConfig) {
 	duration := 1 * time.Hour
 
-	message := "Agent\"" + agent.Name + "\"失去连接"
+	message := "Agent\"" + agent.Name + "（" + agent.Host + "）" + "\"失去连接"
 
 	level := notices.NoticeLevelError
 	t := time.Now()
@@ -152,7 +152,7 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 
 // 发送Agent连接通知
 func sendConnectNotice(agent *agents.AgentConfig) {
-	message := "Agent\"" + agent.Name + "\"已恢复连接"
+	message := "Agent\"" + agent.Name + "（" + agent.Host + "）" + "\"已恢复连接"
 
 	level := notices.NoticeLevelSuccess
 	t := time.Now()

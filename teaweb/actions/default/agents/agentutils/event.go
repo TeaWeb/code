@@ -13,6 +13,7 @@ type Event struct {
 type State struct {
 	Version string  // 版本号
 	Speed   float64 // 连接速度，ms
+	IP      string  // IP地址
 }
 
 var eventQueueMap = map[string]map[chan *Event]*State{} // agentId => { chan => State }
@@ -27,7 +28,7 @@ func NewAgentEvent(name string, data interface{}) *Event {
 }
 
 // 等待Agent事件
-func WaitAgentQueue(agentId string, agentVersion string, speed float64, c chan *Event) {
+func WaitAgentQueue(agentId string, agentVersion string, speed float64, ip string, c chan *Event) {
 	eventQueueLocker.Lock()
 	defer eventQueueLocker.Unlock()
 	_, found := eventQueueMap[agentId]
@@ -35,12 +36,14 @@ func WaitAgentQueue(agentId string, agentVersion string, speed float64, c chan *
 		eventQueueMap[agentId][c] = &State{
 			Version: agentVersion,
 			Speed:   speed,
+			IP:      ip,
 		}
 	} else {
 		eventQueueMap[agentId] = map[chan *Event]*State{
 			c: {
 				Version: agentVersion,
 				Speed:   speed,
+				IP:      ip,
 			},
 		}
 	}

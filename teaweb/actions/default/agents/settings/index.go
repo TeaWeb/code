@@ -23,10 +23,12 @@ func (this *IndexAction) Run(params struct {
 	if isWaiting {
 		this.Data["agentVersion"] = state.Version
 		this.Data["agentSpeed"] = state.Speed
+		this.Data["agentIP"] = state.IP
 		this.Data["agentIsWaiting"] = true
 	} else {
 		this.Data["agentVersion"] = ""
 		this.Data["agentSpeed"] = 0
+		this.Data["agentIP"] = ""
 		this.Data["agentIsWaiting"] = false
 	}
 	this.Data["agent"] = agent

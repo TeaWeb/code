@@ -25,7 +25,7 @@ func (this *PullAction) Run(params struct{}) {
 	}
 
 	c := make(chan *agentutils.Event)
-	agentutils.WaitAgentQueue(agentId, agentVersion, speed, c)
+	agentutils.WaitAgentQueue(agentId, agentVersion, speed, this.RequestRemoteIP(), c)
 
 	// 监控是否中断请求
 	go func() {
