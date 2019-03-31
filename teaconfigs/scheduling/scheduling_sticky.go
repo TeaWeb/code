@@ -1,6 +1,7 @@
 package scheduling
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"math/rand"
@@ -30,31 +31,27 @@ func (this *StickyScheduling) Start() {
 }
 
 // 获取下一个候选对象
-func (this *StickyScheduling) Next(options maps.Map) CandidateInterface {
+func (this *StickyScheduling) Next(call *shared.RequestCall) CandidateInterface {
 	if this.count == 0 {
 		return nil
 	}
-	typeCode := options.GetString("type")
-	param := options.GetString("param")
-	reqObj := options.Get("request")
+	typeCode := call.Options.GetString("type")
+	param := call.Options.GetString("param")
 
-	var req *http.Request = nil
-	if reqObj != nil {
-		req = reqObj.(*http.Request)
-	} else {
+	if call.Request == nil {
 		return this.Candidates[uint32(rand.Int())%this.count]
 	}
 
 	code := ""
 	if typeCode == "cookie" {
-		cookie, err := req.Cookie(param)
+		cookie, err := call.Request.Cookie(param)
 		if err == nil {
 			code = cookie.Value
 		}
 	} else if typeCode == "header" {
-		code = req.Header.Get(param)
+		code = call.Request.Header.Get(param)
 	} else if typeCode == "argument" {
-		code = req.URL.Query().Get(param)
+		code = call.Request.URL.Query().Get(param)
 	}
 
 	matched := false
@@ -67,7 +64,7 @@ func (this *StickyScheduling) Next(options maps.Map) CandidateInterface {
 				return
 			}
 			if typeCode == "cookie" {
-				options["responseCallback"] = func(resp http.ResponseWriter) {
+				call.AddResponseCall(func(resp http.ResponseWriter) {
 					http.SetCookie(resp, &http.Cookie{
 						Name:    param,
 						Value:   codes[0],
@@ -75,11 +72,11 @@ func (this *StickyScheduling) Next(options maps.Map) CandidateInterface {
 						Expires: time.Now().AddDate(0, 1, 0),
 					})
 					logs.Println("set cookie", param, codes)
-				}
+				})
 			} else {
-				options["responseCallback"] = func(resp http.ResponseWriter) {
+				call.AddResponseCall(func(resp http.ResponseWriter) {
 					resp.Header().Set(param, codes[0])
-				}
+				})
 			}
 		}
 	}()

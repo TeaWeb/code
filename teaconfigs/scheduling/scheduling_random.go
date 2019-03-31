@@ -1,6 +1,7 @@
 package scheduling
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/maps"
 	"math"
 	"math/rand"
@@ -55,7 +56,7 @@ func (this *RandomScheduling) Start() {
 }
 
 // 获取下一个候选对象
-func (this *RandomScheduling) Next(options maps.Map) CandidateInterface {
+func (this *RandomScheduling) Next(call *shared.RequestCall) CandidateInterface {
 	if this.count == 0 {
 		return nil
 	}

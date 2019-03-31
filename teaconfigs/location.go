@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/utils/string"
+	"net/http"
 	"regexp"
 	"strings"
 )
@@ -56,6 +57,11 @@ type LocationConfig struct {
 	// - cond ${arg.name} eq lily
 	// - cond ${requestPath} regexp .*\.png
 	Cond []*RequestCond `yaml:"cond" json:"cond"`
+
+	// 请求分组（从server复制而来）
+	requestGroups          []*RequestGroup
+	defaultRequestGroup    *RequestGroup
+	hasRequestGroupFilters bool
 
 	maxBodySize   int64
 	gzipMinLength int64
@@ -232,6 +238,29 @@ func (this *LocationConfig) Validate() error {
 		}
 	}
 
+	// request groups
+	for _, group := range this.requestGroups {
+		if group.IsDefault {
+			this.defaultRequestGroup = group
+		}
+
+		for _, backend := range this.Backends {
+			if len(backend.RequestGroupIds) == 0 && group.Id == "default" {
+				group.AddBackend(backend)
+			} else if backend.HasRequestGroupId(group.Id) {
+				group.AddBackend(backend)
+			}
+		}
+
+		err := group.Validate()
+		if err != nil {
+			return err
+		}
+		if group.HasFilters() {
+			this.hasRequestGroupFilters = true
+		}
+	}
+
 	return nil
 }
 
@@ -399,4 +428,71 @@ func (this *LocationConfig) RefersProxy(proxyId string) bool {
 // 添加过滤条件
 func (this *LocationConfig) AddCond(cond *RequestCond) {
 	this.Cond = append(this.Cond, cond)
+}
+
+// 添加请求分组
+func (this *LocationConfig) AddRequestGroup(group *RequestGroup) {
+	this.requestGroups = append(this.requestGroups, group)
+}
+
+// 使用请求匹配分组
+func (this *LocationConfig) MatchRequestGroup(formatter func(source string) string) *RequestGroup {
+	if !this.hasRequestGroupFilters {
+		return nil
+	}
+	for _, group := range this.requestGroups {
+		if group.HasFilters() && group.Match(formatter) {
+			return group
+		}
+	}
+	return nil
+}
+
+// 取得下一个可用的后端服务
+func (this *LocationConfig) NextBackend(call *shared.RequestCall) *BackendConfig {
+	if this.hasRequestGroupFilters {
+		group := this.MatchRequestGroup(call.Formatter)
+		if group != nil {
+			// request
+			if group.HasRequestHeaders() {
+				for _, h := range group.RequestHeaders {
+					call.Request.Header.Set(h.Name, call.Formatter(h.Value))
+				}
+			}
+
+			// response
+			if group.HasResponseHeaders() {
+				call.AddResponseCall(func(resp http.ResponseWriter) {
+					for _, h := range group.ResponseHeaders {
+						resp.Header().Set(h.Name, call.Formatter(h.Value))
+					}
+				})
+			}
+
+			return group.BackendList.NextBackend(call)
+		}
+	}
+
+	// 默认分组
+	if this.defaultRequestGroup != nil {
+		// request
+		if this.defaultRequestGroup.HasRequestHeaders() {
+			for _, h := range this.defaultRequestGroup.RequestHeaders {
+				call.Request.Header.Set(h.Name, call.Formatter(h.Value))
+			}
+		}
+
+		// response
+		if this.defaultRequestGroup.HasResponseHeaders() {
+			call.AddResponseCall(func(resp http.ResponseWriter) {
+				for _, h := range this.defaultRequestGroup.ResponseHeaders {
+					resp.Header().Set(h.Name, call.Formatter(h.Value))
+				}
+			})
+		}
+
+		return this.defaultRequestGroup.NextBackend(call)
+	}
+
+	return this.BackendList.NextBackend(call)
 }

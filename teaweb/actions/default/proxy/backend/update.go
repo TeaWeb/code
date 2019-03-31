@@ -45,19 +45,24 @@ func (this *UpdateAction) Run(params struct {
 
 	backend.Validate()
 
+	if len(backend.RequestGroupIds) == 0 {
+		backend.AddRequestGroupId("default")
+	}
+
 	this.Data["backend"] = maps.Map{
-		"id":          backend.Id,
-		"address":     backend.Address,
-		"scheme":      backend.Scheme,
-		"code":        backend.Code,
-		"weight":      backend.Weight,
-		"failTimeout": int(backend.FailTimeoutDuration().Seconds()),
-		"readTimeout": int(backend.ReadTimeoutDuration().Seconds()),
-		"on":          backend.On,
-		"maxConns":    backend.MaxConns,
-		"maxFails":    backend.MaxFails,
-		"isDown":      backend.IsDown,
-		"isBackup":    backend.IsBackup,
+		"id":              backend.Id,
+		"address":         backend.Address,
+		"scheme":          backend.Scheme,
+		"code":            backend.Code,
+		"weight":          backend.Weight,
+		"failTimeout":     int(backend.FailTimeoutDuration().Seconds()),
+		"readTimeout":     int(backend.ReadTimeoutDuration().Seconds()),
+		"on":              backend.On,
+		"maxConns":        backend.MaxConns,
+		"maxFails":        backend.MaxFails,
+		"isDown":          backend.IsDown,
+		"isBackup":        backend.IsBackup,
+		"requestGroupIds": backend.RequestGroupIds,
 	}
 
 	this.Show()
@@ -65,21 +70,22 @@ func (this *UpdateAction) Run(params struct {
 
 // 提交
 func (this *UpdateAction) RunPost(params struct {
-	ServerId    string
-	LocationId  string
-	Websocket   bool
-	BackendId   string
-	Address     string
-	Scheme      string
-	Weight      uint
-	On          bool
-	Code        string
-	FailTimeout uint
-	ReadTimeout uint
-	MaxFails    int32
-	MaxConns    int32
-	IsBackup    bool
-	Must        *actions.Must
+	ServerId        string
+	LocationId      string
+	Websocket       bool
+	BackendId       string
+	Address         string
+	Scheme          string
+	Weight          uint
+	On              bool
+	Code            string
+	FailTimeout     uint
+	ReadTimeout     uint
+	MaxFails        int32
+	MaxConns        int32
+	IsBackup        bool
+	RequestGroupIds []string
+	Must            *actions.Must
 }) {
 	params.Must.
 		Field("address", params.Address).
@@ -111,6 +117,7 @@ func (this *UpdateAction) RunPost(params struct {
 	backend.MaxFails = params.MaxFails
 	backend.MaxConns = params.MaxConns
 	backend.IsBackup = params.IsBackup
+	backend.RequestGroupIds = params.RequestGroupIds
 
 	err = server.Save()
 	if err != nil {

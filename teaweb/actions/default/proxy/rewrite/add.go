@@ -141,7 +141,7 @@ func (this *AddAction) RunPost(params struct {
 				cond.Operator = params.CondOps[index]
 				err = cond.Validate()
 				if err != nil {
-					this.Fail("过滤条件\"" + cond.Param + " " + cond.Value + "\"校验失败：" + err.Error())
+					this.Fail("匹配条件\"" + cond.Param + " " + cond.Value + "\"校验失败：" + err.Error())
 				}
 				rewriteRule.AddCond(cond)
 			}

@@ -19,6 +19,7 @@ func (this *IndexAction) Run(params struct {
 
 	this.Data["selectedTab"] = "backend"
 	this.Data["server"] = server
+	this.Data["location"] = nil
 
 	this.Data["queryParams"] = maps.Map{
 		"serverId": params.ServerId,

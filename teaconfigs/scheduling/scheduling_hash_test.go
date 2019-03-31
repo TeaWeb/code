@@ -2,6 +2,7 @@ package scheduling
 
 import (
 	"fmt"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"math/rand"
 	"testing"
 	"time"
@@ -34,12 +35,10 @@ func TestHashScheduling_Next(t *testing.T) {
 
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < 1000000; i ++ {
-		c := s.Next(map[string]interface{}{
-			"key": "192.168.1." + fmt.Sprintf("%d", rand.Int()),
-			/**"formatter": func(s string) string {
-				return "123456"
-			},**/
-		})
+		call := shared.NewRequestCall()
+		call.Options["key"] = "192.168.1." + fmt.Sprintf("%d", rand.Int())
+
+		c := s.Next(call)
 		hits[c.(*TestCandidate).Name] ++
 	}
 	t.Log(hits)

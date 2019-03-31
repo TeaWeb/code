@@ -10,14 +10,14 @@ import (
 type VariableHolder string
 
 var variableMapping = map[string][]interface{}{}
-var variableLocker = sync.Mutex{}
+var variableLocker = sync.RWMutex{}
 var regexpNamedVariable = regexp.MustCompile("\\${[\\w.-]+}")
 
 // 分析变量
 func ParseVariables(source string, replacer func(varName string) (value string)) string {
-	variableLocker.Lock()
-	defer variableLocker.Unlock()
+	variableLocker.RLock()
 	holders, found := variableMapping[source]
+	variableLocker.RUnlock()
 	if !found {
 		indexes := regexpNamedVariable.FindAllStringIndex(source, -1)
 		before := 0
@@ -30,7 +30,9 @@ func ParseVariables(source string, replacer func(varName string) (value string))
 		if before < len(source) {
 			holders = append(holders, source[before:])
 		}
+		variableLocker.Lock()
 		variableMapping[source] = holders
+		variableLocker.Unlock()
 	}
 	result := strings.Builder{}
 	for _, h := range holders {

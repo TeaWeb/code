@@ -1,6 +1,7 @@
 package scheduling
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/maps"
 	"net/http"
 	"testing"
@@ -34,11 +35,13 @@ func TestStickyScheduling_NextArgument(t *testing.T) {
 	}
 
 	options := maps.Map{
-		"type":    "argument",
-		"param":   "backend",
-		"request": req,
+		"type":  "argument",
+		"param": "backend",
 	}
-	t.Log(s.Next(options))
+	call := shared.NewRequestCall()
+	call.Request = req
+	call.Options = options
+	t.Log(s.Next(call))
 	t.Log(options)
 }
 
@@ -75,11 +78,13 @@ func TestStickyScheduling_NextCookie(t *testing.T) {
 	})
 
 	options := maps.Map{
-		"type":    "cookie",
-		"param":   "backend",
-		"request": req,
+		"type":  "cookie",
+		"param": "backend",
 	}
-	t.Log(s.Next(options))
+	call := shared.NewRequestCall()
+	call.Request = req
+	call.Options = options
+	t.Log(s.Next(call))
 	t.Log(options)
 }
 
@@ -112,10 +117,12 @@ func TestStickyScheduling_NextHeader(t *testing.T) {
 	req.Header.Set("backend", "c")
 
 	options := maps.Map{
-		"type":    "header",
-		"param":   "backend",
-		"request": req,
+		"type":  "header",
+		"param": "backend",
 	}
-	t.Log(s.Next(options))
+	call := shared.NewRequestCall()
+	call.Request = req
+	call.Options = options
+	t.Log(s.Next(call))
 	t.Log(options)
 }

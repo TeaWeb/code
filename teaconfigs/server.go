@@ -10,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
+	"net/http"
 	"strings"
 )
 
@@ -75,6 +76,11 @@ type ServerConfig struct {
 
 	// 是否开启静态文件加速
 	CacheStatic bool `yaml:"cacheStatic" json:"cacheStatic"`
+
+	// 请求分组
+	RequestGroups          []*RequestGroup `yaml:"requestGroups" json:"requestGroups"` // 请求条件分组
+	defaultRequestGroup    *RequestGroup
+	hasRequestGroupFilters bool
 
 	maxBodySize   int64
 	gzipMinLength int64
@@ -222,6 +228,14 @@ func (this *ServerConfig) Validate() error {
 
 	// locations
 	for _, location := range this.Locations {
+		// 复制request group
+		location.requestGroups = []*RequestGroup{}
+		if len(location.Backends) > 0 {
+			for _, group := range this.RequestGroups {
+				location.AddRequestGroup(group.Copy())
+			}
+		}
+
 		err := location.Validate()
 		if err != nil {
 			return err
@@ -266,6 +280,29 @@ func (this *ServerConfig) Validate() error {
 	err = this.API.Validate()
 	if err != nil {
 		return err
+	}
+
+	// request groups
+	for _, group := range this.RequestGroups {
+		if group.IsDefault {
+			this.defaultRequestGroup = group
+		}
+
+		for _, backend := range this.Backends {
+			if len(backend.RequestGroupIds) == 0 && group.IsDefault {
+				group.AddBackend(backend)
+			} else if backend.HasRequestGroupId(group.Id) {
+				group.AddBackend(backend)
+			}
+		}
+
+		err := group.Validate()
+		if err != nil {
+			return err
+		}
+		if group.HasFilters() {
+			this.hasRequestGroupFilters = true
+		}
 	}
 
 	return nil
@@ -593,4 +630,93 @@ func (this *ServerConfig) RefersProxy(proxyId string) (description string, refer
 		}
 	}
 	return "", false
+}
+
+// 添加请求分组
+func (this *ServerConfig) AddRequestGroup(group *RequestGroup) {
+	this.RequestGroups = append(this.RequestGroups, group)
+}
+
+// 删除请求分组
+func (this *ServerConfig) RemoveRequestGroup(groupId string) {
+	result := []*RequestGroup{}
+	for _, g := range this.RequestGroups {
+		if g.Id == groupId {
+			continue
+		}
+		result = append(result, g)
+	}
+	this.RequestGroups = result
+}
+
+// 查找请求分组
+func (this *ServerConfig) FindRequestGroup(groupId string) *RequestGroup {
+	for _, g := range this.RequestGroups {
+		if g.Id == groupId {
+			return g
+		}
+	}
+	return nil
+}
+
+// 使用请求匹配分组
+func (this *ServerConfig) MatchRequestGroup(formatter func(source string) string) *RequestGroup {
+	if !this.hasRequestGroupFilters {
+		return nil
+	}
+	for _, group := range this.RequestGroups {
+		if group.HasFilters() && group.Match(formatter) {
+			return group
+		}
+	}
+	return nil
+}
+
+// 取得下一个可用的后端服务
+func (this *ServerConfig) NextBackend(call *shared.RequestCall) *BackendConfig {
+	if this.hasRequestGroupFilters {
+		group := this.MatchRequestGroup(call.Formatter)
+		if group != nil {
+			// request
+			if group.HasRequestHeaders() {
+				for _, h := range group.RequestHeaders {
+					call.Request.Header.Set(h.Name, call.Formatter(h.Value))
+				}
+			}
+
+			// response
+			if group.HasResponseHeaders() {
+				call.AddResponseCall(func(resp http.ResponseWriter) {
+					for _, h := range group.ResponseHeaders {
+						resp.Header().Set(h.Name, call.Formatter(h.Value))
+					}
+				})
+			}
+
+			return group.BackendList.NextBackend(call)
+		}
+	}
+
+	// 默认分组
+	if this.defaultRequestGroup != nil {
+		// request
+		if this.defaultRequestGroup.HasRequestHeaders() {
+			for _, h := range this.defaultRequestGroup.RequestHeaders {
+				call.Request.Header.Set(h.Name, call.Formatter(h.Value))
+			}
+		}
+
+		// response
+		if this.defaultRequestGroup.HasResponseHeaders() {
+			call.AddResponseCall(func(resp http.ResponseWriter) {
+				for _, h := range this.defaultRequestGroup.ResponseHeaders {
+					resp.Header().Set(h.Name, call.Formatter(h.Value))
+				}
+			})
+		}
+
+		return this.defaultRequestGroup.NextBackend(call)
+	}
+
+	return this.BackendList.NextBackend(call)
 }

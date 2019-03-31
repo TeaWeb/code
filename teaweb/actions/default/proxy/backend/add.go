@@ -40,20 +40,21 @@ func (this *AddAction) Run(params struct {
 
 // 提交
 func (this *AddAction) RunPost(params struct {
-	ServerId    string
-	LocationId  string // 路径
-	Websocket   bool   // 是否是Websocket设置
-	Address     string
-	Scheme      string
-	Weight      uint
-	On          bool
-	Code        string
-	FailTimeout uint
-	ReadTimeout uint
-	MaxFails    int32
-	MaxConns    int32
-	IsBackup    bool
-	Must        *actions.Must
+	ServerId        string
+	LocationId      string // 路径
+	Websocket       bool   // 是否是Websocket设置
+	Address         string
+	Scheme          string
+	Weight          uint
+	On              bool
+	Code            string
+	FailTimeout     uint
+	ReadTimeout     uint
+	MaxFails        int32
+	MaxConns        int32
+	IsBackup        bool
+	RequestGroupIds []string
+	Must            *actions.Must
 }) {
 	params.Must.
 		Field("address", params.Address).
@@ -68,6 +69,7 @@ func (this *AddAction) RunPost(params struct {
 	backend.Address = params.Address
 	backend.Scheme = params.Scheme
 	backend.Weight = params.Weight
+	backend.RequestGroupIds = params.RequestGroupIds
 	backend.On = params.On
 	backend.IsDown = false
 	backend.Code = params.Code

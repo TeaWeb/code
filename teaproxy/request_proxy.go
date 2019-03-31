@@ -1,24 +1,11 @@
 package teaproxy
 
-import (
-	"github.com/iwind/TeaGo/maps"
-	"net/http"
-)
-
 // 调用代理
 func (this *Request) callProxy(writer *ResponseWriter) error {
-	options := maps.Map{
-		"request":   this.raw,
-		"formatter": this.Format,
-	}
-	backend := this.proxy.NextBackend(options)
+	backend := this.proxy.NextBackend(this.backendCall)
 
-	responseCallback := options.Get("responseCallback")
-	if responseCallback != nil {
-		f, ok := responseCallback.(func(http.ResponseWriter))
-		if ok {
-			this.responseCallback = f
-		}
+	if len(this.backendCall.ResponseCallbacks) > 0 {
+		this.responseCallback = this.backendCall.CallResponseCallbacks
 	}
 
 	this.backend = backend

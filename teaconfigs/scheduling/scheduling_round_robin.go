@@ -1,6 +1,7 @@
 package scheduling
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"sync"
@@ -41,7 +42,7 @@ func (this *RoundRobinScheduling) Start() {
 }
 
 // 获取下一个候选对象
-func (this *RoundRobinScheduling) Next(options maps.Map) CandidateInterface {
+func (this *RoundRobinScheduling) Next(call *shared.RequestCall) CandidateInterface {
 	if this.count == 0 {
 		return nil
 	}

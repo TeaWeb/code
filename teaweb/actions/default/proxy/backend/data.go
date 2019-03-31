@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/scheduling"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 )
 
 type DataAction actions.Action
@@ -18,6 +19,19 @@ func (this *DataAction) Run(params struct {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
 		this.Fail("找不到Server")
+	}
+
+	// 自定义默认分组
+	if len(server.RequestGroups) == 0 {
+		group := teaconfigs.NewRequestGroup()
+		group.IsDefault = true
+		group.Id = "default"
+		group.Name = "默认分组"
+		server.AddRequestGroup(group)
+		err := server.Save()
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
@@ -64,6 +78,13 @@ func (this *DataAction) Run(params struct {
 		} else {
 			this.Data["scheduling"] = s
 		}
+	}
+
+	// 分组
+	if len(server.RequestGroups) > 0 {
+		this.Data["groups"] = server.RequestGroups
+	} else {
+		this.Data["groups"] = []*teaconfigs.RequestGroup{}
 	}
 
 	this.Success()

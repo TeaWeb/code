@@ -1,4 +1,4 @@
-package backend
+package groups
 
 import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy"
@@ -15,15 +15,11 @@ func init() {
 			}).
 			Helper(new(proxy.Helper)).
 			Module("").
-			Prefix("/proxy/backend").
+			Prefix("/proxy/groups").
 			Get("", new(IndexAction)).
-			Get("/data", new(DataAction)).
 			GetPost("/add", new(AddAction)).
-			GetPost("/update", new(UpdateAction)).
 			Post("/delete", new(DeleteAction)).
-			GetPost("/scheduling", new(SchedulingAction)).
-			Post("/online", new(OnlineAction)).
-			Post("/clearFails", new(ClearFailsAction)).
+			GetPost("/update", new(UpdateAction)).
 			EndAll()
 	})
 }

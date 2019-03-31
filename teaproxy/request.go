@@ -61,9 +61,12 @@ type Request struct {
 	ignoreHeaders []string               // 忽略的Header
 	varMapping    map[string]string      // 自定义变量
 
-	root         string   // 资源根目录
-	index        []string // 目录下默认访问的文件
-	backend      *teaconfigs.BackendConfig
+	root  string   // 资源根目录
+	index []string // 目录下默认访问的文件
+
+	backend     *teaconfigs.BackendConfig
+	backendCall *shared.RequestCall
+
 	fastcgi      *teaconfigs.FastcgiConfig
 	proxy        *teaconfigs.ServerConfig
 	location     *teaconfigs.LocationConfig
@@ -109,6 +112,7 @@ type Request struct {
 // 获取新的请求
 func NewRequest(rawRequest *http.Request) *Request {
 	now := time.Now()
+
 	req := &Request{
 		varMapping:      map[string]string{},
 		raw:             rawRequest,
@@ -117,6 +121,11 @@ func NewRequest(rawRequest *http.Request) *Request {
 		enableAccessLog: true,
 		enableStat:      true,
 	}
+
+	backendCall := shared.NewRequestCall()
+	backendCall.Request = rawRequest
+	backendCall.Formatter = req.Format
+	req.backendCall = backendCall
 
 	return req
 }
@@ -444,13 +453,12 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 			// backends
 			if len(location.Backends) > 0 {
-				options := maps.Map{
-					"request":   this.raw,
-					"formatter": this.Format,
-				}
-				backend := location.NextBackend(options)
+				backend := location.NextBackend(this.backendCall)
 				if backend == nil {
 					return errors.New("no backends available")
+				}
+				if len(this.backendCall.ResponseCallbacks) > 0 {
+					this.responseCallback = this.backendCall.CallResponseCallbacks
 				}
 				this.backend = backend
 				locationConfigured = true
@@ -468,11 +476,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 			// websocket
 			if location.Websocket != nil && location.Websocket.On {
-				options := maps.Map{
-					"request":   this.raw,
-					"formatter": this.Format,
-				}
-				this.backend = location.Websocket.NextBackend(options)
+				this.backend = location.Websocket.NextBackend(this.backendCall)
 				this.websocket = location.Websocket
 				return nil
 			}
@@ -585,22 +589,14 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 
 	// 转发到后端
-	options := maps.Map{
-		"request":   this.raw,
-		"formatter": this.Format,
-	}
-	backend := server.NextBackend(options)
+	backend := server.NextBackend(this.backendCall)
 	if backend == nil {
 		if len(this.root) == 0 {
 			return errors.New("no backends available")
 		}
 	}
-	responseCallback := options.Get("responseCallback")
-	if responseCallback != nil {
-		f, ok := responseCallback.(func(http.ResponseWriter))
-		if ok {
-			this.responseCallback = f
-		}
+	if len(this.backendCall.ResponseCallbacks) > 0 {
+		this.responseCallback = this.backendCall.CallResponseCallbacks
 	}
 	this.backend = backend
 

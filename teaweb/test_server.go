@@ -27,7 +27,12 @@ func startTestServer() {
 			resp.Write([]byte("the page after redirect"))
 		}).
 		Get("/webhook", func(req *http.Request, resp http.ResponseWriter) {
-			resp.Write([]byte("call " + req.URL.String()))
+			resp.Write([]byte("Get " + req.URL.String() + "\n"))
+			for k, v := range req.Header {
+				for _, v1 := range v {
+					resp.Write([]byte( k + ": " + v1 + "\n"))
+				}
+			}
 		}).
 		Post("/webhook", func(req *http.Request, resp http.ResponseWriter) {
 			for k, v := range req.Header {

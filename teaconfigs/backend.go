@@ -2,6 +2,7 @@ package teaconfigs
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
 	"strings"
 	"sync/atomic"
@@ -12,21 +13,22 @@ import (
 type BackendConfig struct {
 	shared.HeaderList `yaml:",inline"`
 
-	On           bool      `yaml:"on" json:"on"`                                 // 是否启用
-	Id           string    `yaml:"id" json:"id"`                                 // ID
-	Code         string    `yaml:"code" json:"code"`                             // 代号
-	Address      string    `yaml:"address" json:"address"`                       // 地址
-	Scheme       string    `yaml:"scheme" json:"scheme"`                         // 协议，http或者https
-	Weight       uint      `yaml:"weight" json:"weight"`                         // 权重
-	IsBackup     bool      `yaml:"backup" json:"isBackup"`                       // 是否为备份
-	FailTimeout  string    `yaml:"failTimeout" json:"failTimeout"`               // 连接失败超时
-	ReadTimeout  string    `yaml:"readTimeout" json:"readTimeout"`               // 读取超时时间
-	MaxFails     int32     `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
-	CurrentFails int32     `yaml:"currentFails" json:"currentFails"`             // 当前已失败次数
-	MaxConns     int32     `yaml:"maxConns" json:"maxConns"`                     // 最大并发连接数
-	CurrentConns int32     `yaml:"currentConns" json:"currentConns"`             // 当前连接数
-	IsDown       bool      `yaml:"down" json:"isDown"`                           // 是否下线
-	DownTime     time.Time `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
+	On              bool      `yaml:"on" json:"on"`                                 // 是否启用
+	Id              string    `yaml:"id" json:"id"`                                 // ID
+	Code            string    `yaml:"code" json:"code"`                             // 代号
+	Address         string    `yaml:"address" json:"address"`                       // 地址
+	Scheme          string    `yaml:"scheme" json:"scheme"`                         // 协议，http或者https
+	Weight          uint      `yaml:"weight" json:"weight"`                         // 权重
+	IsBackup        bool      `yaml:"backup" json:"isBackup"`                       // 是否为备份
+	FailTimeout     string    `yaml:"failTimeout" json:"failTimeout"`               // 连接失败超时
+	ReadTimeout     string    `yaml:"readTimeout" json:"readTimeout"`               // 读取超时时间
+	MaxFails        int32     `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
+	CurrentFails    int32     `yaml:"currentFails" json:"currentFails"`             // 当前已失败次数
+	MaxConns        int32     `yaml:"maxConns" json:"maxConns"`                     // 最大并发连接数
+	CurrentConns    int32     `yaml:"currentConns" json:"currentConns"`             // 当前连接数
+	IsDown          bool      `yaml:"down" json:"isDown"`                           // 是否下线
+	DownTime        time.Time `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
+	RequestGroupIds []string  `yaml:"requestGroupIds" json:"requestGroupIds"`       // 所属请求分组
 
 	failTimeoutDuration time.Duration
 	readTimeoutDuration time.Duration
@@ -108,4 +110,29 @@ func (this *BackendConfig) IncreaseConn() {
 // 减少连接数
 func (this *BackendConfig) DecreaseConn() {
 	atomic.AddInt32(&this.CurrentConns, -1)
+}
+
+// 添加请求分组
+func (this *BackendConfig) AddRequestGroupId(requestGroupId string) {
+	this.RequestGroupIds = append(this.RequestGroupIds, requestGroupId)
+}
+
+// 删除某个请求分组
+func (this *BackendConfig) RemoveRequestGroupId(requestGroupId string) {
+	result := []string{}
+	for _, groupId := range this.RequestGroupIds {
+		if groupId == requestGroupId {
+			continue
+		}
+		result = append(result, groupId)
+	}
+	this.RequestGroupIds = result
+}
+
+// 判断是否有某个情趣分组ID
+func (this *BackendConfig) HasRequestGroupId(requestGroupId string) bool {
+	if requestGroupId == "default" && len(this.RequestGroupIds) == 0 {
+		return true
+	}
+	return lists.ContainsString(this.RequestGroupIds, requestGroupId)
 }

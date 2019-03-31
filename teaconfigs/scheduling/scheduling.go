@@ -1,6 +1,9 @@
 package scheduling
 
-import "github.com/iwind/TeaGo/maps"
+import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/iwind/TeaGo/maps"
+)
 
 // 调度算法接口
 type SchedulingInterface interface {
@@ -8,13 +11,13 @@ type SchedulingInterface interface {
 	HasCandidates() bool
 
 	// 添加候选对象
-	Add(candidate ... CandidateInterface)
+	Add(candidate ...CandidateInterface)
 
 	// 启动
 	Start()
 
 	// 查找下一个候选对象
-	Next(options maps.Map) CandidateInterface
+	Next(call *shared.RequestCall) CandidateInterface
 
 	// 获取简要信息
 	Summary() maps.Map
@@ -31,6 +34,6 @@ func (this *Scheduling) HasCandidates() bool {
 }
 
 // 添加候选对象
-func (this *Scheduling) Add(candidate ... CandidateInterface) {
+func (this *Scheduling) Add(candidate ...CandidateInterface) {
 	this.Candidates = append(this.Candidates, candidate ...)
 }

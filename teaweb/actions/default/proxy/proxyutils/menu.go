@@ -70,6 +70,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 			"backend",
 			"board",
 			"websocket",
+			"groups",
 			"stat.",
 			"log.",
 		) && !action.Spec.HasClassPrefix("proxy.AddAction", "log.RuntimeAction") {

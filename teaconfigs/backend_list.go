@@ -2,7 +2,7 @@ package teaconfigs
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/scheduling"
-	"github.com/iwind/TeaGo/maps"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"sync"
 )
 
@@ -32,8 +32,9 @@ type BackendListInterface interface {
 
 // BackendList定义
 type BackendList struct {
-	Backends   []*BackendConfig  `yaml:"backends" json:"backends"`
-	Scheduling *SchedulingConfig `yaml:"scheduling" json:"scheduling"` // 调度算法选项
+	Backends    []*BackendConfig  `yaml:"backends" json:"backends"`
+	Scheduling  *SchedulingConfig `yaml:"scheduling" json:"scheduling"` // 调度算法选项
+	hasBackends bool
 
 	schedulingIsBackup bool
 	schedulingObject   scheduling.SchedulingInterface
@@ -42,6 +43,8 @@ type BackendList struct {
 
 // 校验
 func (this *BackendList) ValidateBackends() error {
+	this.hasBackends = len(this.Backends) > 0
+
 	for _, backend := range this.Backends {
 		err := backend.Validate()
 		if err != nil {
@@ -88,7 +91,7 @@ func (this *BackendList) FindBackend(backendId string) *BackendConfig {
 }
 
 // 取得下一个可用的后端服务
-func (this *BackendList) NextBackend(options maps.Map) *BackendConfig {
+func (this *BackendList) NextBackend(call *shared.RequestCall) *BackendConfig {
 	this.schedulingLocker.Lock()
 	defer this.schedulingLocker.Unlock()
 
@@ -98,17 +101,17 @@ func (this *BackendList) NextBackend(options maps.Map) *BackendConfig {
 
 	if this.Scheduling != nil {
 		for k, v := range this.Scheduling.Options {
-			options[k] = v
+			call.Options[k] = v
 		}
 	}
 
-	candidate := this.schedulingObject.Next(options)
+	candidate := this.schedulingObject.Next(call)
 	if candidate == nil {
 		// 启用备用服务器
 		if !this.schedulingIsBackup {
 			this.SetupScheduling(true)
 
-			candidate = this.schedulingObject.Next(options)
+			candidate = this.schedulingObject.Next(call)
 			if candidate == nil {
 				return nil
 			}
@@ -164,4 +167,9 @@ func (this *BackendList) SchedulingConfig() *SchedulingConfig {
 // 设置调度算法
 func (this *BackendList) SetSchedulingConfig(scheduling *SchedulingConfig) {
 	this.Scheduling = scheduling
+}
+
+// 判断是否有后端服务器
+func (this *BackendList) HasBackends() bool {
+	return this.hasBackends
 }

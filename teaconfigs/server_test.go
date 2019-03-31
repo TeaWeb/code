@@ -69,3 +69,4 @@ func TestServerConfig_Encode(t *testing.T) {
 
 	t.Log(string(data))
 }
+

@@ -1,6 +1,7 @@
 package scheduling
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/maps"
 	"hash/crc32"
 )
@@ -18,19 +19,15 @@ func (this *HashScheduling) Start() {
 }
 
 // 获取下一个候选对象
-func (this *HashScheduling) Next(options maps.Map) CandidateInterface {
+func (this *HashScheduling) Next(call *shared.RequestCall) CandidateInterface {
 	if this.count == 0 {
 		return nil
 	}
 
-	key := options.GetString("key")
+	key := call.Options.GetString("key")
 
-	formatter := options.Get("formatter")
-	if formatter != nil {
-		f, ok := formatter.(func(string) string)
-		if ok {
-			key = f(key)
-		}
+	if call.Formatter != nil {
+		key = call.Formatter(key)
 	}
 
 	sum := crc32.ChecksumIEEE([]byte(key))
