@@ -11,6 +11,7 @@ type IndexAction actions.Action
 func (this *IndexAction) Run(params struct {
 	ServerId   string
 	LocationId string
+	Websocket  int
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -24,6 +25,7 @@ func (this *IndexAction) Run(params struct {
 	}
 	this.Data["server"] = server
 	this.Data["locationId"] = params.LocationId
+	this.Data["websocket"] = params.Websocket
 
 	if len(server.RequestGroups) > 0 {
 		this.Data["groups"] = server.RequestGroups

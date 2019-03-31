@@ -13,6 +13,7 @@ type UpdateAction actions.Action
 func (this *UpdateAction) Run(params struct {
 	ServerId   string
 	LocationId string
+	Websocket  int
 	GroupId    string
 }) {
 
@@ -28,6 +29,7 @@ func (this *UpdateAction) Run(params struct {
 	}
 	this.Data["server"] = server
 	this.Data["locationId"] = params.LocationId
+	this.Data["websocket"] = params.Websocket
 
 	group := server.FindRequestGroup(params.GroupId)
 	if group == nil {

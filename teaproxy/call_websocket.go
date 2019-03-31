@@ -45,7 +45,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 
 	if this.websocket.ForwardMode == teaconfigs.WebsocketForwardModeWebsocket {
 		// 判断最大连接数
-		if this.backend.CurrentConns >= this.backend.MaxConns {
+		if this.backend.MaxConns > 0 && this.backend.CurrentConns >= this.backend.MaxConns {
 			this.serverError(writer)
 			logs.Error(errors.New("too many connections"))
 			this.addError(errors.New("too many connections"))

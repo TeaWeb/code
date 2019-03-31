@@ -13,6 +13,7 @@ type AddAction actions.Action
 func (this *AddAction) Run(params struct {
 	ServerId   string
 	LocationId string
+	Websocket  int
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -26,6 +27,7 @@ func (this *AddAction) Run(params struct {
 	}
 	this.Data["server"] = server
 	this.Data["locationId"] = params.LocationId
+	this.Data["websocket"] = params.Websocket
 
 	this.Data["operators"] = teaconfigs.AllRequestOperators()
 
