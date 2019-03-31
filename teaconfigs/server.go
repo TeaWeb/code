@@ -720,3 +720,11 @@ func (this *ServerConfig) NextBackend(call *shared.RequestCall) *BackendConfig {
 
 	return this.BackendList.NextBackend(call)
 }
+
+// 设置调度算法
+func (this *ServerConfig) SetupScheduling(isBackup bool) {
+	for _, group := range this.RequestGroups {
+		group.SetupScheduling(isBackup)
+	}
+	this.BackendList.SetupScheduling(isBackup)
+}

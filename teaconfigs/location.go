@@ -433,6 +433,10 @@ func (this *LocationConfig) AddCond(cond *RequestCond) {
 // 添加请求分组
 func (this *LocationConfig) AddRequestGroup(group *RequestGroup) {
 	this.requestGroups = append(this.requestGroups, group)
+
+	if this.Websocket != nil {
+		this.Websocket.AddRequestGroup(group.Copy())
+	}
 }
 
 // 使用请求匹配分组
@@ -495,4 +499,12 @@ func (this *LocationConfig) NextBackend(call *shared.RequestCall) *BackendConfig
 	}
 
 	return this.BackendList.NextBackend(call)
+}
+
+// 设置调度算法
+func (this *LocationConfig) SetupScheduling(isBackup bool) {
+	for _, group := range this.requestGroups {
+		group.SetupScheduling(isBackup)
+	}
+	this.BackendList.SetupScheduling(isBackup)
 }

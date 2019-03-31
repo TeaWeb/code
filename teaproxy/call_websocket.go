@@ -93,7 +93,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 				messageType, message, err := client.ReadMessage()
 				if err != nil {
 					closeErr, ok := err.(*websocket.CloseError)
-					if !ok || closeErr.Code != websocket.CloseGoingAway {
+					if !ok && closeErr != nil && closeErr.Code != websocket.CloseGoingAway {
 						logs.Error(err)
 						this.addError(err)
 					}
@@ -109,7 +109,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 			messageType, message, err := server.ReadMessage()
 			if err != nil {
 				closeErr, ok := err.(*websocket.CloseError)
-				if !ok || closeErr.Code != websocket.CloseGoingAway {
+				if !ok && closeErr != nil && closeErr.Code != websocket.CloseGoingAway {
 					logs.Error(err)
 					this.addError(err)
 				}
