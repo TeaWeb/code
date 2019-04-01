@@ -11,7 +11,7 @@ type BadgeAction actions.Action
 // 计算未读数量
 func (this *BadgeAction) Run(params struct{}) {
 	this.Data["count"] = noticeutils.CountUnreadNotices()
-	this.Data["audioOn"] = notices.SharedNoticeSetting().SoundOn
+	this.Data["soundOn"] = notices.SharedNoticeSetting().SoundOn
 
 	this.Success()
 }
