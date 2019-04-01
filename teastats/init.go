@@ -10,6 +10,7 @@ func init() {
 	RegisterFilter(
 		new(RequestAllPeriodFilter),
 		new(RequestPagePeriodFilter),
+		new(RequestIPPeriodFilter),
 		new(StatusAllPeriodFilter),
 		new(StatusPagePeriodFilter),
 		new(TrafficAllPeriodFilter),
