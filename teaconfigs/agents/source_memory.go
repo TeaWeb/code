@@ -66,6 +66,7 @@ func (this *MemorySource) Execute(params map[string]string) (value interface{}, 
 			"swapUsed":       float64(swap.Used) / 1024 / 1024 / 1024,
 			"swapPercent":    swap.UsedPercent,
 			"swapTotal":      float64(swap.Total) / 1024 / 1024 / 1024,
+			"swapFree":       float64(swap.Free) / 1024 / 1024 / 1024,
 		},
 	}
 
@@ -120,6 +121,10 @@ func (this *MemorySource) Variables() []*SourceVariable {
 		{
 			Code:        "usage.swapTotal",
 			Description: "Swap总内存容量（G）",
+		},
+		{
+			Code:        "usage.swapFree",
+			Description: "Swap Free内存容量（G）",
 		},
 	}
 }

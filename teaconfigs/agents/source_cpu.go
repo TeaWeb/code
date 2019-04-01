@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/shirou/gopsutil/cpu"
 	"sync"
@@ -54,17 +55,21 @@ func (this *CPUSource) Execute(params map[string]string) (value interface{}, err
 
 	percents, err := cpu.Percent(0, true)
 	if err != nil {
+		logs.Error(err)
 		return nil, err
 	}
 	if len(percents) == 0 {
-		value = map[string]interface{}{}
+		value = map[string]interface{}{
+			"avg": 0,
+			"all": []float64{},
+		}
 		return
 	}
 	sum := float64(0)
 	for _, percent := range percents {
 		sum += percent
 	}
-	avg := sum / 8
+	avg := sum / float64(len(percents))
 
 	value = map[string]interface{}{
 		"usage": map[string]interface{}{
