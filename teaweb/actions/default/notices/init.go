@@ -26,6 +26,7 @@ func init() {
 			Post("/deleteReceiver", new(DeleteReceiverAction)).
 			Get("/receiver", new(ReceiverAction)).
 			GetPost("/updateReceiver", new(UpdateReceiverAction)).
+			Post("/sound", new(SoundAction)).
 			EndAll()
 	})
 }

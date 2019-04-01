@@ -32,6 +32,7 @@ func (this *IndexAction) Run(params struct {
 
 	this.Data["countUnread"] = countUnread
 	this.Data["count"] = count
+	this.Data["soundOn"] = notices.SharedNoticeSetting().SoundOn
 
 	// 分页
 	if params.Page < 1 {

@@ -13,6 +13,8 @@ import (
 type NoticeSetting struct {
 	Levels map[NoticeLevel]*NoticeLevelConfig `yaml:"levels" json:"levels"`
 	Medias []*NoticeMediaConfig               `yaml:"medias" json:"medias"`
+
+	SoundOn bool `yaml:"soundOn" json:"soundOn"` // 提示声音
 }
 
 // 取得当前的配置
