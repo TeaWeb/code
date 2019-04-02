@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/maps"
 	"io/ioutil"
 	"net/http"
@@ -63,6 +64,7 @@ func (this *URLConnectivitySource) Execute(params map[string]string) (value inte
 		}
 		return value, err
 	}
+	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
 
 	timeout := this.Timeout
 	if timeout <= 0 {

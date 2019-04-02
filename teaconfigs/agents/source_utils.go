@@ -40,6 +40,7 @@ func RegisterAllDataSources() {
 	RegisterDataSource(NewFileChangeSource(), SourceCategoryCommon)
 	RegisterDataSource(NewMySQLSource(), SourceCategoryCommon)
 	RegisterDataSource(NewDockerSource(), SourceCategoryCommon)
+	RegisterDataSource(NewTeaWebSource(), SourceCategoryCommon)
 
 	// plugin
 }
