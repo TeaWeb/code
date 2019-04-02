@@ -6,7 +6,6 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
-	"regexp"
 	"strings"
 )
 
@@ -21,10 +20,10 @@ func (this *AddAction) Run(params struct {
 // 提交保存
 func (this *AddAction) RunPost(params struct {
 	Description string
-	ServiceType uint
-	Name        string
-	Listen      string
-	Backend     string
+	ServerType  string
+	Names       []string
+	Listens     []string
+	Backends    []string
 	Root        string
 	Must        *actions.Must
 }) {
@@ -38,8 +37,8 @@ func (this *AddAction) RunPost(params struct {
 	server.Charset = "utf-8"
 	server.Index = []string{"index.html", "index.htm", "index.php"}
 
-	if len(params.Name) > 0 {
-		for _, name := range regexp.MustCompile("\\s+").Split(params.Name, -1) {
+	if len(params.Names) > 0 {
+		for _, name := range params.Names {
 			name = strings.TrimSpace(name)
 			if len(name) > 0 {
 				server.AddName(name)
@@ -47,8 +46,8 @@ func (this *AddAction) RunPost(params struct {
 		}
 	}
 
-	if len(params.Listen) > 0 {
-		for _, listen := range regexp.MustCompile("\\s+").Split(params.Listen, -1) {
+	if len(params.Listens) > 0 {
+		for _, listen := range params.Listens {
 			listen = strings.TrimSpace(listen)
 			if len(listen) > 0 {
 				server.AddListen(listen)
@@ -56,18 +55,27 @@ func (this *AddAction) RunPost(params struct {
 		}
 	}
 
-	if params.ServiceType == 1 { // 代理服务
-		for _, backend := range regexp.MustCompile("\\s+").Split(params.Backend, -1) {
+	if params.ServerType == "proxy" { // 代理服务
+		for _, backend := range params.Backends {
 			backend = strings.TrimSpace(backend)
 			if len(backend) > 0 {
 				backendObject := teaconfigs.NewBackendConfig()
+				if strings.HasPrefix(backend, "http://") {
+					backend = strings.TrimPrefix(backend, "http://")
+					backendObject.Scheme = "http"
+				} else if strings.HasPrefix(backend, "https://") {
+					backend = strings.TrimPrefix(backend, "https://")
+					backendObject.Scheme = "https"
+				} else {
+					backendObject.Scheme = "http"
+				}
+
 				backendObject.Address = backend
-				backendObject.Scheme = "http"
 				backendObject.Weight = 10
 				server.AddBackend(backendObject)
 			}
 		}
-	} else if params.ServiceType == 2 { // 普通服务
+	} else if params.ServerType == "static" { // 普通服务
 		server.Root = params.Root
 	}
 
