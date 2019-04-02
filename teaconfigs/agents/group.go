@@ -55,3 +55,19 @@ func (this *Group) RemoveNoticeReceiver(level notices.NoticeLevel, receiverId st
 	}
 	this.NoticeSetting[level] = result
 }
+
+// 删除媒介
+func (this *Group) RemoveMedia(mediaId string) (found bool) {
+	for level, receivers := range this.NoticeSetting {
+		result := []*notices.NoticeReceiver{}
+		for _, receiver := range receivers {
+			if receiver.MediaId == mediaId {
+				found = true
+				continue
+			}
+			result = append(result, receiver)
+		}
+		this.NoticeSetting[level] = result
+	}
+	return
+}

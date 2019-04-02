@@ -129,7 +129,7 @@ func (this *NoticeSetting) NotifyReceivers(level NoticeLevel, receivers []*Notic
 			continue
 		}
 		media := this.FindMedia(r.MediaId)
-		if !media.On {
+		if media == nil || !media.On {
 			continue
 		}
 		mediaType := FindNoticeMediaType(media.Type)
