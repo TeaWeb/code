@@ -51,11 +51,20 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 	})
 
 	if user.Granted(configs.AdminGrantAll) {
+		// mongodb管理
 		tabbar = append(tabbar, map[string]interface{}{
 			"name":    "MongoDB",
 			"subName": "",
 			"url":     "/settings/mongo",
 			"active":  action.Spec.HasClassPrefix("mongo."),
+		})
+
+		// 备份
+		tabbar = append(tabbar, map[string]interface{}{
+			"name":    "备份",
+			"subName": "",
+			"url":     "/settings/backup",
+			"active":  action.Spec.HasClassPrefix("backup."),
 		})
 	}
 

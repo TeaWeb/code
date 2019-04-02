@@ -40,6 +40,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/ssl"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/stat"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/backup"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/login"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/mongo"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/profile"

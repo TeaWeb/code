@@ -1,13 +1,13 @@
 package teastats
 
 import (
+	"errors"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/utils/time"
-	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
 	"strings"
 	"time"
