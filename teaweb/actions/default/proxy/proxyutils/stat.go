@@ -1,9 +1,14 @@
 package proxyutils
 
 import (
+	"bytes"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teastats"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
+	"strings"
 )
 
 // 刷新服务统计
@@ -33,4 +38,86 @@ func ReloadServerStats(serverId string) {
 		}
 	}
 	teastats.RestartServerFilters(serverId, codes)
+}
+
+// 检查图表是否有更新
+func CheckChartChanges() bool {
+	dir := files.NewFile(Tea.Root + "/libs/widgets")
+	if !dir.Exists() {
+		return false
+	}
+
+	for _, file := range dir.List() {
+		if !strings.HasPrefix(file.Name(), "widget.") {
+			continue
+		}
+		data, err := file.ReadAll()
+		if err != nil {
+			logs.Error(err)
+			continue
+		}
+
+		// 对应配置目录
+		configFile := files.NewFile(Tea.ConfigFile("widgets/" + file.Name()))
+		if !configFile.Exists() {
+			return true
+		}
+
+		configData, err := configFile.ReadAll()
+		if err != nil {
+			logs.Error(err)
+			continue
+		}
+
+		if bytes.Compare(data, configData) != 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+// 应用图表更新
+func ApplyChartChanges() error {
+	dir := files.NewFile(Tea.Root + "/libs/widgets")
+	if !dir.Exists() {
+		return nil
+	}
+
+	for _, file := range dir.List() {
+		if !strings.HasPrefix(file.Name(), "widget.") {
+			continue
+		}
+		data, err := file.ReadAll()
+		if err != nil {
+			return err
+		}
+
+		// 对应配置目录
+		configFile := files.NewFile(Tea.ConfigFile("widgets/" + file.Name()))
+		if !configFile.Exists() {
+			err := configFile.Write(data)
+			if err != nil {
+				return err
+			}
+			logs.Println("[proxy]apply the updates for widget '" + configFile.Name() + "'")
+			continue
+		}
+
+		configData, err := configFile.ReadAll()
+		if err != nil {
+			return err
+		}
+
+		if bytes.Compare(data, configData) != 0 {
+			err := configFile.Write(data)
+			if err != nil {
+				return err
+			}
+			logs.Println("[proxy]apply the updates for widget '" + configFile.Name() + "'")
+			continue
+		}
+	}
+
+	return nil
 }
