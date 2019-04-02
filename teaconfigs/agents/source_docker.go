@@ -235,6 +235,40 @@ func (this *DockerSource) Thresholds() []*Threshold {
 func (this *DockerSource) Charts() []*widgets.Chart {
 	charts := []*widgets.Chart{}
 
+	{
+		chart := widgets.NewChart()
+		chart.Columns = 2
+		chart.Name = "Docker状态"
+		chart.Type = "javascript"
+		chart.Options = maps.Map{
+			"code": `var chart = new charts.TableChart();
+var query = new values.Query();
+query.desc();
+query.limit(1);
+var ones = query.findAll();
+if (ones != null && ones.length > 0) {
+	ones[0].value.$each(function (k, one) {
+		if (one.status.match(/Exit/i)) {
+			one.id = "<span class=\"red\">" + one.id + "</span>";
+			one.names = "<span class=\"red\">" + one.names + "</span>";
+			one.image = "<span class=\"red\">" + one.image + "</span>";
+			one.status = "<span class=\"red\">" + one.status + "</span>";	
+		} else if (one.status.match(/Up /i)) {
+			one.id = "<span class=\"green\">" + one.id + "</span>";
+			one.names = "<span class=\"green\">" + one.names + "</span>";
+			one.image = "<span class=\"green\">" + one.image + "</span>";
+			one.status = "<span class=\"green\">" + one.status + "</span>";	
+		}
+		chart.addRow(one.id, one.image, one.names, one.status);
+	});	
+}
+chart.setWidth(0, "eight wide");
+chart.render();`,
+		}
+
+		charts = append(charts, chart)
+	}
+
 	return charts
 }
 
