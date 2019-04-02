@@ -3,6 +3,7 @@
 package agents
 
 import (
+	"context"
 	"github.com/shirou/gopsutil/cpu"
 	"math"
 	"sync"
@@ -77,6 +78,11 @@ func (this *LoadSource) Execute(params map[string]string) (value interface{}, er
 	}
 
 	windowsLoadLocker.Unlock()
+
+	// 在老Windows上不显示错误
+	if err == context.DeadlineExceeded {
+		err = nil
+	}
 
 	return map[string]interface{}{
 		"load1":  load1,
