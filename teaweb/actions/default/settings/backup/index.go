@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/time"
 	"regexp"
+	"time"
 )
 
 type IndexAction actions.Action
@@ -31,9 +32,11 @@ func (this *IndexAction) Run(params struct{}) {
 			modifiedTime, _ := f.LastModified()
 			size, _ := f.Size()
 			result = append(result, maps.Map{
-				"name": f.Name(),
-				"time": timeutil.Format("Y-m-d H:i:s", modifiedTime),
-				"size": fmt.Sprintf("%.2f", float64(size)/1024/1024), // M
+				"name":        f.Name(),
+				"time":        timeutil.Format("Y-m-d H:i:s", modifiedTime),
+				"size":        fmt.Sprintf("%.2f", float64(size)/1024/1024), // M
+				"isToday":     timeutil.Format("Ymd")+".zip" == f.Name(),
+				"isYesterday": timeutil.Format("Ymd", time.Now().Add(-24*time.Hour))+".zip" == f.Name(),
 			})
 		}
 	}
