@@ -7,6 +7,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/shirou/gopsutil/cpu"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -67,6 +68,11 @@ func (this *CPUSource) Execute(params map[string]string) (value interface{}, err
 	}
 	sum := float64(0)
 	for _, percent := range percents {
+		// 修复Windows上可能遇到的100%的Bug
+		if runtime.GOOS == "windows" && percent > 99.9 {
+			percent = 0
+		}
+
 		sum += percent
 	}
 	avg := sum / float64(len(percents))
