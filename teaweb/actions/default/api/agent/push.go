@@ -327,7 +327,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 				linkNames = append(linkNames, types.String(l["name"]))
 			}
 			if len(linkNames) > 0 {
-				notice.Message += "\n位置：" + strings.Join(linkNames, "/")
+				notice.Message += " \n位置：" + strings.Join(linkNames, "/")
 			}
 			notice.Hash()
 			err := noticeutils.NewNoticeQuery().Insert(notice)
