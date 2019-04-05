@@ -19,18 +19,18 @@ import (
 type ScriptSource struct {
 	Source `yaml:",inline"`
 
-	Path       string                `yaml:"path" json:"path"`
-	ScriptType string                `yaml:"scriptType" json:"scriptType"` // 脚本类型，可以为path, code
-	ScriptLang string                `yaml:"scriptLang" json:"scriptLang"` // 脚本语言
-	Script     string                `yaml:"script" json:"script"`         // 脚本代码
-	Env        []*shared.EnvVariable `yaml:"env" json:"env"`               // 环境变量设置
-	Cwd        string                `yaml:"cwd" json:"cwd"`
+	Path       string             `yaml:"path" json:"path"`
+	ScriptType string             `yaml:"scriptType" json:"scriptType"` // 脚本类型，可以为path, code
+	ScriptLang string             `yaml:"scriptLang" json:"scriptLang"` // 脚本语言
+	Script     string             `yaml:"script" json:"script"`         // 脚本代码
+	Env        []*shared.Variable `yaml:"env" json:"env"`               // 环境变量设置
+	Cwd        string             `yaml:"cwd" json:"cwd"`
 }
 
 // 获取新对象
 func NewScriptSource() *ScriptSource {
 	return &ScriptSource{
-		Env: []*shared.EnvVariable{},
+		Env: []*shared.Variable{},
 	}
 }
 
@@ -176,7 +176,7 @@ func (this *ScriptSource) Execute(params map[string]string) (value interface{}, 
 
 // 添加环境变量
 func (this *ScriptSource) AddEnv(name, value string) {
-	this.Env = append(this.Env, &shared.EnvVariable{
+	this.Env = append(this.Env, &shared.Variable{
 		Name:  name,
 		Value: value,
 	})

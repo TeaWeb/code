@@ -6,11 +6,12 @@ import "github.com/iwind/TeaGo/maps"
 type NoticeMediaType = string
 
 const (
-	NoticeMediaTypeEmail    = "email"
-	NoticeMediaTypeWebhook  = "webhook"
-	NoticeMediaTypeScript   = "script"
-	NoticeMediaTypeDingTalk = "dingTalk"
-	NoticeMediaTypeQyWeixin = "qyWeixin"
+	NoticeMediaTypeEmail     = "email"
+	NoticeMediaTypeWebhook   = "webhook"
+	NoticeMediaTypeScript    = "script"
+	NoticeMediaTypeDingTalk  = "dingTalk"
+	NoticeMediaTypeQyWeixin  = "qyWeixin"
+	NoticeMediaTypeAliyunSms = "aliyunSms"
 )
 
 // 所有媒介
@@ -55,6 +56,14 @@ func AllNoticeMediaTypes() []maps.Map {
 			"instance":     new(NoticeQyWeixinMedia),
 			"description":  "通过企业微信应用发送通知消息，<a href=\"http://teaos.cn/doc/notices/QyWeixin.md\" target=\"_blank\">相关文档&raquo;</a>",
 			"user":         "接收消息的成员的用户账号，多个成员用竖线（|）分隔，如果所有成员使用@all。留空表示所有成员。<a href=\"http://teaos.cn/doc/notices/QyWeixin.md#%E7%94%A8%E6%88%B7%E8%B4%A6%E5%8F%B7\" target=\"_blank\">如何查看成员的用户账号？</a>",
+		},
+		{
+			"name":         "阿里云短信",
+			"code":         NoticeMediaTypeAliyunSms,
+			"supportsHTML": false,
+			"instance":     new(NoticeAliyunSmsMedia),
+			"description":  "通过<a href=\"https://www.aliyun.com/product/sms?spm=5176.11533447.1097531.2.12055cfa6UnIix\" target=\"_blank\">阿里云短信服务</a>发送短信",
+			"user":         "接收消息的手机号",
 		},
 	}
 }

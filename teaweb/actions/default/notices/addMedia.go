@@ -3,6 +3,7 @@ package notices
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/actions"
 	"net/http"
@@ -51,6 +52,13 @@ func (this *AddMediaAction) RunPost(params struct {
 	QyWeixinCorporateId string
 	QyWeixinAgentId     string
 	QyWeixinAppSecret   string
+
+	AliyunSmsSign              string
+	AliyunSmsTemplateCode      string
+	AliyunSmsTemplateVarNames  []string
+	AliyunSmsTemplateVarValues []string
+	AliyunSmsAccessKeyId       string
+	AliyunSmsAccessKeySecret   string
 
 	TimeFromHour   int
 	TimeFromMinute int
@@ -175,6 +183,33 @@ func (this *AddMediaAction) RunPost(params struct {
 		media.CorporateId = params.QyWeixinCorporateId
 		media.AgentId = params.QyWeixinAgentId
 		media.AppSecret = params.QyWeixinAppSecret
+		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+	case notices.NoticeMediaTypeAliyunSms:
+		params.Must.
+			Field("aliyunSmsSign", params.AliyunSmsSign).
+			Require("请输入签名名称").
+			Field("aliyunSmsTemplateCode", params.AliyunSmsTemplateCode).
+			Require("请输入模板CODE").
+			Field("aliyunSmsAccessKeyId", params.AliyunSmsAccessKeyId).
+			Require("请输入AccessKey ID").
+			Field("aliyunSmsAccessKeySecret", params.AliyunSmsAccessKeySecret).
+			Require("请输入AccessKey Secret")
+
+		media := notices.NewNoticeAliyunSmsMedia()
+		media.Sign = params.AliyunSmsSign
+		media.TemplateCode = params.AliyunSmsTemplateCode
+		media.AccessKeyId = params.AliyunSmsAccessKeyId
+		media.AccessKeySecret = params.AliyunSmsAccessKeySecret
+
+		for index, name := range params.AliyunSmsTemplateVarNames {
+			if index < len(params.AliyunSmsTemplateVarValues) {
+				media.Variables = append(media.Variables, &shared.Variable{
+					Name:  name,
+					Value: params.AliyunSmsTemplateVarValues[index],
+				})
+			}
+		}
+
 		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
 	}
 

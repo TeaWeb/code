@@ -15,12 +15,12 @@ import (
 
 // 脚本媒介
 type NoticeScriptMedia struct {
-	Path       string                `yaml:"path" json:"path"`
-	ScriptType string                `yaml:"scriptType" json:"scriptType"` // 脚本类型，可以为path, code
-	ScriptLang string                `yaml:"scriptLang" json:"scriptLang"` // 脚本语言
-	Script     string                `yaml:"script" json:"script"`         // 脚本代码
-	Cwd        string                `yaml:"cwd" json:"cwd"`
-	Env        []*shared.EnvVariable `yaml:"env" json:"env"`
+	Path       string             `yaml:"path" json:"path"`
+	ScriptType string             `yaml:"scriptType" json:"scriptType"` // 脚本类型，可以为path, code
+	ScriptLang string             `yaml:"scriptLang" json:"scriptLang"` // 脚本语言
+	Script     string             `yaml:"script" json:"script"`         // 脚本代码
+	Cwd        string             `yaml:"cwd" json:"cwd"`
+	Env        []*shared.Variable `yaml:"env" json:"env"`
 }
 
 // 获取新对象
@@ -30,7 +30,7 @@ func NewNoticeScriptMedia() *NoticeScriptMedia {
 
 // 添加环境变量
 func (this *NoticeScriptMedia) AddEnv(name, value string) {
-	this.Env = append(this.Env, &shared.EnvVariable{
+	this.Env = append(this.Env, &shared.Variable{
 		Name:  name,
 		Value: value,
 	})

@@ -13,16 +13,16 @@ import (
 // 任务
 // 日志存储在 task.${id}
 type TaskConfig struct {
-	Id        string                `yaml:"id" json:"id"`               // ID
-	On        bool                  `yaml:"on" json:"on"`               // 是否启用
-	Name      string                `yaml:"name" json:"name"`           // 名称
-	Cwd       string                `yaml:"cwd" json:"cwd"`             // 当前工作目录（Current Working Directory）
-	Env       []*shared.EnvVariable `yaml:"env" json:"env"`             // 环境变量设置
-	Script    string                `yaml:"script" json:"script"`       // 脚本
-	IsBooting bool                  `yaml:"isBooting" json:"isBooting"` // 在Boot时启动
-	Schedule  []*ScheduleConfig     `yaml:"schedule" json:"schedule"`   // 定时
-	IsManual  bool                  `yaml:"isManual" json:"isManual"`   // 是否手工调用
-	Version   uint                  `yaml:"version" json:"version"`     // 版本
+	Id        string             `yaml:"id" json:"id"`               // ID
+	On        bool               `yaml:"on" json:"on"`               // 是否启用
+	Name      string             `yaml:"name" json:"name"`           // 名称
+	Cwd       string             `yaml:"cwd" json:"cwd"`             // 当前工作目录（Current Working Directory）
+	Env       []*shared.Variable `yaml:"env" json:"env"`             // 环境变量设置
+	Script    string             `yaml:"script" json:"script"`       // 脚本
+	IsBooting bool               `yaml:"isBooting" json:"isBooting"` // 在Boot时启动
+	Schedule  []*ScheduleConfig  `yaml:"schedule" json:"schedule"`   // 定时
+	IsManual  bool               `yaml:"isManual" json:"isManual"`   // 是否手工调用
+	Version   uint               `yaml:"version" json:"version"`     // 版本
 }
 
 // 获取新对象
@@ -46,7 +46,7 @@ func (this *TaskConfig) Validate() error {
 
 // 添加环境变量
 func (this *TaskConfig) AddEnv(name string, value string) {
-	this.Env = append(this.Env, &shared.EnvVariable{
+	this.Env = append(this.Env, &shared.Variable{
 		Name:  name,
 		Value: value,
 	})

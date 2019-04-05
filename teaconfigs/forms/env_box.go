@@ -102,18 +102,18 @@ this.cancelEnv = function () {
 
 func (this *EnvBox) ApplyRequest(req *http.Request) (value interface{}, skip bool, err error) {
 	names, found := req.Form[this.Namespace+"_"+this.Code+"_envNames"]
-	envs := []*shared.EnvVariable{}
+	envs := []*shared.Variable{}
 	if found {
 		values, found := req.Form[this.Namespace+"_"+this.Code+"_envValues"]
 		if found {
 			for index, name := range names {
 				if index < len(values) {
-					envs = append(envs, &shared.EnvVariable{
+					envs = append(envs, &shared.Variable{
 						Name:  name,
 						Value: values[index],
 					})
 				} else {
-					envs = append(envs, &shared.EnvVariable{
+					envs = append(envs, &shared.Variable{
 						Name:  name,
 						Value: "",
 					})

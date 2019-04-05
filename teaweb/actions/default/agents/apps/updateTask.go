@@ -109,7 +109,7 @@ func (this *UpdateTaskAction) RunPost(params struct {
 	task.Name = params.Name
 	task.Script = params.Script
 	task.Cwd = params.Cwd
-	task.Env = []*shared.EnvVariable{}
+	task.Env = []*shared.Variable{}
 	for index, name := range params.EnvNames {
 		if index < len(params.EnvValues) {
 			task.AddEnv(name, params.EnvValues[index])
