@@ -48,8 +48,9 @@ func (this *AppProcessesSource) Execute(params map[string]string) (value interfa
 	}
 
 	exec := teautils.NewCommandExecutor()
-	exec.Add("ps", "ax", "-o", "pid,comm")
+	exec.Add("ps", "ax", "-o", "pid,command")
 	exec.Add("grep", this.CmdlineKeyword)
+	exec.Add("grep", "-v", " grep ")
 	exec.Add("wc", "-l")
 	output, err := exec.Run()
 	if err != nil {
