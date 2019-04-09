@@ -3,6 +3,7 @@ package agents
 import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/forms"
+	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/tatsushid/go-fastping"
@@ -41,14 +42,18 @@ func (this *PingSource) Description() string {
 func (this *PingSource) Execute(params map[string]string) (value interface{}, err error) {
 	if len(this.Host) == 0 {
 		err = errors.New("'host' should not be empty")
-		return
+		return maps.Map{
+			"rtt": -1,
+		}, err
 	}
 
 	p := fastping.NewPinger()
 	p.Network("udp")
 	ra, err := net.ResolveIPAddr("ip4:icmp", this.Host)
 	if err != nil {
-		return nil, err
+		return maps.Map{
+			"rtt": -1,
+		}, err
 	}
 	p.AddIPAddr(ra)
 
@@ -59,14 +64,16 @@ func (this *PingSource) Execute(params map[string]string) (value interface{}, er
 	}
 	p.OnIdle = func() {
 		if value == nil {
-			err = errors.New("timeout")
+			err = errors.New("ping timeout")
 		}
 	}
 
 	p.Run()
 
 	if err != nil {
-		return nil, err
+		return maps.Map{
+			"rtt": -1,
+		}, err
 	}
 
 	return
@@ -106,6 +113,17 @@ func (this *PingSource) Variables() []*SourceVariable {
 // 阈值
 func (this *PingSource) Thresholds() []*Threshold {
 	result := []*Threshold{}
+
+	{
+		t := NewThreshold()
+		t.Param = "${rtt}"
+		t.Operator = ThresholdOperatorEq
+		t.Value = "-1"
+		t.NoticeLevel = notices.NoticeLevelWarning
+		t.NoticeMessage = "Ping超时"
+		t.MaxFails = 5
+		result = append(result, t)
+	}
 
 	return result
 }
