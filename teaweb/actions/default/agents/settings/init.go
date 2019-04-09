@@ -20,6 +20,8 @@ func init() {
 			Get("/noticeReceivers", new(NoticeReceiversAction)).
 			GetPost("/addNoticeReceivers", new(AddNoticeReceiversAction)).
 			Post("/deleteNoticeReceivers", new(DeleteNoticeReceiversAction)).
+			Post("/on", new(OnAction)).
+			Post("/off", new(OffAction)).
 			EndAll()
 	})
 }

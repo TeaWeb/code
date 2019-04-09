@@ -18,6 +18,8 @@ func init() {
 			GetPost("/add", new(AddAction)).
 			GetPost("/update", new(UpdateAction)).
 			Post("/delete", new(DeleteAction)).
+			Post("/on", new(OnAction)).
+			Post("/off", new(OffAction)).
 			Get("/detail", new(DetailAction)).
 			Get("/schedule", new(ScheduleAction)).
 			Get("/boot", new(BootAction)).
@@ -32,6 +34,8 @@ func init() {
 			GetPost("/addItem", new(AddItemAction)).
 			Post("/deleteItem", new(DeleteItemAction)).
 			Get("/itemDetail", new(ItemDetailAction)).
+			Post("/itemOn", new(ItemOnAction)).
+			Post("/itemOff", new(ItemOffAction)).
 			GetPost("/updateItem", new(UpdateItemAction)).
 			GetPost("/itemValues", new(ItemValuesAction)).
 			GetPost("/itemCharts", new(ItemChartsAction)).
