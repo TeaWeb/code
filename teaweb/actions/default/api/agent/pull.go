@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"encoding/base64"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
@@ -15,6 +16,7 @@ type PullAction actions.Action
 func (this *PullAction) Run(params struct{}) {
 	agentId := this.Context.Get("agent").(*agents.AgentConfig).Id
 	agentVersion := this.Request.Header.Get("Tea-Agent-Version")
+	agentOsName := this.Request.Header.Get("Tea-Agent-OsName")
 	nano := this.Request.Header.Get("Tea-Agent-Nano")
 	speed := float64(0)
 	if len(nano) > 0 {
@@ -24,8 +26,16 @@ func (this *PullAction) Run(params struct{}) {
 		}
 	}
 
+	osName := ""
+	if len(agentOsName) > 0 {
+		data, err := base64.StdEncoding.DecodeString(agentOsName)
+		if err == nil {
+			osName = string(data)
+		}
+	}
+
 	c := make(chan *agentutils.Event)
-	agentutils.WaitAgentQueue(agentId, agentVersion, speed, this.RequestRemoteIP(), c)
+	agentutils.WaitAgentQueue(agentId, agentVersion, osName, speed, this.RequestRemoteIP(), c)
 
 	// 监控是否中断请求
 	go func() {

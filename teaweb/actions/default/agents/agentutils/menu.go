@@ -36,14 +36,19 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 		actionCode = "notices"
 	}
 
-	_, isWaiting := CheckAgentIsWaiting("local")
+	state, isWaiting := CheckAgentIsWaiting("local")
 	topSubName := ""
 	if lists.ContainsAny([]string{"/agents/board", "/agents/menu"}, action.Request.URL.Path) {
 		topSubName = ""
 	}
 	menu := menuGroup.FindMenu("", "默认分组"+topSubName)
 	if isWaiting {
-		item := menu.Add("本地", "已连接", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/cluster/add", "/agents/groups"))
+		subName := "已连接"
+		if state != nil && len(state.OsName) > 0 {
+			subName += "," + state.OsName
+		}
+
+		item := menu.Add("本地", subName, "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/cluster/add", "/agents/groups"))
 		item.SubColor = "green"
 	} else {
 		menu.Add("本地", "", "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/cluster/add", "/agents/groups"))
@@ -54,7 +59,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	counterMapping := map[string]int{} // groupId => count
 	maxCount := 50
 	for _, agent := range allAgents {
-		_, isWaiting := CheckAgentIsWaiting(agent.Id)
+		state, isWaiting := CheckAgentIsWaiting(agent.Id)
 
 		var menu *utils.Menu = nil
 		if len(agent.GroupIds) > 0 {
@@ -99,7 +104,11 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 		}
 
 		if isWaiting {
-			item := menu.Add(agent.Name, "已连接", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+			subName := "已连接"
+			if state != nil && len(state.OsName) > 0 {
+				subName += "," + state.OsName
+			}
+			item := menu.Add(agent.Name, subName, "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
 			item.Id = agent.Id
 			item.IsSortable = true
 			item.SubColor = "green"

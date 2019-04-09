@@ -6,6 +6,7 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
+	"runtime"
 	"strings"
 )
 
@@ -40,6 +41,9 @@ func (this *IndexAction) Run(params struct{}) {
 	} else {
 		this.Data["isInstalled"] = false
 	}
+
+	// 当前系统
+	this.Data["os"] = runtime.GOOS
 
 	this.Show()
 }

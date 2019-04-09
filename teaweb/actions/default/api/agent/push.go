@@ -138,6 +138,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	oldValue, err := this.findLatestAgentValue(agent.Id, appId, itemId)
 	if err != nil {
 		logs.Error(err)
+		return
 	}
 	if oldValue == nil {
 		oldValue = v
@@ -271,6 +272,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	err = teamongo.NewAgentValueQuery().Insert(value)
 	if err != nil {
 		logs.Error(err)
+		return
 	}
 
 	// 是否发送恢复通知

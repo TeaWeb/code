@@ -2,12 +2,12 @@ package notices
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
-	"github.com/pkg/errors"
 	"strings"
 )
 
