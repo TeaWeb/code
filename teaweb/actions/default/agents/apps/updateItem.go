@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -125,6 +126,10 @@ func (this *UpdateItemAction) RunPost(params struct {
 
 	Must *actions.Must
 }) {
+	if teaconst.DemoEnabled {
+		this.Fail("演示版无法修改监控项")
+	}
+
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {
 		this.Fail("找不到Agent")

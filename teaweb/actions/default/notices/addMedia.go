@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/actions"
 	"net/http"
@@ -71,6 +72,10 @@ func (this *AddMediaAction) RunPost(params struct {
 
 	Must *actions.Must
 }) {
+	if teaconst.DemoEnabled {
+		this.Fail("演示版无法添加媒介")
+	}
+
 	params.Must.
 		Field("name", params.Name).
 		Require("请输入媒介名称")

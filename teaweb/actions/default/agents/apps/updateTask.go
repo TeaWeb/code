@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -84,6 +85,10 @@ func (this *UpdateTaskAction) RunPost(params struct {
 	On            bool
 	Must          *actions.Must
 }) {
+	if teaconst.DemoEnabled {
+		this.Fail("演示版无法修改任务")
+	}
+
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {
 		this.Fail("找不到Agent")
