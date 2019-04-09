@@ -36,6 +36,7 @@ func init() {
 			Get("/itemDetail", new(ItemDetailAction)).
 			Post("/itemOn", new(ItemOnAction)).
 			Post("/itemOff", new(ItemOffAction)).
+			Post("/execItemSource", new(ExecItemSourceAction)).
 			GetPost("/updateItem", new(UpdateItemAction)).
 			GetPost("/itemValues", new(ItemValuesAction)).
 			GetPost("/itemCharts", new(ItemChartsAction)).

@@ -45,7 +45,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	if isWaiting {
 		subName := "已连接"
 		if state != nil && len(state.OsName) > 0 {
-			subName += "," + state.OsName
+			subName = state.OsName
 		}
 
 		item := menu.Add("本地", subName, "/agents/"+actionCode+"?agentId=local", agentId == "local" && !action.HasPrefix("/agents/addAgent", "/agents/cluster/add", "/agents/groups"))
@@ -106,7 +106,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 		if isWaiting {
 			subName := "已连接"
 			if state != nil && len(state.OsName) > 0 {
-				subName += "," + state.OsName
+				subName = state.OsName
 			}
 			item := menu.Add(agent.Name, subName, "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
 			item.Id = agent.Id

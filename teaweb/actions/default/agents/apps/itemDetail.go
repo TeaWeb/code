@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/utils/string"
 )
 
 type ItemDetailAction actions.Action
@@ -16,6 +17,11 @@ func (this *ItemDetailAction) Run(params struct {
 	AppId   string
 	ItemId  string
 }) {
+	agent := agents.NewAgentConfigFromId(params.AgentId)
+	if agent == nil {
+		this.Fail("找不到Agent")
+	}
+
 	this.Data["agent"] = maps.Map{
 		"id": params.AgentId,
 	}
@@ -57,6 +63,17 @@ func (this *ItemDetailAction) Run(params struct {
 	}
 
 	this.Data["noticeLevels"] = notices.AllNoticeLevels()
+
+	// 是否在线
+	this.Data["isWaiting"] = false
+	if agent.On && app.On && item.On {
+		state, isWaiting := agentutils.CheckAgentIsWaiting(params.AgentId)
+		if state != nil && isWaiting {
+			if stringutil.VersionCompare(state.Version, "0.1") > 0 {
+				this.Data["isWaiting"] = true
+			}
+		}
+	}
 
 	this.Show()
 }
