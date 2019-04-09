@@ -4,12 +4,16 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
+	"github.com/iwind/TeaGo/utils/string"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"strings"
 )
 
 type ItemValuesAction actions.Action
@@ -48,6 +52,16 @@ func (this *ItemValuesAction) RunPost(params struct {
 		this.Fail("找不到Agent")
 	}
 
+	app := agent.FindApp(params.AppId)
+	if app == nil {
+		this.Fail("找不到App")
+	}
+
+	item := app.FindItem(params.ItemId)
+	if item == nil {
+		this.Fail("找不到Item")
+	}
+
 	query := teamongo.NewAgentValueQuery()
 	query.Agent(params.AgentId)
 	query.App(params.AppId)
@@ -79,8 +93,27 @@ func (this *ItemValuesAction) RunPost(params struct {
 		this.Fail("查询失败：" + err.Error())
 	}
 
+	source := item.Source()
 	this.Data["values"] = lists.Map(ones, func(k int, v interface{}) interface{} {
 		value := v.(*agents.Value)
+
+		vars := []maps.Map{}
+		if types.IsMap(value.Value) || types.IsSlice(value.Value) {
+			if source != nil {
+				for _, variable := range source.Variables() {
+					if len(variable.Code) == 0 || strings.Index(variable.Code, "$") > -1 {
+						continue
+					}
+					result := teautils.Get(value.Value, strings.Split(variable.Code, "."))
+					vars = append(vars, maps.Map{
+						"code":        variable.Code,
+						"description": variable.Description,
+						"value":       stringutil.JSONEncodePretty(result),
+					})
+				}
+			}
+		}
+
 		return maps.Map{
 			"id":          value.Id.Hex(),
 			"timestamp":   value.Timestamp,
@@ -89,6 +122,7 @@ func (this *ItemValuesAction) RunPost(params struct {
 			"error":       value.Error,
 			"noticeLevel": notices.FindNoticeLevel(value.NoticeLevel),
 			"threshold":   value.Threshold,
+			"vars":        vars,
 		}
 	})
 	this.Success()
