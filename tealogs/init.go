@@ -5,12 +5,10 @@ import (
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/oschwald/geoip2-golang"
 	"reflect"
 )
 
 var userAgentParser *uaparser.Parser
-var geoDB *geoip2.Reader
 var accessLogVars = map[string]string{}
 
 func init() {
@@ -21,12 +19,6 @@ func init() {
 		logs.Println("[proxy]start user-agent parser")
 		var err error
 		userAgentParser, err = uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
-		if err != nil {
-			logs.Error(err)
-		}
-
-		logs.Println("[proxy]start geo db")
-		geoDB, err = geoip2.Open(Tea.Root + "/resources/GeoLite2-City/GeoLite2-City.mmdb")
 		if err != nil {
 			logs.Error(err)
 		}
