@@ -16,7 +16,7 @@ type Collection struct {
 
 func FindCollection(collName string) *Collection {
 	return &Collection{
-		SharedClient().Database("teaweb").Collection(collName),
+		SharedClient().Database(DatabaseName).Collection(collName),
 	}
 }
 

@@ -31,7 +31,7 @@ func cleanAccessLogs() {
 			compareDay := "logs." + timeutil.Format("Ymd", time.Now().Add(-time.Duration(config.AccessLog.KeepDays * 24)*time.Hour))
 			logs.Println("[mongo]clean access logs before '" + compareDay + "'")
 
-			db := SharedClient().Database("teaweb")
+			db := SharedClient().Database(DatabaseName)
 			ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 			cursor, err := db.ListCollections(ctx, maps.Map{})
 			if err != nil {

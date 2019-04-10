@@ -225,7 +225,7 @@ func TestAccessLogger_DB(t *testing.T) {
 	}
 
 	r, err := client.
-		Database("teaweb").
+		Database(teamongo.DatabaseName).
 		Collection("accessLogs").
 		InsertOne(context.Background(), accessLog)
 	if err != nil {

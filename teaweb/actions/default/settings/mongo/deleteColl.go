@@ -15,7 +15,7 @@ func (this *DeleteCollAction) Run(params struct {
 }) {
 	if len(params.CollName) > 0 {
 		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-		err := teamongo.SharedClient().Database("teaweb").Collection(params.CollName).Drop(ctx)
+		err := teamongo.SharedClient().Database(teamongo.DatabaseName).Collection(params.CollName).Drop(ctx)
 		if err != nil {
 			this.Fail("删除失败：" + err.Error())
 		}

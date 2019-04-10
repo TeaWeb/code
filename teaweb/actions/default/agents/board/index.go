@@ -51,8 +51,15 @@ func (this *IndexAction) RunPost(params struct {
 		this.Fail("无法读取Board配置")
 	}
 
+	mongoEnabled := teamongo.Test() == nil
 	engine := scripts.NewEngine()
-	engine.SetMongo(teamongo.Test() == nil)
+	engine.SetMongo(mongoEnabled)
+
+	if !mongoEnabled {
+		this.Data["charts" ] = []interface{}{}
+		this.Data["output"] = []string{}
+		return
+	}
 
 	for _, c := range board.Charts {
 		app := agent.FindApp(c.AppId)

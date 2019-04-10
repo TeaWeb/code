@@ -1,9 +1,13 @@
 package mongo
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/maps"
+	"regexp"
+	"strings"
 )
 
 type UpdateAction actions.Action
@@ -11,13 +15,15 @@ type UpdateAction actions.Action
 // 修改连接
 func (this *UpdateAction) Run(params struct{}) {
 	config := configs.SharedMongoConfig()
-	this.Data["config"] = configs.MongoConnectionConfig{
-		Scheme:     config.Scheme,
-		Username:   config.Username,
-		Password:   "",
-		Host:       config.Host,
-		Port:       config.Port,
-		RequestURI: config.RequestURI,
+	this.Data["config"] = maps.Map{
+		"scheme":                  config.Scheme,
+		"username":                config.Username,
+		"password":                "",
+		"host":                    config.Host,
+		"port":                    config.Port,
+		"authMechanism":           config.AuthMechanism,
+		"authMechanismProperties": config.AuthMechanismPropertiesString(),
+		"requestURI":              config.RequestURI,
 	}
 
 	this.Show()
@@ -25,10 +31,12 @@ func (this *UpdateAction) Run(params struct{}) {
 
 // 提交保存
 func (this *UpdateAction) RunPost(params struct {
-	Host     string
-	Port     uint
-	Username string
-	Password string
+	Host                    string
+	Port                    uint
+	Username                string
+	Password                string
+	AuthMechanism           string
+	AuthMechanismProperties string
 
 	Must *actions.Must
 }) {
@@ -42,6 +50,19 @@ func (this *UpdateAction) RunPost(params struct {
 	config := configs.SharedMongoConfig()
 	config.Host = params.Host
 	config.Port = params.Port
+	config.AuthMechanism = params.AuthMechanism
+	config.AuthMechanismProperties = []*shared.Variable{}
+
+	if len(params.AuthMechanismProperties) > 0 {
+		properties := regexp.MustCompile("\\s*,\\s*").Split(params.AuthMechanismProperties, -1)
+		for _, property := range properties {
+			if strings.Contains(property, ":") {
+				pieces := strings.Split(property, ":")
+				config.AuthMechanismProperties = append(config.AuthMechanismProperties, shared.NewVariable(pieces[0], pieces[1]))
+			}
+		}
+	}
+
 	config.Username = params.Username
 	if len(params.Username) > 0 {
 		if len(params.Password) > 0 {

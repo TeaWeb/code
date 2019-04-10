@@ -15,7 +15,7 @@ type CollStatAction actions.Action
 func (this *CollStatAction) Run(params struct {
 	CollNames []string
 }) {
-	db := teamongo.SharedClient().Database("teaweb")
+	db := teamongo.SharedClient().Database(teamongo.DatabaseName)
 
 	results := maps.Map{}
 	for _, collName := range params.CollNames {

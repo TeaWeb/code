@@ -6,6 +6,7 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/maps"
 	"runtime"
 	"strings"
 )
@@ -16,13 +17,15 @@ type IndexAction actions.Action
 func (this *IndexAction) Run(params struct{}) {
 	config := configs.SharedMongoConfig()
 
-	this.Data["config"] = configs.MongoConnectionConfig{
-		Scheme:     config.Scheme,
-		Username:   config.Username,
-		Password:   strings.Repeat("*", len(config.Password)),
-		Host:       config.Host,
-		Port:       config.Port,
-		RequestURI: config.RequestURI,
+	this.Data["config"] = maps.Map{
+		"scheme":                  config.Scheme,
+		"username":                config.Username,
+		"password":                strings.Repeat("*", len(config.Password)),
+		"host":                    config.Host,
+		"port":                    config.Port,
+		"authMechanism":           config.AuthMechanism,
+		"authMechanismProperties": config.AuthMechanismPropertiesString(),
+		"requestURI":              config.RequestURI,
 	}
 	this.Data["uri"] = config.URIMask()
 

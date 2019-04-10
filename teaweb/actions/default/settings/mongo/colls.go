@@ -16,7 +16,7 @@ type CollsAction actions.Action
 
 // 集合列表
 func (this *CollsAction) Run(params struct{}) {
-	db := teamongo.SharedClient().Database("teaweb")
+	db := teamongo.SharedClient().Database(teamongo.DatabaseName)
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	cursor, err := db.ListCollections(ctx, maps.Map{})
 	if err != nil {

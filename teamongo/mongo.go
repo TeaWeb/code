@@ -3,6 +3,7 @@ package teamongo
 import (
 	"context"
 	"errors"
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -38,7 +39,20 @@ func SharedClient() *mongo.Client {
 			return nil
 		}
 
-		sharedClient, err = mongo.NewClient(options.Client().ApplyURI(config.URI))
+		clientOptions := options.Client().ApplyURI(config.URI)
+		sharedConfig := configs.SharedMongoConfig()
+
+		if sharedConfig != nil && len(sharedConfig.AuthMechanism) > 0 {
+			clientOptions.SetAuth(options.Credential{
+				Username:                sharedConfig.Username,
+				Password:                sharedConfig.Password,
+				AuthMechanism:           sharedConfig.AuthMechanism,
+				AuthMechanismProperties: sharedConfig.AuthMechanismPropertiesMap(),
+				AuthSource:              DatabaseName,
+			})
+		}
+
+		sharedClient, err = mongo.NewClient(clientOptions)
 		if err != nil {
 			logs.Fatal(err)
 			return nil
@@ -74,7 +88,20 @@ func NewClient() *mongo.Client {
 		return nil
 	}
 
-	client, err := mongo.NewClient(options.Client().ApplyURI(config.URI))
+	clientOptions := options.Client().ApplyURI(config.URI)
+	sharedConfig := configs.SharedMongoConfig()
+
+	if sharedConfig != nil && len(sharedConfig.AuthMechanism) > 0 {
+		clientOptions.SetAuth(options.Credential{
+			Username:                sharedConfig.Username,
+			Password:                sharedConfig.Password,
+			AuthMechanism:           sharedConfig.AuthMechanism,
+			AuthMechanismProperties: sharedConfig.AuthMechanismPropertiesMap(),
+			AuthSource:              DatabaseName,
+		})
+	}
+
+	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
 		logs.Fatal(err)
 		return nil
@@ -105,7 +132,20 @@ func Test() error {
 		return err
 	}
 
-	client, err := mongo.NewClient(options.Client().ApplyURI(config.URI))
+	clientOptions := options.Client().ApplyURI(config.URI)
+	sharedConfig := configs.SharedMongoConfig()
+
+	if sharedConfig != nil && len(sharedConfig.AuthMechanism) > 0 {
+		clientOptions.SetAuth(options.Credential{
+			Username:                sharedConfig.Username,
+			Password:                sharedConfig.Password,
+			AuthMechanism:           sharedConfig.AuthMechanism,
+			AuthMechanismProperties: sharedConfig.AuthMechanismPropertiesMap(),
+			AuthSource:              DatabaseName,
+		})
+	}
+
+	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
 		return err
 	}
@@ -116,7 +156,7 @@ func Test() error {
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), 1*time.Second)
-	_, err = client.Database("teaweb").Collection("logs").Find(ctx, map[string]interface{}{}, options.Find().SetLimit(1))
+	_, err = client.Database(DatabaseName).Collection("logs").Find(ctx, map[string]interface{}{}, options.Find().SetLimit(1))
 
 	if err == nil {
 		client.Disconnect(context.Background())

@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/topology"
 )
 
 type LogsAction actions.Action
@@ -17,7 +18,9 @@ func (this *LogsAction) Run(params struct{}) {
 		Action(tealogs.QueryActionFindAll).
 		Execute()
 	if err != nil {
-		logs.Error(err)
+		if err != topology.ErrServerSelectionTimeout {
+			logs.Error(err)
+		}
 		this.Data["logs"] = []*tealogs.AccessLog{}
 	} else {
 		this.Data["logs"] = ones

@@ -66,7 +66,7 @@ func TestFindCollection(t *testing.T) {
 }
 
 func TestCollectionStat(t *testing.T) {
-	db := SharedClient().Database("teaweb")
+	db := SharedClient().Database(DatabaseName)
 	cursor, err := db.ListCollections(context.Background(), maps.Map{})
 	if err != nil {
 		t.Fatal(err)

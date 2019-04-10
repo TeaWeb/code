@@ -137,7 +137,9 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	v := m.Get("value")
 	oldValue, err := this.findLatestAgentValue(agent.Id, appId, itemId)
 	if err != nil {
-		logs.Error(err)
+		if err != context.DeadlineExceeded {
+			logs.Error(err)
+		}
 		return
 	}
 	if oldValue == nil {
