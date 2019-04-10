@@ -172,6 +172,8 @@ if (latest.length > 0) {
 		chart.values.push([v.used, v.total - v.used]);
 		chart.labels.push(v.name + "（" + (Math.round(v.used / 1024 / 1024 / 1024 * 100) / 100)+ "G/" + (Math.round(v.total / 1024 / 1024 / 1024 * 100) / 100) +"G）");
 	});
+
+	chart.options.height = partitions.length * 4;
 }
 
 chart.colors = [ colors.BROWN, colors.GREEN ];
