@@ -105,6 +105,11 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		}
 	}
 
+	// 特殊页面
+	if len(this.pages) > 0 && this.callPage(writer, resp.StatusCode) {
+		return nil
+	}
+
 	// 忽略的Header
 	ignoreHeaders := this.convertIgnoreHeaders()
 	hasIgnoreHeaders := ignoreHeaders.Len() > 0

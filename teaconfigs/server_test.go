@@ -3,7 +3,6 @@ package teaconfigs
 import (
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/assert"
-	"github.com/iwind/TeaGo/maps"
 	"testing"
 )
 
@@ -15,7 +14,7 @@ func TestServerConfig_NextBackend(t *testing.T) {
 		Code: "random",
 	}
 
-	a.IsNil(s.NextBackend(maps.Map{}))
+	a.IsNil(s.NextBackend(nil))
 
 	s.AddBackend(&BackendConfig{
 		On:       true,
@@ -23,7 +22,7 @@ func TestServerConfig_NextBackend(t *testing.T) {
 		IsDown:   false,
 	})
 	s.Validate()
-	a.IsNotNil(s.NextBackend(maps.Map{}))
+	a.IsNotNil(s.NextBackend(nil))
 
 	// backup
 	s.Backends = []*BackendConfig{}
@@ -46,10 +45,10 @@ func TestServerConfig_NextBackend(t *testing.T) {
 	}
 	s.Validate()
 	t.Log(s.schedulingObject.Summary())
-	t.Log(s.NextBackend(maps.Map{}))
-	t.Log(s.NextBackend(maps.Map{}))
-	t.Log(s.NextBackend(maps.Map{}))
-	t.Log(s.NextBackend(maps.Map{}))
+	t.Log(s.NextBackend(nil))
+	t.Log(s.NextBackend(nil))
+	t.Log(s.NextBackend(nil))
+	t.Log(s.NextBackend(nil))
 }
 
 func TestNewServerConfigFromId(t *testing.T) {
@@ -69,4 +68,3 @@ func TestServerConfig_Encode(t *testing.T) {
 
 	t.Log(string(data))
 }
-

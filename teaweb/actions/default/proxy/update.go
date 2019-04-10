@@ -55,7 +55,11 @@ func (this *UpdateAction) RunPost(params struct {
 	GzipMinLength   float64
 	GzipMinUnit     string
 	CacheStatic     bool
-	Must            *actions.Must
+
+	PageStatus []string
+	PageURL    []string
+
+	Must *actions.Must
 }) {
 	// 加一个0表示已经被设置
 	params.AccessLogFields = append(params.AccessLogFields, 0)
@@ -85,6 +89,16 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 	server.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
 	server.CacheStatic = params.CacheStatic
+
+	server.Pages = []*teaconfigs.PageConfig{}
+	for index, status := range params.PageStatus {
+		if index < len(params.PageURL) {
+			page := teaconfigs.NewPageConfig()
+			page.Status = []string{status}
+			page.URL = params.PageURL[index]
+			server.AddPage(page)
+		}
+	}
 
 	err := server.Validate()
 	if err != nil {

@@ -21,7 +21,7 @@ type ServerConfig struct {
 	RewriteList       `yaml:",inline"`
 	BackendList       `yaml:",inline"`
 
-	On bool `yaml:"on" json:"on"` // 是否开启 @TODO
+	On bool `yaml:"on" json:"on"`
 
 	Id          string   `yaml:"id" json:"id"`                   // ID
 	Description string   `yaml:"description" json:"description"` // 描述
@@ -39,10 +39,6 @@ type ServerConfig struct {
 	MaxBodySize   string            `yaml:"maxBodySize" json:"maxBodySize"`     // 请求body最大尺寸
 	GzipLevel     uint8             `yaml:"gzipLevel" json:"gzipLevel"`         // Gzip压缩级别
 	GzipMinLength string            `yaml:"gzipMinLength" json:"gzipMinLength"` // 需要压缩的最小内容尺寸
-
-	Async   bool     `yaml:"async" json:"async"`     // 请求是否异步处理 @TODO
-	Notify  []string `yaml:"notify" json:"notify"`   // 请求转发地址 @TODO
-	LogOnly bool     `yaml:"logOnly" json:"logOnly"` // 是否只记录日志 @TODO
 
 	// 访问日志
 	DisableAccessLog bool               `yaml:"disableAccessLog" json:"disableAccessLog"` // 是否禁用访问日志
@@ -81,6 +77,9 @@ type ServerConfig struct {
 	RequestGroups          []*RequestGroup `yaml:"requestGroups" json:"requestGroups"` // 请求条件分组
 	defaultRequestGroup    *RequestGroup
 	hasRequestGroupFilters bool
+
+	// 特殊页面
+	Pages []*PageConfig `yaml:"pages" json:"pages"` // 特殊页，更高级的需求应该通过Location来设置
 
 	maxBodySize   int64
 	gzipMinLength int64
@@ -302,6 +301,14 @@ func (this *ServerConfig) Validate() error {
 		}
 		if group.HasFilters() {
 			this.hasRequestGroupFilters = true
+		}
+	}
+
+	// pages
+	for _, page := range this.Pages {
+		err := page.Validate()
+		if err != nil {
+			return err
 		}
 	}
 
@@ -727,4 +734,9 @@ func (this *ServerConfig) SetupScheduling(isBackup bool) {
 		group.SetupScheduling(isBackup)
 	}
 	this.BackendList.SetupScheduling(isBackup)
+}
+
+// 添加Page
+func (this *ServerConfig) AddPage(page *PageConfig) {
+	this.Pages = append(this.Pages, page)
 }

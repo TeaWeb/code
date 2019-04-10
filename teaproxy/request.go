@@ -75,6 +75,8 @@ type Request struct {
 	cachePolicy  *shared.CachePolicy
 	cacheEnabled bool
 
+	pages []*teaconfigs.PageConfig
+
 	api    *apiconfig.API // API
 	mockOn bool           // 是否开启了API Mock
 
@@ -189,6 +191,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 	if server.DisableStat {
 		this.enableStat = false
+	}
+	if len(server.Pages) > 0 {
+		this.pages = append(this.pages, server.Pages ...)
 	}
 	this.gzipLevel = server.GzipLevel
 	this.gzipMinLength = server.GzipMinBytes()
@@ -759,14 +764,21 @@ func (this *Request) consumeAPI(writer *ResponseWriter) bool {
 }
 
 func (this *Request) notFoundError(writer *ResponseWriter) {
+	if this.callPage(writer, http.StatusNotFound) {
+		return
+	}
+
 	msg := "404 page not found: '" + this.requestURI() + "'"
 
 	writer.WriteHeader(http.StatusNotFound)
 	writer.Write([]byte(msg))
-
 }
 
 func (this *Request) serverError(writer *ResponseWriter) {
+	if this.callPage(writer, http.StatusInternalServerError) {
+		return
+	}
+
 	statusCode := http.StatusInternalServerError
 
 	// 忽略的Header
