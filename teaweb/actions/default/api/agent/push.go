@@ -153,7 +153,18 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 
 	// 处理消息中的变量
 	message = teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(message, func(s string) string {
-		result, err := agents.EvalParam(s, v, oldValue)
+		result, err := agents.EvalParam(s, v, oldValue, maps.Map{
+			"AGENT": maps.Map{
+				"name": agent.Name,
+				"host": agent.Host,
+			},
+			"APP": maps.Map{
+				"name": app.Name,
+			},
+			"ITEM": maps.Map{
+				"name": item.Name,
+			},
+		})
 		if err != nil {
 			logs.Error(err)
 		}
