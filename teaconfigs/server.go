@@ -78,8 +78,9 @@ type ServerConfig struct {
 	defaultRequestGroup    *RequestGroup
 	hasRequestGroupFilters bool
 
-	// 特殊页面
-	Pages []*PageConfig `yaml:"pages" json:"pages"` // 特殊页，更高级的需求应该通过Location来设置
+	Pages          []*PageConfig `yaml:"pages" json:"pages"`                   // 特殊页，更高级的需求应该通过Location来设置
+	ShutdownPageOn bool          `yaml:"shutdownPageOn" json:"shutdownPageOn"` // 是否开启临时关闭页面
+	ShutdownPage   string        `yaml:"shutdownPage" json:"shutdownPage"`     // 临时关闭页面
 
 	maxBodySize   int64
 	gzipMinLength int64

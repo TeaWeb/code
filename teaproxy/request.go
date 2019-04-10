@@ -75,7 +75,9 @@ type Request struct {
 	cachePolicy  *shared.CachePolicy
 	cacheEnabled bool
 
-	pages []*teaconfigs.PageConfig
+	pages          []*teaconfigs.PageConfig
+	shutdownPageOn bool
+	shutdownPage   string
 
 	api    *apiconfig.API // API
 	mockOn bool           // 是否开启了API Mock
@@ -194,6 +196,10 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 	if len(server.Pages) > 0 {
 		this.pages = append(this.pages, server.Pages ...)
+	}
+	if server.ShutdownPageOn {
+		this.shutdownPageOn = true
+		this.shutdownPage = server.ShutdownPage
 	}
 	this.gzipLevel = server.GzipLevel
 	this.gzipMinLength = server.GzipMinBytes()
@@ -649,6 +655,11 @@ func (this *Request) call(writer *ResponseWriter) error {
 
 	this.responseWriter = writer
 
+	// 临时关闭页面
+	if this.shutdownPageOn {
+		return this.callShutdown(writer)
+	}
+
 	// hook
 	b := CallRequestBeforeHook(this, writer)
 	if !b {
@@ -797,7 +808,6 @@ func (this *Request) serverError(writer *ResponseWriter) {
 
 	writer.WriteHeader(statusCode)
 	writer.Write([]byte(http.StatusText(statusCode)))
-
 }
 
 func (this *Request) requestRemoteAddr() string {

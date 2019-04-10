@@ -59,6 +59,9 @@ func (this *UpdateAction) RunPost(params struct {
 	PageStatus []string
 	PageURL    []string
 
+	ShutdownPageOn bool
+	ShutdownPage   string
+
 	Must *actions.Must
 }) {
 	// 加一个0表示已经被设置
@@ -99,6 +102,12 @@ func (this *UpdateAction) RunPost(params struct {
 			server.AddPage(page)
 		}
 	}
+
+	server.ShutdownPageOn = params.ShutdownPageOn
+	if server.ShutdownPageOn && len(params.ShutdownPage) == 0 {
+		this.FailField("shutdownPage", "请输入临时关闭页面文件路径")
+	}
+	server.ShutdownPage = params.ShutdownPage
 
 	err := server.Validate()
 	if err != nil {
