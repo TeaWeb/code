@@ -166,7 +166,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 			"ITEM": maps.Map{
 				"name": item.Name,
 			},
-		})
+		}, false)
 		if err != nil {
 			logs.Error(err)
 		}

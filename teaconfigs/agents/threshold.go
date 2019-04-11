@@ -51,11 +51,15 @@ func (this *Threshold) Validate() error {
 			return err
 		}
 		this.regValue = reg
-	} else if this.Operator == ThresholdOperatorGt || this.Operator == ThresholdOperatorGte || this.Operator == ThresholdOperatorLt || this.Operator == ThresholdOperatorLte {
+	} else if this.Operator == ThresholdOperatorGt ||
+		this.Operator == ThresholdOperatorGte ||
+		this.Operator == ThresholdOperatorLt ||
+		this.Operator == ThresholdOperatorLte ||
+		this.Operator == ThresholdOperatorNumberEq {
 		this.floatValue = types.Float64(this.Value)
 		this.supportsMath = true
 	} else if this.Operator == ThresholdOperatorEq {
-		this.supportsMath = true
+		this.supportsMath = true // 为了兼容以前版本的此处必须为true
 	}
 
 	// 检查参数值
@@ -152,6 +156,8 @@ func (this *Threshold) testParam(param string, shouldLoop bool, value interface{
 		return types.Float64(paramValue) <= this.floatValue, nil
 	case ThresholdOperatorEq:
 		return paramValue == this.Value, nil
+	case ThresholdOperatorNumberEq:
+		return types.Float64(paramValue) == this.floatValue, nil
 	case ThresholdOperatorNot:
 		return paramValue != this.Value, nil
 	case ThresholdOperatorPrefix:

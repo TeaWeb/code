@@ -15,6 +15,7 @@ const (
 	ThresholdOperatorLt          = "lt"
 	ThresholdOperatorLte         = "lte"
 	ThresholdOperatorEq          = "eq"
+	ThresholdOperatorNumberEq    = "number eq"
 	ThresholdOperatorNot         = "not"
 	ThresholdOperatorPrefix      = "prefix"
 	ThresholdOperatorSuffix      = "suffix"
@@ -36,9 +37,14 @@ func AllThresholdOperators() []maps.Map {
 			"description": "判断参数值是否不匹配正则表达式",
 		},
 		{
-			"name":        "等于",
+			"name":        "字符串等于",
 			"op":          ThresholdOperatorEq,
 			"description": "使用字符串对比参数值是否相等于某个值",
+		},
+		{
+			"name":        "数字等于",
+			"op":          ThresholdOperatorNumberEq,
+			"description": "使用数字对比参数值是否相等于某个值",
 		},
 		{
 			"name":        "不等于",

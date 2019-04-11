@@ -54,6 +54,16 @@ func TestThreshold_Test(t *testing.T) {
 		},
 	}, nil))
 
+	threshold.Param = "${data.version1}"
+	threshold.Operator = ThresholdOperatorNumberEq
+	threshold.Value = "0"
+	threshold.Validate()
+	t.Log(threshold.Test(map[string]interface{}{
+		"data": maps.Map{
+			"version": "1.25",
+		},
+	}, nil))
+
 	threshold.Param = "${data.hello.world.0}"
 	threshold.Operator = ThresholdOperatorEq
 	threshold.Value = "1"

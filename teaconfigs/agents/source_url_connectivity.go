@@ -45,7 +45,9 @@ func (this *URLConnectivitySource) Description() string {
 func (this *URLConnectivitySource) Execute(params map[string]string) (value interface{}, err error) {
 	if len(this.URL) == 0 {
 		err = errors.New("'url' should not be empty")
-		return
+		return maps.Map{
+			"status": 0,
+		}, err
 	}
 
 	method := this.Method
@@ -76,13 +78,17 @@ func (this *URLConnectivitySource) Execute(params map[string]string) (value inte
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return maps.Map{
+			"status": 0,
+		}, err
 	}
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return maps.Map{
+			"status": 0,
+		}, err
 	}
 
 	if len(data) > 1024 {
