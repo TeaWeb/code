@@ -10,6 +10,8 @@ import (
 
 // 内存缓存管理器
 type RedisManager struct {
+	Manager
+
 	Capacity float64       // 容量
 	Life     time.Duration // 有效期
 
@@ -66,12 +68,12 @@ func (this *RedisManager) SetOptions(options map[string]interface{}) {
 }
 
 func (this *RedisManager) Write(key string, data []byte) error {
-	cmd := this.client.Set("TEA_CACHE_"+key, string(data), this.Life)
+	cmd := this.client.Set("TEA_CACHE_"+this.id+key, string(data), this.Life)
 	return cmd.Err()
 }
 
 func (this *RedisManager) Read(key string) (data []byte, err error) {
-	cmd := this.client.Get("TEA_CACHE_" + key)
+	cmd := this.client.Get("TEA_CACHE_" + this.id + key)
 	if cmd.Err() != nil {
 		if cmd.Err() == redis.Nil {
 			return nil, ErrNotFound
@@ -82,9 +84,28 @@ func (this *RedisManager) Read(key string) (data []byte, err error) {
 	return []byte(cmd.Val()), nil
 }
 
+// 统计
+func (this *RedisManager) Stat() (size int64, countKeys int, err error) {
+	scan := this.client.Scan(0, "TEA_CACHE_"+this.Id()+"*", 100000)
+	if scan == nil {
+		return
+	}
+	it := scan.Iterator()
+	for it.Next() {
+		key := it.Val()
+		b, err := this.client.Get(key).Bytes()
+		if err != nil {
+			continue
+		}
+		countKeys ++
+		size += int64(len(b))
+	}
+	return
+}
+
 func (this *RedisManager) Close() error {
 	if this.client != nil {
-		logs.Println("[cache]close cache policy instance: redis")
+		//logs.Println("[cache]close cache policy instance: redis")
 
 		err := this.client.Close()
 		this.client = nil

@@ -27,6 +27,14 @@ func TestLevelDBManager_Read(t *testing.T) {
 	t.Log(string(data))
 }
 
+func TestLevelDBManager_Stat(t *testing.T) {
+	m := NewLevelDBManager()
+	m.SetOptions(map[string]interface{}{
+		"dir": "cache",
+	})
+	t.Log(m.Stat())
+}
+
 func TestLevelDBManager_CleanExpired(t *testing.T) {
 	m := NewLevelDBManager()
 	m.SetOptions(map[string]interface{}{

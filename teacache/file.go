@@ -9,12 +9,17 @@ import (
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
 
 // 文件缓存管理器
 type FileManager struct {
+	Manager
+
 	Capacity float64       // 容量
 	Life     time.Duration // 有效期
 
@@ -140,11 +145,32 @@ func (this *FileManager) Read(key string) (data []byte, err error) {
 	return data[12:], nil
 }
 
+// 统计
+func (this *FileManager) Stat() (size int64, countKeys int, err error) {
+	filepath.Walk(this.dir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(info.Name(), ".cache") {
+			return nil
+		}
+		size += info.Size()
+		countKeys ++
+
+		return nil
+	})
+
+	return
+}
+
 func (this *FileManager) Close() error {
-	logs.Println("[cache]close cache policy instance: file")
+	//logs.Println("[cache]close cache policy instance: file")
 	if this.looper != nil {
 		this.looper.Stop()
 		this.looper = nil
 	}
+
+	// TODO 删除所有文件和目录
+
 	return nil
 }

@@ -2,13 +2,13 @@ package teacache
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
-	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 	"path/filepath"
@@ -17,6 +17,8 @@ import (
 
 // Leveldb缓存管理器
 type LevelDBManager struct {
+	Manager
+
 	Capacity float64       // 容量
 	Life     time.Duration // 有效期
 
@@ -123,7 +125,21 @@ func (this *LevelDBManager) CleanExpired() error {
 			continue
 		}
 	}
+	it.Release()
 	return nil
+}
+
+// 统计
+func (this *LevelDBManager) Stat() (size int64, countKeys int, err error) {
+	it := this.db.NewIterator(util.BytesPrefix([]byte("KEY")), nil)
+	for it.Next() {
+		data := it.Value()
+		countKeys ++
+		size += int64(len(data))
+	}
+	it.Release()
+
+	return
 }
 
 func (this *LevelDBManager) Close() error {
@@ -133,7 +149,7 @@ func (this *LevelDBManager) Close() error {
 	}
 	if this.db != nil {
 		err := this.db.Close()
-		logs.Println("[cache]close cache policy instance: leveldb")
+		//logs.Println("[cache]close cache policy instance: leveldb")
 
 		this.db = nil
 		return err

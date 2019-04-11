@@ -63,3 +63,9 @@ func TestFileManagerConcurrent(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestFileManager_Stat(t *testing.T) {
+	m := NewFileManager()
+	m.dir = Tea.Root + "/./cache"
+	t.Log(m.Stat())
+}
