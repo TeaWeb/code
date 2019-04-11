@@ -9,12 +9,9 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"io"
 	"net/http"
-	"sync"
 )
 
-var cachePolicyMap = map[*shared.CachePolicy]ManagerInterface{}
-var cachePolicyMapLocker = sync.RWMutex{}
-
+// 请求之前处理
 func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter) bool {
 	cacheConfig := req.CachePolicy()
 	if cacheConfig == nil || !cacheConfig.On {
@@ -22,15 +19,20 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 	}
 
 	cachePolicyMapLocker.RLock()
-	cache, found := cachePolicyMap[cacheConfig]
+	cache, found := cachePolicyMap[cacheConfig.Filename]
 	cachePolicyMapLocker.RUnlock()
 	if !found {
+		cacheConfig = shared.NewCachePolicyFromFile(cacheConfig.Filename)
+		if cacheConfig == nil {
+			return true
+		}
 		cache = NewManagerFromConfig(cacheConfig)
 		if cache == nil {
 			return true
 		}
+		logs.Println("[cache]create cache policy instance:", cacheConfig.Name+"("+cacheConfig.Type+")")
 		cachePolicyMapLocker.Lock()
-		cachePolicyMap[cacheConfig] = cache
+		cachePolicyMap[cacheConfig.Filename] = cache
 		cachePolicyMapLocker.Unlock()
 	}
 
@@ -74,6 +76,7 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 	return false
 }
 
+// 请求之后处理
 func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter) bool {
 	if !req.IsCacheEnabled() {
 		return true
@@ -96,7 +99,7 @@ func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter)
 	}
 
 	cachePolicyMapLocker.RLock()
-	cache, found := cachePolicyMap[cacheConfig]
+	cache, found := cachePolicyMap[cacheConfig.Filename]
 	cachePolicyMapLocker.RUnlock()
 	if !found {
 		return true

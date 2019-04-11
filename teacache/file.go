@@ -18,6 +18,7 @@ type FileManager struct {
 	Capacity float64       // 容量
 	Life     time.Duration // 有效期
 
+	looper      *timers.Looper
 	dir         string
 	writeLocker sync.RWMutex
 }
@@ -26,7 +27,7 @@ func NewFileManager() *FileManager {
 	manager := &FileManager{}
 
 	// 删除过期
-	timers.Loop(10*time.Minute, func(looper *timers.Looper) {
+	manager.looper = timers.Loop(30*time.Minute, func(looper *timers.Looper) {
 		if len(manager.dir) == 0 {
 			return
 		}
@@ -71,6 +72,10 @@ func NewFileManager() *FileManager {
 }
 
 func (this *FileManager) SetOptions(options map[string]interface{}) {
+	if this.Life <= 0 {
+		this.Life = 1800 * time.Second
+	}
+
 	dir, found := options["dir"]
 	if found {
 		this.dir = types.String(dir)
@@ -133,4 +138,13 @@ func (this *FileManager) Read(key string) (data []byte, err error) {
 		return nil, ErrNotFound
 	}
 	return data[12:], nil
+}
+
+func (this *FileManager) Close() error {
+	logs.Println("[cache]close cache policy instance: file")
+	if this.looper != nil {
+		this.looper.Stop()
+		this.looper = nil
+	}
+	return nil
 }

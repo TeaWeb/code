@@ -1,8 +1,8 @@
 package teacache
 
 import (
-	"errors"
 	"github.com/iwind/TeaGo/caches"
+	"github.com/iwind/TeaGo/logs"
 	"sync"
 	"time"
 )
@@ -31,17 +31,21 @@ func NewMemoryManager() *MemoryManager {
 		}
 	})
 	m.cache = factory
+
 	return m
 }
 
 func (this *MemoryManager) SetOptions(options map[string]interface{}) {
-
+	if this.Life <= 0 {
+		this.Life = 1800 * time.Second
+	}
 }
 
 func (this *MemoryManager) Write(key string, data []byte) error {
 	// 检查容量
 	if this.Capacity > 0 && this.memory+float64(len(data)) >= this.Capacity {
-		return errors.New("out of memory")
+		this.memory = 0
+		this.cache.Reset()
 	}
 
 	this.cache.Set(key, data).Expire(this.Life)
@@ -54,4 +58,13 @@ func (this *MemoryManager) Read(key string) (data []byte, err error) {
 		return nil, ErrNotFound
 	}
 	return value.([]byte), nil
+}
+
+func (this *MemoryManager) Close() error {
+	if this.cache == nil {
+		return nil
+	}
+	logs.Println("[cache]close cache policy instance: memory")
+	this.cache.Close()
+	return nil
 }

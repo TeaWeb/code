@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
@@ -77,6 +78,9 @@ func (this *DeletePolicyAction) Run(params struct {
 	if isChanged {
 		proxyutils.NotifyChange()
 	}
+
+	// 重置缓存策略实例
+	teacache.ResetCachePolicyManager(policy.Filename)
 
 	this.Success()
 }

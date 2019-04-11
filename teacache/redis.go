@@ -3,6 +3,7 @@ package teacache
 import (
 	"fmt"
 	"github.com/go-redis/redis"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"time"
 )
@@ -27,6 +28,10 @@ func NewRedisManager() *RedisManager {
 }
 
 func (this *RedisManager) SetOptions(options map[string]interface{}) {
+	if this.Life <= 0 {
+		this.Life = 1800 * time.Second
+	}
+
 	m := maps.NewMap(options)
 	this.Network = m.GetString("network")
 	this.Host = m.GetString("host")
@@ -43,6 +48,10 @@ func (this *RedisManager) SetOptions(options map[string]interface{}) {
 		}
 	} else if this.Network == "sock" {
 		addr = this.Sock
+	}
+
+	if this.client != nil {
+		this.client.Close()
 	}
 
 	this.client = redis.NewClient(&redis.Options{
@@ -64,7 +73,24 @@ func (this *RedisManager) Write(key string, data []byte) error {
 func (this *RedisManager) Read(key string) (data []byte, err error) {
 	cmd := this.client.Get("TEA_CACHE_" + key)
 	if cmd.Err() != nil {
+		if cmd.Err() == redis.Nil {
+			return nil, ErrNotFound
+		}
+		logs.Printf("%#v", cmd.Err())
 		return nil, cmd.Err()
 	}
 	return []byte(cmd.Val()), nil
+}
+
+func (this *RedisManager) Close() error {
+	if this.client != nil {
+		logs.Println("[cache]close cache policy instance: redis")
+
+		err := this.client.Close()
+		this.client = nil
+
+		return err
+	}
+
+	return nil
 }

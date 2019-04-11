@@ -18,6 +18,7 @@ func (this *CreatePolicyAction) Run(params struct{}) {
 	this.Show()
 }
 
+// 保存提交
 func (this *CreatePolicyAction) RunPost(params struct {
 	Name string
 	Key  string
@@ -30,6 +31,16 @@ func (this *CreatePolicyAction) RunPost(params struct {
 	StatusList   []int
 	MaxSize      float64
 	MaxSizeUnit  string
+
+	FileDir string
+
+	RedisNetwork  string
+	RedisHost     string
+	RedisPort     int
+	RedisSock     string
+	RedisPassword string
+
+	LeveldbDir string
 
 	Must *actions.Must
 }) {
@@ -58,17 +69,33 @@ func (this *CreatePolicyAction) RunPost(params struct {
 	policy.Status = params.StatusList
 
 	// 选项
-	if policy.Type == "file" {
+	switch policy.Type {
+	case "file":
+		params.Must.
+			Field("fileDir", params.FileDir).
+			Require("请输入缓存存放目录")
 		policy.Options = map[string]interface{}{
-			"dir": this.ParamString("options_dir"),
+			"dir": params.FileDir,
 		}
-	} else if policy.Type == "redis" {
+	case "redis":
+		params.Must.
+			Field("redisNetwork", params.RedisNetwork).
+			Require("请选择Redis连接协议").
+			Field("redisHost", params.RedisHost).
+			Require("请输入Redis服务器地址")
 		policy.Options = map[string]interface{}{
-			"network":  this.ParamString("options_network"),
-			"host":     this.ParamString("options_host"),
-			"port":     this.ParamString("options_port"),
-			"password": this.ParamString("options_password"),
-			"sock":     this.ParamString("options_sock"),
+			"network":  params.RedisNetwork,
+			"host":     params.RedisHost,
+			"port":     params.RedisPort,
+			"password": params.RedisPassword,
+			"sock":     params.RedisSock,
+		}
+	case "leveldb":
+		params.Must.
+			Field("leveldbDir", params.LeveldbDir).
+			Require("请输入数据库存放目录")
+		policy.Options = map[string]interface{}{
+			"dir": params.LeveldbDir,
 		}
 	}
 

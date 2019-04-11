@@ -19,6 +19,9 @@ type ManagerInterface interface {
 
 	// 设置选项
 	SetOptions(options map[string]interface{})
+
+	// 关闭
+	Close() error
 }
 
 // 获取新的管理对象
@@ -41,6 +44,13 @@ func NewManagerFromConfig(config *shared.CachePolicy) ManagerInterface {
 		m.Life, _ = time.ParseDuration(config.Life)
 		m.Capacity, _ = stringutil.ParseFileSize(config.Capacity)
 		m.SetOptions(config.Options)
+		return m
+	case "leveldb":
+		m := NewLevelDBManager()
+		m.Life, _ = time.ParseDuration(config.Life)
+		m.Capacity, _ = stringutil.ParseFileSize(config.Capacity)
+		m.SetOptions(config.Options)
+		return m
 	}
 	return nil
 }

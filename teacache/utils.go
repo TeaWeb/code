@@ -17,6 +17,10 @@ func AllCacheTypes() []maps.Map {
 			"name": "Redis",
 			"type": "redis",
 		},
+		{
+			"name": "LevelDB",
+			"type": "leveldb",
+		},
 	}
 }
 
