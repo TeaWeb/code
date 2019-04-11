@@ -14,6 +14,23 @@ func TestThreshold_Test(t *testing.T) {
 	threshold.Validate()
 	t.Log(threshold.Test("123", nil))
 
+	// v0.1.1之前的Bug，内容中不能含有\n
+	{
+		threshold = NewThreshold()
+		threshold.Param = `${0}.replace("\n", "")`
+		threshold.Operator = ThresholdOperatorContains
+		threshold.Value = "qy-api"
+		threshold.supportsMath = true
+		t.Log(threshold.Test(`"31399 qy-api\n5409"`, nil))
+
+		threshold = NewThreshold()
+		threshold.Param = `${0}`
+		threshold.Operator = ThresholdOperatorContains
+		threshold.Value = `qy-api\n5409`
+		threshold.Validate()
+		t.Log(threshold.Test(`"31399 qy-api\n5409"`, nil))
+	}
+
 	threshold.Param = "${1}"
 	threshold.Operator = ThresholdOperatorGt
 	threshold.Validate()
@@ -50,6 +67,7 @@ func TestThreshold_Test(t *testing.T) {
 	}, nil))
 }
 
+// 测试修改
 func TestThreshold_Test2(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${changes}"
@@ -64,9 +82,12 @@ func TestThreshold_Test2(t *testing.T) {
 	}, nil))
 }
 
+// 测试多级获取数据
 func TestThreshold_Eval(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${data.hello.world.0} * 100 / ${data.hello.world.1}"
+	threshold.Operator = ThresholdOperatorEq
+	threshold.Validate()
 	t.Log(threshold.Eval(map[string]interface{}{
 		"data": maps.Map{
 			"version": "1.0.25",
@@ -88,12 +109,14 @@ func TestThreshold_Array(t *testing.T) {
 				},
 			},
 		},
-	}, nil))
+	}, nil, nil, true))
 }
 
 func TestThreshold_Eval_Date(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "new Date().getTime() / 1000 - ${timestamp}"
+	threshold.Operator = ThresholdOperatorGt
+	threshold.Validate()
 	t.Log(threshold.Eval(map[string]interface{}{
 		"timestamp": time.Now().Unix() - 10,
 	}, nil))
@@ -170,6 +193,8 @@ func TestThreshold_EVAL_Dollar3(t *testing.T) {
 func TestThreshold_Old(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${rows} - ${OLD.rows234}"
+	threshold.Operator = ThresholdOperatorEq
+	threshold.Validate()
 	t.Log(threshold.Eval(map[string]interface{}{
 		"rows": 1,
 	}, map[string]interface{}{
@@ -182,6 +207,7 @@ func TestThreshold_Old2(t *testing.T) {
 	threshold.Param = "Math.abs(${0} - ${OLD})"
 	threshold.Operator = ThresholdOperatorEq
 	threshold.Value = "333"
+	threshold.Validate()
 	t.Log(threshold.Test(123, 456, ))
 }
 

@@ -12,7 +12,7 @@ import (
 )
 
 // 使用某个参数执行数值运算，使用Javascript语法
-func EvalParam(param string, value interface{}, old interface{}, varMapping ...maps.Map) (string, error) {
+func EvalParam(param string, value interface{}, old interface{}, varMapping maps.Map, supportsMath bool) (string, error) {
 	if old == nil {
 		old = value
 	}
@@ -21,10 +21,14 @@ func EvalParam(param string, value interface{}, old interface{}, varMapping ...m
 		varName := s[2 : len(s)-1]
 
 		// 从varMapping中查找
-		if len(varMapping) > 0 {
-			firstKey := varName[:strings.Index(varName, ".")]
-			if varMapping[0].Has(firstKey) {
-				result := teautils.Get(varMapping[0], strings.Split(varName, "."))
+		if varMapping != nil {
+			index := strings.Index(varName, ".")
+			var firstKey = varName
+			if index > 0 {
+				firstKey = varName[:index]
+			}
+			if varMapping.Has(firstKey) {
+				result := teautils.Get(varMapping, strings.Split(varName, "."))
 				if result == nil {
 					return ""
 				}
@@ -38,13 +42,13 @@ func EvalParam(param string, value interface{}, old interface{}, varMapping ...m
 
 		// 支持${OLD}和${OLD.xxx}
 		if varName == "OLD" {
-			result, err := EvalParam("${0}", old, nil)
+			result, err := EvalParam("${0}", old, nil, nil, supportsMath)
 			if err != nil {
 				resultErr = err
 			}
 			return result
 		} else if strings.HasPrefix(varName, "OLD.") {
-			result, err := EvalParam("${"+varName[4:]+"}", old, nil)
+			result, err := EvalParam("${"+varName[4:]+"}", old, nil, nil, supportsMath)
 			if err != nil {
 				resultErr = err
 			}
@@ -89,7 +93,7 @@ func EvalParam(param string, value interface{}, old interface{}, varMapping ...m
 
 	// 支持加、减、乘、除、余
 	if len(paramValue) > 0 {
-		if strings.ContainsAny(paramValue, "+-*/%") {
+		if supportsMath && strings.ContainsAny(paramValue, "+-*/%") {
 			vm := otto.New()
 			v, err := vm.Run(paramValue)
 			if err != nil {

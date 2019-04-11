@@ -27,8 +27,9 @@ type Threshold struct {
 	Actions       []map[string]interface{} `yaml:"actions" json:"actions"`             // 动作配置
 	MaxFails      int                      `yaml:"maxFails" json:"maxFails"`           // 连续失败次数
 
-	regValue   *regexp.Regexp
-	floatValue float64
+	regValue     *regexp.Regexp
+	floatValue   float64
+	supportsMath bool
 
 	shouldLoop bool   // 是否应该循环测试，如果包含名为$（dollar符号）的变量，则表示是循环测试
 	loopVar    string // 要循环的变量
@@ -43,6 +44,7 @@ func NewThreshold() *Threshold {
 
 // 校验
 func (this *Threshold) Validate() error {
+	this.supportsMath = false
 	if this.Operator == ThresholdOperatorRegexp || this.Operator == ThresholdOperatorNotRegexp {
 		reg, err := regexp.Compile(this.Value)
 		if err != nil {
@@ -51,6 +53,9 @@ func (this *Threshold) Validate() error {
 		this.regValue = reg
 	} else if this.Operator == ThresholdOperatorGt || this.Operator == ThresholdOperatorGte || this.Operator == ThresholdOperatorLt || this.Operator == ThresholdOperatorLte {
 		this.floatValue = types.Float64(this.Value)
+		this.supportsMath = true
+	} else if this.Operator == ThresholdOperatorEq {
+		this.supportsMath = true
 	}
 
 	// 检查参数值
@@ -121,7 +126,7 @@ func (this *Threshold) testParam(param string, shouldLoop bool, value interface{
 		return false, nil
 	}
 
-	paramValue, err := EvalParam(param, value, oldValue)
+	paramValue, err := EvalParam(param, value, oldValue, nil, this.supportsMath)
 	if err != nil {
 		return false, err
 	}
@@ -163,7 +168,7 @@ func (this *Threshold) testParam(param string, shouldLoop bool, value interface{
 
 // 执行数值运算，使用Javascript语法
 func (this *Threshold) Eval(value interface{}, old interface{}) (string, error) {
-	return EvalParam(this.Param, value, old)
+	return EvalParam(this.Param, value, old, nil, this.supportsMath)
 }
 
 // 执行动作
