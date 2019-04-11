@@ -93,7 +93,7 @@ func EvalParam(param string, value interface{}, old interface{}, varMapping maps
 
 	// 支持加、减、乘、除、余
 	if len(paramValue) > 0 {
-		if supportsMath && strings.ContainsAny(paramValue, "+-*/%") {
+		if supportsMath && strings.ContainsAny(param, "+-*/%") {
 			vm := otto.New()
 			v, err := vm.Run(paramValue)
 			if err != nil {

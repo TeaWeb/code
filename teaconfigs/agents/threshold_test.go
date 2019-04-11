@@ -26,6 +26,13 @@ func TestThreshold_Test(t *testing.T) {
 		threshold = NewThreshold()
 		threshold.Param = `${0}`
 		threshold.Operator = ThresholdOperatorContains
+		threshold.Value = "qy-api"
+		threshold.supportsMath = true
+		t.Log(threshold.Test(`"31399 qy-api\n5409"`, nil))
+
+		threshold = NewThreshold()
+		threshold.Param = `${0}`
+		threshold.Operator = ThresholdOperatorContains
 		threshold.Value = `qy-api\n5409`
 		threshold.Validate()
 		t.Log(threshold.Test(`"31399 qy-api\n5409"`, nil))

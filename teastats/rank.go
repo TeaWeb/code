@@ -208,6 +208,7 @@ func (this *Rank) Load(db *leveldb.DB, prefix string) {
 		this.buffer[k] = v
 		i ++
 	}
+	it.Release()
 	this.isLoading = false
 }
 
