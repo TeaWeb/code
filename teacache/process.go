@@ -63,8 +63,14 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 			writer.Header().Add(k, v)
 		}
 	}
-	io.Copy(writer, resp.Body)
+	_, err = io.Copy(writer, resp.Body)
+	if err != nil {
+		logs.Error(err)
+	}
 
+	req.SetAttr("cache.cached", "1")
+	req.SetAttr("cache.policy.name", cacheConfig.Name)
+	req.SetAttr("cache.policy.type", cacheConfig.Type)
 	return false
 }
 

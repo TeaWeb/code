@@ -47,7 +47,7 @@ func TestFileManagerConcurrent(t *testing.T) {
 		go func(i int) {
 			_, err := m.Read("123456")
 			if err != nil {
-				// logs.Println(err)
+				//logs.Println(err)
 			} else {
 				logs.Println("read success")
 			}

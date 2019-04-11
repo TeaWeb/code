@@ -80,6 +80,7 @@ type AccessLog struct {
 
 	// 扩展
 	Extend *AccessLogExtend `bson:"extend" json:"extend"`
+	Attrs  map[string]string
 
 	// 格式化的正则表达式
 	formatReg     *regexp.Regexp

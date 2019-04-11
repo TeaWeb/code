@@ -11,8 +11,9 @@ import (
 // 缓存策略配置
 type CachePolicy struct {
 	Filename string `yaml:"filename" json:"filename"` // 文件名
-	On       bool   `yaml:"on" json:"on"`             // 是否开启 TODO
-	Name     string `yaml:"name" json:"name"`         // 名称
+	Id       string `yaml:"id" json:"id"`
+	On       bool   `yaml:"on" json:"on"`     // 是否开启 TODO
+	Name     string `yaml:"name" json:"name"` // 名称
 
 	Key      string `yaml:"key" json:"key"`           // 每个缓存的Key规则，里面可以有变量
 	Capacity string `yaml:"capacity" json:"capacity"` // 最大内容容量
@@ -82,7 +83,8 @@ func (this *CachePolicy) LifeDuration() time.Duration {
 // 保存
 func (this *CachePolicy) Save() error {
 	if len(this.Filename) == 0 {
-		this.Filename = "cache.policy." + stringutil.Rand(16) + ".conf"
+		this.Id = stringutil.Rand(16)
+		this.Filename = "cache.policy." + this.Id + ".conf"
 	}
 	writer, err := files.NewWriter(Tea.ConfigFile(this.Filename))
 	if err != nil {

@@ -162,5 +162,9 @@ func Test() error {
 		client.Disconnect(context.Background())
 	}
 
+	if err == context.DeadlineExceeded {
+		err = errors.New("connection timeout")
+	}
+
 	return err
 }

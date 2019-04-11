@@ -48,6 +48,8 @@ type Request struct {
 	raw    *http.Request
 	server *teaconfigs.ServerConfig
 
+	attrs map[string]string // 附加参数
+
 	scheme        string
 	rawScheme     string // 原始的scheme
 	uri           string
@@ -124,6 +126,7 @@ func NewRequest(rawRequest *http.Request) *Request {
 		requestFromTime: now,
 		enableAccessLog: true,
 		enableStat:      true,
+		attrs:           map[string]string{},
 	}
 
 	backendCall := shared.NewRequestCall()
@@ -1143,6 +1146,11 @@ func (this *Request) Format(source string) string {
 	})
 }
 
+// 设置属性
+func (this *Request) SetAttr(key string, value string) {
+	this.attrs[key] = value
+}
+
 // 格式化一组字符串
 func (this *Request) formatAll(sources []string) []string {
 	result := []string{}
@@ -1202,6 +1210,7 @@ func (this *Request) log() {
 		Errors:          this.errors,
 		HasErrors:       len(this.errors) > 0,
 		Extend:          &tealogs.AccessLogExtend{},
+		Attrs:           this.attrs,
 	}
 
 	// 日志和统计

@@ -3,6 +3,7 @@ package cache
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 )
@@ -22,6 +23,45 @@ func (this *DeletePolicyAction) Run(params struct {
 		this.Fail("找不到要删除的缓存策略")
 	}
 
+	// 删除Server和Location中的cache
+	isChanged := false
+	serverList, _ := teaconfigs.SharedServerList()
+	if serverList != nil {
+		for _, server := range serverList.FindAllServers() {
+			// 删除server中的缓存策略
+			if server.CachePolicy == params.Filename {
+				isChanged = true
+				server.CachePolicy = ""
+
+				for _, location := range server.Locations { // 删除Location中的缓存策略
+					if location.CachePolicy == params.Filename {
+						location.CachePolicy = ""
+					}
+				}
+
+				err := server.Save()
+				if err != nil {
+					this.Fail("删除失败：" + err.Error())
+				}
+			} else { // 删除Location中的缓存策略
+				serverChanged := false
+				for _, location := range server.Locations {
+					if location.CachePolicy == params.Filename {
+						location.CachePolicy = ""
+						isChanged = true
+						serverChanged = true
+					}
+				}
+				if serverChanged {
+					err := server.Save()
+					if err != nil {
+						this.Fail("删除失败：" + err.Error())
+					}
+				}
+			}
+		}
+	}
+
 	config, _ := teaconfigs.SharedCacheConfig()
 	config.DeletePolicy(params.Filename)
 	err := config.Save()
@@ -32,6 +72,10 @@ func (this *DeletePolicyAction) Run(params struct {
 	err = policy.Delete()
 	if err != nil {
 		logs.Error(err)
+	}
+
+	if isChanged {
+		proxyutils.NotifyChange()
 	}
 
 	this.Success()

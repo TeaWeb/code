@@ -18,14 +18,12 @@ type FileManager struct {
 	Capacity float64       // 容量
 	Life     time.Duration // 有效期
 
-	dir          string
-	writingFiles map[string]bool // file path => true
-	writeLocker  sync.Mutex
+	dir         string
+	writeLocker sync.RWMutex
 }
 
 func NewFileManager() *FileManager {
 	manager := &FileManager{}
-	manager.writingFiles = map[string]bool{}
 
 	// 删除过期
 	timers.Loop(10*time.Minute, func(looper *timers.Looper) {
@@ -50,9 +48,13 @@ func NewFileManager() *FileManager {
 						logs.Error(err)
 						continue
 					}
-					timestamp := types.Int64(string(reader.Read(12)))
+					data := reader.Read(12)
+					if len(data) != 12 {
+						continue
+					}
+					timestamp := types.Int64(string(data))
 					reader.Close()
-					if timestamp < time.Now().Unix() {
+					if timestamp < time.Now().Unix()-100 { // 超时100秒以上的
 						err := file.Delete()
 						if err != nil {
 							logs.Error(err)
@@ -80,6 +82,9 @@ func (this *FileManager) Write(key string, data []byte) error {
 		return errors.New("cache dir should not be empty")
 	}
 
+	this.writeLocker.Lock()
+	defer this.writeLocker.Unlock()
+
 	dirFile := files.NewFile(this.dir)
 	if !dirFile.IsDir() {
 		return errors.New("cache dir should be a valid dir")
@@ -95,13 +100,6 @@ func (this *FileManager) Write(key string, data []byte) error {
 	}
 
 	newFile := files.NewFile(newDir.Path() + Tea.DS + md5 + ".cache")
-	if this.isLocking(newFile) {
-		return errors.New("file is locking")
-	}
-
-	this.writeLocker.Lock()
-	this.writingFiles[newFile.Path()] = true
-	this.writeLocker.Unlock()
 
 	// 头部加入有效期
 	var life = int64(this.Life.Seconds())
@@ -113,19 +111,16 @@ func (this *FileManager) Write(key string, data []byte) error {
 	data = append([]byte(fmt.Sprintf("%012d", time.Now().Unix()+life)), data ...)
 	err := newFile.Write(data)
 
-	// 解除锁定
-	this.writeLocker.Lock()
-	defer this.writeLocker.Unlock()
-	delete(this.writingFiles, newFile.Path())
 	return err
 }
 
 func (this *FileManager) Read(key string) (data []byte, err error) {
 	md5 := stringutil.Md5(key)
 	file := files.NewFile(this.dir + Tea.DS + md5[:2] + Tea.DS + md5[2:4] + Tea.DS + md5 + ".cache")
-	if this.isLocking(file) {
-		return nil, errors.New("file is locking")
-	}
+
+	this.writeLocker.RLock()
+	defer this.writeLocker.RUnlock()
+
 	if !file.Exists() {
 		return nil, ErrNotFound
 	}
@@ -138,13 +133,4 @@ func (this *FileManager) Read(key string) (data []byte, err error) {
 		return nil, ErrNotFound
 	}
 	return data[12:], nil
-}
-
-func (this *FileManager) isLocking(file *files.File) bool {
-	this.writeLocker.Lock()
-	defer this.writeLocker.Unlock()
-
-	path := file.Path()
-	_, found := this.writingFiles[path]
-	return found
 }

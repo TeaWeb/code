@@ -92,6 +92,7 @@ func (this *ListAction) Run(params struct {
 				"locationId":     accessLog.LocationId,
 				"rewriteId":      accessLog.RewriteId,
 				"fastcgiId":      accessLog.FastcgiId,
+				"attrs":          accessLog.Attrs,
 			}
 		})
 
