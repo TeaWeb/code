@@ -240,6 +240,8 @@ func (this *LocationConfig) Validate() error {
 
 	// request groups
 	for _, group := range this.requestGroups {
+		group.Backends = []*BackendConfig{}
+
 		if group.IsDefault {
 			this.defaultRequestGroup = group
 		}
