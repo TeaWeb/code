@@ -132,6 +132,5 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 	// 重置缓存策略实例
 	teacache.ResetCachePolicyManager(policy.Filename)
 
-	this.Next("/cache", nil)
 	this.Success("保存成功")
 }

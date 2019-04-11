@@ -15,6 +15,8 @@ func init() {
 			GetPost("/createPolicy", new(CreatePolicyAction)).
 			Post("/deletePolicy", new(DeletePolicyAction)).
 			GetPost("/updatePolicy", new(UpdatePolicyAction)).
+			GetPost("/testPolicy", new(TestPolicyAction)).
+			Get("/policy", new(PolicyAction)).
 			EndAll()
 	})
 }
