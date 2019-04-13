@@ -21,7 +21,7 @@ func (this *MemorySource) Execute(params map[string]string) (value interface{}, 
 
 	// 重新计算内存
 	if stat.Total > 0 {
-		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" || runtime.GOOS == "freebsd" {
 			stat.Used = stat.Total - stat.Free - stat.Buffers - stat.Cached
 			stat.UsedPercent = float64(stat.Used) * 100 / float64(stat.Total)
 		}
