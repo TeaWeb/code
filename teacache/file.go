@@ -88,6 +88,7 @@ func (this *FileManager) SetOptions(options map[string]interface{}) {
 	}
 }
 
+// 写入
 func (this *FileManager) Write(key string, data []byte) error {
 	if len(this.dir) == 0 {
 		return errors.New("cache dir should not be empty")
@@ -125,6 +126,7 @@ func (this *FileManager) Write(key string, data []byte) error {
 	return err
 }
 
+// 读取
 func (this *FileManager) Read(key string) (data []byte, err error) {
 	md5 := stringutil.Md5(key)
 	file := files.NewFile(this.dir + Tea.DS + md5[:2] + Tea.DS + md5[2:4] + Tea.DS + md5 + ".cache")
@@ -144,6 +146,33 @@ func (this *FileManager) Read(key string) (data []byte, err error) {
 		return nil, ErrNotFound
 	}
 	return data[12:], nil
+}
+
+// 删除
+func (this *FileManager) Delete(key string) error {
+	if len(this.dir) == 0 {
+		return errors.New("cache dir should not be empty")
+	}
+
+	this.writeLocker.Lock()
+	defer this.writeLocker.Unlock()
+
+	dirFile := files.NewFile(this.dir)
+	if !dirFile.IsDir() {
+		return errors.New("cache dir should be a valid dir")
+	}
+
+	md5 := stringutil.Md5(key)
+	newDir := files.NewFile(this.dir + Tea.DS + md5[:2] + Tea.DS + md5[2:4])
+	if !newDir.Exists() {
+		return nil
+	}
+
+	newFile := files.NewFile(newDir.Path() + Tea.DS + md5 + ".cache")
+	if !newFile.Exists() {
+		return nil
+	}
+	return newFile.Delete()
 }
 
 // 统计

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaproxy"
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"io"
@@ -41,6 +42,31 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 		return true
 	}
 	key := req.Format(cacheConfig.Key)
+
+	// 是否为清除缓存
+	rawReq := req.Raw()
+	teaKey := rawReq.Header.Get("Tea-Key")
+	if rawReq.Header.Get("Tea-Cache-Purge") == "1" {
+		if len(teaKey) == 0 {
+			writer.Write([]byte("ERROR:'Tea-Key' should be set in header"))
+			return false
+		}
+
+		if configs.SharedAdminConfig().FindUserWithKey(teaKey) == nil {
+			writer.Write([]byte("ERROR:Tea-Key:'" + teaKey + "' is incorrect"))
+			return false
+		}
+
+		err := cache.Delete(key)
+		if err != nil {
+			writer.Write([]byte("ERROR:" + err.Error()))
+		} else {
+			writer.Write([]byte("ok"))
+		}
+		return false
+	}
+
+	// 读取缓存
 	data, err := cache.Read(key)
 	if err != nil {
 		if err != ErrNotFound {

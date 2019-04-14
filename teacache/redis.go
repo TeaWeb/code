@@ -84,6 +84,12 @@ func (this *RedisManager) Read(key string) (data []byte, err error) {
 	return []byte(cmd.Val()), nil
 }
 
+// 删除
+func (this *RedisManager) Delete(key string) error {
+	cmd := this.client.Del("TEA_CACHE_" + this.id + key)
+	return cmd.Err()
+}
+
 // 统计
 func (this *RedisManager) Stat() (size int64, countKeys int, err error) {
 	scan := this.client.Scan(0, "TEA_CACHE_"+this.Id()+"*", 100000)

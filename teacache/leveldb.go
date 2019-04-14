@@ -101,6 +101,14 @@ func (this *LevelDBManager) Read(key string) (data []byte, err error) {
 	return
 }
 
+// 删除
+func (this *LevelDBManager) Delete(key string) error {
+	if this.db == nil {
+		return errors.New("leveldb nil pointer found")
+	}
+	return this.db.Delete(append([]byte("KEY"), []byte(key)...), nil)
+}
+
 func (this *LevelDBManager) CleanExpired() error {
 	if this.db == nil {
 		return nil

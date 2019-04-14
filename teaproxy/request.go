@@ -1022,6 +1022,11 @@ func (this *Request) SetHost(host string) {
 	this.host = host
 }
 
+// 获取原始的请求
+func (this *Request) Raw() *http.Request {
+	return this.raw
+}
+
 // 利用请求参数格式化字符串
 func (this *Request) Format(source string) string {
 	if len(source) == 0 {

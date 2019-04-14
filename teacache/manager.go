@@ -21,6 +21,9 @@ type ManagerInterface interface {
 	// 读取
 	Read(key string) (data []byte, err error)
 
+	// 删除
+	Delete(key string) error
+
 	// 设置选项
 	SetOptions(options map[string]interface{})
 

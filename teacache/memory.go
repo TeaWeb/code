@@ -64,6 +64,12 @@ func (this *MemoryManager) Read(key string) (data []byte, err error) {
 	return value.([]byte), nil
 }
 
+// 删除
+func (this *MemoryManager) Delete(key string) error {
+	this.cache.Delete(key)
+	return nil
+}
+
 // 统计
 func (this *MemoryManager) Stat() (size int64, countKeys int, err error) {
 	return this.memory, this.count, nil
