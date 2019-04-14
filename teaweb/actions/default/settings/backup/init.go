@@ -30,6 +30,7 @@ func init() {
 			Post("/backup", new(BackupAction)).
 			Post("/delete", new(DeleteAction)).
 			Post("/restore", new(RestoreAction)).
+			Get("/download", new(DownloadAction)).
 			EndAll()
 	})
 
