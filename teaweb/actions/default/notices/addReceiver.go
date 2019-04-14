@@ -11,12 +11,14 @@ type AddReceiverAction actions.Action
 // 添加接收者
 func (this *AddReceiverAction) Run(params struct {
 	Level notices.NoticeLevel
+	From  string
 }) {
 	level := notices.FindNoticeLevel(params.Level)
 	if level == nil {
 		this.Fail("找不到Level信息")
 	}
 	this.Data["level"] = level
+	this.Data["from"] = params.From
 
 	setting := notices.SharedNoticeSetting()
 	mediaMaps := []maps.Map{}
