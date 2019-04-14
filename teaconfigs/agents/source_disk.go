@@ -142,7 +142,7 @@ func (this *DiskSource) Thresholds() []*Threshold {
 		t.Operator = ThresholdOperatorGt
 		t.Value = "80"
 		t.NoticeLevel = notices.NoticeLevelWarning
-		t.NoticeMessage = "某个分区已使用80%"
+		t.NoticeMessage = "${ROW.name}分区已使用80%"
 		result = append(result, t)
 	}
 

@@ -736,7 +736,7 @@ chart.render();
 				threshold.Operator = ThresholdOperatorGt
 				threshold.Value = "80"
 				threshold.NoticeLevel = notices.NoticeLevelWarning
-				threshold.NoticeMessage = "某个分区已使用80%"
+				threshold.NoticeMessage = "${ROW.name}分区已使用80%"
 				item.AddThreshold(threshold)
 			}
 

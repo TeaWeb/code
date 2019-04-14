@@ -145,7 +145,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	if oldValue == nil {
 		oldValue = v
 	}
-	threshold, level, message, err := item.TestValue(v, oldValue)
+	threshold, row, level, message, err := item.TestValue(v, oldValue)
 	if err != nil {
 		logs.Error(errors.New(item.Name + " " + err.Error()))
 		if len(m.GetString("error")) == 0 {
@@ -166,6 +166,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 			"ITEM": maps.Map{
 				"name": item.Name,
 			},
+			"ROW": row,
 		}, false)
 		if err != nil {
 			logs.Error(err)

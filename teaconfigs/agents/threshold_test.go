@@ -147,34 +147,38 @@ func TestThreshold_Eval_Javascript(t *testing.T) {
 	}, nil))
 }
 
-func TestThreshold_EVAL_Dollar(t *testing.T) {
+func TestThreshold_Eval_Dollar(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${a.$.percent}"
 	threshold.Operator = ThresholdOperatorGt
 	threshold.Value = "81"
 	threshold.Validate()
 	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
-	t.Log(threshold.Test(maps.Map{
+	t.Log(threshold.TestRow(maps.Map{
 		"a": []maps.Map{
 			{
+				"name":    "30",
 				"percent": 30,
 			},
 			{
+				"name":    "60",
 				"percent": 60,
 			},
 			{
+				"name":    "82",
 				"percent": 82,
 			},
 			{
+				"name":    "50",
 				"percent": 50,
 			},
 		},
 	}, nil))
 
-	t.Log(threshold.Test("abc", nil))
+	t.Log(threshold.TestRow("abc", nil))
 }
 
-func TestThreshold_EVAL_Dollar2(t *testing.T) {
+func TestThreshold_Eval_Dollar2(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${$.percent}"
 	threshold.Operator = ThresholdOperatorGt
@@ -197,7 +201,7 @@ func TestThreshold_EVAL_Dollar2(t *testing.T) {
 	}, nil))
 }
 
-func TestThreshold_EVAL_Dollar3(t *testing.T) {
+func TestThreshold_Eval_Dollar3(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${$}"
 	threshold.Operator = ThresholdOperatorGt
@@ -205,6 +209,16 @@ func TestThreshold_EVAL_Dollar3(t *testing.T) {
 	threshold.Validate()
 	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
 	t.Log(threshold.Test([]int{1, 2, 3, 4}, nil))
+}
+
+func TestThreshold_Eval_Nil(t *testing.T) {
+	threshold := NewThreshold()
+	threshold.Param = "${0}"
+	threshold.Operator = ThresholdOperatorGte
+	threshold.Value = "0"
+	threshold.Validate()
+	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
+	t.Log(threshold.Test(nil, nil))
 }
 
 func TestThreshold_Old(t *testing.T) {

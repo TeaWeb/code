@@ -78,11 +78,17 @@ func (this *Threshold) Validate() error {
 
 // 将此条件应用于阈值，检查是否匹配
 func (this *Threshold) Test(value interface{}, oldValue interface{}) (ok bool, err error) {
+	ok, _, err = this.testParam(this.Param, this.shouldLoop, value, oldValue)
+	return
+}
+
+// 将此条件应用于阈值，检查是否匹配，如果匹配同时也返回$匹配的行数据
+func (this *Threshold) TestRow(value interface{}, oldValue interface{}) (ok bool, row interface{}, err error) {
 	return this.testParam(this.Param, this.shouldLoop, value, oldValue)
 }
 
 // 检查阈值，但指定更多的参数
-func (this *Threshold) testParam(param string, shouldLoop bool, value interface{}, oldValue interface{}) (ok bool, err error) {
+func (this *Threshold) testParam(param string, shouldLoop bool, value interface{}, oldValue interface{}) (ok bool, row interface{}, err error) {
 	// 处理$（dollar符号）
 	if shouldLoop {
 		pieces := strings.Split(this.loopVar, ".")
@@ -102,7 +108,7 @@ func (this *Threshold) testParam(param string, shouldLoop bool, value interface{
 						indexParam += "." + strings.Join(pieces[dollarIndex+1:], ".")
 					}
 					newParam := strings.Replace(param, "${"+this.loopVar+"}", "${"+indexParam+"}", -1)
-					ok1, err1 := this.testParam(newParam, false, value, oldValue)
+					ok1, _, err1 := this.testParam(newParam, false, value, oldValue)
 					if ok1 {
 						ok = ok1
 						err = err1
@@ -117,59 +123,60 @@ func (this *Threshold) testParam(param string, shouldLoop bool, value interface{
 					indexParam := strings.Join(pieces[:dollarIndex], ".") + "." + fmt.Sprintf("%d.", k) + strings.Join(pieces[dollarIndex+1:], ".")
 
 					newParam := strings.Replace(param, "${"+this.loopVar+"}", "${"+indexParam+"}", -1)
-					ok1, err1 := this.testParam(newParam, false, value, oldValue)
+					ok1, _, err1 := this.testParam(newParam, false, value, oldValue)
 					if ok1 {
 						ok = ok1
 						err = err1
+						row = v
 					}
 				})
 				return
 			}
 		}
 
-		return false, nil
+		return false, nil, nil
 	}
 
 	paramValue, err := EvalParam(param, value, oldValue, nil, this.supportsMath)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	switch this.Operator {
 	case ThresholdOperatorRegexp:
 		if this.regValue == nil {
-			return false, nil
+			return false, nil, nil
 		}
-		return this.regValue.MatchString(types.String(paramValue)), nil
+		return this.regValue.MatchString(types.String(paramValue)), nil, nil
 	case ThresholdOperatorNotRegexp:
 		if this.regValue == nil {
-			return false, nil
+			return false, nil, nil
 		}
-		return !this.regValue.MatchString(types.String(paramValue)), nil
+		return !this.regValue.MatchString(types.String(paramValue)), nil, nil
 	case ThresholdOperatorGt:
-		return types.Float64(paramValue) > this.floatValue, nil
+		return types.Float64(paramValue) > this.floatValue, nil, nil
 	case ThresholdOperatorGte:
-		return types.Float64(paramValue) >= this.floatValue, nil
+		return types.Float64(paramValue) >= this.floatValue, nil, nil
 	case ThresholdOperatorLt:
-		return types.Float64(paramValue) < this.floatValue, nil
+		return types.Float64(paramValue) < this.floatValue, nil, nil
 	case ThresholdOperatorLte:
-		return types.Float64(paramValue) <= this.floatValue, nil
+		return types.Float64(paramValue) <= this.floatValue, nil, nil
 	case ThresholdOperatorEq:
-		return paramValue == this.Value, nil
+		return paramValue == this.Value, nil, nil
 	case ThresholdOperatorNumberEq:
-		return types.Float64(paramValue) == this.floatValue, nil
+		return types.Float64(paramValue) == this.floatValue, nil, nil
 	case ThresholdOperatorNot:
-		return paramValue != this.Value, nil
+		return paramValue != this.Value, nil, nil
 	case ThresholdOperatorPrefix:
-		return strings.HasPrefix(types.String(paramValue), this.Value), nil
+		return strings.HasPrefix(types.String(paramValue), this.Value), nil, nil
 	case ThresholdOperatorSuffix:
-		return strings.HasSuffix(types.String(paramValue), this.Value), nil
+		return strings.HasSuffix(types.String(paramValue), this.Value), nil, nil
 	case ThresholdOperatorContains:
-		return strings.Contains(types.String(paramValue), this.Value), nil
+		return strings.Contains(types.String(paramValue), this.Value), nil, nil
 	case ThresholdOperatorNotContains:
-		return !strings.Contains(types.String(paramValue), this.Value), nil
+		return !strings.Contains(types.String(paramValue), this.Value), nil, nil
 	}
-	return false, nil
+	return false, nil, nil
 }
 
 // 执行数值运算，使用Javascript语法
