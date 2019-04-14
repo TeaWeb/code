@@ -27,6 +27,9 @@ type ManagerInterface interface {
 	// 统计
 	Stat() (size int64, countKeys int, err error)
 
+	// 清理
+	Clean() error
+
 	// 关闭
 	Close() error
 }

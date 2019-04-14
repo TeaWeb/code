@@ -20,7 +20,7 @@ func (this *TestPolicyAction) Run(params struct {
 	this.Data["policy"] = policy
 
 	// 类型
-	this.Data["typeName"] = teacache.TypeName(policy.Type)
+	this.Data["typeName"] = teacache.FindTypeName(policy.Type)
 
 	this.Show()
 }

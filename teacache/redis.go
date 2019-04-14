@@ -90,7 +90,15 @@ func (this *RedisManager) Stat() (size int64, countKeys int, err error) {
 	if scan == nil {
 		return
 	}
+	if scan.Err() != nil {
+		err = scan.Err()
+		return
+	}
 	it := scan.Iterator()
+	if it.Err() != nil {
+		err = it.Err()
+		return
+	}
 	for it.Next() {
 		key := it.Val()
 		b, err := this.client.Get(key).Bytes()
@@ -98,11 +106,40 @@ func (this *RedisManager) Stat() (size int64, countKeys int, err error) {
 			continue
 		}
 		countKeys ++
-		size += int64(len(b))
+		size += int64(len(b) + len(key))
 	}
 	return
 }
 
+// 清理
+func (this *RedisManager) Clean() error {
+	scan := this.client.Scan(0, "TEA_CACHE_"+this.Id()+"*", 100000)
+	if scan == nil {
+		return nil
+	}
+	if scan.Err() != nil {
+		return scan.Err()
+	}
+	it := scan.Iterator()
+	if it.Err() != nil {
+		return it.Err()
+	}
+	keys := []string{}
+	for it.Next() {
+		key := it.Val()
+		keys = append(keys, key)
+	}
+
+	if len(keys) > 0 {
+		for _, key := range keys {
+			this.client.Del(key)
+		}
+	}
+
+	return nil
+}
+
+// 关闭
 func (this *RedisManager) Close() error {
 	if this.client != nil {
 		//logs.Println("[cache]close cache policy instance: redis")

@@ -28,7 +28,7 @@ func (this *CacheAction) Run(params struct {
 	if len(server.CachePolicy) > 0 {
 		policy := shared.NewCachePolicyFromFile(server.CachePolicy)
 		if policy != nil {
-			this.Data["cachePolicy"] = policy.Name + "（" + teacache.TypeName(policy.Type) + "）"
+			this.Data["cachePolicy"] = policy.Name + "（" + teacache.FindTypeName(policy.Type) + "）"
 		}
 	}
 	this.Data["cachePolicyFile"] = server.CachePolicy
@@ -39,7 +39,7 @@ func (this *CacheAction) Run(params struct {
 		return maps.Map{
 			"filename": policy.Filename,
 			"name":     policy.Name,
-			"type":     teacache.TypeName(policy.Type),
+			"type":     teacache.FindTypeName(policy.Type),
 		}
 	})
 

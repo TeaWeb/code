@@ -34,7 +34,7 @@ func (this *UpdateCacheAction) Run(params struct {
 		}
 		this.Data["policy"] = maps.Map{
 			"name":     policy.Name,
-			"typeName": teacache.TypeName(policy.Type),
+			"typeName": teacache.FindTypeName(policy.Type),
 		}
 	} else {
 		this.Data["policy"] = maps.Map{

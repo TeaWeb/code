@@ -135,13 +135,32 @@ func (this *LevelDBManager) Stat() (size int64, countKeys int, err error) {
 	for it.Next() {
 		data := it.Value()
 		countKeys ++
-		size += int64(len(data))
+		size += int64(len(data) + len(it.Key()))
 	}
 	it.Release()
 
 	return
 }
 
+// 清理
+func (this *LevelDBManager) Clean() error {
+	if this.db == nil {
+		return nil
+	}
+	it := this.db.NewIterator(util.BytesPrefix([]byte("KEY")), nil)
+	for it.Next() {
+		key := it.Key()
+
+		if this.db != nil {
+			this.db.Delete(key, nil)
+		}
+		continue
+	}
+	it.Release()
+	return nil
+}
+
+// 关闭
 func (this *LevelDBManager) Close() error {
 	if this.looper != nil {
 		this.looper.Stop()

@@ -43,3 +43,12 @@ func TestLevelDBManager_CleanExpired(t *testing.T) {
 	m.Life = 30 * time.Second
 	m.CleanExpired()
 }
+
+func TestLevelDBManager_Clean(t *testing.T) {
+	m := NewLevelDBManager()
+	m.SetOptions(map[string]interface{}{
+		"dir": "cache",
+	})
+	m.Life = 30 * time.Second
+	m.Clean()
+}

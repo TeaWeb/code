@@ -23,14 +23,14 @@ func NewMemoryManager() *MemoryManager {
 	m := &MemoryManager{}
 
 	factory := caches.NewFactory()
-	factory.OnOperation(func(op caches.CacheOperation, value interface{}) {
+	factory.OnOperation(func(op caches.CacheOperation, item *caches.Item) {
 		m.memoryLocker.Lock()
 		defer m.memoryLocker.Unlock()
 		if op == caches.CacheOperationSet {
-			m.memory += int64(len(value.([]byte)))
+			m.memory += int64(len(item.Value.([]byte)) + len(item.Key))
 			m.count ++
 		} else if op == caches.CacheOperationDelete {
-			m.memory -= int64(len(value.([]byte)))
+			m.memory -= int64(len(item.Value.([]byte)) + len(item.Key))
 			m.count --
 		}
 	})
@@ -69,6 +69,13 @@ func (this *MemoryManager) Stat() (size int64, countKeys int, err error) {
 	return this.memory, this.count, nil
 }
 
+// 清理
+func (this *MemoryManager) Clean() error {
+	this.cache.Reset()
+	return nil
+}
+
+// 关闭
 func (this *MemoryManager) Close() error {
 	if this.cache == nil {
 		return nil

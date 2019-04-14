@@ -34,7 +34,7 @@ func (this *IndexAction) Run(params struct{}) {
 			"maxSize":    policy.MaxSize,
 
 			"type":     policy.Type,
-			"typeName": teacache.TypeName(policy.Type),
+			"typeName": teacache.FindTypeName(policy.Type),
 			"options":  policy.Options,
 		})
 	}

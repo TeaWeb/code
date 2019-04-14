@@ -11,6 +11,7 @@ import (
 	"github.com/iwind/TeaGo/utils/string"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -161,6 +162,25 @@ func (this *FileManager) Stat() (size int64, countKeys int, err error) {
 	})
 
 	return
+}
+
+// 清理
+func (this *FileManager) Clean() error {
+	dirReg := regexp.MustCompile("^[0-9a-f]{2}$")
+	for _, file := range files.NewFile(this.dir).List() {
+		if !file.IsDir() {
+			continue
+		}
+		if !dirReg.MatchString(file.Name()) {
+			continue
+		}
+
+		err := file.DeleteAll()
+		if err != nil {
+			logs.Error(err)
+		}
+	}
+	return nil
 }
 
 func (this *FileManager) Close() error {

@@ -69,3 +69,9 @@ func TestFileManager_Stat(t *testing.T) {
 	m.dir = Tea.Root + "/./cache"
 	t.Log(m.Stat())
 }
+
+func TestFileManager_Clean(t *testing.T) {
+	m := NewFileManager()
+	m.dir = Tea.Root + "/./cache"
+	t.Log(m.Clean())
+}
