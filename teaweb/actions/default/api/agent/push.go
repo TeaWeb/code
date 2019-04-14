@@ -370,35 +370,31 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 	// 查找App的通知设置
 	app := agent.FindApp(appId)
 	if app != nil {
-		for _, receiverLevel := range receiverLevels {
-			receivers, found := app.NoticeSetting[receiverLevel]
-			if found && len(receivers) > 0 {
-				isNotified = true
-				receiverIds = setting.NotifyReceivers(level, receivers, message, func(receiverId string, minutes int) int {
-					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
-						"agent.agentId": agent.Id,
-						"agent.appId":   appId,
-						"agent.itemId":  itemId,
-					}, minutes)
-				})
-			}
+		receivers := app.FindAllNoticeReceivers(receiverLevels...)
+		if len(receivers) > 0 {
+			isNotified = true
+			receiverIds = setting.NotifyReceivers(level, receivers, message, func(receiverId string, minutes int) int {
+				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+					"agent.agentId": agent.Id,
+					"agent.appId":   appId,
+					"agent.itemId":  itemId,
+				}, minutes)
+			})
 		}
 	}
 
 	// 查找Agent的通知设置
 	if !isNotified {
-		for _, receiverLevel := range receiverLevels {
-			receivers, found := agent.NoticeSetting[receiverLevel]
-			if found && len(receivers) > 0 {
-				isNotified = true
-				receiverIds = setting.NotifyReceivers(level, receivers, message, func(receiverId string, minutes int) int {
-					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
-						"agent.agentId": agent.Id,
-						"agent.appId":   appId,
-						"agent.itemId":  itemId,
-					}, minutes)
-				})
-			}
+		receivers := agent.FindAllNoticeReceivers(receiverLevels ...)
+		if len(receivers) > 0 {
+			isNotified = true
+			receiverIds = setting.NotifyReceivers(level, receivers, message, func(receiverId string, minutes int) int {
+				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+					"agent.agentId": agent.Id,
+					"agent.appId":   appId,
+					"agent.itemId":  itemId,
+				}, minutes)
+			})
 		}
 	}
 
@@ -410,26 +406,25 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 		}
 		group := agents.SharedGroupConfig().FindGroup(groupId)
 		if group != nil {
-			for _, receiverLevel := range receiverLevels {
-				receivers, found := group.NoticeSetting[receiverLevel]
-				if found && len(receivers) > 0 {
-					isNotified = true
-					receiverIds = setting.NotifyReceivers(level, receivers, message, func(receiverId string, minutes int) int {
-						return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
-							"agent.agentId": agent.Id,
-							"agent.appId":   appId,
-							"agent.itemId":  itemId,
-						}, minutes)
-					})
-				}
+			receivers := group.FindAllNoticeReceivers(receiverLevels...)
+			if len(receivers) > 0 {
+				isNotified = true
+				receiverIds = setting.NotifyReceivers(level, receivers, message, func(receiverId string, minutes int) int {
+					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+						"agent.agentId": agent.Id,
+						"agent.appId":   appId,
+						"agent.itemId":  itemId,
+					}, minutes)
+				})
 			}
 		}
 	}
 
 	// 全局通知
 	if !isNotified {
-		for _, receiverLevel := range receiverLevels {
-			receiverIds = setting.Notify(receiverLevel, message, func(receiverId string, minutes int) int {
+		receivers := setting.FindAllNoticeReceivers(receiverLevels...)
+		if len(receivers) > 0 {
+			receiverIds = setting.NotifyReceivers(level, receivers, message, func(receiverId string, minutes int) int {
 				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
 					"agent.agentId": agent.Id,
 					"agent.appId":   appId,

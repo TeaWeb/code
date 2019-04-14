@@ -834,3 +834,31 @@ func (this *AgentConfig) RemoveMedia(mediaId string) (found bool) {
 	}
 	return
 }
+
+// 查找一个或多个级别对应的接收者，并合并相同的接收者
+func (this *AgentConfig) FindAllNoticeReceivers(level ...notices.NoticeLevel) []*notices.NoticeReceiver {
+	if len(level) == 0 {
+		return []*notices.NoticeReceiver{}
+	}
+
+	m := maps.Map{} // mediaId_user => bool
+	result := []*notices.NoticeReceiver{}
+	for _, l := range level {
+		receivers, ok := this.NoticeSetting[l]
+		if !ok {
+			continue
+		}
+		for _, receiver := range receivers {
+			if !receiver.On {
+				continue
+			}
+			key := receiver.Key()
+			if m.Has(key) {
+				continue
+			}
+			m[key] = true
+			result = append(result, receiver)
+		}
+	}
+	return result
+}

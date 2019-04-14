@@ -2,6 +2,7 @@ package agents
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 )
 
@@ -22,8 +23,9 @@ type AppConfig struct {
 // 获取新对象
 func NewAppConfig() *AppConfig {
 	return &AppConfig{
-		Id: stringutil.Rand(16),
-		On: true,
+		Id:            stringutil.Rand(16),
+		On:            true,
+		NoticeSetting: map[notices.NoticeLevel][]*notices.NoticeReceiver{},
 	}
 }
 
@@ -192,4 +194,32 @@ func (this *AppConfig) RemoveMedia(mediaId string) (found bool) {
 		this.NoticeSetting[level] = result
 	}
 	return
+}
+
+// 查找一个或多个级别对应的接收者，并合并相同的接收者
+func (this *AppConfig) FindAllNoticeReceivers(level ...notices.NoticeLevel) []*notices.NoticeReceiver {
+	if len(level) == 0 {
+		return []*notices.NoticeReceiver{}
+	}
+
+	m := maps.Map{} // mediaId_user => bool
+	result := []*notices.NoticeReceiver{}
+	for _, l := range level {
+		receivers, ok := this.NoticeSetting[l]
+		if !ok {
+			continue
+		}
+		for _, receiver := range receivers {
+			if !receiver.On {
+				continue
+			}
+			key := receiver.Key()
+			if m.Has(key) {
+				continue
+			}
+			m[key] = true
+			result = append(result, receiver)
+		}
+	}
+	return result
 }

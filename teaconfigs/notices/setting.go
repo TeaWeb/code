@@ -159,3 +159,31 @@ func (this *NoticeSetting) NotifyReceivers(level NoticeLevel, receivers []*Notic
 
 	return
 }
+
+// 查找一个或多个级别对应的接收者，并合并相同的接收者
+func (this *NoticeSetting) FindAllNoticeReceivers(level ...NoticeLevel) []*NoticeReceiver {
+	if len(level) == 0 {
+		return []*NoticeReceiver{}
+	}
+
+	m := maps.Map{} // mediaId_user => bool
+	result := []*NoticeReceiver{}
+	for _, l := range level {
+		config, ok := this.Levels[l]
+		if !ok {
+			continue
+		}
+		for _, receiver := range config.Receivers {
+			if !receiver.On {
+				continue
+			}
+			key := receiver.Key()
+			if m.Has(key) {
+				continue
+			}
+			m[key] = true
+			result = append(result, receiver)
+		}
+	}
+	return result
+}

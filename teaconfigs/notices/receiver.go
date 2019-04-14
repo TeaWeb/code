@@ -18,3 +18,8 @@ func NewNoticeReceiver() *NoticeReceiver {
 		Id: stringutil.Rand(16),
 	}
 }
+
+// 获取唯一的Key
+func (this *NoticeReceiver) Key() string {
+	return this.MediaId + "_" + this.User
+}
