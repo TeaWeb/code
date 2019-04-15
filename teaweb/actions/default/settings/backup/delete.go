@@ -1,6 +1,7 @@
 package backup
 
 import (
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
@@ -12,6 +13,10 @@ type DeleteAction actions.Action
 func (this *DeleteAction) Run(params struct {
 	File string
 }) {
+	if teaconst.DemoEnabled {
+		this.Fail("演示版无法删除")
+	}
+
 	if len(params.File) == 0 {
 		this.Fail("请指定要删除的备份文件")
 	}

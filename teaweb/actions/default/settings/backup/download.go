@@ -1,6 +1,7 @@
 package backup
 
 import (
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
@@ -15,6 +16,10 @@ type DownloadAction actions.Action
 func (this *DownloadAction) Run(params struct {
 	Filename string
 }) {
+	if teaconst.DemoEnabled {
+		this.Fail("演示版无法下载")
+	}
+
 	reg := regexp.MustCompile("^\\d{8}\\.zip$")
 	if !reg.MatchString(params.Filename) {
 		this.WriteString("file not found")

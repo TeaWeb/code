@@ -62,7 +62,7 @@ func AllNoticeMediaTypes() []maps.Map {
 			"code":         NoticeMediaTypeAliyunSms,
 			"supportsHTML": false,
 			"instance":     new(NoticeAliyunSmsMedia),
-			"description":  "通过<a href=\"https://www.aliyun.com/product/sms?spm=5176.11533447.1097531.2.12055cfa6UnIix\" target=\"_blank\">阿里云短信服务</a>发送短信",
+			"description":  "通过<a href=\"https://www.aliyun.com/product/sms?spm=5176.11533447.1097531.2.12055cfa6UnIix\" target=\"_blank\">阿里云短信服务</a>发送短信，<a href=\"http://teaos.cn/doc/notices/AliyunSms.md\" target=\"_blank\">相关文档&raquo;</a>",
 			"user":         "接收消息的手机号",
 		},
 	}

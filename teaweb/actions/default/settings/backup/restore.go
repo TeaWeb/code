@@ -3,6 +3,7 @@ package backup
 import (
 	"archive/zip"
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
@@ -18,6 +19,10 @@ type RestoreAction actions.Action
 func (this *RestoreAction) Run(params struct {
 	File string
 }) {
+	if teaconst.DemoEnabled {
+		this.Fail("演示版无法恢复")
+	}
+
 	if len(params.File) == 0 {
 		this.Fail("请指定要恢复的文件")
 	}
