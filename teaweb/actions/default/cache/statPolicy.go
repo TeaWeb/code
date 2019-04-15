@@ -40,6 +40,9 @@ func (this *StatPolicyAction) RunPost(params struct {
 	manager := teacache.FindCachePolicyManager(params.Filename)
 	if manager == nil {
 		manager = teacache.NewManagerFromConfig(policy)
+		if manager == nil {
+			this.Fail("找不到Policy")
+		}
 		defer manager.Close()
 	}
 

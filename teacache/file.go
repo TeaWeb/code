@@ -177,6 +177,12 @@ func (this *FileManager) Delete(key string) error {
 
 // 统计
 func (this *FileManager) Stat() (size int64, countKeys int, err error) {
+	// 检查目录是否存在
+	info, err := os.Stat(this.dir)
+	if err != nil || !info.IsDir() {
+		return
+	}
+
 	filepath.Walk(this.dir, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
