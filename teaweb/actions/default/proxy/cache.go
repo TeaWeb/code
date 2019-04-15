@@ -24,11 +24,11 @@ func (this *CacheAction) Run(params struct {
 	this.Data["server"] = server
 
 	// 缓存策略
-	this.Data["cachePolicy"] = ""
+	this.Data["cachePolicy"] = nil
 	if len(server.CachePolicy) > 0 {
 		policy := shared.NewCachePolicyFromFile(server.CachePolicy)
 		if policy != nil {
-			this.Data["cachePolicy"] = policy.Name + "（" + teacache.FindTypeName(policy.Type) + "）"
+			this.Data["cachePolicy"] = policy
 		}
 	}
 	this.Data["cachePolicyFile"] = server.CachePolicy

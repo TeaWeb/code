@@ -20,11 +20,11 @@ func (this *CacheAction) Run(params struct {
 	_, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "cache")
 
 	// 缓存策略
-	this.Data["cachePolicy"] = ""
+	this.Data["cachePolicy"] = nil
 	if len(location.CachePolicy) > 0 {
 		policy := shared.NewCachePolicyFromFile(location.CachePolicy)
 		if policy != nil {
-			this.Data["cachePolicy"] = policy.Name + "（" + teacache.FindTypeName(policy.Type) + "）"
+			this.Data["cachePolicy"] = policy
 		}
 	}
 	this.Data["cachePolicyFile"] = location.CachePolicy

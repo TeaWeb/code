@@ -36,7 +36,7 @@ func (this *TestPolicyAction) RunPost(params struct {
 
 	policy := shared.NewCachePolicyFromFile(params.Filename)
 	if policy == nil {
-		this.Data["result"] = "找不到Policy";
+		this.Data["result"] = "找不到Policy"
 		this.Fail()
 	}
 

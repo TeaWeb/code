@@ -6,24 +6,12 @@ import (
 	"github.com/iwind/TeaGo/actions"
 )
 
-type CleanPolicyAction actions.Action
+type CleanAction actions.Action
 
-// 清理
-func (this *CleanPolicyAction) Run(params struct {
+// 清除缓存
+func (this *CleanAction) RunPost(params struct {
 	Filename string
-}) {
-	policy := shared.NewCachePolicyFromFile(params.Filename)
-	if policy == nil {
-		this.Data["result"] = "找不到Policy"
-		this.Fail()
-	}
-	this.Data["policy"] = policy
-	this.Show()
-}
-
-// 执行清理
-func (this *CleanPolicyAction) RunPost(params struct {
-	Filename string
+	Key      string
 }) {
 	policy := shared.NewCachePolicyFromFile(params.Filename)
 	if policy == nil {
@@ -41,12 +29,10 @@ func (this *CleanPolicyAction) RunPost(params struct {
 		this.Fail("找不到管理器")
 	}
 
-	err := manager.Clean()
+	err := manager.Delete(params.Key)
 	if err != nil {
-		this.Data["result"] = err.Error()
-		this.Fail()
+		this.Fail("ERROR:" + err.Error())
 	}
 
-	this.Data["result"] = "清理完成"
 	this.Success()
 }
