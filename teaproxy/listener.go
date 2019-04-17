@@ -1,6 +1,7 @@
 package teaproxy
 
 import (
+	"crypto/tls"
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaplugins"
@@ -151,7 +152,6 @@ func (this *Listener) Reload() error {
 	this.IsChanged = false
 	this.Error = nil
 
-	var ssl = &teaconfigs.SSLConfig{}
 	if !hasServers {
 		defer this.serversLocker.Unlock()
 
@@ -162,7 +162,6 @@ func (this *Listener) Reload() error {
 
 		return nil
 	} else {
-		ssl = this.currentServers[0].SSL
 		this.serversLocker.Unlock()
 	}
 
@@ -202,7 +201,24 @@ func (this *Listener) Reload() error {
 
 	if this.Scheme == SchemeHTTPS {
 		logs.Println("start ssl listener on", this.Address)
-		err = this.httpServer.ListenAndServeTLS(Tea.ConfigFile(ssl.Certificate), Tea.ConfigFile(ssl.CertificateKey))
+
+		certificates := []tls.Certificate{}
+		for _, server := range this.currentServers {
+			ssl := server.SSL
+			if ssl != nil && ssl.On {
+				cer, err := tls.LoadX509KeyPair(Tea.ConfigFile(ssl.Certificate), Tea.ConfigFile(ssl.CertificateKey))
+				if err != nil {
+					logs.Error(errors.New("[listener]load certificate '" + ssl.Certificate + "', '" + ssl.CertificateKey + "' failed:" + err.Error()))
+					continue
+				}
+				certificates = append(certificates, cer)
+			}
+		}
+
+		this.httpServer.TLSConfig = &tls.Config{
+			Certificates: certificates,
+		}
+		err = this.httpServer.ListenAndServeTLS("", "")
 		if err != nil && err != http.ErrServerClosed {
 			logs.Error(errors.New("[listener]" + this.Address + ": " + err.Error()))
 		} else {
