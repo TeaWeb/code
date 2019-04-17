@@ -85,14 +85,16 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		}
 
 		// 如果超过最大失败次数，则下线
-		currentFails := this.backend.IncreaseFails()
-		if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
-			this.backend.IsDown = true
-			this.backend.DownTime = time.Now()
-			if this.websocket != nil {
-				this.websocket.SetupScheduling(false)
-			} else {
-				this.server.SetupScheduling(false)
+		if !this.backend.HasCheckURL() {
+			currentFails := this.backend.IncreaseFails()
+			if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
+				this.backend.IsDown = true
+				this.backend.DownTime = time.Now()
+				if this.websocket != nil {
+					this.websocket.SetupScheduling(false)
+				} else {
+					this.server.SetupScheduling(false)
+				}
 			}
 		}
 
@@ -118,7 +120,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	}
 
 	// 清除错误次数
-	if resp.StatusCode >= 200 {
+	if resp.StatusCode >= 200 && !this.backend.HasCheckURL() {
 		if !this.backend.IsDown && this.backend.CurrentFails > 0 {
 			this.backend.CurrentFails = 0
 		}

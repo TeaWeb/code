@@ -9,6 +9,7 @@ import (
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
@@ -83,6 +84,8 @@ type ServerConfig struct {
 	Pages          []*PageConfig `yaml:"pages" json:"pages"`                   // 特殊页，更高级的需求应该通过Location来设置
 	ShutdownPageOn bool          `yaml:"shutdownPageOn" json:"shutdownPageOn"` // 是否开启临时关闭页面
 	ShutdownPage   string        `yaml:"shutdownPage" json:"shutdownPage"`     // 临时关闭页面
+
+	Version int `yaml:"version" json:"version"` // 版本
 
 	maxBodySize   int64
 	gzipMinLength int64
@@ -375,6 +378,7 @@ func (this *ServerConfig) Save() error {
 	}
 
 	this.TeaVersion = teaconst.TeaVersion
+	this.Version ++
 
 	writer, err := files.NewWriter(Tea.ConfigFile(this.Filename))
 	if err != nil {
@@ -745,4 +749,60 @@ func (this *ServerConfig) SetupScheduling(isBackup bool) {
 // 添加Page
 func (this *ServerConfig) AddPage(page *PageConfig) {
 	this.Pages = append(this.Pages, page)
+}
+
+// 装载事件
+func (this *ServerConfig) OnAttach() {
+	// 开启后端健康检查
+	backends := []*BackendConfig{}
+	for _, backend := range this.Backends {
+		if !lists.Contains(backends, backend) {
+			backends = append(backends, backend)
+		}
+	}
+	for _, location := range this.Locations {
+		for _, backend := range location.Backends {
+			if !lists.Contains(backends, backend) {
+				backends = append(backends, backend)
+			}
+		}
+	}
+	for _, backend := range backends {
+		backend.OnAttach()
+		backend.DownCallback(func(backend *BackendConfig) {
+			if backend.IsBackup {
+				this.SetupScheduling(true)
+			} else {
+				this.SetupScheduling(false)
+			}
+		})
+		backend.UpCallback(func(backend *BackendConfig) {
+			if backend.IsBackup {
+				this.SetupScheduling(true)
+			} else {
+				this.SetupScheduling(false)
+			}
+		})
+	}
+}
+
+// 卸载事件
+func (this *ServerConfig) OnDetach() {
+	// 停止后端健康检查
+	backends := []*BackendConfig{}
+	for _, backend := range this.Backends {
+		if !lists.Contains(backends, backend) {
+			backends = append(backends, backend)
+		}
+	}
+	for _, location := range this.Locations {
+		for _, backend := range location.Backends {
+			if !lists.Contains(backends, backend) {
+				backends = append(backends, backend)
+			}
+		}
+	}
+	for _, backend := range backends {
+		backend.OnDetach()
+	}
 }

@@ -16,8 +16,9 @@ var SharedManager = NewManager()
 
 // 管理器
 type Manager struct {
-	listeners map[string]*Listener // scheme://address => listener
-	servers   map[string]*teaconfigs.ServerConfig
+	listeners  map[string]*Listener // scheme://address => listener
+	oldServers map[string]*teaconfigs.ServerConfig
+	servers    map[string]*teaconfigs.ServerConfig
 
 	done   chan bool
 	locker sync.RWMutex
@@ -40,6 +41,7 @@ func (this *Manager) Start() error {
 		return err
 	}
 
+	this.servers = map[string]*teaconfigs.ServerConfig{}
 	for _, configFile := range files {
 		if configFile == "server.sample.www.proxy.conf" { // 跳过示例配置
 			continue
@@ -79,6 +81,7 @@ func (this *Manager) Start() error {
 // 重启
 func (this *Manager) Restart() error {
 	this.locker.Lock()
+	this.oldServers = this.servers
 	this.servers = map[string]*teaconfigs.ServerConfig{}
 	for _, listener := range this.listeners {
 		listener.Reset()
@@ -93,6 +96,17 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 	defer this.locker.Unlock()
 
 	this.servers[server.Id] = server
+
+	// old servers
+	oldServer, ok := this.oldServers[server.Id]
+	if ok {
+		if server.Version > oldServer.Version {
+			oldServer.OnDetach()
+			server.OnAttach()
+		}
+	} else {
+		server.OnAttach()
+	}
 
 	keys := []string{}
 

@@ -89,3 +89,33 @@ func TestBackendConfig_RequestPath(t *testing.T) {
 		a.IsTrue(backend.RequestArgs() == "name=value")
 	}
 }
+
+func TestBackendConfig_CheckHealth(t *testing.T) {
+	a := assert.NewAssertion(t)
+	{
+		backend := NewBackendConfig()
+		backend.Validate()
+		a.IsTrue(backend.CheckHealth())
+	}
+
+	{
+		backend := NewBackendConfig()
+		backend.CheckURL = "htt111"
+		backend.Validate()
+		a.IsFalse(backend.CheckHealth())
+	}
+
+	{
+		backend := NewBackendConfig()
+		backend.CheckURL = "http://127.0.0.1:9991/webhook"
+		backend.Validate()
+		a.IsTrue(backend.CheckHealth())
+	}
+
+	{
+		backend := NewBackendConfig()
+		backend.CheckURL = "http://127.0.0.1:9991/webhook2"
+		backend.Validate()
+		a.IsFalse(backend.CheckHealth())
+	}
+}

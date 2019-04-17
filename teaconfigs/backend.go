@@ -1,9 +1,14 @@
 package teaconfigs
 
 import (
+	"crypto/tls"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/utils/string"
+	"net/http"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -31,11 +36,23 @@ type BackendConfig struct {
 	RequestGroupIds []string  `yaml:"requestGroupIds" json:"requestGroupIds"`       // 所属请求分组
 	RequestURI      string    `yaml:"requestURI" json:"requestURI"`                 // 转发后的请求URI
 
+	// 健康检查URL，目前支持：
+	// - http|https 返回2xx-3xx认为成功
+	CheckURL      string `yaml:"checkURL" json:"checkURL"`
+	CheckInterval int    `yaml:"checkInterval" json:"checkInterval"`
+
 	failTimeoutDuration time.Duration
 	readTimeoutDuration time.Duration
-	hasRequestURI       bool
-	requestPath         string
-	requestArgs         string
+
+	hasRequestURI bool
+	requestPath   string
+	requestArgs   string
+
+	hasCheckURL bool
+	checkLooper *timers.Looper
+
+	upCallbacks   []func(backend *BackendConfig)
+	downCallbacks []func(backend *BackendConfig)
 }
 
 // 获取新对象
@@ -87,6 +104,9 @@ func (this *BackendConfig) Validate() error {
 			this.requestPath = this.RequestURI
 		}
 	}
+
+	// check
+	this.hasCheckURL = len(this.CheckURL) > 0
 
 	return nil
 }
@@ -169,4 +189,117 @@ func (this *BackendConfig) RequestPath() string {
 // 获取转发后的附加参数
 func (this *BackendConfig) RequestArgs() string {
 	return this.requestArgs
+}
+
+// 健康检查
+func (this *BackendConfig) CheckHealth() bool {
+	if len(this.CheckURL) == 0 {
+		return true
+	}
+	req, err := http.NewRequest(http.MethodGet, this.CheckURL, nil)
+	if err != nil {
+		logs.Error(err)
+		return false
+	}
+	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	if this.failTimeoutDuration > 0 {
+		client.Timeout = this.failTimeoutDuration
+	} else {
+		client.Timeout = 10 * time.Second
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode >= 200 && resp.StatusCode < 400
+}
+
+// 重启检查
+func (this *BackendConfig) RestartChecking() {
+	if this.checkLooper != nil {
+		this.checkLooper.Stop()
+		this.checkLooper = nil
+	}
+
+	if len(this.CheckURL) == 0 {
+		return
+	}
+
+	interval := this.CheckInterval
+	if interval <= 0 {
+		interval = 30
+	}
+
+	this.checkLooper = timers.Loop(time.Duration(interval)*time.Second, func(looper *timers.Looper) {
+		if this.CheckHealth() {
+			this.CurrentFails = 0
+			this.IsDown = false
+
+			this.OnUp()
+		} else {
+			this.CurrentFails ++
+			if this.MaxFails > 0 && this.CurrentFails >= this.MaxFails {
+				this.IsDown = true
+				this.DownTime = time.Now()
+
+				this.OnDown()
+			}
+		}
+	})
+}
+
+// 停止Checking
+func (this *BackendConfig) StopChecking() {
+	if this.checkLooper != nil {
+		this.checkLooper.Stop()
+		this.checkLooper = nil
+	}
+}
+
+// 判断是否有URL Check
+func (this *BackendConfig) HasCheckURL() bool {
+	return this.hasCheckURL
+}
+
+// 装载事件
+func (this *BackendConfig) OnAttach() {
+	this.downCallbacks = []func(backend *BackendConfig){}
+	this.RestartChecking()
+}
+
+// 卸载事件
+func (this *BackendConfig) OnDetach() {
+	this.StopChecking()
+}
+
+// 下线事件
+func (this *BackendConfig) OnDown() {
+	for _, callback := range this.downCallbacks {
+		callback(this)
+	}
+}
+
+// 上线事件
+func (this *BackendConfig) OnUp() {
+	for _, callback := range this.upCallbacks {
+		callback(this)
+	}
+}
+
+// 增加下线回调
+func (this *BackendConfig) DownCallback(callback func(backend *BackendConfig)) {
+	this.downCallbacks = append(this.downCallbacks, callback)
+}
+
+// 增加上线回调
+func (this *BackendConfig) UpCallback(callback func(backend *BackendConfig)) {
+	this.upCallbacks = append(this.upCallbacks, callback)
 }

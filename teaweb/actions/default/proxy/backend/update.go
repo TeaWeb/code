@@ -7,6 +7,7 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
+	"regexp"
 )
 
 type UpdateAction actions.Action
@@ -68,6 +69,8 @@ func (this *UpdateAction) Run(params struct {
 		"isBackup":        backend.IsBackup,
 		"requestGroupIds": backend.RequestGroupIds,
 		"requestURI":      backend.RequestURI,
+		"checkURL":        backend.CheckURL,
+		"checkInterval":   backend.CheckInterval,
 	}
 
 	this.Show()
@@ -91,15 +94,23 @@ func (this *UpdateAction) RunPost(params struct {
 	IsBackup        bool
 	RequestGroupIds []string
 	RequestURI      string
+	CheckURL        string
+	CheckInterval   int
 	Must            *actions.Must
 }) {
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
+	}
+
 	params.Must.
 		Field("address", params.Address).
 		Require("请输入后端服务器地址")
 
-	server := teaconfigs.NewServerConfigFromId(params.ServerId)
-	if server == nil {
-		this.Fail("找不到Server")
+	if len(params.CheckURL) > 0 {
+		if !regexp.MustCompile("(?i)(http://|https://)").MatchString(params.CheckURL) {
+			this.FailField("checkURL", "健康检查URL必须以http://或https://开头")
+		}
 	}
 
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
@@ -125,6 +136,8 @@ func (this *UpdateAction) RunPost(params struct {
 	backend.IsBackup = params.IsBackup
 	backend.RequestGroupIds = params.RequestGroupIds
 	backend.RequestURI = params.RequestURI
+	backend.CheckURL = params.CheckURL
+	backend.CheckInterval = params.CheckInterval
 
 	err = server.Save()
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/types"
+	"regexp"
 )
 
 type AddAction actions.Action
@@ -55,15 +56,23 @@ func (this *AddAction) RunPost(params struct {
 	IsBackup        bool
 	RequestGroupIds []string
 	RequestURI      string
+	CheckURL        string
+	CheckInterval   int
 	Must            *actions.Must
 }) {
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
+	}
+
 	params.Must.
 		Field("address", params.Address).
 		Require("请输入后端服务器地址")
 
-	server := teaconfigs.NewServerConfigFromId(params.ServerId)
-	if server == nil {
-		this.Fail("找不到Server")
+	if len(params.CheckURL) > 0 {
+		if !regexp.MustCompile("(?i)(http://|https://)").MatchString(params.CheckURL) {
+			this.FailField("checkURL", "健康检查URL必须以http://或https://开头")
+		}
 	}
 
 	backend := teaconfigs.NewBackendConfig()
@@ -80,6 +89,8 @@ func (this *AddAction) RunPost(params struct {
 	backend.MaxConns = params.MaxConns
 	backend.IsBackup = params.IsBackup
 	backend.RequestURI = params.RequestURI
+	backend.CheckURL = params.CheckURL
+	backend.CheckInterval = params.CheckInterval
 
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
 	if err != nil {
