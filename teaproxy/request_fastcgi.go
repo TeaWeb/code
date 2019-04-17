@@ -184,7 +184,7 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	}
 
 	// 自定义Header
-	for _, header := range this.headers {
+	for _, header := range this.responseHeaders {
 		if header.Match(resp.StatusCode) {
 			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
 				continue

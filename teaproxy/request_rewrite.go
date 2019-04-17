@@ -50,7 +50,7 @@ func (this *Request) callRewrite(writer *ResponseWriter) error {
 		}
 
 		// headers
-		for _, h := range this.headers {
+		for _, h := range this.responseHeaders {
 			req.Header.Add(h.Name, h.Value)
 		}
 

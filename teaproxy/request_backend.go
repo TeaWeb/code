@@ -69,6 +69,14 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	this.raw.Header.Set("X-Forwarded-Host", this.host)
 	this.raw.Header.Set("X-Forwarded-Proto", this.raw.Proto)
 	this.raw.Header.Set("Connection", "keep-alive")
+
+	// 自定义请求Header
+	if this.backend.HasRequestHeaders() {
+		for _, header := range this.backend.RequestHeaders {
+			this.raw.Header.Set(header.Name, header.Value)
+		}
+	}
+
 	client := SharedClientPool.client(this.backend.Id, this.backend.Address, this.backend.FailTimeoutDuration(), this.backend.ReadTimeoutDuration(), this.backend.MaxConns)
 
 	this.raw.RequestURI = ""
@@ -158,12 +166,19 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		}
 	}
 
-	// 自定义Header
-	for _, header := range this.headers {
+	// 自定义响应Headers
+	for _, header := range this.responseHeaders {
 		if header.Match(resp.StatusCode) {
 			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
 				continue
 			}
+			writer.Header().Set(header.Name, header.Value)
+		}
+	}
+
+	// 当前Backend的响应Headers
+	if this.backend.HasResponseHeaders() {
+		for _, header := range this.backend.ResponseHeaders {
 			writer.Header().Set(header.Name, header.Value)
 		}
 	}

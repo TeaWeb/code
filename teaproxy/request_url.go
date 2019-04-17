@@ -30,11 +30,6 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 		req.Header.Set("X-Forwarded-By", ip)
 	}
 
-	// headers
-	for _, h := range this.headers {
-		req.Header.Add(h.Name, h.Value)
-	}
-
 	var client *http.Client = nil
 	if len(req.Host) > 0 {
 		host := req.Host

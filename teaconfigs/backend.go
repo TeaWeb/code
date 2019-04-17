@@ -18,23 +18,25 @@ import (
 type BackendConfig struct {
 	shared.HeaderList `yaml:",inline"`
 
-	On              bool      `yaml:"on" json:"on"`                                 // 是否启用
-	Id              string    `yaml:"id" json:"id"`                                 // ID
-	Code            string    `yaml:"code" json:"code"`                             // 代号
-	Address         string    `yaml:"address" json:"address"`                       // 地址
-	Scheme          string    `yaml:"scheme" json:"scheme"`                         // 协议，http或者https
-	Weight          uint      `yaml:"weight" json:"weight"`                         // 权重
-	IsBackup        bool      `yaml:"backup" json:"isBackup"`                       // 是否为备份
-	FailTimeout     string    `yaml:"failTimeout" json:"failTimeout"`               // 连接失败超时
-	ReadTimeout     string    `yaml:"readTimeout" json:"readTimeout"`               // 读取超时时间
-	MaxFails        int32     `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
-	CurrentFails    int32     `yaml:"currentFails" json:"currentFails"`             // 当前已失败次数
-	MaxConns        int32     `yaml:"maxConns" json:"maxConns"`                     // 最大并发连接数
-	CurrentConns    int32     `yaml:"currentConns" json:"currentConns"`             // 当前连接数
-	IsDown          bool      `yaml:"down" json:"isDown"`                           // 是否下线
-	DownTime        time.Time `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
-	RequestGroupIds []string  `yaml:"requestGroupIds" json:"requestGroupIds"`       // 所属请求分组
-	RequestURI      string    `yaml:"requestURI" json:"requestURI"`                 // 转发后的请求URI
+	On              bool                   `yaml:"on" json:"on"`                                 // 是否启用
+	Id              string                 `yaml:"id" json:"id"`                                 // ID
+	Code            string                 `yaml:"code" json:"code"`                             // 代号
+	Address         string                 `yaml:"address" json:"address"`                       // 地址
+	Scheme          string                 `yaml:"scheme" json:"scheme"`                         // 协议，http或者https
+	Weight          uint                   `yaml:"weight" json:"weight"`                         // 权重
+	IsBackup        bool                   `yaml:"backup" json:"isBackup"`                       // 是否为备份
+	FailTimeout     string                 `yaml:"failTimeout" json:"failTimeout"`               // 连接失败超时
+	ReadTimeout     string                 `yaml:"readTimeout" json:"readTimeout"`               // 读取超时时间
+	MaxFails        int32                  `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
+	CurrentFails    int32                  `yaml:"currentFails" json:"currentFails"`             // 当前已失败次数
+	MaxConns        int32                  `yaml:"maxConns" json:"maxConns"`                     // 最大并发连接数
+	CurrentConns    int32                  `yaml:"currentConns" json:"currentConns"`             // 当前连接数
+	IsDown          bool                   `yaml:"down" json:"isDown"`                           // 是否下线
+	DownTime        time.Time              `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
+	RequestGroupIds []string               `yaml:"requestGroupIds" json:"requestGroupIds"`       // 所属请求分组
+	RequestURI      string                 `yaml:"requestURI" json:"requestURI"`                 // 转发后的请求URI
+	RequestHeaders  []*shared.HeaderConfig `yaml:"requestHeaders" json:"requestHeaders"`         // 请求Header
+	ResponseHeaders []*shared.HeaderConfig `yaml:"responseHeaders" json:"responseHeaders"`       // 响应Header
 
 	// 健康检查URL，目前支持：
 	// - http|https 返回2xx-3xx认为成功
@@ -53,6 +55,9 @@ type BackendConfig struct {
 
 	upCallbacks   []func(backend *BackendConfig)
 	downCallbacks []func(backend *BackendConfig)
+
+	hasRequestHeaders  bool
+	hasResponseHeaders bool
 }
 
 // 获取新对象
@@ -107,6 +112,10 @@ func (this *BackendConfig) Validate() error {
 
 	// check
 	this.hasCheckURL = len(this.CheckURL) > 0
+
+	// headers
+	this.hasRequestHeaders = len(this.RequestHeaders) > 0
+	this.hasResponseHeaders = len(this.ResponseHeaders) > 0
 
 	return nil
 }
@@ -302,4 +311,24 @@ func (this *BackendConfig) DownCallback(callback func(backend *BackendConfig)) {
 // 增加上线回调
 func (this *BackendConfig) UpCallback(callback func(backend *BackendConfig)) {
 	this.upCallbacks = append(this.upCallbacks, callback)
+}
+
+// 添加请求Header
+func (this *BackendConfig) AddRequestHeader(header *shared.HeaderConfig) {
+	this.RequestHeaders = append(this.RequestHeaders, header)
+}
+
+// 添加响应Header
+func (this *BackendConfig) AddResponseHeader(header *shared.HeaderConfig) {
+	this.ResponseHeaders = append(this.ResponseHeaders, header)
+}
+
+// 判断是否有请求Header
+func (this *BackendConfig) HasRequestHeaders() bool {
+	return this.hasRequestHeaders
+}
+
+// 判断是否有响应Header
+func (this *BackendConfig) HasResponseHeaders() bool {
+	return this.hasResponseHeaders
 }

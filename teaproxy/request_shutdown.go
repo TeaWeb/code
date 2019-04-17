@@ -8,6 +8,7 @@ import (
 	"os"
 )
 
+// 调用临时关闭页面
 func (this *Request) callShutdown(writer *ResponseWriter) error {
 	if urlPrefixRegexp.MatchString(this.shutdownPage) {
 		return this.callURL(writer, http.MethodGet, this.shutdownPage)

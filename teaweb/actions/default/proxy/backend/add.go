@@ -3,6 +3,7 @@ package backend
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/types"
@@ -58,6 +59,13 @@ func (this *AddAction) RunPost(params struct {
 	RequestURI      string
 	CheckURL        string
 	CheckInterval   int
+
+	RequestHeaderNames  []string
+	RequestHeaderValues []string
+
+	ResponseHeaderNames  []string
+	ResponseHeaderValues []string
+
 	Must            *actions.Must
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
@@ -91,6 +99,30 @@ func (this *AddAction) RunPost(params struct {
 	backend.RequestURI = params.RequestURI
 	backend.CheckURL = params.CheckURL
 	backend.CheckInterval = params.CheckInterval
+
+	// 请求Header
+	if len(params.RequestHeaderNames) > 0 {
+		for index, headerName := range params.RequestHeaderNames {
+			if index < len(params.RequestHeaderValues) {
+				header := shared.NewHeaderConfig()
+				header.Name = headerName
+				header.Value = params.RequestHeaderValues[index]
+				backend.AddRequestHeader(header)
+			}
+		}
+	}
+
+	// 响应Header
+	if len(params.ResponseHeaderNames) > 0 {
+		for index, headerName := range params.ResponseHeaderNames {
+			if index < len(params.ResponseHeaderValues) {
+				header := shared.NewHeaderConfig()
+				header.Name = headerName
+				header.Value = params.ResponseHeaderValues[index]
+				backend.AddResponseHeader(header)
+			}
+		}
+	}
 
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
 	if err != nil {

@@ -50,18 +50,18 @@ type Request struct {
 
 	attrs map[string]string // 附加参数
 
-	scheme        string
-	rawScheme     string // 原始的scheme
-	uri           string
-	rawURI        string // 跳转之前的uri
-	host          string
-	method        string
-	serverName    string // @TODO
-	serverAddr    string
-	charset       string
-	headers       []*shared.HeaderConfig // 自定义Header
-	ignoreHeaders []string               // 忽略的Header
-	varMapping    map[string]string      // 自定义变量
+	scheme          string
+	rawScheme       string // 原始的scheme
+	uri             string
+	rawURI          string // 跳转之前的uri
+	host            string
+	method          string
+	serverName      string // @TODO
+	serverAddr      string
+	charset         string
+	responseHeaders []*shared.HeaderConfig // 自定义响应Header
+	ignoreHeaders   []string               // 忽略的Header
+	varMapping      map[string]string      // 自定义变量
 
 	root  string   // 资源根目录
 	index []string // 目录下默认访问的文件
@@ -169,7 +169,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	if server.HasHeaders() {
 		// 延迟执行，让Header有机会加入Backend, Fastcgi等信息
 		defer func() {
-			this.headers = append(this.headers, server.FormatHeaders(this.Format) ...)
+			this.responseHeaders = append(this.responseHeaders, server.FormatHeaders(this.Format) ...)
 		}()
 	}
 
@@ -279,7 +279,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 			// headers
 			if api.HasHeaders() {
-				this.headers = append(this.headers, api.FormatHeaders(func(source string) string {
+				this.responseHeaders = append(this.responseHeaders, api.FormatHeaders(func(source string) string {
 					return this.Format(source)
 				}) ...)
 			}
@@ -353,7 +353,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 
 			if location.HasHeaders() {
-				this.headers = append(this.headers, location.FormatHeaders(this.Format) ...)
+				this.responseHeaders = append(this.responseHeaders, location.FormatHeaders(this.Format) ...)
 			}
 
 			if len(location.IgnoreHeaders) > 0 {
@@ -378,7 +378,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 						this.rewriteId = rule.Id
 
 						if rule.HasHeaders() {
-							this.headers = append(this.headers, rule.FormatHeaders(func(source string) string {
+							this.responseHeaders = append(this.responseHeaders, rule.FormatHeaders(func(source string) string {
 								return this.Format(source)
 							}) ...)
 						}
@@ -447,7 +447,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				locationConfigured = true
 
 				if fastcgi.HasHeaders() {
-					this.headers = append(this.headers, fastcgi.Headers ...)
+					this.responseHeaders = append(this.responseHeaders, fastcgi.Headers ...)
 				}
 
 				if len(fastcgi.IgnoreHeaders) > 0 {
@@ -482,7 +482,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				locationConfigured = true
 
 				if backend.HasHeaders() {
-					this.headers = append(this.headers, backend.Headers ...)
+					this.responseHeaders = append(this.responseHeaders, backend.Headers ...)
 				}
 
 				if len(backend.IgnoreHeaders) > 0 {
@@ -519,7 +519,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.rewriteId = rule.Id
 
 				if rule.HasHeaders() {
-					this.headers = append(this.headers, rule.Headers ...)
+					this.responseHeaders = append(this.responseHeaders, rule.Headers ...)
 				}
 
 				if len(rule.IgnoreHeaders) > 0 {
@@ -584,7 +584,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		this.backend = nil // 防止冲突
 
 		if fastcgi.HasHeaders() {
-			this.headers = append(this.headers, fastcgi.Headers ...)
+			this.responseHeaders = append(this.responseHeaders, fastcgi.Headers ...)
 		}
 
 		if len(fastcgi.IgnoreHeaders) > 0 {
@@ -620,7 +620,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 	if backend != nil {
 		if backend.HasHeaders() {
-			this.headers = append(this.headers, backend.Headers ...)
+			this.responseHeaders = append(this.responseHeaders, backend.Headers ...)
 		}
 
 		if len(backend.IgnoreHeaders) > 0 {
@@ -804,7 +804,7 @@ func (this *Request) serverError(writer *ResponseWriter) {
 	hasIgnoreHeaders := ignoreHeaders.Len() > 0
 
 	// 自定义Header
-	for _, header := range this.headers {
+	for _, header := range this.responseHeaders {
 		if header.Match(statusCode) {
 			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
 				continue

@@ -132,7 +132,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	respHeader.Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
 
 	// 自定义Header
-	for _, header := range this.headers {
+	for _, header := range this.responseHeaders {
 		if header.Match(http.StatusOK) {
 			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
 				continue
