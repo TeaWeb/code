@@ -49,6 +49,10 @@ func (this *UpdateAction) Run(params struct {
 		backend.AddRequestGroupId("default")
 	}
 
+	if len(backend.RequestURI) == 0 {
+		backend.RequestURI = "${requestURI}"
+	}
+
 	this.Data["backend"] = maps.Map{
 		"id":              backend.Id,
 		"address":         backend.Address,
@@ -63,6 +67,7 @@ func (this *UpdateAction) Run(params struct {
 		"isDown":          backend.IsDown,
 		"isBackup":        backend.IsBackup,
 		"requestGroupIds": backend.RequestGroupIds,
+		"requestURI":      backend.RequestURI,
 	}
 
 	this.Show()
@@ -85,6 +90,7 @@ func (this *UpdateAction) RunPost(params struct {
 	MaxConns        int32
 	IsBackup        bool
 	RequestGroupIds []string
+	RequestURI      string
 	Must            *actions.Must
 }) {
 	params.Must.
@@ -118,6 +124,7 @@ func (this *UpdateAction) RunPost(params struct {
 	backend.MaxConns = params.MaxConns
 	backend.IsBackup = params.IsBackup
 	backend.RequestGroupIds = params.RequestGroupIds
+	backend.RequestURI = params.RequestURI
 
 	err = server.Save()
 	if err != nil {

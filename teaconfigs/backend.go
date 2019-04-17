@@ -29,9 +29,13 @@ type BackendConfig struct {
 	IsDown          bool      `yaml:"down" json:"isDown"`                           // 是否下线
 	DownTime        time.Time `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
 	RequestGroupIds []string  `yaml:"requestGroupIds" json:"requestGroupIds"`       // 所属请求分组
+	RequestURI      string    `yaml:"requestURI" json:"requestURI"`                 // 转发后的请求URI
 
 	failTimeoutDuration time.Duration
 	readTimeoutDuration time.Duration
+	hasRequestURI       bool
+	requestPath         string
+	requestArgs         string
 }
 
 // 获取新对象
@@ -67,6 +71,21 @@ func (this *BackendConfig) Validate() error {
 	err := this.ValidateHeaders()
 	if err != nil {
 		return err
+	}
+
+	// request uri
+	if len(this.RequestURI) == 0 || this.RequestURI == "${requestURI}" {
+		this.hasRequestURI = false
+	} else {
+		this.hasRequestURI = true
+
+		if strings.Contains(this.RequestURI, "?") {
+			pieces := strings.SplitN(this.RequestURI, "?", -1)
+			this.requestPath = pieces[0]
+			this.requestArgs = pieces[1]
+		} else {
+			this.requestPath = this.RequestURI
+		}
 	}
 
 	return nil
@@ -135,4 +154,19 @@ func (this *BackendConfig) HasRequestGroupId(requestGroupId string) bool {
 		return true
 	}
 	return lists.ContainsString(this.RequestGroupIds, requestGroupId)
+}
+
+// 判断是否设置RequestURI
+func (this *BackendConfig) HasRequestURI() bool {
+	return this.hasRequestURI
+}
+
+// 获取转发后的Path
+func (this *BackendConfig) RequestPath() string {
+	return this.requestPath
+}
+
+// 获取转发后的附加参数
+func (this *BackendConfig) RequestArgs() string {
+	return this.requestArgs
 }

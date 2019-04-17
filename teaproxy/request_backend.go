@@ -33,10 +33,29 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	}
 
 	// new uri
-	u, err := url.ParseRequestURI(this.uri)
-	if err == nil {
-		this.raw.URL.Path = u.Path
-		this.raw.URL.RawQuery = u.RawQuery
+	if this.backend.HasRequestURI() {
+		uri := this.Format(this.backend.RequestPath())
+
+		u, err := url.ParseRequestURI(uri)
+		if err == nil {
+			this.raw.URL.Path = u.Path
+			this.raw.URL.RawQuery = u.RawQuery
+
+			args := this.Format(this.backend.RequestArgs())
+			if len(args) > 0 {
+				if len(u.RawQuery) > 0 {
+					this.raw.URL.RawQuery += "&" + args
+				} else {
+					this.raw.URL.RawQuery += args
+				}
+			}
+		}
+	} else {
+		u, err := url.ParseRequestURI(this.uri)
+		if err == nil {
+			this.raw.URL.Path = u.Path
+			this.raw.URL.RawQuery = u.RawQuery
+		}
 	}
 
 	// 设置代理相关的头部

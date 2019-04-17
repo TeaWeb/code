@@ -14,7 +14,8 @@ func startTestServer() {
 		Get("/", func(resp http.ResponseWriter) {
 			resp.Write([]byte("This is test server"))
 		}).
-		Get("/hello", func(resp http.ResponseWriter) {
+		Get("/hello", func(req *http.Request, resp http.ResponseWriter) {
+			resp.Write([]byte(req.RequestURI + ":"))
 			resp.Write([]byte("world"))
 		}).
 		Get("/benchmark", func(resp http.ResponseWriter) {

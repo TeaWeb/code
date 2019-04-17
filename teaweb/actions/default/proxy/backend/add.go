@@ -54,6 +54,7 @@ func (this *AddAction) RunPost(params struct {
 	MaxConns        int32
 	IsBackup        bool
 	RequestGroupIds []string
+	RequestURI      string
 	Must            *actions.Must
 }) {
 	params.Must.
@@ -78,6 +79,7 @@ func (this *AddAction) RunPost(params struct {
 	backend.MaxFails = params.MaxFails
 	backend.MaxConns = params.MaxConns
 	backend.IsBackup = params.IsBackup
+	backend.RequestURI = params.RequestURI
 
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
 	if err != nil {
