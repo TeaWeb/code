@@ -27,7 +27,16 @@ func (this *UpdateCacheAction) Run(params struct {
 		this.Fail("找不到要操作的路径规则")
 	}
 
-	if len(params.Policy) > 0 {
+	this.Data["cacheOn"] = true
+	if params.Policy == "none" {
+		this.Data["policy"] = maps.Map{
+			"name":     "",
+			"typeName": "",
+			"type":     "",
+			"key":      "",
+		}
+		this.Data["cacheOn"] = false
+	} else if len(params.Policy) > 0 {
 		policy := shared.NewCachePolicyFromFile(params.Policy)
 		if policy == nil {
 			this.Fail("找不到要使用的缓存策略")
@@ -47,8 +56,13 @@ func (this *UpdateCacheAction) Run(params struct {
 		}
 	}
 
-	location.CacheOn = true
-	location.CachePolicy = params.Policy
+	if params.Policy == "none" {
+		location.CacheOn = false
+		location.CachePolicy = ""
+	} else {
+		location.CacheOn = true
+		location.CachePolicy = params.Policy
+	}
 	err := server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())

@@ -45,7 +45,7 @@ type LocationConfig struct {
 	Proxy string `yaml:proxy" json:"proxy"` //  代理配置 @TODO
 
 	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
-	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开 TODO
+	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开
 	cachePolicy *shared.CachePolicy
 
 	// websocket设置

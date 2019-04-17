@@ -85,6 +85,7 @@ func (this *AddAction) RunPost(params struct {
 	location := teaconfigs.NewLocation()
 	location.SetPattern(params.Pattern, params.PatternType, params.IsCaseInsensitive, params.IsReverse)
 	location.On = params.On
+	location.CacheOn = true
 	location.Name = params.Name
 	location.Root = params.Root
 	location.Charset = params.Charset

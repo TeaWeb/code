@@ -28,6 +28,9 @@ func (this *CacheAction) Run(params struct {
 		}
 	}
 	this.Data["cachePolicyFile"] = location.CachePolicy
+	if !location.CacheOn {
+		this.Data["cachePolicyFile"] = "none"
+	}
 
 	cache, _ := teaconfigs.SharedCacheConfig()
 	this.Data["cachePolicyList"] = lists.Map(cache.FindAllPolicies(), func(k int, v interface{}) interface{} {

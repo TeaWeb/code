@@ -183,6 +183,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		if cachePolicy != nil && cachePolicy.On {
 			this.cachePolicy = cachePolicy
 		}
+	} else {
+		this.cachePolicy = nil
 	}
 
 	// other
@@ -346,6 +348,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				if cachePolicy != nil && cachePolicy.On {
 					this.cachePolicy = cachePolicy
 				}
+			} else {
+				this.cachePolicy = nil
 			}
 
 			if location.HasHeaders() {

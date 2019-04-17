@@ -3,7 +3,6 @@ package proxy
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"strings"
@@ -36,6 +35,7 @@ func (this *AddAction) RunPost(params struct {
 	server.Description = params.Description
 	server.Charset = "utf-8"
 	server.Index = []string{"index.html", "index.htm", "index.php"}
+	server.CacheOn = true
 
 	if len(params.Names) > 0 {
 		for _, name := range params.Names {
@@ -86,8 +86,7 @@ func (this *AddAction) RunPost(params struct {
 
 	filename := "server." + server.Id + ".proxy.conf"
 	server.Filename = filename
-	configPath := Tea.ConfigFile(filename)
-	err = server.WriteToFile(configPath)
+	err = server.Save()
 	if err != nil {
 		this.Fail(err.Error())
 	}

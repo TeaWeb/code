@@ -1,6 +1,7 @@
 package teaproxy
 
 import (
+	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/timers"
 	"net/http"
 	"sync/atomic"
@@ -17,8 +18,11 @@ var qps = int32(0)
 var QPS = int32(0)
 
 func init() {
-	timers.Every(1*time.Second, func(ticker *time.Ticker) {
-		QPS = qps
-		atomic.StoreInt32(&qps, 0)
+	TeaGo.BeforeStart(func(server *TeaGo.Server) {
+		// 计算QPS
+		timers.Every(1*time.Second, func(ticker *time.Ticker) {
+			QPS = qps
+			atomic.StoreInt32(&qps, 0)
+		})
 	})
 }

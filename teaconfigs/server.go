@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/api"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
@@ -24,6 +25,7 @@ type ServerConfig struct {
 	On bool `yaml:"on" json:"on"`
 
 	Id          string   `yaml:"id" json:"id"`                   // ID
+	TeaVersion  string   `yaml:"teaVersion" json:"teaVersion"`   // Tea版本
 	Description string   `yaml:"description" json:"description"` // 描述
 	Name        []string `yaml:"name" json:"name"`               // 域名
 	Http        bool     `yaml:"http" json:"http"`               // 是否支持HTTP
@@ -150,6 +152,7 @@ func NewServerConfigFromFile(filename string) (*ServerConfig, error) {
 		return nil, err
 	}
 
+	config.compatible()
 	config.Filename = filename
 
 	// 初始化
@@ -199,6 +202,8 @@ func NewServerConfigFromId(serverId string) *ServerConfig {
 		logs.Error(err)
 		return nil
 	}
+
+	server.compatible()
 
 	return server
 }
@@ -318,6 +323,18 @@ func (this *ServerConfig) Validate() error {
 	return nil
 }
 
+// 版本相关兼容性
+func (this *ServerConfig) compatible() {
+	// 版本相关
+	if len(this.TeaVersion) == 0 {
+		// cacheOn 默认值
+		this.CacheOn = true
+		for _, location := range this.Locations {
+			location.CacheOn = true
+		}
+	}
+}
+
 // 最大Body尺寸
 func (this *ServerConfig) MaxBodyBytes() int64 {
 	return this.maxBodySize
@@ -351,35 +368,21 @@ func (this *ServerConfig) LocationAtIndex(index int) *LocationConfig {
 	return location
 }
 
-// 将配置写入文件
-func (this *ServerConfig) WriteToFile(path string) error {
-	writer, err := files.NewWriter(path)
-	if err != nil {
-		return err
-	}
-	_, err = writer.WriteYAML(this)
-	writer.Close()
-	return err
-}
-
-// 将配置写入文件
-func (this *ServerConfig) WriteToFilename(filename string) error {
-	writer, err := files.NewWriter(Tea.ConfigFile(filename))
-	if err != nil {
-		return err
-	}
-	_, err = writer.WriteYAML(this)
-	writer.Close()
-	return err
-}
-
 // 保存
 func (this *ServerConfig) Save() error {
 	if len(this.Filename) == 0 {
 		return errors.New("'filename' should be specified")
 	}
 
-	return this.WriteToFilename(this.Filename)
+	this.TeaVersion = teaconst.TeaVersion
+
+	writer, err := files.NewWriter(Tea.ConfigFile(this.Filename))
+	if err != nil {
+		return err
+	}
+	_, err = writer.WriteYAML(this)
+	writer.Close()
+	return err
 }
 
 // 删除
