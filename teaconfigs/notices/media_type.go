@@ -12,6 +12,7 @@ const (
 	NoticeMediaTypeDingTalk  = "dingTalk"
 	NoticeMediaTypeQyWeixin  = "qyWeixin"
 	NoticeMediaTypeAliyunSms = "aliyunSms"
+	NoticeMediaTypeTeaSms    = "teaSms"
 )
 
 // 所有媒介
@@ -63,6 +64,14 @@ func AllNoticeMediaTypes() []maps.Map {
 			"supportsHTML": false,
 			"instance":     new(NoticeAliyunSmsMedia),
 			"description":  "通过<a href=\"https://www.aliyun.com/product/sms?spm=5176.11533447.1097531.2.12055cfa6UnIix\" target=\"_blank\">阿里云短信服务</a>发送短信，<a href=\"http://teaos.cn/doc/notices/AliyunSms.md\" target=\"_blank\">相关文档&raquo;</a>",
+			"user":         "接收消息的手机号",
+		},
+		{
+			"name":         "TeaOS云短信",
+			"code":         NoticeMediaTypeTeaSms,
+			"supportsHTML": false,
+			"instance":     new(NoticeTeaSmsMedia),
+			"description":  "通过<a href=\"http://cloud.teaos.cn\" target=\"_blank\">TeaOS官方</a>提供的云短信接口发送短信，<a href=\"http://teaos.cn/doc/notices/TeaSms.md\" target=\"_blank\">相关文档&raquo;</a>",
 			"user":         "接收消息的手机号",
 		},
 	}

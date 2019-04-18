@@ -61,6 +61,9 @@ func (this *AddMediaAction) RunPost(params struct {
 	AliyunSmsAccessKeyId       string
 	AliyunSmsAccessKeySecret   string
 
+	TeaSmsAccessId     string
+	TeaSmsAccessSecret string
+
 	TimeFromHour   int
 	TimeFromMinute int
 	TimeFromSecond int
@@ -215,6 +218,16 @@ func (this *AddMediaAction) RunPost(params struct {
 			}
 		}
 
+		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+	case notices.NoticeMediaTypeTeaSms:
+		params.Must.
+			Field("teaSmsAccessId", params.TeaSmsAccessId).
+			Require("请输入AccessId").
+			Field("teaSmsAccessSecret", params.TeaSmsAccessSecret).
+			Require("请输入AccessSecret")
+		media := notices.NewNoticeTeaSmsMedia()
+		media.AccessId = params.TeaSmsAccessId
+		media.AccessSecret = params.TeaSmsAccessSecret
 		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
 	}
 

@@ -42,10 +42,12 @@ func (this *TestMediaAction) RunPost(params struct {
 		this.Fail("发现配置错误：" + err.Error())
 	}
 
+	this.Data["response"] = ""
 	if rawMedia.RequireUser() {
-		params.Must.
-			Field("user", params.User).
-			Require("请输入接收人标识")
+		if len(params.User) == 0 {
+			this.Data["error"] = "请输入用户标识"
+			this.Success()
+		}
 	}
 
 	resp, err := rawMedia.Send(params.User, params.Subject, params.Body)
