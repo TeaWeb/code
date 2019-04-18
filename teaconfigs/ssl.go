@@ -1,7 +1,9 @@
 package teaconfigs
 
 import (
+	"crypto/tls"
 	"errors"
+	"github.com/iwind/TeaGo/Tea"
 	"strings"
 )
 
@@ -11,6 +13,8 @@ type SSLConfig struct {
 	Certificate    string   `yaml:"certificate" json:"certificate"`       // 证书文件
 	CertificateKey string   `yaml:"certificateKey" json:"certificateKey"` // 密钥
 	Listen         []string `yaml:"listen" json:"listen"`                 // 网络地址
+
+	cert *tls.Certificate
 }
 
 // 获取新对象
@@ -39,5 +43,18 @@ func (this *SSLConfig) Validate() error {
 			}
 		}
 	}
+
+	cert, err := tls.LoadX509KeyPair(Tea.ConfigFile(this.Certificate), Tea.ConfigFile(this.CertificateKey))
+	if err != nil {
+		return errors.New("load certificate '" + this.Certificate + "', '" + this.CertificateKey + "' failed:" + err.Error())
+	}
+
+	this.cert = &cert
+
 	return nil
+}
+
+// 取得Certificate对象
+func (this *SSLConfig) CertificateObject() *tls.Certificate {
+	return this.cert
 }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaplugins"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"golang.org/x/net/context"
@@ -202,21 +201,22 @@ func (this *Listener) Reload() error {
 	if this.Scheme == SchemeHTTPS {
 		logs.Println("start ssl listener on", this.Address)
 
-		certificates := []tls.Certificate{}
-		for _, server := range this.currentServers {
-			ssl := server.SSL
-			if ssl != nil && ssl.On {
-				cer, err := tls.LoadX509KeyPair(Tea.ConfigFile(ssl.Certificate), Tea.ConfigFile(ssl.CertificateKey))
-				if err != nil {
-					logs.Error(errors.New("[listener]load certificate '" + ssl.Certificate + "', '" + ssl.CertificateKey + "' failed:" + err.Error()))
-					continue
-				}
-				certificates = append(certificates, cer)
-			}
-		}
-
 		this.httpServer.TLSConfig = &tls.Config{
-			Certificates: certificates,
+			Certificates: nil,
+			GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
+				if len(info.ServerName) == 0 && len(this.currentServers) > 0 && this.currentServers[0].SSL != nil {
+					return this.currentServers[0].SSL.CertificateObject(), nil
+				}
+				server, _ := this.findNamedServer(info.ServerName)
+				if server == nil || server.SSL == nil || !server.SSL.On {
+					return nil, errors.New("[listener]no server found for '" + this.Address + "'")
+				}
+				cert := server.SSL.CertificateObject()
+				if cert != nil {
+					return cert, nil
+				}
+				return nil, errors.New("no certificate found")
+			},
 		}
 		err = this.httpServer.ListenAndServeTLS("", "")
 		if err != nil && err != http.ErrServerClosed {
