@@ -28,7 +28,6 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 	if this.backend.HasHost() {
 		this.raw.Host = this.Format(this.backend.Host)
-		logs.Println("request:", this.raw.Host)
 	}
 
 	if len(this.backend.Scheme) > 0 && this.backend.Scheme != "http" {
