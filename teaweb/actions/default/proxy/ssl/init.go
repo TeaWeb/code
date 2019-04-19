@@ -20,6 +20,8 @@ func init() {
 			GetPost("/update", new(UpdateAction)).
 			Post("/startHttps", new(StartHttpsAction)).
 			Post("/shutdownHttps", new(ShutdownHttpsAction)).
+			Get("/downloadCert", new(DownloadCertAction)).
+			Get("/downloadKey", new(DownloadKeyAction)).
 			EndAll()
 	})
 }
