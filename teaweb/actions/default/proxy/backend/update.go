@@ -74,6 +74,7 @@ func (this *UpdateAction) Run(params struct {
 		"checkInterval":   backend.CheckInterval,
 		"requestHeaders":  backend.RequestHeaders,
 		"responseHeaders": backend.ResponseHeaders,
+		"host":            backend.Host,
 	}
 
 	this.Show()
@@ -105,6 +106,8 @@ func (this *UpdateAction) RunPost(params struct {
 
 	ResponseHeaderNames  []string
 	ResponseHeaderValues []string
+
+	Host string
 
 	Must *actions.Must
 }) {
@@ -174,6 +177,8 @@ func (this *UpdateAction) RunPost(params struct {
 			}
 		}
 	}
+
+	backend.Host = params.Host
 
 	err = server.Save()
 	if err != nil {

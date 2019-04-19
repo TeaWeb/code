@@ -66,7 +66,9 @@ func (this *AddAction) RunPost(params struct {
 	ResponseHeaderNames  []string
 	ResponseHeaderValues []string
 
-	Must            *actions.Must
+	Host string
+
+	Must *actions.Must
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -124,10 +126,13 @@ func (this *AddAction) RunPost(params struct {
 		}
 	}
 
+	backend.Host = params.Host
+
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
 	if err != nil {
 		this.Fail(err.Error())
 	}
+
 	backendList.AddBackend(backend)
 
 	err = server.Save()

@@ -37,6 +37,7 @@ type BackendConfig struct {
 	RequestURI      string                 `yaml:"requestURI" json:"requestURI"`                 // 转发后的请求URI
 	RequestHeaders  []*shared.HeaderConfig `yaml:"requestHeaders" json:"requestHeaders"`         // 请求Header
 	ResponseHeaders []*shared.HeaderConfig `yaml:"responseHeaders" json:"responseHeaders"`       // 响应Header
+	Host            string                 `yaml:"host" json:"host"`                             // 自定义主机名
 
 	// 健康检查URL，目前支持：
 	// - http|https 返回2xx-3xx认为成功
@@ -58,6 +59,8 @@ type BackendConfig struct {
 
 	hasRequestHeaders  bool
 	hasResponseHeaders bool
+
+	hasHost bool
 }
 
 // 获取新对象
@@ -116,6 +119,9 @@ func (this *BackendConfig) Validate() error {
 	// headers
 	this.hasRequestHeaders = len(this.RequestHeaders) > 0
 	this.hasResponseHeaders = len(this.ResponseHeaders) > 0
+
+	// host
+	this.hasHost = len(this.Host) > 0
 
 	return nil
 }
@@ -331,4 +337,9 @@ func (this *BackendConfig) HasRequestHeaders() bool {
 // 判断是否有响应Header
 func (this *BackendConfig) HasResponseHeaders() bool {
 	return this.hasResponseHeaders
+}
+
+// 判断是否有自定义主机名
+func (this *BackendConfig) HasHost() bool {
+	return this.hasHost
 }

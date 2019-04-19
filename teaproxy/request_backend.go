@@ -26,6 +26,11 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 	this.raw.URL.Host = this.host
 
+	if this.backend.HasHost() {
+		this.raw.Host = this.Format(this.backend.Host)
+		logs.Println("request:", this.raw.Host)
+	}
+
 	if len(this.backend.Scheme) > 0 && this.backend.Scheme != "http" {
 		this.raw.URL.Scheme = this.backend.Scheme
 	} else {
@@ -179,7 +184,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	// 当前Backend的响应Headers
 	if this.backend.HasResponseHeaders() {
 		for _, header := range this.backend.ResponseHeaders {
-			writer.Header().Set(header.Name, header.Value)
+			writer.Header().Set(header.Name, this.Format(header.Value))
 		}
 	}
 
