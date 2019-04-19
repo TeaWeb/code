@@ -35,6 +35,7 @@ func (this *DetailAction) Run(params struct {
 		"enableStat":      !location.DisableStat,
 		"gzipLevel":       location.GzipLevel,
 		"gzipMinLength":   location.GzipMinLength,
+		"redirectToHttps": location.RedirectToHttps,
 		"conds":           location.Cond,
 
 		"fastcgi":     location.Fastcgi,

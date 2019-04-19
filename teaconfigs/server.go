@@ -25,12 +25,13 @@ type ServerConfig struct {
 
 	On bool `yaml:"on" json:"on"`
 
-	Id          string   `yaml:"id" json:"id"`                   // ID
-	TeaVersion  string   `yaml:"teaVersion" json:"teaVersion"`   // Tea版本
-	Description string   `yaml:"description" json:"description"` // 描述
-	Name        []string `yaml:"name" json:"name"`               // 域名
-	Http        bool     `yaml:"http" json:"http"`               // 是否支持HTTP
-	IsDefault   bool     `yaml:"isDefault" json:"isDefault"`     // 是否默认的服务，找不到匹配域名时有限使用此配置
+	Id              string   `yaml:"id" json:"id"`                           // ID
+	TeaVersion      string   `yaml:"teaVersion" json:"teaVersion"`           // Tea版本
+	Description     string   `yaml:"description" json:"description"`         // 描述
+	Name            []string `yaml:"name" json:"name"`                       // 域名
+	Http            bool     `yaml:"http" json:"http"`                       // 是否支持HTTP
+	RedirectToHttps bool     `yaml:"redirectToHttps" json:"redirectToHttps"` // 是否自动跳转到Https
+	IsDefault       bool     `yaml:"isDefault" json:"isDefault"`             // 是否默认的服务，找不到匹配域名时有限使用此配置
 
 	// 监听地址
 	Listen []string `yaml:"listen" json:"listen"`

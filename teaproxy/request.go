@@ -89,6 +89,8 @@ type Request struct {
 	rewriteRedirectMode string // 跳转方式
 	rewriteIsExternal   bool   // 是否为外部URL
 
+	redirectToHttps bool
+
 	websocket *teaconfigs.WebsocketConfig
 
 	// 执行请求
@@ -208,6 +210,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 	this.gzipLevel = server.GzipLevel
 	this.gzipMinLength = server.GzipMinBytes()
+
+	if server.RedirectToHttps && this.rawScheme == "http" {
+		this.redirectToHttps = true
+		return nil
+	}
 
 	// API配置，目前只有Plus版本支持
 	if teaconst.PlusEnabled && server.API != nil && server.API.On {
@@ -341,6 +348,10 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 			if location.GzipMinBytes() > 0 {
 				this.gzipMinLength = location.GzipMinBytes()
+			}
+			if location.RedirectToHttps && this.rawScheme == "http" {
+				this.redirectToHttps = true
+				return nil
 			}
 
 			if location.CacheOn {
@@ -661,6 +672,12 @@ func (this *Request) call(writer *ResponseWriter) error {
 	}**/
 
 	this.responseWriter = writer
+
+	// 跳转到https
+	if this.redirectToHttps {
+		this.callRedirectToHttps(writer)
+		return nil
+	}
 
 	// 临时关闭页面
 	if this.shutdownPageOn {

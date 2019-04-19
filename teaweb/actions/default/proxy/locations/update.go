@@ -53,6 +53,7 @@ func (this *UpdateAction) Run(params struct {
 		"enableStat":        !location.DisableStat,
 		"gzipLevel":         location.GzipLevel,
 		"gzipMinLength":     location.GzipMinLength,
+		"redirectToHttps":   location.RedirectToHttps,
 		"conds":             location.Cond,
 
 		// 菜单用
@@ -88,6 +89,7 @@ func (this *UpdateAction) RunPost(params struct {
 	GzipLevel         int8
 	GzipMinLength     float64
 	GzipMinUnit       string
+	RedirectToHttps   bool
 	On                bool
 	IsReverse         bool
 	IsCaseInsensitive bool
@@ -144,6 +146,7 @@ func (this *UpdateAction) RunPost(params struct {
 	location.DisableStat = !params.EnableStat
 	location.GzipLevel = params.GzipLevel
 	location.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
+	location.RedirectToHttps = params.RedirectToHttps
 
 	index := []string{}
 	for _, i := range params.Index {

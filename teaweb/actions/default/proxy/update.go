@@ -62,6 +62,8 @@ func (this *UpdateAction) RunPost(params struct {
 	ShutdownPageOn bool
 	ShutdownPage   string
 
+	RedirectToHttps bool
+
 	Must *actions.Must
 }) {
 	// 加一个0表示已经被设置
@@ -108,6 +110,8 @@ func (this *UpdateAction) RunPost(params struct {
 		this.FailField("shutdownPage", "请输入临时关闭页面文件路径")
 	}
 	server.ShutdownPage = params.ShutdownPage
+
+	server.RedirectToHttps = params.RedirectToHttps
 
 	err := server.Validate()
 	if err != nil {

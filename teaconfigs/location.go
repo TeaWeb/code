@@ -21,16 +21,17 @@ type LocationConfig struct {
 	Name    string `yaml:"name" json:"name"`       // 名称
 	Pattern string `yaml:"pattern" json:"pattern"` // 匹配规则
 
-	Async         bool                 `yaml:"async" json:"async"`                 // 是否异步请求 @TODO
-	Notify        []interface{}        `yaml:"notify" json:"notify"`               // 转发请求，可以配置转发策略 @TODO
-	LogOnly       bool                 `yaml:"logOnly" json:"logOnly"`             // 是否只记录日志 @TODO
-	Root          string               `yaml:"root" json:"root"`                   // 资源根目录
-	Index         []string             `yaml:"index" json:"index"`                 // 默认文件
-	Charset       string               `yaml:"charset" json:"charset"`             // 字符集设置
-	MaxBodySize   string               `yaml:"maxBodySize" json:"maxBodySize"`     // 请求body最大尺寸
-	GzipLevel     int8                 `yaml:"gzipLevel" json:"gzipLevel"`         // Gzip压缩级别
-	GzipMinLength string               `yaml:"gzipMinLength" json:"gzipMinLength"` // 需要压缩的最小内容尺寸
-	AccessPolicy  *shared.AccessPolicy `yaml:"accessPolicy" json:"accessPolicy"`   // 访问控制
+	Async           bool                 `yaml:"async" json:"async"`                     // 是否异步请求 @TODO
+	Notify          []interface{}        `yaml:"notify" json:"notify"`                   // 转发请求，可以配置转发策略 @TODO
+	LogOnly         bool                 `yaml:"logOnly" json:"logOnly"`                 // 是否只记录日志 @TODO
+	Root            string               `yaml:"root" json:"root"`                       // 资源根目录
+	Index           []string             `yaml:"index" json:"index"`                     // 默认文件
+	Charset         string               `yaml:"charset" json:"charset"`                 // 字符集设置
+	MaxBodySize     string               `yaml:"maxBodySize" json:"maxBodySize"`         // 请求body最大尺寸
+	GzipLevel       int8                 `yaml:"gzipLevel" json:"gzipLevel"`             // Gzip压缩级别
+	GzipMinLength   string               `yaml:"gzipMinLength" json:"gzipMinLength"`     // 需要压缩的最小内容尺寸
+	AccessPolicy    *shared.AccessPolicy `yaml:"accessPolicy" json:"accessPolicy"`       // 访问控制
+	RedirectToHttps bool                 `yaml:"redirectToHttps" json:"redirectToHttps"` // 是否自动跳转到Https
 
 	// 日志
 	DisableAccessLog bool               `yaml:"disableAccessLog" json:"disableAccessLog"` // 是否禁用访问日志
