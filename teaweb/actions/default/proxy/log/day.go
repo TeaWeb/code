@@ -38,7 +38,7 @@ func (this *DayAction) Run(params struct {
 		params.Page = 1
 	}
 	if params.Size < 1 {
-		params.Size = 10
+		params.Size = 20
 	}
 
 	this.Data["server"] = maps.Map{
