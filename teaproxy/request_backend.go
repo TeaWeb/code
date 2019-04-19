@@ -73,7 +73,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	// 自定义请求Header
 	if this.backend.HasRequestHeaders() {
 		for _, header := range this.backend.RequestHeaders {
-			this.raw.Header.Set(header.Name, header.Value)
+			this.raw.Header.Set(header.Name, this.Format(header.Value))
 		}
 	}
 
