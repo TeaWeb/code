@@ -113,13 +113,17 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 		if len(ext) > 0 {
 			mimeType := mime.TypeByExtension(ext)
 			if len(mimeType) > 0 {
-				if len(this.charset) > 0 {
-					// 去掉里面的charset设置
-					index := strings.Index(mimeType, "charset=")
-					if index > 0 {
-						respHeader.Set("Content-Type", mimeType[:index+len("charset=")]+this.charset)
+				if _, found := textMimeMap[mimeType]; found {
+					if len(this.charset) > 0 {
+						// 去掉里面的charset设置
+						index := strings.Index(mimeType, "charset=")
+						if index > 0 {
+							respHeader.Set("Content-Type", mimeType[:index+len("charset=")]+this.charset)
+						} else {
+							respHeader.Set("Content-Type", mimeType+"; charset="+this.charset)
+						}
 					} else {
-						respHeader.Set("Content-Type", mimeType+"; charset="+this.charset)
+						respHeader.Set("Content-Type", mimeType)
 					}
 				} else {
 					respHeader.Set("Content-Type", mimeType)

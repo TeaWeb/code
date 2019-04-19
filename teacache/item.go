@@ -2,9 +2,15 @@ package teacache
 
 import "encoding/binary"
 
+// 缓存条目
 type Item struct {
 	Header []byte
 	Body   []byte
+}
+
+// 获取新对象
+func NewItem() *Item {
+	return &Item{}
 }
 
 func (this *Item) Encode() (data []byte) {
@@ -21,3 +27,4 @@ func (this *Item) Decode(data []byte) {
 	this.Header = data[8 : 8+headerLength]
 	this.Body = data[8+headerLength:]
 }
+

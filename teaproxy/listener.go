@@ -209,13 +209,13 @@ func (this *Listener) Reload() error {
 				}
 				server, _ := this.findNamedServer(info.ServerName)
 				if server == nil || server.SSL == nil || !server.SSL.On {
-					return nil, errors.New("[listener]no server found for '" + this.Address + "'")
+					return nil, errors.New("[listener]no server found for '" + info.ServerName + "'")
 				}
 				cert := server.SSL.CertificateObject()
 				if cert != nil {
 					return cert, nil
 				}
-				return nil, errors.New("no certificate found")
+				return nil, errors.New("[listener]no certificate found for '" + info.ServerName + "'")
 			},
 		}
 		err = this.httpServer.ListenAndServeTLS("", "")

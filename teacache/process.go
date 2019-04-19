@@ -78,6 +78,10 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 		return true
 	}
 
+	if len(data) <= 8 {
+		return true
+	}
+
 	resp, err := http.ReadResponse(bufio.NewReader(bytes.NewReader(data[8:])), nil)
 	if err != nil {
 		logs.Error(err)
@@ -85,12 +89,16 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 	}
 	defer resp.Body.Close()
 
-	writer.WriteHeader(resp.StatusCode)
 	for k, vs := range resp.Header {
+		if k == "Connection" {
+			continue
+		}
 		for _, v := range vs {
 			writer.Header().Add(k, v)
 		}
 	}
+	writer.WriteHeader(resp.StatusCode)
+
 	_, err = io.Copy(writer, resp.Body)
 	if err != nil {
 		logs.Error(err)
