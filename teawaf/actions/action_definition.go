@@ -1,7 +1,8 @@
 package actions
 
 type ActionDefinition struct {
-	Name     string
-	Code     ActionString
-	Instance ActionInterface
+	Name        string
+	Code        ActionString
+	Description string
+	Instance    ActionInterface
 }

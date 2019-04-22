@@ -22,6 +22,18 @@ func (this *RequestRemoteAddrCheckPoint) RequestValue(req *http.Request, param s
 		return
 	}
 
+	// Real-Ip
+	realIP = req.Header.Get("X-Real-Ip")
+	if len(realIP) > 0 {
+		index := strings.LastIndex(realIP, ":")
+		if index < 0 {
+			value = realIP
+		} else {
+			value = realIP[:index]
+		}
+		return
+	}
+
 	// X-Forwarded-For
 	forwardedFor := req.Header.Get("X-Forwarded-For")
 	if len(forwardedFor) > 0 {

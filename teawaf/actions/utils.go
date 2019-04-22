@@ -18,11 +18,20 @@ var AllActions = []*ActionDefinition{
 	},
 }
 
-func FindAction(action ActionString) ActionInterface {
+func FindActionInstance(action ActionString) ActionInterface {
 	for _, def := range AllActions {
 		if def.Code == action {
 			return def.Instance
 		}
 	}
 	return nil
+}
+
+func FindActionName(action ActionString) string {
+	for _, def := range AllActions {
+		if def.Code == action {
+			return def.Name
+		}
+	}
+	return ""
 }

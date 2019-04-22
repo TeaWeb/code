@@ -16,6 +16,6 @@ func (this *RequestHeadersCheckPoint) RequestValue(req *http.Request, param stri
 			headers = append(headers, k+": "+subV)
 		}
 	}
-	value = strings.Join(headers, ";")
+	value = strings.Join(headers, "\n")
 	return
 }

@@ -2,6 +2,7 @@ package teawaf
 
 import (
 	"github.com/TeaWeb/code/teawaf/actions"
+	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/assert"
 	"net/http"
 	"testing"
@@ -10,24 +11,24 @@ import (
 func TestWAF_MatchRequest(t *testing.T) {
 	a := assert.NewAssertion(t)
 
-	set := NewRuleSet()
+	set := rules.NewRuleSet()
 	set.Name = "Name_Age"
-	set.Connector = RuleConnectorAnd
-	set.Rules = []*Rule{
+	set.Connector = rules.RuleConnectorAnd
+	set.Rules = []*rules.Rule{
 		{
 			Param:    "${arg.name}",
-			Operator: RuleOperatorEqString,
+			Operator: rules.RuleOperatorEqString,
 			Value:    "lu",
 		},
 		{
 			Param:    "${arg.age}",
-			Operator: RuleOperatorEq,
+			Operator: rules.RuleOperatorEq,
 			Value:    "20",
 		},
 	}
 	set.Action = actions.ActionBlock
 
-	group := NewRuleGroup()
+	group := rules.NewRuleGroup()
 	group.AddRuleSet(set)
 
 	waf := NewWAF()
@@ -41,6 +42,10 @@ func TestWAF_MatchRequest(t *testing.T) {
 	goNext, set, err := waf.MatchRequest(req, nil)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if set == nil {
+		t.Log("not match")
+		return
 	}
 	t.Log("goNext:", goNext, "set:", set.Name)
 	a.IsFalse(goNext)
