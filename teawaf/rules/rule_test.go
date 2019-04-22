@@ -1,4 +1,4 @@
-package teawaf
+package rules
 
 import (
 	"github.com/iwind/TeaGo/assert"

@@ -1,4 +1,4 @@
-package teawaf
+package rules
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
+	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -264,6 +265,15 @@ func (this *Rule) Test(value interface{}) bool {
 		} else {
 			return false
 		}
+
+	case RuleOperatorVersionGt:
+		return stringutil.VersionCompare(this.Value, types.String(value)) > 0
+	case RuleOperatorVersionLt:
+		return stringutil.VersionCompare(this.Value, types.String(value)) < 0
 	}
 	return false
+}
+
+func (this *Rule) IsSingleCheckPoint() bool {
+	return this.singleCheckPoint != nil
 }

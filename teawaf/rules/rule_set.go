@@ -1,8 +1,9 @@
-package teawaf
+package rules
 
 import (
 	"github.com/TeaWeb/code/teawaf/actions"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
 )
 
@@ -14,6 +15,7 @@ const (
 )
 
 type RuleSet struct {
+	Id        string        `yaml:"id" json:"id"`
 	On        bool          `yaml:"on" json:"on"`
 	Name      string        `yaml:"name" json:"name"`
 	Rules     []*Rule       `yaml:"rules" json:"rules"`
@@ -26,7 +28,10 @@ type RuleSet struct {
 }
 
 func NewRuleSet() *RuleSet {
-	return &RuleSet{}
+	return &RuleSet{
+		Id: stringutil.Rand(16),
+		On: true,
+	}
 }
 
 func (this *RuleSet) Init() error {

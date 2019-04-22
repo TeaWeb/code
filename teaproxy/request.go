@@ -846,6 +846,17 @@ func (this *Request) requestRemoteAddr() string {
 		}
 	}
 
+	// Real-Ip
+	realIP = this.raw.Header.Get("X-Real-Ip")
+	if len(realIP) > 0 {
+		index := strings.LastIndex(realIP, ":")
+		if index < 0 {
+			return realIP
+		} else {
+			return realIP[:index]
+		}
+	}
+
 	// X-Forwarded-For
 	forwardedFor := this.raw.Header.Get("X-Forwarded-For")
 	if len(forwardedFor) > 0 {
