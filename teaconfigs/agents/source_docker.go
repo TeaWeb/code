@@ -133,82 +133,82 @@ func (this *DockerSource) Form() *forms.Form {
 func (this *DockerSource) Variables() []*SourceVariable {
 	return []*SourceVariable{
 		{
-			Code:        "blockIO",
+			Code:        "$.blockIO",
 			Description: "Block IO",
 		},
 		{
-			Code:        "command",
+			Code:        "$.command",
 			Description: "命令行",
 		},
 		{
-			Code:        "cpuPercent",
+			Code:        "$.cpuPercent",
 			Description: "CPU使用比例",
 		},
 		{
-			Code:        "cpuPercentString",
+			Code:        "$.cpuPercentString",
 			Description: "CPU使用比例（字符串）",
 		},
 		{
-			Code:        "createdAt",
+			Code:        "$.createdAt",
 			Description: "容器创建时间",
 		},
 		{
-			Code:        "id",
+			Code:        "$.id",
 			Description: "容器ID",
 		},
 		{
-			Code:        "image",
+			Code:        "$.image",
 			Description: "镜像Image",
 		},
 		{
-			Code:        "labels",
+			Code:        "$.labels",
 			Description: "标签",
 		},
 		{
-			Code:        "memPercent",
+			Code:        "$.memPercent",
 			Description: "内存使用比例",
 		},
 		{
-			Code:        "memPercentString",
+			Code:        "$.memPercentString",
 			Description: "内存使用比例（字符串）",
 		},
 		{
-			Code:        "memUsage",
+			Code:        "$.memUsage",
 			Description: "内容使用",
 		},
 		{
-			Code:        "mounts",
+			Code:        "$.mounts",
 			Description: "挂载分卷",
 		},
 		{
-			Code:        "names",
+			Code:        "$.names",
 			Description: "容器名",
 		},
 		{
-			Code:        "netIO",
+			Code:        "$.netIO",
 			Description: "网络IO",
 		},
 		{
-			Code:        "networks",
+			Code:        "$.networks",
 			Description: "绑定网络",
 		}, {
-			Code:        "pids",
+			Code:        "$.pids",
 			Description: "PId数量（在Windows上不可用）",
 		},
 		{
-			Code:        "ports",
+			Code:        "$.ports",
 			Description: "开放端口",
 		},
 		{
-			Code:        "runningFor",
+			Code:        "$.runningFor",
 			Description: "已运行时间",
 		},
 		{
-			Code:        "size",
+			Code:        "$.size",
 			Description: "容器硬盘空间占用",
 		},
 		{
-			Code:        "status",
+			Code:        "$.status",
 			Description: "容器状态",
 		},
 	}
@@ -224,7 +224,7 @@ func (this *DockerSource) Thresholds() []*Threshold {
 		t.NoticeLevel = notices.NoticeLevelWarning
 		t.Operator = ThresholdOperatorRegexp
 		t.Value = "(?i)Exited"
-		t.NoticeMessage = "有Docker容器处于Exited状态"
+		t.NoticeMessage = "${ROW.names}容器处于Exited状态"
 		result = append(result, t)
 	}
 

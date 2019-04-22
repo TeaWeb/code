@@ -40,6 +40,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/rewrite"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/ssl"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/stat"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/waf"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/backup"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/login"
@@ -191,12 +192,12 @@ func lookupArgs() bool {
 		fmt.Println("  -v", "\n     print version")
 		fmt.Println("  start", "\n     start the server")
 		fmt.Println("  stop", "\n     stop the server")
-		fmt.Println("  reload", "\n     reload all proxy servers config")
+		fmt.Println("  reload", "\n     reload all proxy servers configs")
 		fmt.Println("  restart", "\n     restart the server")
 		fmt.Println("  reset", "\n     reset the server locker status")
 		fmt.Println("  status", "\n     print server status")
 		return true
-	} else if lists.ContainsString(args, "-v") { // 版本号
+	} else if lists.ContainsAny(args, "-v", "version", "-version") { // 版本号
 		fmt.Println("TeaWeb v"+teaconst.TeaVersion, "(build: "+runtime.Version(), runtime.GOOS, runtime.GOARCH+")")
 		return true
 	} else if lists.ContainsString(args, "start") { // 启动
@@ -326,7 +327,7 @@ func lookupArgs() bool {
 	}
 
 	if len(args) > 0 {
-		fmt.Println("[teaweb]unknown command option '" + strings.Join(args, " ") + "', run './bin/teaweb -h' to see the usage.")
+		fmt.Println("[teaweb]unknown command option '" + strings.Join(args, " ") + "', run './bin/teaweb -h' to lookup the usage.")
 		return true
 	}
 	return false

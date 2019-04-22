@@ -2,9 +2,9 @@ package notices
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
