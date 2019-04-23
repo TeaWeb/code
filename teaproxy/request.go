@@ -8,6 +8,7 @@ import (
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
@@ -76,6 +77,8 @@ type Request struct {
 
 	cachePolicy  *shared.CachePolicy
 	cacheEnabled bool
+
+	waf *teawaf.WAF
 
 	pages          []*teaconfigs.PageConfig
 	shutdownPageOn bool
@@ -187,6 +190,16 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		}
 	} else {
 		this.cachePolicy = nil
+	}
+
+	// waf
+	if server.WAFOn {
+		waf := server.WAF()
+		if waf != nil && waf.On {
+			this.waf = waf
+		}
+	} else {
+		this.waf = nil
 	}
 
 	// other
@@ -361,6 +374,15 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				}
 			} else {
 				this.cachePolicy = nil
+			}
+
+			if location.WAFOn {
+				waf := location.WAF()
+				if waf != nil && waf.On {
+					this.waf = waf
+				}
+			} else {
+				this.waf = nil
 			}
 
 			if location.HasHeaders() {
@@ -672,6 +694,13 @@ func (this *Request) call(writer *ResponseWriter) error {
 	}**/
 
 	this.responseWriter = writer
+
+	// WAF
+	if this.waf != nil {
+		if this.callWAF(writer) {
+			return nil
+		}
+	}
 
 	// 跳转到https
 	if this.redirectToHttps {

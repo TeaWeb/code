@@ -4,6 +4,8 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teawaf"
 	"github.com/TeaWeb/code/teawaf/rules"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -108,6 +110,11 @@ func (this *ImportAction) RunPost(params struct {
 
 		this.Data["countGroups"] = countGroups
 		this.Data["countSets"] = countSets
+
+		// 通知刷新
+		if wafutils.IsPolicyUsed(currentWAF.Id) {
+			proxyutils.NotifyChange()
+		}
 
 		this.Success()
 	}

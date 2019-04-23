@@ -3,6 +3,7 @@ package teaconfigs
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
 	"regexp"
@@ -49,6 +50,10 @@ type LocationConfig struct {
 	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开
 	cachePolicy *shared.CachePolicy
 
+	WAFOn bool   `yaml:"wafOn" json:"wafOn"` // 是否启用
+	WafId string `yaml:"wafId" json:"wafId"` // WAF ID
+	waf   *teawaf.WAF                        // waf object
+
 	// websocket设置
 	Websocket *WebsocketConfig `yaml:"websocket" json:"websocket"`
 
@@ -79,8 +84,10 @@ type LocationConfig struct {
 // 获取新对象
 func NewLocation() *LocationConfig {
 	return &LocationConfig{
-		On: true,
-		Id: stringutil.Rand(16),
+		On:      true,
+		Id:      stringutil.Rand(16),
+		CacheOn: true,
+		WAFOn:   true,
 	}
 }
 
@@ -188,6 +195,18 @@ func (this *LocationConfig) Validate() error {
 				return err
 			}
 			this.cachePolicy = policy
+		}
+	}
+
+	// waf
+	if len(this.WafId) > 0 && this.WAFOn {
+		waf := SharedWAFList().FindWAF(this.WafId)
+		if waf != nil {
+			err := waf.Init()
+			if err != nil {
+				return err
+			}
+			this.waf = waf
 		}
 	}
 
@@ -413,6 +432,11 @@ func (this *LocationConfig) SetPattern(pattern string, patternType int, caseInse
 // 缓存策略
 func (this *LocationConfig) CachePolicyObject() *shared.CachePolicy {
 	return this.cachePolicy
+}
+
+// WAF
+func (this *LocationConfig) WAF() *teawaf.WAF {
+	return this.waf
 }
 
 // 是否在引用某个代理

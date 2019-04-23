@@ -2,6 +2,8 @@ package waf
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -22,6 +24,11 @@ func (this *GroupDeleteAction) RunPost(params struct {
 	err := wafList.SaveWAF(waf)
 	if err != nil {
 		this.Fail("删除失败：" + err.Error())
+	}
+
+	// 通知刷新
+	if wafutils.IsPolicyUsed(waf.Id) {
+		proxyutils.NotifyChange()
 	}
 
 	this.Success()

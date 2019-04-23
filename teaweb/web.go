@@ -38,6 +38,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/log"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/rewrite"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/servers"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/ssl"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/stat"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/waf"

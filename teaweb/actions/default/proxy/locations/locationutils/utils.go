@@ -29,6 +29,8 @@ func SetCommonInfo(action actions.ActionWrapper, serverId string, locationId str
 		"cachePolicy": location.CachePolicy,
 		"websocket":   location.Websocket,
 		"backends":    location.Backends,
+		"wafOn":       location.WAFOn,
+		"wafId":       location.WafId,
 	}
 
 	obj.Data["selectedTab"] = "location"

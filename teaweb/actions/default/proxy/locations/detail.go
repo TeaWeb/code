@@ -44,6 +44,7 @@ func (this *DetailAction) Run(params struct {
 		"rewrite":     location.Rewrite,
 		"websocket":   location.Websocket,
 		"backends":    location.Backends,
+		"wafId":       location.WafId,
 	}
 	this.Data["server"] = server
 

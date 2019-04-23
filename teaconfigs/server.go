@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
@@ -66,6 +67,10 @@ type ServerConfig struct {
 	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
 	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开
 	cachePolicy *shared.CachePolicy
+
+	WAFOn bool   `yaml:"wafOn" json:"wafOn"` // 是否启用
+	WafId string `yaml:"wafId" json:"wafId"` // WAF ID
+	waf   *teawaf.WAF                        // waf object
 
 	// API相关
 	API *api.APIConfig `yaml:"api" json:"api"` // API配置
@@ -133,9 +138,11 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 // 取得一个新的服务配置
 func NewServerConfig() *ServerConfig {
 	return &ServerConfig{
-		On:  true,
-		Id:  stringutil.Rand(16),
-		API: api.NewAPIConfig(),
+		On:      true,
+		Id:      stringutil.Rand(16),
+		API:     api.NewAPIConfig(),
+		CacheOn: true,
+		WAFOn:   true,
 	}
 }
 
@@ -188,6 +195,7 @@ func NewServerConfigFromId(serverId string) *ServerConfig {
 		// 遍历查找
 		for _, server := range LoadServerConfigsFromDir(Tea.ConfigDir()) {
 			if server.Id == serverId {
+				server.compatible()
 				return server
 			}
 		}
@@ -270,7 +278,7 @@ func (this *ServerConfig) Validate() error {
 	}
 
 	// 校验缓存配置
-	if len(this.CachePolicy) > 0 {
+	if len(this.CachePolicy) > 0 && this.CacheOn {
 		policy := shared.NewCachePolicyFromFile(this.CachePolicy)
 		if policy != nil {
 			err := policy.Validate()
@@ -278,6 +286,18 @@ func (this *ServerConfig) Validate() error {
 				return err
 			}
 			this.cachePolicy = policy
+		}
+	}
+
+	// waf
+	if len(this.WafId) > 0 && this.WAFOn {
+		waf := SharedWAFList().FindWAF(this.WafId)
+		if waf != nil {
+			err := waf.Init()
+			if err != nil {
+				return err
+			}
+			this.waf = waf
 		}
 	}
 
@@ -331,10 +351,22 @@ func (this *ServerConfig) Validate() error {
 func (this *ServerConfig) compatible() {
 	// 版本相关
 	if len(this.TeaVersion) == 0 {
-		// cacheOn 默认值
+		// cache 默认值
 		this.CacheOn = true
+
+		// waf 默认值
+		this.WAFOn = true
+
 		for _, location := range this.Locations {
 			location.CacheOn = true
+			location.WAFOn = true
+		}
+	} else if stringutil.VersionCompare(this.TeaVersion, "0.1.3") < 0 {
+		// waf 默认值
+		this.WAFOn = true
+
+		for _, location := range this.Locations {
+			location.WAFOn = true
 		}
 	}
 }
@@ -444,6 +476,11 @@ func (this *ServerConfig) AddLocation(location *LocationConfig) {
 // 缓存策略
 func (this *ServerConfig) CachePolicyObject() *shared.CachePolicy {
 	return this.cachePolicy
+}
+
+// WAF策略
+func (this *ServerConfig) WAF() *teawaf.WAF {
+	return this.waf
 }
 
 // 根据Id查找Location

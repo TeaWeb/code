@@ -75,6 +75,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 			"groups",
 			"stat.",
 			"log.",
+			"servers.",
 		) && !action.Spec.HasClassPrefix("proxy.AddAction", "log.RuntimeAction") {
 			tabbar := []maps.Map{
 				{
@@ -103,7 +104,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 					"subName": "",
 					"url":     "/proxy/detail?serverId=" + serverId,
 					"icon":    "setting",
-					"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "websocket", "access") && !action.HasPrefix("/proxy/delete"),
+					"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "websocket", "access", "servers") && !action.HasPrefix("/proxy/delete"),
 				},
 				{
 					"name":    "删除",
@@ -115,5 +116,21 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 			}
 			action.Data["teaTabbar"] = tabbar
 		}
+	}
+}
+
+// 包装Server相关数据
+func WrapServerData(server *teaconfigs.ServerConfig) maps.Map {
+	return maps.Map{
+		"id":          server.Id,
+		"description": server.Description,
+		"backends":    server.Backends,
+		"headers":     server.Headers,
+		"cachePolicy": server.CachePolicy,
+		"cacheOn":     server.CacheOn,
+		"ssl":         server.SSL,
+		"locations":   server.Locations,
+		"wafOn":       server.WAFOn,
+		"wafId":       server.WafId,
 	}
 }

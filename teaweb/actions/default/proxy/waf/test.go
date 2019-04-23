@@ -110,7 +110,11 @@ func (this *TestAction) RunPost(params struct {
 
 Loop:
 	for _, group := range waf.RuleGroups {
-		result = append(result, "开始检查规则分组 '"+group.Name+"' ...")
+		result = append(result, "开始检查规则分组 '"+group.Name+"' "+fmt.Sprintf("%d 个规则集", len(group.RuleSets))+" ...")
+		if len(group.RuleSets) == 0 {
+			result = append(result, "　　跳过")
+			continue
+		}
 		for _, set := range group.RuleSets {
 			result = append(result, "　　开始检查规则集 '"+set.Name+"' "+fmt.Sprintf("%d 个规则 ...", len(set.Rules)))
 

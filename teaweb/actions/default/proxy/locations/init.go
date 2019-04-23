@@ -28,6 +28,8 @@ func init() {
 			GetPost("/access", new(AccessAction)).
 			Get("/cache", new(CacheAction)).
 			Post("/updateCache", new(UpdateCacheAction)).
+			Get("/waf", new(WafAction)).
+			Post("/waf/update", new(WafUpdateAction)).
 			Post("/test", new(TestAction)).
 			EndAll()
 	})

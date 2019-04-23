@@ -2,6 +2,8 @@ package waf
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
@@ -34,6 +36,11 @@ func (this *DeleteAction) RunPost(params struct {
 	err = file.Delete()
 	if err != nil {
 		this.Fail("删除失败：" + err.Error())
+	}
+
+	// 通知刷新
+	if wafutils.IsPolicyUsed(params.WafId) {
+		proxyutils.NotifyChange()
 	}
 
 	this.Success()

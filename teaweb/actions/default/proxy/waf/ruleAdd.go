@@ -5,6 +5,8 @@ import (
 	wafactions "github.com/TeaWeb/code/teawaf/actions"
 	"github.com/TeaWeb/code/teawaf/checkpoints"
 	"github.com/TeaWeb/code/teawaf/rules"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -196,6 +198,11 @@ func (this *RuleAddAction) RunPost(params struct {
 	err := wafList.SaveWAF(waf)
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
+	}
+
+	// 通知刷新
+	if wafutils.IsPolicyUsed(waf.Id) {
+		proxyutils.NotifyChange()
 	}
 
 	this.Success()
