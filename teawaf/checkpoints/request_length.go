@@ -4,11 +4,11 @@ import (
 	"net/http"
 )
 
-type RequestLengthCheckPoint struct {
-	CheckPoint
+type RequestLengthCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestLengthCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestLengthCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	value = req.ContentLength
 	return
 }

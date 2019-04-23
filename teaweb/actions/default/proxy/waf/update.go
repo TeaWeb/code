@@ -23,8 +23,10 @@ func (this *UpdateAction) RunGet(params struct {
 	}
 
 	this.Data["config"] = maps.Map{
-		"id":   waf.Id,
-		"name": waf.Name,
+		"id":        waf.Id,
+		"name":      waf.Name,
+		"On":        waf.On,
+		"countSets": waf.CountRuleSets(),
 	}
 
 	this.Data["groups"] = lists.Map(groups.InternalGroups, func(k int, v interface{}) interface{} {
@@ -45,6 +47,7 @@ func (this *UpdateAction) RunPost(params struct {
 	WafId      string
 	Name       string
 	GroupCodes []string
+	On         bool
 	Must       *actions.Must
 }) {
 	waf := teaconfigs.SharedWAFList().FindWAF(params.WafId)
@@ -57,6 +60,7 @@ func (this *UpdateAction) RunPost(params struct {
 		Require("请输入策略名称")
 
 	waf.Name = params.Name
+	waf.On = params.On
 
 	// add new group
 	for _, groupCode := range params.GroupCodes {

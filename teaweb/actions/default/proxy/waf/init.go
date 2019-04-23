@@ -16,8 +16,12 @@ func init() {
 			Post("/delete", new(DeleteAction)).
 			Get("/detail", new(DetailAction)).
 			GetPost("/update", new(UpdateAction)).
+			GetPost("/test", new(TestAction)).
+			Get("/export", new(ExportAction)).
+			GetPost("/import", new(ImportAction)).
 			Get("/rules", new(RulesAction)).
 			GetPost("/group/add", new(GroupAddAction)).
+			GetPost("/group/update", new(GroupUpdateAction)).
 			Get("/group", new(GroupAction)).
 			Post("/group/delete", new(GroupDeleteAction)).
 			Post("/group/on", new(GroupOnAction)).

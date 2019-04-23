@@ -23,9 +23,9 @@ type Rule struct {
 	Value    string       `yaml:"value" json:"value"`       // compared value
 
 	singleParam      string                          // real param after prefix
-	singleCheckPoint checkpoints.CheckPointInterface // if is single check point
+	singleCheckpoint checkpoints.CheckpointInterface // if is single check point
 
-	multipleCheckPoints map[string]checkpoints.CheckPointInterface
+	multipleCheckpoints map[string]checkpoints.CheckpointInterface
 
 	floatValue float64
 	reg        *regexp.Regexp
@@ -74,25 +74,25 @@ func (this *Rule) Init() error {
 			this.singleParam = pieces[1]
 		}
 
-		point := checkpoints.FindCheckPoint(prefix)
+		point := checkpoints.FindCheckpoint(prefix)
 		if point == nil {
 			return errors.New("no check point '" + prefix + "' found")
 		}
-		this.singleCheckPoint = point
+		this.singleCheckpoint = point
 
 		return nil
 	}
 
-	this.multipleCheckPoints = map[string]checkpoints.CheckPointInterface{}
+	this.multipleCheckpoints = map[string]checkpoints.CheckpointInterface{}
 	var err error = nil
 	teautils.ParseVariables(this.Param, func(varName string) (value string) {
 		pieces := strings.SplitN(varName, ".", 2)
 		prefix := pieces[0]
-		checkPoint := checkpoints.FindCheckPoint(prefix)
-		if checkPoint == nil {
+		checkpoint := checkpoints.FindCheckpoint(prefix)
+		if checkpoint == nil {
 			err = errors.New("no check point '" + prefix + "' found")
 		} else {
-			this.multipleCheckPoints[prefix] = checkPoint
+			this.multipleCheckpoints[prefix] = checkpoint
 		}
 		return ""
 	})
@@ -101,8 +101,8 @@ func (this *Rule) Init() error {
 }
 
 func (this *Rule) MatchRequest(req *http.Request) (b bool, err error) {
-	if this.singleCheckPoint != nil {
-		value, err := this.singleCheckPoint.RequestValue(req, this.singleParam)
+	if this.singleCheckpoint != nil {
+		value, err := this.singleCheckpoint.RequestValue(req, this.singleParam)
 		if err != nil {
 			return false, err
 		}
@@ -112,7 +112,7 @@ func (this *Rule) MatchRequest(req *http.Request) (b bool, err error) {
 	value := teautils.ParseVariables(this.Param, func(varName string) (value string) {
 		pieces := strings.SplitN(varName, ".", 2)
 		prefix := pieces[0]
-		point, ok := this.multipleCheckPoints[prefix]
+		point, ok := this.multipleCheckpoints[prefix]
 		if !ok {
 			return ""
 		}
@@ -140,10 +140,10 @@ func (this *Rule) MatchRequest(req *http.Request) (b bool, err error) {
 }
 
 func (this *Rule) MatchResponse(req *http.Request, resp *http.Response) (b bool, err error) {
-	if this.singleCheckPoint != nil {
+	if this.singleCheckpoint != nil {
 		// if is request param
-		if this.singleCheckPoint.IsRequest() {
-			value, err := this.singleCheckPoint.RequestValue(req, this.singleParam)
+		if this.singleCheckpoint.IsRequest() {
+			value, err := this.singleCheckpoint.RequestValue(req, this.singleParam)
 			if err != nil {
 				return false, err
 			}
@@ -151,7 +151,7 @@ func (this *Rule) MatchResponse(req *http.Request, resp *http.Response) (b bool,
 		}
 
 		// response param
-		value, err := this.singleCheckPoint.ResponseValue(req, resp, this.singleParam)
+		value, err := this.singleCheckpoint.ResponseValue(req, resp, this.singleParam)
 		if err != nil {
 			return false, err
 		}
@@ -161,7 +161,7 @@ func (this *Rule) MatchResponse(req *http.Request, resp *http.Response) (b bool,
 	value := teautils.ParseVariables(this.Param, func(varName string) (value string) {
 		pieces := strings.SplitN(varName, ".", 2)
 		prefix := pieces[0]
-		point, ok := this.multipleCheckPoints[prefix]
+		point, ok := this.multipleCheckpoints[prefix]
 		if !ok {
 			return ""
 		}
@@ -274,6 +274,6 @@ func (this *Rule) Test(value interface{}) bool {
 	return false
 }
 
-func (this *Rule) IsSingleCheckPoint() bool {
-	return this.singleCheckPoint != nil
+func (this *Rule) IsSingleCheckpoint() bool {
+	return this.singleCheckpoint != nil
 }

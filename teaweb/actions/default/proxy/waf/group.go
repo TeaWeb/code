@@ -23,8 +23,9 @@ func (this *GroupAction) RunGet(params struct {
 		this.Fail("找不到WAF")
 	}
 	this.Data["config"] = maps.Map{
-		"id":   waf.Id,
-		"name": waf.Name,
+		"id":        waf.Id,
+		"name":      waf.Name,
+		"countSets": waf.CountRuleSets(),
 	}
 
 	group := waf.FindRuleGroup(params.GroupId)
@@ -42,6 +43,7 @@ func (this *GroupAction) RunGet(params struct {
 			"name": set.Name,
 			"rules": lists.Map(set.Rules, func(k int, v interface{}) interface{} {
 				rule := v.(*rules.Rule)
+
 				return maps.Map{
 					"param":    rule.Param,
 					"operator": rule.Operator,

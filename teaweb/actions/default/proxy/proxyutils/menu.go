@@ -54,7 +54,8 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 		menu.AlwaysActive = true
 		menu.Add("[添加新代理]", "", "/proxy/add", action.Spec.ClassName == "proxy.AddAction", )
 		menu.Add("[缓存策略]", "", "/cache", action.HasPrefix("/cache"))
-		menu.Add("[WAF策略]", "", "/proxy/waf", action.HasPrefix("/proxy/waf"))
+		item := menu.Add("[WAF策略]", "", "/proxy/waf", action.HasPrefix("/proxy/waf"))
+		item.SupName = "beta"
 	}
 	utils.SetSubMenu(action, menuGroup)
 

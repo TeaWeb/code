@@ -21,8 +21,9 @@ func (this *RuleAddAction) RunGet(params struct {
 		this.Fail("找不到WAF")
 	}
 	this.Data["config"] = maps.Map{
-		"id":   waf.Id,
-		"name": waf.Name,
+		"id":        waf.Id,
+		"name":      waf.Name,
+		"countSets": waf.CountRuleSets(),
 	}
 
 	group := waf.FindRuleGroup(params.GroupId)
@@ -45,8 +46,8 @@ func (this *RuleAddAction) RunGet(params struct {
 	}
 
 	// check points
-	this.Data["checkpoints"] = lists.Map(checkpoints.AllCheckPoints, func(k int, v interface{}) interface{} {
-		def := v.(*checkpoints.CheckPointDefinition)
+	this.Data["checkpoints"] = lists.Map(checkpoints.AllCheckpoints, func(k int, v interface{}) interface{} {
+		def := v.(*checkpoints.CheckpointDefinition)
 		return maps.Map{
 			"name":        def.Name,
 			"prefix":      def.Prefix,

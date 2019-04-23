@@ -4,11 +4,11 @@ import (
 	"net/http"
 )
 
-type RequestArgsCheckPoint struct {
-	CheckPoint
+type RequestArgsCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestArgsCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestArgsCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	value = req.URL.RawQuery
 	return
 }

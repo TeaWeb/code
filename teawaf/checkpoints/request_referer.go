@@ -4,11 +4,11 @@ import (
 	"net/http"
 )
 
-type RequestRefererCheckPoint struct {
-	CheckPoint
+type RequestRefererCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestRefererCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestRefererCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	value = req.Referer()
 	return
 }

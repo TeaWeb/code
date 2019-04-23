@@ -16,7 +16,7 @@ func TestRule_Init_Single(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(rule.singleParam, rule.singleCheckPoint)
+	t.Log(rule.singleParam, rule.singleCheckpoint)
 	req, err := http.NewRequest(http.MethodGet, "http://teaos.cn/hello?name=lu&age=20", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -33,7 +33,7 @@ func TestRule_Init_Composite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(rule.singleParam, rule.singleCheckPoint)
+	t.Log(rule.singleParam, rule.singleCheckpoint)
 
 	req, err := http.NewRequest(http.MethodGet, "http://teaos.cn/hello?name=lu&age=20", nil)
 	if err != nil {

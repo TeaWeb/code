@@ -5,11 +5,11 @@ import (
 	"strings"
 )
 
-type RequestHeadersCheckPoint struct {
-	CheckPoint
+type RequestHeadersCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestHeadersCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestHeadersCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	var headers = []string{}
 	for k, v := range req.Header {
 		for _, subV := range v {

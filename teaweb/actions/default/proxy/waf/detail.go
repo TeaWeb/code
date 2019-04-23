@@ -20,7 +20,12 @@ func (this *DetailAction) RunGet(params struct {
 		this.Fail("找不到WAF")
 	}
 
-	this.Data["config"] = waf
+	this.Data["config"] = maps.Map{
+		"id":        waf.Id,
+		"name":      waf.Name,
+		"countSets": waf.CountRuleSets(),
+		"on":        waf.On,
+	}
 
 	this.Data["groups"] = lists.Map(groups.InternalGroups, func(k int, v interface{}) interface{} {
 		g := v.(*rules.RuleGroup)

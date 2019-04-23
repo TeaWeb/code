@@ -5,11 +5,11 @@ import (
 	"strings"
 )
 
-type RequestHeaderCheckPoint struct {
-	CheckPoint
+type RequestHeaderCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestHeaderCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestHeaderCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	v, found := req.Header[param]
 	if !found {
 		value = ""

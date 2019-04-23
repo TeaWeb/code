@@ -4,11 +4,11 @@ import (
 	"net/http"
 )
 
-type RequestUserAgentCheckPoint struct {
-	CheckPoint
+type RequestUserAgentCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestUserAgentCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestUserAgentCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	value = req.UserAgent()
 	return
 }

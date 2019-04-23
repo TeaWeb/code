@@ -1,0 +1,158 @@
+package waf
+
+import (
+	"fmt"
+	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teawaf/checkpoints"
+	"github.com/TeaWeb/code/teawaf/rules"
+	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
+	"regexp"
+	"strings"
+)
+
+type TestAction actions.Action
+
+// 测试
+func (this *TestAction) RunGet(params struct {
+	WafId string
+}) {
+	waf := teaconfigs.SharedWAFList().FindWAF(params.WafId)
+	if waf == nil {
+		this.Fail("找不到WAF")
+	}
+
+	this.Data["config"] = maps.Map{
+		"id":        waf.Id,
+		"name":      waf.Name,
+		"countSets": waf.CountRuleSets(),
+	}
+
+	// 数据列表
+	paramList := []string{}
+	for _, group := range waf.RuleGroups {
+		for _, set := range group.RuleSets {
+			for _, rule := range set.Rules {
+				if lists.ContainsString(paramList, rule.Param) {
+					continue
+				}
+				paramList = append(paramList, rule.Param)
+			}
+		}
+	}
+
+	reg := regexp.MustCompile("^\\${([\\w.-]+)}$")
+	this.Data["params"] = lists.Map(paramList, func(k int, v interface{}) interface{} {
+		param := v.(string)
+
+		prefix := ""
+		result := reg.FindStringSubmatch(param)
+		if len(result) > 0 {
+			match := result[1]
+			pieces := strings.SplitN(match, ".", 2)
+			prefix = pieces[0]
+			if len(pieces) == 2 {
+				param = pieces[1]
+			} else {
+				param = ""
+			}
+		}
+
+		checkpointName := ""
+		if len(prefix) > 0 {
+			checkpoint := checkpoints.FindCheckpointDefinition(prefix)
+			if checkpoint != nil {
+				def := checkpoints.FindCheckpointDefinition(prefix)
+				if def != nil {
+					checkpointName = def.Name
+				}
+			}
+		}
+
+		return maps.Map{
+			"param":      strings.Trim(prefix+"."+param, "."),
+			"fullParam":  types.String(v),
+			"prefix":     prefix,
+			"checkpoint": checkpointName,
+		}
+	})
+
+	this.Show()
+}
+
+// 提交测试数据
+func (this *TestAction) RunPost(params struct {
+	WafId  string
+	Params []string
+	Values []string
+}) {
+	waf := teaconfigs.SharedWAFList().FindWAF(params.WafId)
+	if waf == nil {
+		this.Fail("找不到WAF")
+	}
+
+	valueMap := maps.Map{}
+	for index, param := range params.Params {
+		if index < len(params.Values) {
+			valueMap[param] = params.Values[index]
+		}
+	}
+
+	result := []string{}
+	waf.Init()
+
+	matched := false
+	setName := ""
+	action := ""
+
+Loop:
+	for _, group := range waf.RuleGroups {
+		result = append(result, "开始检查规则分组 '"+group.Name+"' ...")
+		for _, set := range group.RuleSets {
+			result = append(result, "　　开始检查规则集 '"+set.Name+"' "+fmt.Sprintf("%d 个规则 ...", len(set.Rules)))
+
+			if len(set.Rules) == 0 {
+				result = append(result, "　　　　跳过")
+				continue
+			}
+
+			found := false
+			if set.Connector == rules.RuleConnectorAnd {
+				found = true
+			}
+			for _, rule := range set.Rules {
+				value := teautils.ParseVariables(rule.Param, func(varName string) (value string) {
+					v, _ := valueMap["${"+varName+"}"]
+					return types.String(v)
+				})
+				if rule.Test(value) {
+					if set.Connector == rules.RuleConnectorOr {
+						found = true
+					}
+				} else {
+					if set.Connector == rules.RuleConnectorAnd {
+						found = false
+					}
+				}
+			}
+			if found {
+				matched = true
+				action = set.Action
+				result = append(result, "　　　　匹配成功， 动作："+strings.ToUpper(set.Action))
+				setName = set.Name
+				break Loop
+			} else {
+				result = append(result, "　　　　 没有匹配的规则")
+			}
+		}
+	}
+
+	this.Data["result"] = result
+	this.Data["action"] = action
+	this.Data["setName"] = setName
+	this.Data["matched"] = matched
+	this.Success()
+}

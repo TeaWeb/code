@@ -20,8 +20,14 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 		}
 
 		action.Data["selectedSubMenu"] = "detail"
-		if action.HasPrefix("/proxy/waf/rules","/proxy/waf/group") {
+		if action.HasPrefix("/proxy/waf/rules", "/proxy/waf/group") {
 			action.Data["selectedSubMenu"] = "rules"
+		} else if action.HasPrefix("/proxy/waf/test") {
+			action.Data["selectedSubMenu"] = "test"
+		} else if action.HasPrefix("/proxy/waf/export") {
+			action.Data["selectedSubMenu"] = "export"
+		} else if action.HasPrefix("/proxy/waf/import") {
+			action.Data["selectedSubMenu"] = "import"
 		}
 	}
 }

@@ -4,11 +4,11 @@ import (
 	"net/http"
 )
 
-type RequestCookieCheckPoint struct {
-	CheckPoint
+type RequestCookieCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestCookieCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestCookieCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	cookie, err := req.Cookie(param)
 	if err != nil {
 		value = ""

@@ -5,11 +5,11 @@ import (
 	"strings"
 )
 
-type RequestRemoteAddrCheckPoint struct {
-	CheckPoint
+type RequestRemoteAddrCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestRemoteAddrCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestRemoteAddrCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	// Real-IP
 	realIP := req.Header.Get("X-Real-IP")
 	if len(realIP) > 0 {

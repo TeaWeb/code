@@ -19,7 +19,12 @@ func (this *RulesAction) RunGet(params struct {
 		this.Fail("找不到WAF")
 	}
 
-	this.Data["config"] = config
+	this.Data["config"] = maps.Map{
+		"id":        config.Id,
+		"name":      config.Name,
+		"countSets": config.CountRuleSets(),
+	}
+
 	this.Data["groups"] = lists.Map(config.RuleGroups, func(k int, v interface{}) interface{} {
 		group := v.(*rules.RuleGroup)
 		return maps.Map{

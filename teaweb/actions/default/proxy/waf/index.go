@@ -15,8 +15,11 @@ func (this *IndexAction) RunGet(params struct{}) {
 	configs := lists.Map(teaconfigs.SharedWAFList().FindAllConfigs(), func(k int, v interface{}) interface{} {
 		config := v.(*teawaf.WAF)
 		return maps.Map{
-			"id":   config.Id,
-			"name": config.Name,
+			"id":          config.Id,
+			"name":        config.Name,
+			"on":          config.On,
+			"countGroups": len(config.RuleGroups),
+			"countSets":   config.CountRuleSets(),
 		}
 	})
 	this.Data["configs"] = configs

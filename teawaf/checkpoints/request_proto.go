@@ -4,11 +4,11 @@ import (
 	"net/http"
 )
 
-type RequestProtoCheckPoint struct {
-	CheckPoint
+type RequestProtoCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestProtoCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestProtoCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	value = req.Proto
 	return
 }

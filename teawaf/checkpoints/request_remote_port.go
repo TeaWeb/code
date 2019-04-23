@@ -5,11 +5,11 @@ import (
 	"strings"
 )
 
-type RequestRemotePortCheckPoint struct {
-	CheckPoint
+type RequestRemotePortCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestRemotePortCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestRemotePortCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	remoteAddr := req.RemoteAddr
 	index := strings.LastIndex(remoteAddr, ":")
 	if index < 0 {

@@ -4,11 +4,11 @@ import (
 	"net/http"
 )
 
-type RequestContentTypeCheckPoint struct {
-	CheckPoint
+type RequestContentTypeCheckpoint struct {
+	Checkpoint
 }
 
-func (this *RequestContentTypeCheckPoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestContentTypeCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
 	value = req.Header.Get("Content-Type")
 	return
 }

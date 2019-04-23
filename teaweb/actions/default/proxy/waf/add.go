@@ -33,6 +33,7 @@ func (this *AddAction) RunGet(params struct{}) {
 func (this *AddAction) RunPost(params struct {
 	Name       string
 	GroupCodes []string
+	On         bool
 	Must       *actions.Must
 }) {
 	params.Must.
@@ -41,6 +42,7 @@ func (this *AddAction) RunPost(params struct {
 
 	waf := teawaf.NewWAF()
 	waf.Name = params.Name
+	waf.On = params.On
 
 	for _, groupCode := range params.GroupCodes {
 		for _, g := range groups.InternalGroups {

@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 )
 
@@ -18,7 +19,11 @@ func (this *GroupAddAction) RunGet(params struct {
 		this.Fail("找不到WAF")
 	}
 
-	this.Data["config"] = config
+	this.Data["config"] = maps.Map{
+		"id":        config.Id,
+		"name":      config.Name,
+		"countSets": config.CountRuleSets(),
+	}
 
 	this.Show()
 }

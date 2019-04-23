@@ -13,6 +13,7 @@ import (
 
 type WAF struct {
 	Id         string             `yaml:"id" json:"id"`
+	On         bool               `yaml:"on" json:"on"`
 	Name       string             `yaml:"name" json:"name"`
 	RuleGroups []*rules.RuleGroup `yaml:"ruleGroups" json:"ruleGroups"`
 
@@ -22,6 +23,7 @@ type WAF struct {
 func NewWAF() *WAF {
 	return &WAF{
 		Id: stringutil.Rand(16),
+		On: true,
 	}
 }
 
@@ -191,4 +193,22 @@ func (this *WAF) ContainsGroupCode(code string) bool {
 		}
 	}
 	return false
+}
+
+func (this *WAF) Copy() *WAF {
+	waf := &WAF{
+		Id:         this.Id,
+		On:         this.On,
+		Name:       this.Name,
+		RuleGroups: this.RuleGroups,
+	}
+	return waf
+}
+
+func (this *WAF) CountRuleSets() int {
+	count := 0
+	for _, group := range this.RuleGroups {
+		count += len(group.RuleSets)
+	}
+	return count
 }
