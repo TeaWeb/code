@@ -46,10 +46,13 @@ func (this *DeleteAction) Run(params struct {
 		"appId": params.AppId,
 	}))
 
-	app.IsSharedWithGroup = false
-	agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("REMOVE_APP", maps.Map{
-		"appId": params.AppId,
-	}), nil)
+	// 同步
+	if app.IsSharedWithGroup {
+		app.IsSharedWithGroup = false // 取消共享
+		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("REMOVE_APP", maps.Map{
+			"appId": params.AppId,
+		}), nil)
+	}
 
 	this.Success()
 }

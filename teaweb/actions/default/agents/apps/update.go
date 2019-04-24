@@ -44,6 +44,8 @@ func (this *UpdateAction) RunPost(params struct {
 		this.Fail("找不到要修改的App")
 	}
 
+	isSharedWithGroup := app.IsSharedWithGroup
+
 	app.On = params.On
 	app.Name = params.Name
 	app.IsSharedWithGroup = params.IsSharedWithGroup
@@ -58,9 +60,11 @@ func (this *UpdateAction) RunPost(params struct {
 	}))
 
 	// 同步
-	agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("UPDATE_APP", maps.Map{
-		"appId": app.Id,
-	}), nil)
+	if isSharedWithGroup {
+		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("UPDATE_APP", maps.Map{
+			"appId": app.Id,
+		}), nil)
+	}
 
 	this.Success()
 }
