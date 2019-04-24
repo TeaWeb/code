@@ -18,15 +18,19 @@ func (this *GroupUpdateAction) RunGet(params struct {
 		this.Fail("找不到WAF")
 	}
 	this.Data["config"] = maps.Map{
-		"id":        waf.Id,
-		"name":      waf.Name,
-		"countSets": waf.CountRuleSets(),
+		"id":            waf.Id,
+		"name":          waf.Name,
+		"countInbound":  waf.CountInboundRuleSets(),
+		"countOutbound": waf.CountOutboundRuleSets(),
 	}
 
 	group := waf.FindRuleGroup(params.GroupId)
 	if group == nil {
 		this.Fail("找不到分组")
 	}
+
+	this.Data["inbound"] = group.IsInbound
+	this.Data["outbound"] = !group.IsInbound
 
 	this.Data["group"] = group
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf/checkpoints"
+	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -100,9 +101,9 @@ func (this *Rule) Init() error {
 	return err
 }
 
-func (this *Rule) MatchRequest(req *http.Request) (b bool, err error) {
+func (this *Rule) MatchRequest(req *requests.Request) (b bool, err error) {
 	if this.singleCheckpoint != nil {
-		value, err := this.singleCheckpoint.RequestValue(req, this.singleParam)
+		value, err, _ := this.singleCheckpoint.RequestValue(req, this.singleParam)
 		if err != nil {
 			return false, err
 		}
@@ -118,14 +119,14 @@ func (this *Rule) MatchRequest(req *http.Request) (b bool, err error) {
 		}
 
 		if len(pieces) == 1 {
-			value1, err1 := point.RequestValue(req, "")
+			value1, err1, _ := point.RequestValue(req, "")
 			if err1 != nil {
 				err = err1
 			}
 			return types.String(value1)
 		}
 
-		value1, err1 := point.RequestValue(req, pieces[1])
+		value1, err1, _ := point.RequestValue(req, pieces[1])
 		if err1 != nil {
 			err = err1
 		}
@@ -139,11 +140,11 @@ func (this *Rule) MatchRequest(req *http.Request) (b bool, err error) {
 	return this.Test(value), nil
 }
 
-func (this *Rule) MatchResponse(req *http.Request, resp *http.Response) (b bool, err error) {
+func (this *Rule) MatchResponse(req *requests.Request, resp *http.Response) (b bool, err error) {
 	if this.singleCheckpoint != nil {
 		// if is request param
 		if this.singleCheckpoint.IsRequest() {
-			value, err := this.singleCheckpoint.RequestValue(req, this.singleParam)
+			value, err, _ := this.singleCheckpoint.RequestValue(req, this.singleParam)
 			if err != nil {
 				return false, err
 			}
@@ -151,7 +152,7 @@ func (this *Rule) MatchResponse(req *http.Request, resp *http.Response) (b bool,
 		}
 
 		// response param
-		value, err := this.singleCheckpoint.ResponseValue(req, resp, this.singleParam)
+		value, err, _ := this.singleCheckpoint.ResponseValue(req, resp, this.singleParam)
 		if err != nil {
 			return false, err
 		}
@@ -168,13 +169,13 @@ func (this *Rule) MatchResponse(req *http.Request, resp *http.Response) (b bool,
 
 		if len(pieces) == 1 {
 			if point.IsRequest() {
-				value1, err1 := point.RequestValue(req, "")
+				value1, err1, _ := point.RequestValue(req, "")
 				if err1 != nil {
 					err = err1
 				}
 				return types.String(value1)
 			} else {
-				value1, err1 := point.ResponseValue(req, resp, "")
+				value1, err1, _ := point.ResponseValue(req, resp, "")
 				if err1 != nil {
 					err = err1
 				}
@@ -183,13 +184,13 @@ func (this *Rule) MatchResponse(req *http.Request, resp *http.Response) (b bool,
 		}
 
 		if point.IsRequest() {
-			value1, err1 := point.RequestValue(req, pieces[1])
+			value1, err1, _ := point.RequestValue(req, pieces[1])
 			if err1 != nil {
 				err = err1
 			}
 			return types.String(value1)
 		} else {
-			value1, err1 := point.ResponseValue(req, resp, pieces[1])
+			value1, err1, _ := point.ResponseValue(req, resp, pieces[1])
 			if err1 != nil {
 				err = err1
 			}

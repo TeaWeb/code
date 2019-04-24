@@ -2,7 +2,7 @@ package waf
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teawaf/groups"
+	"github.com/TeaWeb/code/teawaf/inbound"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
@@ -23,13 +23,14 @@ func (this *UpdateAction) RunGet(params struct {
 	}
 
 	this.Data["config"] = maps.Map{
-		"id":        waf.Id,
-		"name":      waf.Name,
-		"On":        waf.On,
-		"countSets": waf.CountRuleSets(),
+		"id":            waf.Id,
+		"name":          waf.Name,
+		"On":            waf.On,
+		"countInbound":  waf.CountInboundRuleSets(),
+		"countOutbound": waf.CountOutboundRuleSets(),
 	}
 
-	this.Data["groups"] = lists.Map(groups.InternalGroups, func(k int, v interface{}) interface{} {
+	this.Data["groups"] = lists.Map(inbound.InternalGroups, func(k int, v interface{}) interface{} {
 		g := v.(*rules.RuleGroup)
 
 		return maps.Map{
@@ -67,7 +68,7 @@ func (this *UpdateAction) RunPost(params struct {
 		if waf.ContainsGroupCode(groupCode) {
 			continue
 		}
-		for _, g := range groups.InternalGroups {
+		for _, g := range inbound.InternalGroups {
 			if g.Code == groupCode {
 				newGroup := rules.NewRuleGroup()
 				newGroup.Id = stringutil.Rand(16)
@@ -75,6 +76,7 @@ func (this *UpdateAction) RunPost(params struct {
 				newGroup.Code = g.Code
 				newGroup.Name = g.Name
 				newGroup.RuleSets = g.RuleSets
+				newGroup.IsInbound = g.IsInbound
 				waf.AddRuleGroup(newGroup)
 			}
 		}
@@ -82,13 +84,13 @@ func (this *UpdateAction) RunPost(params struct {
 
 	// remove old group
 	result := []*rules.RuleGroup{}
-	for _, g := range waf.RuleGroups {
+	for _, g := range waf.Inbound {
 		if len(g.Code) > 0 && !lists.ContainsString(params.GroupCodes, g.Code) {
 			continue
 		}
 		result = append(result, g)
 	}
-	waf.RuleGroups = result
+	waf.Inbound = result
 
 	filename := "waf." + waf.Id + ".conf"
 	err := waf.Save(Tea.ConfigFile(filename))

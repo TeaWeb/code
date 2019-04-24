@@ -17,21 +17,27 @@ type GroupAction actions.Action
 func (this *GroupAction) RunGet(params struct {
 	WafId   string
 	GroupId string
+	Inbound bool
 }) {
 	waf := teaconfigs.SharedWAFList().FindWAF(params.WafId)
 	if waf == nil {
 		this.Fail("找不到WAF")
 	}
+
 	this.Data["config"] = maps.Map{
-		"id":        waf.Id,
-		"name":      waf.Name,
-		"countSets": waf.CountRuleSets(),
+		"id":            waf.Id,
+		"name":          waf.Name,
+		"countInbound":  waf.CountInboundRuleSets(),
+		"countOutbound": waf.CountOutboundRuleSets(),
 	}
 
 	group := waf.FindRuleGroup(params.GroupId)
 	if group == nil {
 		this.Fail("找不到分组")
 	}
+
+	this.Data["inbound"] = group.IsInbound
+	this.Data["outbound"] = !group.IsInbound
 
 	this.Data["group"] = group
 
@@ -50,9 +56,10 @@ func (this *GroupAction) RunGet(params struct {
 					"value":    rule.Value,
 				}
 			}),
-			"on":        set.On,
-			"action":    wafactions.FindActionName(set.Action),
-			"connector": strings.ToUpper(set.Connector),
+			"on":         set.On,
+			"action":     strings.ToUpper(set.Action),
+			"actionName": wafactions.FindActionName(set.Action),
+			"connector":  strings.ToUpper(set.Connector),
 		}
 	})
 

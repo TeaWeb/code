@@ -2,6 +2,7 @@ package rules
 
 import (
 	"github.com/TeaWeb/code/teawaf/actions"
+	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
@@ -51,7 +52,7 @@ func (this *RuleSet) AddRule(rule ...*Rule) {
 	this.Rules = append(this.Rules, rule...)
 }
 
-func (this *RuleSet) MatchRequest(req *http.Request) (b bool, err error) {
+func (this *RuleSet) MatchRequest(req *requests.Request) (b bool, err error) {
 	if !this.hasRules {
 		return false, nil
 	}
@@ -92,7 +93,7 @@ func (this *RuleSet) MatchRequest(req *http.Request) (b bool, err error) {
 	return
 }
 
-func (this *RuleSet) MatchResponse(req *http.Request, resp *http.Response) (b bool, err error) {
+func (this *RuleSet) MatchResponse(req *requests.Request, resp *http.Response) (b bool, err error) {
 	if !this.hasRules {
 		return false, nil
 	}

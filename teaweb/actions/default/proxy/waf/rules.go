@@ -12,7 +12,8 @@ type RulesAction actions.Action
 
 // 规则
 func (this *RulesAction) RunGet(params struct {
-	WafId string
+	Inbound bool
+	WafId   string
 }) {
 	config := teaconfigs.SharedWAFList().FindWAF(params.WafId)
 	if config == nil {
@@ -20,21 +21,37 @@ func (this *RulesAction) RunGet(params struct {
 	}
 
 	this.Data["config"] = maps.Map{
-		"id":        config.Id,
-		"name":      config.Name,
-		"countSets": config.CountRuleSets(),
+		"id":            config.Id,
+		"name":          config.Name,
+		"countInbound":  config.CountInboundRuleSets(),
+		"countOutbound": config.CountOutboundRuleSets(),
 	}
+	this.Data["inbound"] = params.Inbound
+	this.Data["outbound"] = !params.Inbound
 
-	this.Data["groups"] = lists.Map(config.RuleGroups, func(k int, v interface{}) interface{} {
-		group := v.(*rules.RuleGroup)
-		return maps.Map{
-			"id":            group.Id,
-			"code":          group.Code,
-			"name":          group.Name,
-			"on":            group.On,
-			"countRuleSets": len(group.RuleSets),
-		}
-	})
+	if params.Inbound {
+		this.Data["groups"] = lists.Map(config.Inbound, func(k int, v interface{}) interface{} {
+			group := v.(*rules.RuleGroup)
+			return maps.Map{
+				"id":            group.Id,
+				"code":          group.Code,
+				"name":          group.Name,
+				"on":            group.On,
+				"countRuleSets": len(group.RuleSets),
+			}
+		})
+	} else {
+		this.Data["groups"] = lists.Map(config.Outbound, func(k int, v interface{}) interface{} {
+			group := v.(*rules.RuleGroup)
+			return maps.Map{
+				"id":            group.Id,
+				"code":          group.Code,
+				"name":          group.Name,
+				"on":            group.On,
+				"countRuleSets": len(group.RuleSets),
+			}
+		})
+	}
 
 	this.Show()
 }

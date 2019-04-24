@@ -3,6 +3,7 @@ package teawaf
 import (
 	"errors"
 	"github.com/TeaWeb/code/teawaf/actions"
+	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/files"
@@ -12,12 +13,14 @@ import (
 )
 
 type WAF struct {
-	Id         string             `yaml:"id" json:"id"`
-	On         bool               `yaml:"on" json:"on"`
-	Name       string             `yaml:"name" json:"name"`
-	RuleGroups []*rules.RuleGroup `yaml:"ruleGroups" json:"ruleGroups"`
+	Id       string             `yaml:"id" json:"id"`
+	On       bool               `yaml:"on" json:"on"`
+	Name     string             `yaml:"name" json:"name"`
+	Inbound  []*rules.RuleGroup `yaml:"inbound" json:"inbound"`
+	Outbound []*rules.RuleGroup `yaml:"outbound" json:"outbound"`
 
-	hasRuleGroups    bool
+	hasInboundRules  bool
+	hasOutboundRules bool
 	onActionCallback func(action actions.ActionString) (goNext bool)
 }
 
@@ -51,10 +54,20 @@ func NewWAFFromFile(path string) (waf *WAF, err error) {
 }
 
 func (this *WAF) Init() error {
-	this.hasRuleGroups = len(this.RuleGroups) > 0
+	this.hasInboundRules = len(this.Inbound) > 0
+	this.hasOutboundRules = len(this.Outbound) > 0
 
-	if this.hasRuleGroups {
-		for _, group := range this.RuleGroups {
+	if this.hasInboundRules {
+		for _, group := range this.Inbound {
+			err := group.Init()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if this.hasOutboundRules {
+		for _, group := range this.Outbound {
 			err := group.Init()
 			if err != nil {
 				return err
@@ -66,28 +79,51 @@ func (this *WAF) Init() error {
 }
 
 func (this *WAF) AddRuleGroup(ruleGroup *rules.RuleGroup) {
-	this.RuleGroups = append(this.RuleGroups, ruleGroup)
+	if ruleGroup.IsInbound {
+		this.Inbound = append(this.Inbound, ruleGroup)
+	} else {
+		this.Outbound = append(this.Outbound, ruleGroup)
+	}
 }
 
 func (this *WAF) RemoveRuleGroup(ruleGroupId string) {
 	if len(ruleGroupId) == 0 {
 		return
 	}
-	result := []*rules.RuleGroup{}
-	for _, group := range this.RuleGroups {
-		if group.Id == ruleGroupId {
-			continue
+
+	{
+		result := []*rules.RuleGroup{}
+		for _, group := range this.Inbound {
+			if group.Id == ruleGroupId {
+				continue
+			}
+			result = append(result, group)
 		}
-		result = append(result, group)
+		this.Inbound = result
 	}
-	this.RuleGroups = result
+
+	{
+		result := []*rules.RuleGroup{}
+		for _, group := range this.Outbound {
+			if group.Id == ruleGroupId {
+				continue
+			}
+			result = append(result, group)
+		}
+		this.Outbound = result
+	}
 }
 
 func (this *WAF) FindRuleGroup(ruleGroupId string) *rules.RuleGroup {
 	if len(ruleGroupId) == 0 {
 		return nil
 	}
-	for _, group := range this.RuleGroups {
+	for _, group := range this.Inbound {
+		if group.Id == ruleGroupId {
+			return group
+		}
+	}
+	for _, group := range this.Outbound {
 		if group.Id == ruleGroupId {
 			return group
 		}
@@ -95,40 +131,69 @@ func (this *WAF) FindRuleGroup(ruleGroupId string) *rules.RuleGroup {
 	return nil
 }
 
-func (this *WAF) MoveRuleGroup(fromIndex int, toIndex int) {
-	if fromIndex < 0 || fromIndex >= len(this.RuleGroups) {
+func (this *WAF) MoveInboundRuleGroup(fromIndex int, toIndex int) {
+	if fromIndex < 0 || fromIndex >= len(this.Inbound) {
 		return
 	}
-	if toIndex < 0 || toIndex >= len(this.RuleGroups) {
+	if toIndex < 0 || toIndex >= len(this.Inbound) {
 		return
 	}
 	if fromIndex == toIndex {
 		return
 	}
 
-	location := this.RuleGroups[fromIndex]
+	group := this.Inbound[fromIndex]
 	result := []*rules.RuleGroup{}
-	for i := 0; i < len(this.RuleGroups); i ++ {
+	for i := 0; i < len(this.Inbound); i ++ {
 		if i == fromIndex {
 			continue
 		}
 		if fromIndex > toIndex && i == toIndex {
-			result = append(result, location)
+			result = append(result, group)
 		}
-		result = append(result, this.RuleGroups[i])
+		result = append(result, this.Inbound[i])
 		if fromIndex < toIndex && i == toIndex {
-			result = append(result, location)
+			result = append(result, group)
 		}
 	}
 
-	this.RuleGroups = result
+	this.Inbound = result
 }
 
-func (this *WAF) MatchRequest(req *http.Request, writer http.ResponseWriter) (goNext bool, set *rules.RuleSet, err error) {
-	if !this.hasRuleGroups {
+func (this *WAF) MoveOutboundRuleGroup(fromIndex int, toIndex int) {
+	if fromIndex < 0 || fromIndex >= len(this.Outbound) {
+		return
+	}
+	if toIndex < 0 || toIndex >= len(this.Outbound) {
+		return
+	}
+	if fromIndex == toIndex {
+		return
+	}
+
+	group := this.Outbound[fromIndex]
+	result := []*rules.RuleGroup{}
+	for i := 0; i < len(this.Outbound); i ++ {
+		if i == fromIndex {
+			continue
+		}
+		if fromIndex > toIndex && i == toIndex {
+			result = append(result, group)
+		}
+		result = append(result, this.Outbound[i])
+		if fromIndex < toIndex && i == toIndex {
+			result = append(result, group)
+		}
+	}
+
+	this.Outbound = result
+}
+
+func (this *WAF) MatchRequest(req *requests.Request, writer http.ResponseWriter) (goNext bool, set *rules.RuleSet, err error) {
+	if !this.hasInboundRules {
 		return true, nil, nil
 	}
-	for _, group := range this.RuleGroups {
+	for _, group := range this.Inbound {
 		if !group.On {
 			continue
 		}
@@ -153,11 +218,11 @@ func (this *WAF) MatchRequest(req *http.Request, writer http.ResponseWriter) (go
 	return true, nil, nil
 }
 
-func (this *WAF) MatchResponse(req *http.Request, resp *http.Response, writer http.ResponseWriter) (goNext bool, set *rules.RuleSet, err error) {
-	if !this.hasRuleGroups {
+func (this *WAF) MatchResponse(req *requests.Request, resp *http.Response, writer http.ResponseWriter) (goNext bool, set *rules.RuleSet, err error) {
+	if !this.hasOutboundRules {
 		return true, nil, nil
 	}
-	for _, group := range this.RuleGroups {
+	for _, group := range this.Outbound {
 		if !group.On {
 			continue
 		}
@@ -198,7 +263,12 @@ func (this *WAF) ContainsGroupCode(code string) bool {
 	if len(code) == 0 {
 		return false
 	}
-	for _, group := range this.RuleGroups {
+	for _, group := range this.Inbound {
+		if group.Code == code {
+			return true
+		}
+	}
+	for _, group := range this.Outbound {
 		if group.Code == code {
 			return true
 		}
@@ -208,17 +278,26 @@ func (this *WAF) ContainsGroupCode(code string) bool {
 
 func (this *WAF) Copy() *WAF {
 	waf := &WAF{
-		Id:         this.Id,
-		On:         this.On,
-		Name:       this.Name,
-		RuleGroups: this.RuleGroups,
+		Id:       this.Id,
+		On:       this.On,
+		Name:     this.Name,
+		Inbound:  this.Inbound,
+		Outbound: this.Outbound,
 	}
 	return waf
 }
 
-func (this *WAF) CountRuleSets() int {
+func (this *WAF) CountInboundRuleSets() int {
 	count := 0
-	for _, group := range this.RuleGroups {
+	for _, group := range this.Inbound {
+		count += len(group.RuleSets)
+	}
+	return count
+}
+
+func (this *WAF) CountOutboundRuleSets() int {
+	count := 0
+	for _, group := range this.Outbound {
 		count += len(group.RuleSets)
 	}
 	return count

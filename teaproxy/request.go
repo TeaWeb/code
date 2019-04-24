@@ -697,7 +697,7 @@ func (this *Request) call(writer *ResponseWriter) error {
 
 	// WAF
 	if this.waf != nil {
-		if this.callWAF(writer) {
+		if this.callWAFRequest(writer) {
 			return nil
 		}
 	}

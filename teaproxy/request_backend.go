@@ -116,6 +116,14 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		return nil
 	}
 
+	// waf
+	if this.waf != nil {
+		if this.callWAFResponse(resp, writer) {
+			resp.Body.Close()
+			return nil
+		}
+	}
+
 	data := []byte{}
 	bodyRead := false
 	if resp.ContentLength > 0 && resp.ContentLength < 2048 { // 内容比较少的直接读取，以加快响应速度

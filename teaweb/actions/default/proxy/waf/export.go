@@ -5,7 +5,6 @@ import (
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"strings"
 )
@@ -27,7 +26,8 @@ func (this *ExportAction) RunGet(params struct {
 	// 导出
 	if params.Export {
 		waf1 := waf.Copy()
-		waf1.RuleGroups = []*rules.RuleGroup{}
+		waf1.Inbound = []*rules.RuleGroup{}
+		waf1.Outbound = []*rules.RuleGroup{}
 		if len(params.GroupIds) > 0 {
 			groupIds := strings.Split(params.GroupIds, ",")
 			for _, groupId := range groupIds {
@@ -54,20 +54,31 @@ func (this *ExportAction) RunGet(params struct {
 	}
 
 	this.Data["config"] = maps.Map{
-		"id":        waf.Id,
-		"name":      waf.Name,
-		"countSets": waf.CountRuleSets(),
+		"id":            waf.Id,
+		"name":          waf.Name,
+		"countInbound":  waf.CountInboundRuleSets(),
+		"countOutbound": waf.CountOutboundRuleSets(),
 	}
 
-	this.Data["groups"] = lists.Map(waf.RuleGroups, func(k int, v interface{}) interface{} {
-		group := v.(*rules.RuleGroup)
-		return maps.Map{
+	groups := []maps.Map{}
+	for _, group := range waf.Inbound {
+		groups = append(groups, maps.Map{
 			"id":        group.Id,
-			"name":      group.Name,
+			"name":      "[入站]" + group.Name,
 			"countSets": len(group.RuleSets),
 			"on":        group.On,
-		}
-	})
+		})
+	}
+	for _, group := range waf.Outbound {
+		groups = append(groups, maps.Map{
+			"id":        group.Id,
+			"name":      "[出站]" + group.Name,
+			"countSets": len(group.RuleSets),
+			"on":        group.On,
+		})
+	}
+
+	this.Data["groups"] = groups
 
 	this.Show()
 }

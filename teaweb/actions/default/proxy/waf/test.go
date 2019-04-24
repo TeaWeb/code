@@ -18,28 +18,45 @@ type TestAction actions.Action
 
 // 测试
 func (this *TestAction) RunGet(params struct {
-	WafId string
+	WafId   string
+	Inbound bool
 }) {
 	waf := teaconfigs.SharedWAFList().FindWAF(params.WafId)
 	if waf == nil {
 		this.Fail("找不到WAF")
 	}
 
+	this.Data["inbound"] = params.Inbound
+
 	this.Data["config"] = maps.Map{
-		"id":        waf.Id,
-		"name":      waf.Name,
-		"countSets": waf.CountRuleSets(),
+		"id":            waf.Id,
+		"name":          waf.Name,
+		"countInbound":  waf.CountInboundRuleSets(),
+		"countOutbound": waf.CountOutboundRuleSets(),
 	}
 
 	// 数据列表
 	paramList := []string{}
-	for _, group := range waf.RuleGroups {
-		for _, set := range group.RuleSets {
-			for _, rule := range set.Rules {
-				if lists.ContainsString(paramList, rule.Param) {
-					continue
+	if params.Inbound {
+		for _, group := range waf.Inbound {
+			for _, set := range group.RuleSets {
+				for _, rule := range set.Rules {
+					if lists.ContainsString(paramList, rule.Param) {
+						continue
+					}
+					paramList = append(paramList, rule.Param)
 				}
-				paramList = append(paramList, rule.Param)
+			}
+		}
+	} else {
+		for _, group := range waf.Outbound {
+			for _, set := range group.RuleSets {
+				for _, rule := range set.Rules {
+					if lists.ContainsString(paramList, rule.Param) {
+						continue
+					}
+					paramList = append(paramList, rule.Param)
+				}
 			}
 		}
 	}
@@ -85,9 +102,10 @@ func (this *TestAction) RunGet(params struct {
 
 // 提交测试数据
 func (this *TestAction) RunPost(params struct {
-	WafId  string
-	Params []string
-	Values []string
+	WafId   string
+	Params  []string
+	Values  []string
+	Inbound bool
 }) {
 	waf := teaconfigs.SharedWAFList().FindWAF(params.WafId)
 	if waf == nil {
@@ -108,8 +126,15 @@ func (this *TestAction) RunPost(params struct {
 	setName := ""
 	action := ""
 
+	groups := []*rules.RuleGroup{}
+	if params.Inbound {
+		groups = waf.Inbound
+	} else {
+		groups = waf.Outbound
+	}
+
 Loop:
-	for _, group := range waf.RuleGroups {
+	for _, group := range groups {
 		result = append(result, "开始检查规则分组 '"+group.Name+"' "+fmt.Sprintf("%d 个规则集", len(group.RuleSets))+" ...")
 		if len(group.RuleSets) == 0 {
 			result = append(result, "　　跳过")

@@ -3,12 +3,10 @@ package waf
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teawaf"
-	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 )
@@ -25,9 +23,10 @@ func (this *ImportAction) RunGet(params struct {
 	}
 
 	this.Data["config"] = maps.Map{
-		"id":        waf.Id,
-		"name":      waf.Name,
-		"countSets": waf.CountRuleSets(),
+		"id":            waf.Id,
+		"name":          waf.Name,
+		"countInbound":  waf.CountInboundRuleSets(),
+		"countOutbound": waf.CountOutboundRuleSets(),
 	}
 
 	this.Show()
@@ -63,14 +62,22 @@ func (this *ImportAction) RunPost(params struct {
 		}
 
 		this.Data["data"] = string(data)
-		this.Data["groups"] = lists.Map(waf.RuleGroups, func(k int, v interface{}) interface{} {
-			group := v.(*rules.RuleGroup)
-			return maps.Map{
+		groups := []maps.Map{}
+		for _, group := range waf.Inbound {
+			groups = append(groups, maps.Map{
 				"id":        group.Id,
-				"name":      group.Name,
+				"name":      "[入站]" + group.Name,
 				"countSets": len(group.RuleSets),
-			}
-		})
+			})
+		}
+		for _, group := range waf.Outbound {
+			groups = append(groups, maps.Map{
+				"id":        group.Id,
+				"name":      "[出站]" + group.Name,
+				"countSets": len(group.RuleSets),
+			})
+		}
+		this.Data["groups"] = groups
 
 		this.Success()
 	} else if params.Step == "groups" { // 提交分组信息

@@ -1,6 +1,7 @@
 package teaweb
 
 import (
+	"fmt"
 	"github.com/iwind/TeaGo"
 	"io/ioutil"
 	"net/http"
@@ -55,6 +56,28 @@ func startTestServer() {
 		Get("/timeout120", func(req *http.Request, resp http.ResponseWriter) {
 			time.Sleep(121 * time.Second)
 			resp.Write([]byte("120 seconds timeout"))
+		}).
+		Post("/upload", func(req *http.Request, resp http.ResponseWriter) {
+			err := req.ParseMultipartForm(32 * 1024 * 1024)
+			if err != nil {
+				resp.Write([]byte(err.Error()))
+				return
+			}
+
+			resp.Write([]byte("files:\n"))
+			for field, files := range req.MultipartForm.File {
+				for _, f := range files {
+					resp.Write([]byte(field + ":" + f.Filename + ", " + fmt.Sprintf("%d", f.Size) + "bytes\n"))
+				}
+			}
+
+			resp.Write([]byte("params:\n"))
+			for k, values := range req.PostForm {
+				for _, v := range values {
+					resp.Write([]byte(k + ":" + v + "\n"))
+				}
+			}
+
 		}).
 		StartOn("127.0.0.1:9991")
 }

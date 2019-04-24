@@ -63,6 +63,8 @@ func (this *UpdateAction) Run(params struct {
 		"cachePolicy": location.CachePolicy,
 		"websocket":   location.Websocket,
 		"backends":    location.Backends,
+		"wafOn":       location.WAFOn,
+		"wafId":       location.WafId,
 	}
 
 	// 运算符

@@ -12,17 +12,21 @@ type GroupAddAction actions.Action
 
 // 添加分组
 func (this *GroupAddAction) RunGet(params struct {
-	WafId string
+	WafId   string
+	Inbound bool
 }) {
 	config := teaconfigs.SharedWAFList().FindWAF(params.WafId)
 	if config == nil {
 		this.Fail("找不到WAF")
 	}
 
+	this.Data["inbound"] = params.Inbound
+	this.Data["outbound"] = !params.Inbound
 	this.Data["config"] = maps.Map{
-		"id":        config.Id,
-		"name":      config.Name,
-		"countSets": config.CountRuleSets(),
+		"id":            config.Id,
+		"name":          config.Name,
+		"countInbound":  config.CountInboundRuleSets(),
+		"countOutbound": config.CountOutboundRuleSets(),
 	}
 
 	this.Show()
@@ -30,10 +34,11 @@ func (this *GroupAddAction) RunGet(params struct {
 
 // 保存分组
 func (this *GroupAddAction) RunPost(params struct {
-	WafId string
-	Name  string
-	On    bool
-	Must  *actions.Must
+	WafId   string
+	Name    string
+	On      bool
+	Inbound bool
+	Must    *actions.Must
 }) {
 	wafList := teaconfigs.SharedWAFList()
 	config := wafList.FindWAF(params.WafId)
@@ -49,6 +54,7 @@ func (this *GroupAddAction) RunPost(params struct {
 	group.Id = stringutil.Rand(16)
 	group.On = params.On
 	group.Name = params.Name
+	group.IsInbound = params.Inbound
 
 	config.AddRuleGroup(group)
 	err := wafList.SaveWAF(config)

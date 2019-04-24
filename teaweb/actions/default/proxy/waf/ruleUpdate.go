@@ -27,15 +27,19 @@ func (this *RuleUpdateAction) RunGet(params struct {
 		this.Fail("找不到WAF")
 	}
 	this.Data["config"] = maps.Map{
-		"id":        waf.Id,
-		"name":      waf.Name,
-		"countSets": waf.CountRuleSets(),
+		"id":            waf.Id,
+		"name":          waf.Name,
+		"countInbound":  waf.CountInboundRuleSets(),
+		"countOutbound": waf.CountOutboundRuleSets(),
 	}
 
 	group := waf.FindRuleGroup(params.GroupId)
 	if group == nil {
 		this.Fail("找不到分组")
 	}
+
+	this.Data["inbound"] = group.IsInbound
+	this.Data["outbound"] = !group.IsInbound
 
 	set := group.FindRuleSet(params.SetId)
 	if set == nil {
@@ -83,15 +87,20 @@ func (this *RuleUpdateAction) RunGet(params struct {
 	}
 
 	// check points
-	this.Data["checkpoints"] = lists.Map(checkpoints.AllCheckpoints, func(k int, v interface{}) interface{} {
-		def := v.(*checkpoints.CheckpointDefinition)
-		return maps.Map{
-			"name":        def.Name,
-			"prefix":      def.Prefix,
-			"description": def.Description,
-			"hasParams":   def.HasParams,
+	checkpointList := []maps.Map{}
+	for _, def := range checkpoints.AllCheckpoints {
+		if (group.IsInbound && def.Instance.IsRequest()) || (!group.IsInbound && !def.Instance.IsRequest()) {
+			checkpointList = append(checkpointList, maps.Map{
+				"name":         def.Name,
+				"prefix":       def.Prefix,
+				"description":  def.Description,
+				"hasParams":    def.HasParams,
+				"paramOptions": def.Instance.ParamOptions(),
+			})
 		}
-	})
+	}
+
+	this.Data["checkpoints"] = checkpointList
 
 	this.Data["operators"] = lists.Map(rules.AllRuleOperators, func(k int, v interface{}) interface{} {
 		def := v.(*rules.RuleOperatorDefinition)

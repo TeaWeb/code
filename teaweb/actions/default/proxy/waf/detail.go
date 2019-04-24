@@ -2,7 +2,7 @@ package waf
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teawaf/groups"
+	"github.com/TeaWeb/code/teawaf/inbound"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -21,13 +21,14 @@ func (this *DetailAction) RunGet(params struct {
 	}
 
 	this.Data["config"] = maps.Map{
-		"id":        waf.Id,
-		"name":      waf.Name,
-		"countSets": waf.CountRuleSets(),
-		"on":        waf.On,
+		"id":            waf.Id,
+		"name":          waf.Name,
+		"countInbound":  waf.CountInboundRuleSets(),
+		"countOutbound": waf.CountOutboundRuleSets(),
+		"on":            waf.On,
 	}
 
-	this.Data["groups"] = lists.Map(groups.InternalGroups, func(k int, v interface{}) interface{} {
+	this.Data["groups"] = lists.Map(inbound.InternalGroups, func(k int, v interface{}) interface{} {
 		g := v.(*rules.RuleGroup)
 
 		return maps.Map{

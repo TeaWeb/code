@@ -1,4 +1,4 @@
-package groups
+package inbound
 
 import "github.com/TeaWeb/code/teawaf/rules"
 

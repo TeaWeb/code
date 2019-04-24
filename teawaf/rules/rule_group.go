@@ -1,16 +1,18 @@
 package rules
 
 import (
+	"github.com/TeaWeb/code/teawaf/requests"
 	"net/http"
 )
 
 // rule group
 type RuleGroup struct {
-	Id       string     `yaml:"id" json:"id"`
-	On       bool       `yaml:"on" json:"on"`
-	Name     string     `yaml:"name" json:"name"` // such as SQL Injection
-	Code     string     `yaml:"code" json:"code"` // identify the group
-	RuleSets []*RuleSet `yaml:"ruleSets" json:"ruleSets"`
+	Id        string     `yaml:"id" json:"id"`
+	On        bool       `yaml:"on" json:"on"`
+	Name      string     `yaml:"name" json:"name"` // such as SQL Injection
+	Code      string     `yaml:"code" json:"code"` // identify the group
+	RuleSets  []*RuleSet `yaml:"ruleSets" json:"ruleSets"`
+	IsInbound bool       `yaml:"isInbound" json:"isInbound"`
 
 	hasRuleSets bool
 }
@@ -65,7 +67,7 @@ func (this *RuleGroup) RemoveRuleSet(id string) {
 	this.RuleSets = result
 }
 
-func (this *RuleGroup) MatchRequest(req *http.Request) (b bool, set *RuleSet, err error) {
+func (this *RuleGroup) MatchRequest(req *requests.Request) (b bool, set *RuleSet, err error) {
 	if !this.hasRuleSets {
 		return
 	}
@@ -84,7 +86,7 @@ func (this *RuleGroup) MatchRequest(req *http.Request) (b bool, set *RuleSet, er
 	return
 }
 
-func (this *RuleGroup) MatchResponse(req *http.Request, resp *http.Response) (b bool, set *RuleSet, err error) {
+func (this *RuleGroup) MatchResponse(req *requests.Request, resp *http.Response) (b bool, set *RuleSet, err error) {
 	if !this.hasRuleSets {
 		return
 	}

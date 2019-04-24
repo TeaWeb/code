@@ -1,6 +1,7 @@
 package checkpoints
 
 import (
+	"github.com/TeaWeb/code/teawaf/requests"
 	"net/http"
 	"strings"
 )
@@ -9,7 +10,7 @@ type RequestRemoteAddrCheckpoint struct {
 	Checkpoint
 }
 
-func (this *RequestRemoteAddrCheckpoint) RequestValue(req *http.Request, param string) (value interface{}, err error) {
+func (this *RequestRemoteAddrCheckpoint) RequestValue(req *requests.Request, param string) (value interface{}, sysErr error, userErr error) {
 	// Real-IP
 	realIP := req.Header.Get("X-Real-IP")
 	if len(realIP) > 0 {
@@ -54,6 +55,13 @@ func (this *RequestRemoteAddrCheckpoint) RequestValue(req *http.Request, param s
 		value = remoteAddr
 	} else {
 		value = remoteAddr[:index]
+	}
+	return
+}
+
+func (this *RequestRemoteAddrCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string) (value interface{}, sysErr error, userErr error) {
+	if this.IsRequest() {
+		return this.RequestValue(req, param)
 	}
 	return
 }

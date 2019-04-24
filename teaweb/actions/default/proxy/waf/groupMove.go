@@ -12,6 +12,7 @@ type GroupMoveAction actions.Action
 // 移动分组
 func (this *GroupMoveAction) RunPost(params struct {
 	WafId     string
+	Inbound   bool
 	FromIndex int
 	ToIndex   int
 }) {
@@ -21,10 +22,18 @@ func (this *GroupMoveAction) RunPost(params struct {
 		this.Fail("找不到WAF")
 	}
 
-	waf.MoveRuleGroup(params.FromIndex, params.ToIndex)
-	err := wafList.SaveWAF(waf)
-	if err != nil {
-		this.Fail("保存失败：" + err.Error())
+	if params.Inbound {
+		waf.MoveInboundRuleGroup(params.FromIndex, params.ToIndex)
+		err := wafList.SaveWAF(waf)
+		if err != nil {
+			this.Fail("保存失败：" + err.Error())
+		}
+	} else {
+		waf.MoveOutboundRuleGroup(params.FromIndex, params.ToIndex)
+		err := wafList.SaveWAF(waf)
+		if err != nil {
+			this.Fail("保存失败：" + err.Error())
+		}
 	}
 
 	// 通知刷新

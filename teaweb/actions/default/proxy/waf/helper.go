@@ -29,5 +29,8 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 		} else if action.HasPrefix("/proxy/waf/import") {
 			action.Data["selectedSubMenu"] = "import"
 		}
+
+		action.Data["inbound"] = false
+		action.Data["outbound"] = false
 	}
 }

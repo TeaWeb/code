@@ -136,6 +136,7 @@ func (this *DayAction) Run(params struct {
 					"upgrade":        accessLog.GetHeader("Upgrade"),
 					"day":            timeutil.Format("Ymd", accessLog.Time()),
 					"errors":         accessLog.Errors,
+					"attrs":          accessLog.Attrs,
 				}
 			})
 
