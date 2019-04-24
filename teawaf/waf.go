@@ -17,7 +17,8 @@ type WAF struct {
 	Name       string             `yaml:"name" json:"name"`
 	RuleGroups []*rules.RuleGroup `yaml:"ruleGroups" json:"ruleGroups"`
 
-	hasRuleGroups bool
+	hasRuleGroups    bool
+	onActionCallback func(action actions.ActionString) (goNext bool)
 }
 
 func NewWAF() *WAF {
@@ -136,11 +137,16 @@ func (this *WAF) MatchRequest(req *http.Request, writer http.ResponseWriter) (go
 			return true, nil, err
 		}
 		if b {
-			actionObject := actions.FindActionInstance(set.Action)
-			if actionObject == nil {
-				return true, set, errors.New("no action called '" + set.Action + "'")
+			if this.onActionCallback == nil {
+				actionObject := actions.FindActionInstance(set.Action)
+				if actionObject == nil {
+					return true, set, errors.New("no action called '" + set.Action + "'")
+				}
+				goNext := actionObject.Perform(writer)
+				return goNext, set, nil
+			} else {
+				goNext = this.onActionCallback(set.Action)
 			}
-			goNext := actionObject.Perform(writer)
 			return goNext, set, nil
 		}
 	}
@@ -160,11 +166,16 @@ func (this *WAF) MatchResponse(req *http.Request, resp *http.Response, writer ht
 			return true, nil, err
 		}
 		if b {
-			actionObject := actions.FindActionInstance(set.Action)
-			if actionObject == nil {
-				return true, set, errors.New("no action called '" + set.Action + "'")
+			if this.onActionCallback == nil {
+				actionObject := actions.FindActionInstance(set.Action)
+				if actionObject == nil {
+					return true, set, errors.New("no action called '" + set.Action + "'")
+				}
+				goNext := actionObject.Perform(writer)
+				return goNext, set, nil
+			} else {
+				goNext = this.onActionCallback(set.Action)
 			}
-			goNext := actionObject.Perform(writer)
 			return goNext, set, nil
 		}
 	}
@@ -211,4 +222,8 @@ func (this *WAF) CountRuleSets() int {
 		count += len(group.RuleSets)
 	}
 	return count
+}
+
+func (this *WAF) OnAction(onActionCallback func(action actions.ActionString) (goNext bool)) {
+	this.onActionCallback = onActionCallback
 }

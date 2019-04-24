@@ -37,5 +37,34 @@ func (this *DetailAction) RunGet(params struct {
 		}
 	})
 
+	// 正在使用此缓存策略的项目
+	configItems := []maps.Map{}
+	serverList, _ := teaconfigs.SharedServerList()
+	if serverList != nil {
+		for _, server := range serverList.FindAllServers() {
+
+			if server.WafId == waf.Id {
+				configItems = append(configItems, maps.Map{
+					"type":   "server",
+					"server": server.Description,
+					"link":   "/proxy/servers/waf?serverId=" + server.Id,
+				})
+			}
+
+			for _, location := range server.Locations {
+				if location.WafId == waf.Id {
+					configItems = append(configItems, maps.Map{
+						"type":     "location",
+						"server":   server.Description,
+						"location": location.Pattern,
+						"link":     "/proxy/locations/waf?serverId=" + server.Id + "&locationId=" + location.Id,
+					})
+				}
+			}
+		}
+	}
+
+	this.Data["configItems"] = configItems
+
 	this.Show()
 }
