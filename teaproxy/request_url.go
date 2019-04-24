@@ -25,7 +25,7 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 		} else {
 			ip = this.raw.RemoteAddr
 		}
-		req.Header.Set("X-Real-IP", ip)
+		req.Header["X-Real-IP"] = []string{ip}
 		req.Header.Set("X-Forwarded-For", ip)
 		req.Header.Set("X-Forwarded-By", ip)
 	}

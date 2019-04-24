@@ -66,7 +66,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	// 参考 https://tools.ietf.org/html/rfc7239
 	remoteAddr := this.requestRemoteAddr()
 	if len(remoteAddr) > 0 {
-		this.raw.Header.Set("X-Real-IP", remoteAddr)
+		this.raw.Header["X-Real-IP"] = []string{remoteAddr} // forbid golang convert IP to Ip
 		this.raw.Header.Set("X-Forwarded-For", remoteAddr)
 		this.raw.Header.Set("X-Forwarded-By", remoteAddr)
 	}
