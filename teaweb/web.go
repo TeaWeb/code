@@ -75,7 +75,14 @@ var server *TeaGo.Server
 func Start() {
 	// 当前ROOT
 	if !Tea.IsTesting() {
-		exePath := os.Args[0]
+		exePath, err := os.Executable()
+		if err != nil {
+			exePath = os.Args[0]
+		}
+		link, err := filepath.EvalSymlinks(exePath)
+		if err == nil {
+			exePath = link
+		}
 		fullPath, err := filepath.Abs(exePath)
 		if err == nil {
 			Tea.UpdateRoot(filepath.Dir(filepath.Dir(fullPath)))
