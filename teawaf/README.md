@@ -33,6 +33,16 @@ if err != nil {
 }
 waf.Start()
 
+// match http request
+// (req *http.Request, responseWriter http.ResponseWriter)
+goNext, ruleSet, _ := waf.MatchRequest(req, responseWriter)
+if ruleSet != nil {
+	log.Println("meet rule set:", ruleSet.Name, "action:", ruleSet.Action)
+}
+if !goNext {
+	return
+}
+
 // stop the waf
 // waf.Stop()
 ~~~
