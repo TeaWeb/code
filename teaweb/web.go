@@ -145,28 +145,13 @@ func Start() {
 		Get("/", new(index.IndexAction)).
 		Get("/logout", new(logout.IndexAction)).
 		Get("/css/semantic.min.css", func(req *http.Request, writer http.ResponseWriter) {
-			cssFile := files.NewFile(Tea.Root + "/public/css/semantic.min.css")
-			data, err := cssFile.ReadAll()
-			if err != nil {
-				return
-			}
-
-			gzipWriter, err := gzip.NewWriterLevel(writer, gzip.BestCompression)
-			if err != nil {
-				writer.Write(data)
-				return
-			}
-			defer gzipWriter.Close()
-
-			header := writer.Header()
-			header.Set("Content-Encoding", "gzip")
-			header.Set("Transfer-Encoding", "chunked")
-			header.Set("Vary", "Accept-Encoding")
-			header.Set("Accept-encoding", "gzip, deflate, br")
-			header.Set("Content-Type", "text/css; charset=utf-8")
-			header.Set("Last-Modified", "Sat, 02 Mar 2015 09:31:16 GMT")
-
-			gzipWriter.Write(data)
+			compressResource(writer, Tea.Root+"/public/css/semantic.min.css", "text/css; charset=utf-8")
+		}).
+		Get("/js/echarts.min.js", func(req *http.Request, writer http.ResponseWriter) {
+			compressResource(writer, Tea.Root+"/public/js/echarts.min.js", "text/javascript; charset=utf-8")
+		}).
+		Get("/js/vue.min.js", func(req *http.Request, writer http.ResponseWriter) {
+			compressResource(writer, Tea.Root+"/public/js/vue.min.js", "text/javascript; charset=utf-8")
 		}).
 
 		EndAll().
@@ -377,4 +362,30 @@ func checkPid() *os.Process {
 	}
 
 	return nil
+}
+
+// 压缩Javascript、CSS等静态资源
+func compressResource(writer http.ResponseWriter, path string, mimeType string) {
+	cssFile := files.NewFile(path)
+	data, err := cssFile.ReadAll()
+	if err != nil {
+		return
+	}
+
+	gzipWriter, err := gzip.NewWriterLevel(writer, gzip.BestSpeed)
+	if err != nil {
+		writer.Write(data)
+		return
+	}
+	defer gzipWriter.Close()
+
+	header := writer.Header()
+	header.Set("Content-Encoding", "gzip")
+	header.Set("Transfer-Encoding", "chunked")
+	header.Set("Vary", "Accept-Encoding")
+	header.Set("Accept-encoding", "gzip, deflate, br")
+	header.Set("Content-Type", mimeType)
+	header.Set("Last-Modified", "Sat, 02 Mar 2015 09:31:16 GMT")
+
+	gzipWriter.Write(data)
 }
