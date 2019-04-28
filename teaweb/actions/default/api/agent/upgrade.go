@@ -32,7 +32,7 @@ func (this *UpgradeAction) Run(params struct{}) {
 		this.Fail("agent is latest version")
 	}
 
-	agentFile := Tea.Root + Tea.DS + "upgrade" + Tea.DS + teaconst.TeaVersion + Tea.DS + agentOS + Tea.DS + agentArch + Tea.DS
+	agentFile := Tea.Root + Tea.DS + "web" + Tea.DS + "upgrade" + Tea.DS + teaconst.TeaVersion + Tea.DS + agentOS + Tea.DS + agentArch + Tea.DS
 	if agentOS == "windows" {
 		agentFile += "teaweb-agent.exe"
 	} else {

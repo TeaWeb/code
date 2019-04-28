@@ -150,7 +150,7 @@ func (this *Installer) Start() error {
 	// upload installer
 	this.log("finding installer file")
 	filename := "agentinstaller_" + this.OS + "_" + this.Arch
-	installerFile := files.NewFile(Tea.Root + "/installers/" + filename)
+	installerFile := files.NewFile(Tea.Root + "/web/installers/" + filename)
 	if !installerFile.Exists() {
 		return errors.New("installer file '" + filename + "' not found")
 	}

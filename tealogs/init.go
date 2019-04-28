@@ -18,7 +18,7 @@ func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		logs.Println("[proxy]start user-agent parser")
 		var err error
-		userAgentParser, err = uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+		userAgentParser, err = uaparser.NewParser(Tea.Root + Tea.DS + "web" + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
 		if err != nil {
 			logs.Error(err)
 		}

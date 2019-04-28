@@ -42,7 +42,7 @@ func ReloadServerStats(serverId string) {
 
 // 检查图表是否有更新
 func CheckChartChanges() bool {
-	dir := files.NewFile(Tea.Root + "/libs/widgets")
+	dir := files.NewFile(Tea.Root + "/web/libs/widgets")
 	if !dir.Exists() {
 		return false
 	}
@@ -79,7 +79,7 @@ func CheckChartChanges() bool {
 
 // 应用图表更新
 func ApplyChartChanges() error {
-	dir := files.NewFile(Tea.Root + "/libs/widgets")
+	dir := files.NewFile(Tea.Root + "/web/libs/widgets")
 	if !dir.Exists() {
 		return nil
 	}

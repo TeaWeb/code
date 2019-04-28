@@ -88,6 +88,9 @@ func Start() {
 			Tea.UpdateRoot(filepath.Dir(filepath.Dir(fullPath)))
 		}
 	}
+	Tea.SetPublicDir(Tea.Root + Tea.DS + "web" + Tea.DS + "public")
+	Tea.SetViewsDir(Tea.Root + Tea.DS + "web" + Tea.DS + "views")
+	Tea.SetTmpDir(Tea.Root + Tea.DS + "web" + Tea.DS + "tmp")
 
 	// 执行参数
 	if lookupArgs() {
@@ -152,13 +155,13 @@ func Start() {
 		Get("/", new(index.IndexAction)).
 		Get("/logout", new(logout.IndexAction)).
 		Get("/css/semantic.min.css", func(req *http.Request, writer http.ResponseWriter) {
-			compressResource(writer, Tea.Root+"/public/css/semantic.min.css", "text/css; charset=utf-8")
+			compressResource(writer, Tea.PublicDir()+"/css/semantic.min.css", "text/css; charset=utf-8")
 		}).
 		Get("/js/echarts.min.js", func(req *http.Request, writer http.ResponseWriter) {
-			compressResource(writer, Tea.Root+"/public/js/echarts.min.js", "text/javascript; charset=utf-8")
+			compressResource(writer, Tea.PublicDir()+"/js/echarts.min.js", "text/javascript; charset=utf-8")
 		}).
 		Get("/js/vue.min.js", func(req *http.Request, writer http.ResponseWriter) {
-			compressResource(writer, Tea.Root+"/public/js/vue.min.js", "text/javascript; charset=utf-8")
+			compressResource(writer, Tea.PublicDir()+"/js/vue.min.js", "text/javascript; charset=utf-8")
 		}).
 
 		EndAll().

@@ -74,7 +74,7 @@ func TestLogParseExtension(t *testing.T) {
 
 func TestLogOSParser1(t *testing.T) {
 	userAgent := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.59 Safari/537.36"
-	parser, err := uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	parser, err := uaparser.NewParser(Tea.Root + "/web/resources" + Tea.DS + "regexes.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestLogOSParser1(t *testing.T) {
 
 func TestLogOSParser2(t *testing.T) {
 	userAgent := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.59 Safari/537.36"
-	parser, err := uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	parser, err := uaparser.NewParser(Tea.Root + "/web/resources" + Tea.DS + "regexes.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -122,7 +122,7 @@ func TestLogOSParser2(t *testing.T) {
 
 func TestLogOSParser3(t *testing.T) {
 	userAgent := " Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)"
-	parser, err := uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	parser, err := uaparser.NewParser(Tea.Root + "/web/resources" + Tea.DS + "regexes.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -141,7 +141,7 @@ func TestLogOSParser3(t *testing.T) {
 
 func TestLogOSParser4(t *testing.T) {
 	userAgent := "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36"
-	parser, err := uaparser.NewParser(Tea.Root + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	parser, err := uaparser.NewParser(Tea.Root + "/web/resources" + Tea.DS + "regexes.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}

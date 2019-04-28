@@ -506,7 +506,7 @@ func (this *Engine) callGetCache(call otto.FunctionCall) otto.Value {
 
 // 加载JS库文件
 func (this *Engine) loadLib(file string) {
-	path := Tea.Root + Tea.DS + file
+	path := Tea.Root + Tea.DS + "web" + Tea.DS + file
 	cacheKey := "libfile://" + path
 	code, found := engineCache.Get(cacheKey)
 	if !found {

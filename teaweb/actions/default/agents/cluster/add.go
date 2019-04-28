@@ -13,7 +13,7 @@ type AddAction actions.Action
 func (this *AddAction) Run(params struct{}) {
 	// 检查安装工具
 	{
-		dirFile := files.NewFile(Tea.Root + "/installers")
+		dirFile := files.NewFile(Tea.Root + "/web/installers")
 		if dirFile.Exists() && len(dirFile.List()) > 0 {
 			this.Data["checkInstaller"] = true
 		} else {
@@ -23,7 +23,7 @@ func (this *AddAction) Run(params struct{}) {
 
 	//  Agent新版本
 	{
-		dirFile := files.NewFile(Tea.Root + "/upgrade")
+		dirFile := files.NewFile(Tea.Root + "/web/upgrade")
 		if dirFile.Exists() && len(dirFile.List()) > 0 {
 			this.Data["checkUpgradeFiles"] = true
 		} else {
