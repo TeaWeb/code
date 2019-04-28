@@ -39,11 +39,12 @@ func (this *GroupUpdateAction) RunGet(params struct {
 
 // 保存修改
 func (this *GroupUpdateAction) RunPost(params struct {
-	WafId   string
-	GroupId string
-	Name    string
-	On      bool
-	Must    *actions.Must
+	WafId       string
+	GroupId     string
+	Name        string
+	Description string
+	On          bool
+	Must        *actions.Must
 }) {
 	wafList := teaconfigs.SharedWAFList()
 	config := wafList.FindWAF(params.WafId)
@@ -62,6 +63,7 @@ func (this *GroupUpdateAction) RunPost(params struct {
 
 	group.On = params.On
 	group.Name = params.Name
+	group.Description = params.Description
 
 	err := wafList.SaveWAF(config)
 	if err != nil {

@@ -10,13 +10,13 @@ import (
 	"testing"
 )
 
-func TestRequestBodyCheckpoint_RequestValue(t *testing.T) {
-	req, err := http.NewRequest(http.MethodPost, "http://teaos.cn", bytes.NewBuffer([]byte("123456")))
+func TestRequestAllCheckpoint_RequestValue(t *testing.T) {
+	req, err := http.NewRequest(http.MethodPost, "http://teaos.cn/hello/world", bytes.NewBuffer([]byte("123456")))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	checkpoint := new(RequestBodyCheckpoint)
+	checkpoint := new(RequestAllCheckpoint)
 	t.Log(checkpoint.RequestValue(requests.NewRequest(req), "", nil))
 
 	body, err := ioutil.ReadAll(req.Body)
@@ -26,7 +26,7 @@ func TestRequestBodyCheckpoint_RequestValue(t *testing.T) {
 	t.Log(string(body))
 }
 
-func TestRequestBodyCheckpoint_RequestValue_Max(t *testing.T) {
+func TestRequestAllCheckpoint_RequestValue_Max(t *testing.T) {
 	req, err := http.NewRequest(http.MethodPost, "http://teaos.cn", bytes.NewBuffer([]byte(strings.Repeat("123456", 10240000))))
 	if err != nil {
 		t.Fatal(err)

@@ -2,7 +2,9 @@ package teawaf
 
 import (
 	"errors"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teawaf/actions"
+	"github.com/TeaWeb/code/teawaf/checkpoints"
 	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/go-yaml/yaml"
@@ -10,18 +12,22 @@ import (
 	"github.com/iwind/TeaGo/utils/string"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 )
 
 type WAF struct {
-	Id       string             `yaml:"id" json:"id"`
-	On       bool               `yaml:"on" json:"on"`
-	Name     string             `yaml:"name" json:"name"`
-	Inbound  []*rules.RuleGroup `yaml:"inbound" json:"inbound"`
-	Outbound []*rules.RuleGroup `yaml:"outbound" json:"outbound"`
+	Id             string             `yaml:"id" json:"id"`
+	On             bool               `yaml:"on" json:"on"`
+	Name           string             `yaml:"name" json:"name"`
+	Inbound        []*rules.RuleGroup `yaml:"inbound" json:"inbound"`
+	Outbound       []*rules.RuleGroup `yaml:"outbound" json:"outbound"`
+	CreatedVersion string             `yaml:"createdVersion" json:"createdVersion"`
 
 	hasInboundRules  bool
 	hasOutboundRules bool
 	onActionCallback func(action actions.ActionString) (goNext bool)
+
+	checkpointsMap map[string]checkpoints.CheckpointInterface // prefix => checkpoint
 }
 
 func NewWAF() *WAF {
@@ -37,7 +43,7 @@ func NewWAFFromFile(path string) (waf *WAF, err error) {
 	}
 	file := files.NewFile(path)
 	if !file.Exists() {
-		return nil, errors.New("'path' not exist")
+		return nil, errors.New("'" + path + "' not exist")
 	}
 
 	reader, err := file.Reader()
@@ -54,11 +60,27 @@ func NewWAFFromFile(path string) (waf *WAF, err error) {
 }
 
 func (this *WAF) Init() error {
+	// checkpoint
+	this.checkpointsMap = map[string]checkpoints.CheckpointInterface{}
+	for _, def := range checkpoints.AllCheckpoints {
+		instance := reflect.New(reflect.Indirect(reflect.ValueOf(def.Instance)).Type()).Interface().(checkpoints.CheckpointInterface)
+		instance.Init()
+		this.checkpointsMap[def.Prefix] = instance
+	}
+
+	// rules
 	this.hasInboundRules = len(this.Inbound) > 0
 	this.hasOutboundRules = len(this.Outbound) > 0
 
 	if this.hasInboundRules {
 		for _, group := range this.Inbound {
+			// finder
+			for _, set := range group.RuleSets {
+				for _, rule := range set.Rules {
+					rule.SetCheckpointFinder(this.FindCheckpointInstance)
+				}
+			}
+
 			err := group.Init()
 			if err != nil {
 				return err
@@ -68,6 +90,13 @@ func (this *WAF) Init() error {
 
 	if this.hasOutboundRules {
 		for _, group := range this.Outbound {
+			// finder
+			for _, set := range group.RuleSets {
+				for _, rule := range set.Rules {
+					rule.SetCheckpointFinder(this.FindCheckpointInstance)
+				}
+			}
+
 			err := group.Init()
 			if err != nil {
 				return err
@@ -125,6 +154,23 @@ func (this *WAF) FindRuleGroup(ruleGroupId string) *rules.RuleGroup {
 	}
 	for _, group := range this.Outbound {
 		if group.Id == ruleGroupId {
+			return group
+		}
+	}
+	return nil
+}
+
+func (this *WAF) FindRuleGroupWithCode(ruleGroupCode string) *rules.RuleGroup {
+	if len(ruleGroupCode) == 0 {
+		return nil
+	}
+	for _, group := range this.Inbound {
+		if group.Code == ruleGroupCode {
+			return group
+		}
+	}
+	for _, group := range this.Outbound {
+		if group.Code == ruleGroupCode {
 			return group
 		}
 	}
@@ -252,6 +298,9 @@ func (this *WAF) Save(path string) error {
 	if len(path) == 0 {
 		return errors.New("path should not be empty")
 	}
+	if len(this.CreatedVersion) == 0 {
+		this.CreatedVersion = teaconst.TeaVersion
+	}
 	data, err := yaml.Marshal(this)
 	if err != nil {
 		return err
@@ -305,4 +354,62 @@ func (this *WAF) CountOutboundRuleSets() int {
 
 func (this *WAF) OnAction(onActionCallback func(action actions.ActionString) (goNext bool)) {
 	this.onActionCallback = onActionCallback
+}
+
+func (this *WAF) FindCheckpointInstance(prefix string) checkpoints.CheckpointInterface {
+	instance, ok := this.checkpointsMap[prefix]
+	if ok {
+		return instance
+	}
+	return nil
+}
+
+// start
+func (this *WAF) Start() {
+	for _, checkpoint := range this.checkpointsMap {
+		checkpoint.Start()
+	}
+}
+
+// call stop() when the waf was deleted
+func (this *WAF) Stop() {
+	for _, checkpoint := range this.checkpointsMap {
+		checkpoint.Stop()
+	}
+}
+
+// merge with template
+func (this *WAF) MergeTemplate() (changedItems []string) {
+	changedItems = []string{}
+
+	// compare versions
+	if this.CreatedVersion == teaconst.TeaVersion {
+		return
+	}
+	this.CreatedVersion = teaconst.TeaVersion
+
+	template := Template()
+	groups := []*rules.RuleGroup{}
+	groups = append(groups, template.Inbound...)
+	groups = append(groups, template.Outbound...)
+	for _, group := range groups {
+		oldGroup := this.FindRuleGroupWithCode(group.Code)
+		if oldGroup == nil {
+			group.Id = stringutil.Rand(16)
+			this.AddRuleGroup(group)
+			changedItems = append(changedItems, "+group "+group.Name)
+			continue
+		}
+
+		// check rule sets
+		for _, set := range group.RuleSets {
+			oldSet := oldGroup.FindRuleSetWithCode(set.Code)
+			if oldSet == nil {
+				oldGroup.AddRuleSet(set)
+				changedItems = append(changedItems, "+group "+group.Name+" rule set:"+set.Name)
+				continue
+			}
+		}
+	}
+	return
 }

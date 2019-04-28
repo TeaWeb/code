@@ -15,7 +15,7 @@ func TestArgParam_RequestValue(t *testing.T) {
 	req := requests.NewRequest(rawReq)
 
 	checkpoint := new(RequestArgCheckpoint)
-	t.Log(checkpoint.RequestValue(req, "name"))
-	t.Log(checkpoint.ResponseValue(req, nil, "name"))
-	t.Log(checkpoint.RequestValue(req, "name2"))
+	t.Log(checkpoint.RequestValue(req, "name", nil))
+	t.Log(checkpoint.ResponseValue(req, nil, "name", nil))
+	t.Log(checkpoint.RequestValue(req, "name2", nil))
 }

@@ -36,8 +36,10 @@ func (this *RulesAction) RunGet(params struct {
 				"id":            group.Id,
 				"code":          group.Code,
 				"name":          group.Name,
+				"description":   group.Description,
 				"on":            group.On,
 				"countRuleSets": len(group.RuleSets),
+				"canDelete":     len(group.Code) == 0,
 			}
 		})
 	} else {
@@ -47,8 +49,10 @@ func (this *RulesAction) RunGet(params struct {
 				"id":            group.Id,
 				"code":          group.Code,
 				"name":          group.Name,
+				"description":   group.Description,
 				"on":            group.On,
 				"countRuleSets": len(group.RuleSets),
+				"canDelete":     len(group.Code) == 0,
 			}
 		})
 	}

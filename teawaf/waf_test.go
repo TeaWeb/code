@@ -2,6 +2,7 @@ package teawaf
 
 import (
 	"github.com/TeaWeb/code/teawaf/actions"
+	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/assert"
 	"net/http"
@@ -30,15 +31,24 @@ func TestWAF_MatchRequest(t *testing.T) {
 
 	group := rules.NewRuleGroup()
 	group.AddRuleSet(set)
+	group.IsInbound = true
 
 	waf := NewWAF()
 	waf.AddRuleGroup(group)
-	waf.Init()
-
-	req, err := http.NewRequest(http.MethodGet, "http://teaos.cn/hello?name=lu&age=20", nil)
+	err := waf.Init()
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	waf.OnAction(func(action actions.ActionString) (goNext bool) {
+		return action != actions.ActionBlock
+	})
+
+	raw, err := http.NewRequest(http.MethodGet, "http://teaos.cn/hello?name=lu&age=20", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := requests.NewRequest(raw)
 	goNext, set, err := waf.MatchRequest(req, nil)
 	if err != nil {
 		t.Fatal(err)

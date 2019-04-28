@@ -10,7 +10,7 @@ type RequestHeadersCheckpoint struct {
 	Checkpoint
 }
 
-func (this *RequestHeadersCheckpoint) RequestValue(req *requests.Request, param string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestHeadersCheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	var headers = []string{}
 	for k, v := range req.Header {
 		for _, subV := range v {
@@ -21,9 +21,9 @@ func (this *RequestHeadersCheckpoint) RequestValue(req *requests.Request, param 
 	return
 }
 
-func (this *RequestHeadersCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestHeadersCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	if this.IsRequest() {
-		return this.RequestValue(req, param)
+		return this.RequestValue(req, param, options)
 	}
 	return
 }

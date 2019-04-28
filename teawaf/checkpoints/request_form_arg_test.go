@@ -19,10 +19,10 @@ func TestRequestFormArgCheckpoint_RequestValue(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	checkpoint := new(RequestFormArgCheckpoint)
-	t.Log(checkpoint.RequestValue(req, "name"))
-	t.Log(checkpoint.RequestValue(req, "age"))
-	t.Log(checkpoint.RequestValue(req, "Hello"))
-	t.Log(checkpoint.RequestValue(req, "encoded"))
+	t.Log(checkpoint.RequestValue(req, "name", nil))
+	t.Log(checkpoint.RequestValue(req, "age", nil))
+	t.Log(checkpoint.RequestValue(req, "Hello", nil))
+	t.Log(checkpoint.RequestValue(req, "encoded", nil))
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {

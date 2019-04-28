@@ -535,3 +535,20 @@ func (this *LocationConfig) SetupScheduling(isBackup bool) {
 	}
 	this.BackendList.SetupScheduling(isBackup)
 }
+
+// 装载事件
+func (this *LocationConfig) OnAttach() {
+	// 开启WAF
+	if this.waf != nil {
+		this.waf.Start()
+	}
+}
+
+// 卸载事件
+func (this *LocationConfig) OnDetach() {
+	// 停止WAF
+	if this.waf != nil {
+		this.waf.Stop()
+		this.waf = nil
+	}
+}

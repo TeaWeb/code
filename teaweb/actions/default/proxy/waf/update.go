@@ -2,11 +2,14 @@ package waf
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teawaf/inbound"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/TeaWeb/code/teawaf/rules"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 )
@@ -25,18 +28,19 @@ func (this *UpdateAction) RunGet(params struct {
 	this.Data["config"] = maps.Map{
 		"id":            waf.Id,
 		"name":          waf.Name,
-		"On":            waf.On,
+		"on":            waf.On,
 		"countInbound":  waf.CountInboundRuleSets(),
 		"countOutbound": waf.CountOutboundRuleSets(),
 	}
 
-	this.Data["groups"] = lists.Map(inbound.InternalGroups, func(k int, v interface{}) interface{} {
+	this.Data["groups"] = lists.Map(teawaf.Template().Inbound, func(k int, v interface{}) interface{} {
 		g := v.(*rules.RuleGroup)
+		group := waf.FindRuleGroupWithCode(g.Code)
 
 		return maps.Map{
 			"name":      g.Name,
 			"code":      g.Code,
-			"isChecked": waf.ContainsGroupCode(g.Code),
+			"isChecked": group != nil && group.On,
 		}
 	})
 
@@ -64,38 +68,47 @@ func (this *UpdateAction) RunPost(params struct {
 	waf.On = params.On
 
 	// add new group
+	template := teawaf.Template()
 	for _, groupCode := range params.GroupCodes {
-		if waf.ContainsGroupCode(groupCode) {
+		g := waf.FindRuleGroupWithCode(groupCode)
+		if g != nil {
+			g.On = true
 			continue
 		}
-		for _, g := range inbound.InternalGroups {
-			if g.Code == groupCode {
-				newGroup := rules.NewRuleGroup()
-				newGroup.Id = stringutil.Rand(16)
-				newGroup.On = g.On
-				newGroup.Code = g.Code
-				newGroup.Name = g.Name
-				newGroup.RuleSets = g.RuleSets
-				newGroup.IsInbound = g.IsInbound
-				waf.AddRuleGroup(newGroup)
-			}
+		g = template.FindRuleGroupWithCode(groupCode)
+		g.Id = stringutil.Rand(16)
+		g.On = true
+		waf.AddRuleGroup(g)
+	}
+
+	// remove old group {
+	for _, g := range waf.Inbound {
+		if len(g.Code) > 0 && !lists.ContainsString(params.GroupCodes, g.Code) {
+			g.On = false
+			continue
 		}
 	}
 
-	// remove old group
-	result := []*rules.RuleGroup{}
-	for _, g := range waf.Inbound {
+	for _, g := range waf.Outbound {
 		if len(g.Code) > 0 && !lists.ContainsString(params.GroupCodes, g.Code) {
+			g.On = false
 			continue
 		}
-		result = append(result, g)
 	}
-	waf.Inbound = result
+
+	for _, g := range waf.Inbound {
+		logs.Println(g.Code, g.Name, g.Name, g.On)
+	}
 
 	filename := "waf." + waf.Id + ".conf"
 	err := waf.Save(Tea.ConfigFile(filename))
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
+	}
+
+	// 通知刷新
+	if wafutils.IsPolicyUsed(waf.Id) {
+		proxyutils.NotifyChange()
 	}
 
 	this.Success()

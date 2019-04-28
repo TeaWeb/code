@@ -799,6 +799,8 @@ func (this *ServerConfig) OnAttach() {
 		}
 	}
 	for _, location := range this.Locations {
+		location.OnAttach()
+
 		for _, backend := range location.Backends {
 			if !lists.Contains(backends, backend) {
 				backends = append(backends, backend)
@@ -822,6 +824,11 @@ func (this *ServerConfig) OnAttach() {
 			}
 		})
 	}
+
+	// 开启WAF
+	if this.waf != nil {
+		this.waf.Start()
+	}
 }
 
 // 卸载事件
@@ -834,6 +841,8 @@ func (this *ServerConfig) OnDetach() {
 		}
 	}
 	for _, location := range this.Locations {
+		location.OnDetach()
+
 		for _, backend := range location.Backends {
 			if !lists.Contains(backends, backend) {
 				backends = append(backends, backend)
@@ -842,5 +851,11 @@ func (this *ServerConfig) OnDetach() {
 	}
 	for _, backend := range backends {
 		backend.OnDetach()
+	}
+
+	// 停止WAF
+	if this.waf != nil {
+		this.waf.Stop()
+		this.waf = nil
 	}
 }

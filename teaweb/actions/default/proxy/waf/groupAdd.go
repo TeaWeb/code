@@ -34,11 +34,12 @@ func (this *GroupAddAction) RunGet(params struct {
 
 // 保存分组
 func (this *GroupAddAction) RunPost(params struct {
-	WafId   string
-	Name    string
-	On      bool
-	Inbound bool
-	Must    *actions.Must
+	WafId       string
+	Name        string
+	Description string
+	On          bool
+	Inbound     bool
+	Must        *actions.Must
 }) {
 	wafList := teaconfigs.SharedWAFList()
 	config := wafList.FindWAF(params.WafId)
@@ -54,6 +55,7 @@ func (this *GroupAddAction) RunPost(params struct {
 	group.Id = stringutil.Rand(16)
 	group.On = params.On
 	group.Name = params.Name
+	group.Description = params.Description
 	group.IsInbound = params.Inbound
 
 	config.AddRuleGroup(group)

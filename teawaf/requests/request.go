@@ -9,6 +9,7 @@ import (
 
 type Request struct {
 	*http.Request
+	BodyData []byte
 }
 
 func NewRequest(raw *http.Request) *Request {

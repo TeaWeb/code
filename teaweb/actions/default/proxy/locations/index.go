@@ -40,6 +40,7 @@ func (this *IndexAction) Run(params struct {
 			"cachePolicy":       location.CachePolicyObject(),
 			"websocket":         location.Websocket != nil && location.Websocket.On,
 			"backends":          location.Backends,
+			"hasWAF":            len(location.WafId) > 0 && location.WAFOn,
 		})
 	}
 

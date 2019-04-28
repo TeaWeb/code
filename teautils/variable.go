@@ -34,6 +34,13 @@ func ParseVariables(source string, replacer func(varName string) (value string))
 		variableMapping[source] = holders
 		variableLocker.Unlock()
 	}
+
+	// no variables
+	if len(holders) == 0 {
+		return source
+	}
+
+	// replace
 	result := strings.Builder{}
 	for _, h := range holders {
 		_, ok := h.(VariableHolder)

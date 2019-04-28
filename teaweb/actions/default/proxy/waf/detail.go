@@ -2,7 +2,7 @@ package waf
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teawaf/inbound"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -28,13 +28,14 @@ func (this *DetailAction) RunGet(params struct {
 		"on":            waf.On,
 	}
 
-	this.Data["groups"] = lists.Map(inbound.InternalGroups, func(k int, v interface{}) interface{} {
+	this.Data["groups"] = lists.Map(teawaf.Template().Inbound, func(k int, v interface{}) interface{} {
 		g := v.(*rules.RuleGroup)
+		group := waf.FindRuleGroupWithCode(g.Code)
 
 		return maps.Map{
 			"name":      g.Name,
 			"code":      g.Code,
-			"isChecked": waf.ContainsGroupCode(g.Code),
+			"isChecked": group != nil && group.On,
 		}
 	})
 
@@ -66,6 +67,9 @@ func (this *DetailAction) RunGet(params struct {
 	}
 
 	this.Data["configItems"] = configItems
+
+	// 是否有新的模版变更
+	this.Data["newItems"] = waf.MergeTemplate()
 
 	this.Show()
 }

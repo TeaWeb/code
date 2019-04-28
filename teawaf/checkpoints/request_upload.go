@@ -15,7 +15,7 @@ type RequestUploadCheckpoint struct {
 	Checkpoint
 }
 
-func (this *RequestUploadCheckpoint) RequestValue(req *requests.Request, param string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestUploadCheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	value = ""
 	if param == "minSize" || param == "maxSize" {
 		value = 0
@@ -25,18 +25,25 @@ func (this *RequestUploadCheckpoint) RequestValue(req *requests.Request, param s
 		return
 	}
 
+	if req.Body == nil {
+		return
+	}
+
 	if req.MultipartForm == nil {
-		data, err := req.ReadBody(32 * 1024 * 1024)
-		if err != nil {
-			sysErr = err
-			return
+		if len(req.BodyData) == 0 {
+			data, err := req.ReadBody(32 * 1024 * 1024)
+			if err != nil {
+				sysErr = err
+				return
+			}
+
+			req.BodyData = data
+			defer req.RestoreBody(data)
 		}
 
-		defer req.RestoreBody(data)
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(req.BodyData))
 
-		req.Body = ioutil.NopCloser(bytes.NewBuffer(data))
-
-		err = req.ParseMultipartForm(32 * 1024 * 1024)
+		err := req.ParseMultipartForm(32 * 1024 * 1024)
 		if err != nil {
 			userErr = err
 			return
@@ -101,9 +108,9 @@ func (this *RequestUploadCheckpoint) RequestValue(req *requests.Request, param s
 	return
 }
 
-func (this *RequestUploadCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestUploadCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	if this.IsRequest() {
-		return this.RequestValue(req, param)
+		return this.RequestValue(req, param, options)
 	}
 	return
 }

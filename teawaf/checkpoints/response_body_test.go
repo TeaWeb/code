@@ -15,7 +15,7 @@ func TestResponseBodyCheckpoint_ResponseValue(t *testing.T) {
 	resp.Body = ioutil.NopCloser(bytes.NewBuffer([]byte("Hello, World")))
 
 	checkpoint := new(ResponseBodyCheckpoint)
-	t.Log(checkpoint.ResponseValue(nil, resp, ""))
+	t.Log(checkpoint.ResponseValue(nil, resp, "", nil))
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

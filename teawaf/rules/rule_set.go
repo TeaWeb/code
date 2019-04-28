@@ -17,6 +17,7 @@ const (
 
 type RuleSet struct {
 	Id        string        `yaml:"id" json:"id"`
+	Code      string        `yaml:"code" json:"code"`
 	On        bool          `yaml:"on" json:"on"`
 	Name      string        `yaml:"name" json:"name"`
 	Rules     []*Rule       `yaml:"rules" json:"rules"`

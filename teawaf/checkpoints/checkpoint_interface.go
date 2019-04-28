@@ -7,8 +7,27 @@ import (
 
 // Check Point
 type CheckpointInterface interface {
+	// initialize
+	Init()
+
+	// is request?
 	IsRequest() bool
-	RequestValue(req *requests.Request, param string) (value interface{}, sysErr error, userErr error)
-	ResponseValue(req *requests.Request, resp *http.Response, param string) (value interface{}, sysErr error, userErr error)
+
+	// get request value
+	RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error)
+
+	// get response value
+	ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error)
+
+	// param option list
 	ParamOptions() *ParamOptions
+
+	// options
+	Options() []*Option
+
+	// start
+	Start()
+
+	// stop
+	Stop()
 }

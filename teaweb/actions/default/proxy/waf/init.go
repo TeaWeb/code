@@ -7,6 +7,7 @@ import (
 
 func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
+		// 注册路由
 		server.
 			Prefix("/proxy/waf").
 			Helper(new(helpers.UserMustAuth)).
@@ -15,6 +16,7 @@ func init() {
 			GetPost("/add", new(AddAction)).
 			Post("/delete", new(DeleteAction)).
 			Get("/detail", new(DetailAction)).
+			Post("/mergeTemplate", new(MergeTemplateAction)).
 			GetPost("/update", new(UpdateAction)).
 			GetPost("/test", new(TestAction)).
 			Get("/export", new(ExportAction)).

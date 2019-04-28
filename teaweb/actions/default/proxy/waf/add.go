@@ -3,7 +3,6 @@ package waf
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teawaf"
-	"github.com/TeaWeb/code/teawaf/inbound"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
@@ -18,11 +17,12 @@ type AddAction actions.Action
 
 // 添加策略
 func (this *AddAction) RunGet(params struct{}) {
-	this.Data["groups"] = lists.Map(inbound.InternalGroups, func(k int, v interface{}) interface{} {
+	this.Data["groups"] = lists.Map(teawaf.Template().Inbound, func(k int, v interface{}) interface{} {
 		g := v.(*rules.RuleGroup)
 		return maps.Map{
-			"name": g.Name,
-			"code": g.Code,
+			"name":      g.Name,
+			"code":      g.Code,
+			"isChecked": g.On,
 		}
 	})
 
@@ -45,19 +45,18 @@ func (this *AddAction) RunPost(params struct {
 	waf.Name = params.Name
 	waf.On = params.On
 
-	for _, groupCode := range params.GroupCodes {
-		for _, g := range inbound.InternalGroups {
-			if g.Code == groupCode {
-				newGroup := rules.NewRuleGroup()
-				newGroup.Id = stringutil.Rand(16)
-				newGroup.On = g.On
-				newGroup.Code = g.Code
-				newGroup.Name = g.Name
-				newGroup.RuleSets = g.RuleSets
-				newGroup.IsInbound = params.IsInbound
-				waf.AddRuleGroup(newGroup)
-			}
-		}
+	template := teawaf.Template()
+
+	for _, g := range template.Inbound {
+		newGroup := rules.NewRuleGroup()
+		newGroup.Id = stringutil.Rand(16)
+		newGroup.On = lists.ContainsString(params.GroupCodes, g.Code)
+		newGroup.Code = g.Code
+		newGroup.Name = g.Name
+		newGroup.RuleSets = g.RuleSets
+		newGroup.IsInbound = g.IsInbound
+		newGroup.Description = g.Description
+		waf.AddRuleGroup(newGroup)
 	}
 
 	filename := "waf." + waf.Id + ".conf"

@@ -24,12 +24,12 @@ func TestRequestJSONArgCheckpoint_RequestValue_Map(t *testing.T) {
 	//req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	checkpoint := new(RequestJSONArgCheckpoint)
-	t.Log(checkpoint.RequestValue(req, "name"))
-	t.Log(checkpoint.RequestValue(req, "age"))
-	t.Log(checkpoint.RequestValue(req, "Hello"))
-	t.Log(checkpoint.RequestValue(req, ""))
-	t.Log(checkpoint.RequestValue(req, "books"))
-	t.Log(checkpoint.RequestValue(req, "books.1"))
+	t.Log(checkpoint.RequestValue(req, "name", nil))
+	t.Log(checkpoint.RequestValue(req, "age", nil))
+	t.Log(checkpoint.RequestValue(req, "Hello", nil))
+	t.Log(checkpoint.RequestValue(req, "", nil))
+	t.Log(checkpoint.RequestValue(req, "books", nil))
+	t.Log(checkpoint.RequestValue(req, "books.1", nil))
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -37,7 +37,6 @@ func TestRequestJSONArgCheckpoint_RequestValue_Map(t *testing.T) {
 	}
 	t.Log(string(body))
 }
-
 
 func TestRequestJSONArgCheckpoint_RequestValue_Array(t *testing.T) {
 	rawReq, err := http.NewRequest(http.MethodPost, "http://teaos.cn", bytes.NewBuffer([]byte(`
@@ -55,12 +54,12 @@ func TestRequestJSONArgCheckpoint_RequestValue_Array(t *testing.T) {
 	//req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	checkpoint := new(RequestJSONArgCheckpoint)
-	t.Log(checkpoint.RequestValue(req, "0.name"))
-	t.Log(checkpoint.RequestValue(req, "0.age"))
-	t.Log(checkpoint.RequestValue(req, "0.Hello"))
-	t.Log(checkpoint.RequestValue(req, ""))
-	t.Log(checkpoint.RequestValue(req, "0.books"))
-	t.Log(checkpoint.RequestValue(req, "0.books.1"))
+	t.Log(checkpoint.RequestValue(req, "0.name", nil))
+	t.Log(checkpoint.RequestValue(req, "0.age", nil))
+	t.Log(checkpoint.RequestValue(req, "0.Hello", nil))
+	t.Log(checkpoint.RequestValue(req, "", nil))
+	t.Log(checkpoint.RequestValue(req, "0.books", nil))
+	t.Log(checkpoint.RequestValue(req, "0.books.1", nil))
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -68,7 +67,6 @@ func TestRequestJSONArgCheckpoint_RequestValue_Array(t *testing.T) {
 	}
 	t.Log(string(body))
 }
-
 
 func TestRequestJSONArgCheckpoint_RequestValue_Error(t *testing.T) {
 	rawReq, err := http.NewRequest(http.MethodPost, "http://teaos.cn", bytes.NewBuffer([]byte(`
@@ -86,12 +84,12 @@ func TestRequestJSONArgCheckpoint_RequestValue_Error(t *testing.T) {
 	//req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	checkpoint := new(RequestJSONArgCheckpoint)
-	t.Log(checkpoint.RequestValue(req, "0.name"))
-	t.Log(checkpoint.RequestValue(req, "0.age"))
-	t.Log(checkpoint.RequestValue(req, "0.Hello"))
-	t.Log(checkpoint.RequestValue(req, ""))
-	t.Log(checkpoint.RequestValue(req, "0.books"))
-	t.Log(checkpoint.RequestValue(req, "0.books.1"))
+	t.Log(checkpoint.RequestValue(req, "0.name", nil))
+	t.Log(checkpoint.RequestValue(req, "0.age", nil))
+	t.Log(checkpoint.RequestValue(req, "0.Hello", nil))
+	t.Log(checkpoint.RequestValue(req, "", nil))
+	t.Log(checkpoint.RequestValue(req, "0.books", nil))
+	t.Log(checkpoint.RequestValue(req, "0.books.1", nil))
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {

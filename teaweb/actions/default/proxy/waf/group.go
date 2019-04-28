@@ -51,9 +51,10 @@ func (this *GroupAction) RunGet(params struct {
 				rule := v.(*rules.Rule)
 
 				return maps.Map{
-					"param":    rule.Param,
-					"operator": rule.Operator,
-					"value":    rule.Value,
+					"param":             rule.Param,
+					"operator":          rule.Operator,
+					"value":             rule.Value,
+					"isCaseInsensitive": rule.IsCaseInsensitive,
 				}
 			}),
 			"on":         set.On,

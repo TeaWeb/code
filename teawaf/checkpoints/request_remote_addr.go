@@ -10,7 +10,7 @@ type RequestRemoteAddrCheckpoint struct {
 	Checkpoint
 }
 
-func (this *RequestRemoteAddrCheckpoint) RequestValue(req *requests.Request, param string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestRemoteAddrCheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	// Real-IP
 	realIP := req.Header.Get("X-Real-IP")
 	if len(realIP) > 0 {
@@ -59,9 +59,9 @@ func (this *RequestRemoteAddrCheckpoint) RequestValue(req *requests.Request, par
 	return
 }
 
-func (this *RequestRemoteAddrCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestRemoteAddrCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	if this.IsRequest() {
-		return this.RequestValue(req, param)
+		return this.RequestValue(req, param, options)
 	}
 	return
 }

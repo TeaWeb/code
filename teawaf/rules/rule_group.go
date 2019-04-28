@@ -7,12 +7,13 @@ import (
 
 // rule group
 type RuleGroup struct {
-	Id        string     `yaml:"id" json:"id"`
-	On        bool       `yaml:"on" json:"on"`
-	Name      string     `yaml:"name" json:"name"` // such as SQL Injection
-	Code      string     `yaml:"code" json:"code"` // identify the group
-	RuleSets  []*RuleSet `yaml:"ruleSets" json:"ruleSets"`
-	IsInbound bool       `yaml:"isInbound" json:"isInbound"`
+	Id          string     `yaml:"id" json:"id"`
+	On          bool       `yaml:"on" json:"on"`
+	Name        string     `yaml:"name" json:"name"` // such as SQL Injection
+	Description string     `yaml:"description" json:"description"`
+	Code        string     `yaml:"code" json:"code"` // identify the group
+	RuleSets    []*RuleSet `yaml:"ruleSets" json:"ruleSets"`
+	IsInbound   bool       `yaml:"isInbound" json:"isInbound"`
 
 	hasRuleSets bool
 }
@@ -47,6 +48,18 @@ func (this *RuleGroup) FindRuleSet(id string) *RuleSet {
 	}
 	for _, ruleSet := range this.RuleSets {
 		if ruleSet.Id == id {
+			return ruleSet
+		}
+	}
+	return nil
+}
+
+func (this *RuleGroup) FindRuleSetWithCode(code string) *RuleSet {
+	if len(code) == 0 {
+		return nil
+	}
+	for _, ruleSet := range this.RuleSets {
+		if ruleSet.Code == code {
 			return ruleSet
 		}
 	}

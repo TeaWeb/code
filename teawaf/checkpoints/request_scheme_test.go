@@ -14,5 +14,5 @@ func TestRequestSchemeCheckpoint_RequestValue(t *testing.T) {
 
 	req := requests.NewRequest(rawReq)
 	checkpoint := new(RequestSchemeCheckpoint)
-	t.Log(checkpoint.RequestValue(req, ""))
+	t.Log(checkpoint.RequestValue(req, "", nil))
 }

@@ -61,6 +61,13 @@ var AllCheckpoints = []*CheckpointDefinition{
 		Instance:    new(RequestBodyCheckpoint),
 	},
 	{
+		Name:        "请求URI和请求体组合",
+		Prefix:      "requestAll",
+		Description: "${requestURI}和${requestBody}组合",
+		HasParams:   false,
+		Instance:    new(RequestAllCheckpoint),
+	},
+	{
 		Name:        "请求表单参数",
 		Prefix:      "requestForm",
 		Description: "获取POST或者其他方法发送的表单参数，最大请求体限制32M",
@@ -171,6 +178,13 @@ var AllCheckpoints = []*CheckpointDefinition{
 		Description: "单个Header值",
 		HasParams:   true,
 		Instance:    new(RequestHeaderCheckpoint),
+	},
+	{
+		Name:        "CC统计",
+		Prefix:      "cc",
+		Description: "统计某段时间段内的请求信息",
+		HasParams:   true,
+		Instance:    new(CCCheckpoint),
 	},
 	{
 		Name:        "响应状态码",

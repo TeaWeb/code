@@ -16,12 +16,12 @@ func (this *ResponseBodyCheckpoint) IsRequest() bool {
 	return false
 }
 
-func (this *ResponseBodyCheckpoint) RequestValue(req *requests.Request, param string) (value interface{}, sysErr error, userErr error) {
+func (this *ResponseBodyCheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	value = ""
 	return
 }
 
-func (this *ResponseBodyCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string) (value interface{}, sysErr error, userErr error) {
+func (this *ResponseBodyCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	value = ""
 	if resp != nil {
 		body, err := ioutil.ReadAll(resp.Body)

@@ -9,14 +9,18 @@ type RequestURICheckpoint struct {
 	Checkpoint
 }
 
-func (this *RequestURICheckpoint) RequestValue(req *requests.Request, param string) (value interface{}, sysErr error, userErr error) {
-	value = req.RequestURI
+func (this *RequestURICheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
+	if len(req.RequestURI) > 0 {
+		value = req.RequestURI
+	} else if req.URL != nil {
+		value = req.URL.RequestURI()
+	}
 	return
 }
 
-func (this *RequestURICheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestURICheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	if this.IsRequest() {
-		return this.RequestValue(req, param)
+		return this.RequestValue(req, param, options)
 	}
 	return
 }

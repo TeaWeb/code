@@ -19,9 +19,13 @@ var singleParamRegexp = regexp.MustCompile("^\\${[\\w.-]+}$")
 
 // rule
 type Rule struct {
-	Param    string       `yaml:"param" json:"param"`       // such as ${arg.name} or ${args}, can be composite as ${arg.firstName}${arg.lastName}
-	Operator RuleOperator `yaml:"operator" json:"operator"` // such as contains, gt,  ...
-	Value    string       `yaml:"value" json:"value"`       // compared value
+	Param             string            `yaml:"param" json:"param"`       // such as ${arg.name} or ${args}, can be composite as ${arg.firstName}${arg.lastName}
+	Operator          RuleOperator      `yaml:"operator" json:"operator"` // such as contains, gt,  ...
+	Value             string            `yaml:"value" json:"value"`       // compared value
+	IsCaseInsensitive bool              `yaml:"isCaseInsensitive" json:"isCaseInsensitive"`
+	CheckpointOptions map[string]string `yaml:"checkpointOptions" json:"checkpointOptions"`
+
+	checkpointFinder func(prefix string) checkpoints.CheckpointInterface
 
 	singleParam      string                          // real param after prefix
 	singleCheckpoint checkpoints.CheckpointInterface // if is single check point
@@ -52,13 +56,27 @@ func (this *Rule) Init() error {
 	case RuleOperatorNeq:
 		this.floatValue = types.Float64(this.Value)
 	case RuleOperatorMatch:
-		reg, err := regexp.Compile(this.Value)
+		v := this.Value
+		if this.IsCaseInsensitive && !strings.HasPrefix(v, "(?i)") {
+			v = "(?i)" + v
+		}
+
+		v = this.unescape(v)
+
+		reg, err := regexp.Compile(v)
 		if err != nil {
 			return err
 		}
 		this.reg = reg
 	case RuleOperatorNotMatch:
-		reg, err := regexp.Compile(this.Value)
+		v := this.Value
+		if this.IsCaseInsensitive && !strings.HasPrefix(v, "(?i)") {
+			v = "(?i)" + v
+		}
+
+		v = this.unescape(v)
+
+		reg, err := regexp.Compile(v)
 		if err != nil {
 			return err
 		}
@@ -75,11 +93,20 @@ func (this *Rule) Init() error {
 			this.singleParam = pieces[1]
 		}
 
-		point := checkpoints.FindCheckpoint(prefix)
-		if point == nil {
-			return errors.New("no check point '" + prefix + "' found")
+		if this.checkpointFinder != nil {
+			checkpoint := this.checkpointFinder(prefix)
+			if checkpoint == nil {
+				return errors.New("no check point '" + prefix + "' found")
+			}
+			this.singleCheckpoint = checkpoint
+		} else {
+			checkpoint := checkpoints.FindCheckpoint(prefix)
+			if checkpoint == nil {
+				return errors.New("no check point '" + prefix + "' found")
+			}
+			checkpoint.Init()
+			this.singleCheckpoint = checkpoint
 		}
-		this.singleCheckpoint = point
 
 		return nil
 	}
@@ -89,11 +116,21 @@ func (this *Rule) Init() error {
 	teautils.ParseVariables(this.Param, func(varName string) (value string) {
 		pieces := strings.SplitN(varName, ".", 2)
 		prefix := pieces[0]
-		checkpoint := checkpoints.FindCheckpoint(prefix)
-		if checkpoint == nil {
-			err = errors.New("no check point '" + prefix + "' found")
+		if this.checkpointFinder != nil {
+			checkpoint := this.checkpointFinder(prefix)
+			if checkpoint == nil {
+				err = errors.New("no check point '" + prefix + "' found")
+			} else {
+				this.multipleCheckpoints[prefix] = checkpoint
+			}
 		} else {
-			this.multipleCheckpoints[prefix] = checkpoint
+			checkpoint := checkpoints.FindCheckpoint(prefix)
+			if checkpoint == nil {
+				err = errors.New("no check point '" + prefix + "' found")
+			} else {
+				checkpoint.Init()
+				this.multipleCheckpoints[prefix] = checkpoint
+			}
 		}
 		return ""
 	})
@@ -103,7 +140,7 @@ func (this *Rule) Init() error {
 
 func (this *Rule) MatchRequest(req *requests.Request) (b bool, err error) {
 	if this.singleCheckpoint != nil {
-		value, err, _ := this.singleCheckpoint.RequestValue(req, this.singleParam)
+		value, err, _ := this.singleCheckpoint.RequestValue(req, this.singleParam, this.CheckpointOptions)
 		if err != nil {
 			return false, err
 		}
@@ -119,14 +156,14 @@ func (this *Rule) MatchRequest(req *requests.Request) (b bool, err error) {
 		}
 
 		if len(pieces) == 1 {
-			value1, err1, _ := point.RequestValue(req, "")
+			value1, err1, _ := point.RequestValue(req, "", this.CheckpointOptions)
 			if err1 != nil {
 				err = err1
 			}
 			return types.String(value1)
 		}
 
-		value1, err1, _ := point.RequestValue(req, pieces[1])
+		value1, err1, _ := point.RequestValue(req, pieces[1], this.CheckpointOptions)
 		if err1 != nil {
 			err = err1
 		}
@@ -144,7 +181,7 @@ func (this *Rule) MatchResponse(req *requests.Request, resp *http.Response) (b b
 	if this.singleCheckpoint != nil {
 		// if is request param
 		if this.singleCheckpoint.IsRequest() {
-			value, err, _ := this.singleCheckpoint.RequestValue(req, this.singleParam)
+			value, err, _ := this.singleCheckpoint.RequestValue(req, this.singleParam, this.CheckpointOptions)
 			if err != nil {
 				return false, err
 			}
@@ -152,7 +189,7 @@ func (this *Rule) MatchResponse(req *requests.Request, resp *http.Response) (b b
 		}
 
 		// response param
-		value, err, _ := this.singleCheckpoint.ResponseValue(req, resp, this.singleParam)
+		value, err, _ := this.singleCheckpoint.ResponseValue(req, resp, this.singleParam, this.CheckpointOptions)
 		if err != nil {
 			return false, err
 		}
@@ -169,13 +206,13 @@ func (this *Rule) MatchResponse(req *requests.Request, resp *http.Response) (b b
 
 		if len(pieces) == 1 {
 			if point.IsRequest() {
-				value1, err1, _ := point.RequestValue(req, "")
+				value1, err1, _ := point.RequestValue(req, "", this.CheckpointOptions)
 				if err1 != nil {
 					err = err1
 				}
 				return types.String(value1)
 			} else {
-				value1, err1, _ := point.ResponseValue(req, resp, "")
+				value1, err1, _ := point.ResponseValue(req, resp, "", this.CheckpointOptions)
 				if err1 != nil {
 					err = err1
 				}
@@ -184,13 +221,13 @@ func (this *Rule) MatchResponse(req *requests.Request, resp *http.Response) (b b
 		}
 
 		if point.IsRequest() {
-			value1, err1, _ := point.RequestValue(req, pieces[1])
+			value1, err1, _ := point.RequestValue(req, pieces[1], this.CheckpointOptions)
 			if err1 != nil {
 				err = err1
 			}
 			return types.String(value1)
 		} else {
-			value1, err1, _ := point.ResponseValue(req, resp, pieces[1])
+			value1, err1, _ := point.ResponseValue(req, resp, pieces[1], this.CheckpointOptions)
 			if err1 != nil {
 				err = err1
 			}
@@ -221,9 +258,17 @@ func (this *Rule) Test(value interface{}) bool {
 	case RuleOperatorNeq:
 		return types.Float64(value) != this.floatValue
 	case RuleOperatorEqString:
-		return types.String(value) == this.Value
+		if this.IsCaseInsensitive {
+			return strings.ToLower(types.String(value)) == strings.ToLower(this.Value)
+		} else {
+			return types.String(value) == this.Value
+		}
 	case RuleOperatorNeqString:
-		return types.String(value) != this.Value
+		if this.IsCaseInsensitive {
+			return strings.ToLower(types.String(value)) != strings.ToLower(this.Value)
+		} else {
+			return types.String(value) != this.Value
+		}
 	case RuleOperatorMatch:
 		return this.reg.MatchString(types.String(value))
 	case RuleOperatorNotMatch:
@@ -239,20 +284,47 @@ func (this *Rule) Test(value interface{}) bool {
 			return ok
 		}
 		if types.IsMap(value) {
+			lowerValue := ""
+			if this.IsCaseInsensitive {
+				lowerValue = strings.ToLower(this.Value)
+			}
 			for _, v := range maps.NewMap(value) {
-				if types.String(v) == this.Value {
-					return true
+				if this.IsCaseInsensitive {
+					if strings.ToLower(types.String(v)) == lowerValue {
+						return true
+					}
+				} else {
+					if types.String(v) == this.Value {
+						return true
+					}
 				}
 			}
 			return false
 		}
-		return strings.Contains(types.String(value), this.Value)
+
+		if this.IsCaseInsensitive {
+			return strings.Contains(strings.ToLower(types.String(value)), strings.ToLower(this.Value))
+		} else {
+			return strings.Contains(types.String(value), this.Value)
+		}
 	case RuleOperatorNotContains:
-		return !strings.Contains(types.String(value), this.Value)
+		if this.IsCaseInsensitive {
+			return !strings.Contains(strings.ToLower(types.String(value)), strings.ToLower(this.Value))
+		} else {
+			return !strings.Contains(types.String(value), this.Value)
+		}
 	case RuleOperatorPrefix:
-		return strings.HasPrefix(types.String(value), this.Value)
+		if this.IsCaseInsensitive {
+			return strings.HasPrefix(strings.ToLower(types.String(value)), strings.ToLower(this.Value))
+		} else {
+			return strings.HasPrefix(types.String(value), this.Value)
+		}
 	case RuleOperatorSuffix:
-		return strings.HasSuffix(types.String(value), this.Value)
+		if this.IsCaseInsensitive {
+			return strings.HasSuffix(strings.ToLower(types.String(value)), strings.ToLower(this.Value))
+		} else {
+			return strings.HasSuffix(types.String(value), this.Value)
+		}
 	case RuleOperatorHasKey:
 		if types.IsSlice(value) {
 			index := types.Int(this.Value)
@@ -262,7 +334,16 @@ func (this *Rule) Test(value interface{}) bool {
 			return reflect.ValueOf(value).Len() > index
 		} else if types.IsMap(value) {
 			m := maps.NewMap(value)
-			return m.Has(this.Value)
+			if this.IsCaseInsensitive {
+				lowerValue := strings.ToLower(this.Value)
+				for k := range m {
+					if strings.ToLower(k) == lowerValue {
+						return true
+					}
+				}
+			} else {
+				return m.Has(this.Value)
+			}
 		} else {
 			return false
 		}
@@ -277,4 +358,22 @@ func (this *Rule) Test(value interface{}) bool {
 
 func (this *Rule) IsSingleCheckpoint() bool {
 	return this.singleCheckpoint != nil
+}
+
+func (this *Rule) SetCheckpointFinder(finder func(prefix string) checkpoints.CheckpointInterface) {
+	this.checkpointFinder = finder
+}
+
+func (this *Rule) unescape(v string) string {
+	//replace urlencoded characters
+	v = strings.Replace(v, `\s`, `(\s|%09|%0A|\+)`, -1)
+	v = strings.Replace(v, `\(`, `(\(|%28)`, -1)
+	v = strings.Replace(v, `=`, `(=|%3D)`, -1)
+	v = strings.Replace(v, `<`, `(<|%3C)`, -1)
+	v = strings.Replace(v, `\*`, `(\*|%2A)`, -1)
+	v = strings.Replace(v, `\\`, `(\\|%2F)`, -1)
+	v = strings.Replace(v, `!`, `(!|%21)`, -1)
+	v = strings.Replace(v, `/`, `(/|%2F)`, -1)
+	v = strings.Replace(v, `;`, `(;|%3B)`, -1)
+	return v
 }

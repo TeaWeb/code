@@ -1,6 +1,7 @@
 package waf
 
 import (
+	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs"
 	wafactions "github.com/TeaWeb/code/teawaf/actions"
 	"github.com/TeaWeb/code/teawaf/checkpoints"
@@ -9,6 +10,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"regexp"
 	"strings"
@@ -69,6 +71,8 @@ func (this *RuleUpdateAction) RunGet(params struct {
 			"param":    param,
 			"operator": rule.Operator,
 			"value":    rule.Value,
+			"case":     rule.IsCaseInsensitive,
+			"options":  rule.CheckpointOptions,
 		}
 	})
 
@@ -96,6 +100,20 @@ func (this *RuleUpdateAction) RunGet(params struct {
 				"description":  def.Description,
 				"hasParams":    def.HasParams,
 				"paramOptions": def.Instance.ParamOptions(),
+				"options": lists.Map(def.Instance.Options(), func(k int, v interface{}) interface{} {
+					option := v.(*checkpoints.Option)
+					return maps.Map{
+						"name":        option.Name,
+						"maxLength":   option.MaxLength,
+						"code":        option.Code,
+						"rightLabel":  option.RightLabel,
+						"value":       option.Value,
+						"isRequired":  option.IsRequired,
+						"size":        option.Size,
+						"comment":     option.Comment,
+						"placeholder": option.Placeholder,
+					}
+				}),
 			})
 		}
 	}
@@ -108,6 +126,7 @@ func (this *RuleUpdateAction) RunGet(params struct {
 			"name":        def.Name,
 			"code":        def.Code,
 			"description": def.Description,
+			"case":        def.CaseInsensitive,
 		}
 	})
 
@@ -135,6 +154,8 @@ func (this *RuleUpdateAction) RunPost(params struct {
 	RuleParams    []string
 	RuleOperators []string
 	RuleValues    []string
+	RuleCases     []int
+	RuleOptions   []string
 
 	Connector string
 	Action    string
@@ -167,7 +188,7 @@ func (this *RuleUpdateAction) RunPost(params struct {
 	set.ActionOptions = maps.Map{}
 	set.Rules = []*rules.Rule{}
 	for index, prefix := range params.RulePrefixes {
-		if index < len(params.RuleParams) && index < len(params.RuleOperators) && index < len(params.RuleValues) {
+		if index < len(params.RuleParams) && index < len(params.RuleOperators) && index < len(params.RuleValues) && index < len(params.RuleCases) {
 			rule := rules.NewRule()
 			rule.Operator = params.RuleOperators[index]
 
@@ -178,6 +199,31 @@ func (this *RuleUpdateAction) RunPost(params struct {
 				rule.Param = "${" + prefix + "}"
 			}
 			rule.Value = params.RuleValues[index]
+			rule.IsCaseInsensitive = params.RuleCases[index] == 1
+
+			// 选项
+			options := params.RuleOptions[index]
+			if len(options) > 0 {
+				arr := []maps.Map{}
+				err := json.Unmarshal([]byte(options), &arr)
+				if err != nil {
+					logs.Error(err)
+				} else {
+					rule.CheckpointOptions = map[string]string{}
+					for _, m := range arr {
+						code := m.GetString("code")
+						value := m.GetString("value")
+						rule.CheckpointOptions[code] = value
+					}
+				}
+			}
+
+			// 校验
+			err := rule.Init()
+			if err != nil {
+				this.Fail("校验规则 '" + rule.Param + " " + rule.Operator + " " + rule.Value + "' 失败，原因：" + err.Error())
+			}
+
 			set.AddRule(rule)
 		}
 	}

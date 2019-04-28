@@ -39,7 +39,13 @@ func (this *TestAction) RunGet(params struct {
 	paramList := []string{}
 	if params.Inbound {
 		for _, group := range waf.Inbound {
+			if !group.On {
+				continue
+			}
 			for _, set := range group.RuleSets {
+				if !set.On {
+					continue
+				}
 				for _, rule := range set.Rules {
 					if lists.ContainsString(paramList, rule.Param) {
 						continue
@@ -50,7 +56,13 @@ func (this *TestAction) RunGet(params struct {
 		}
 	} else {
 		for _, group := range waf.Outbound {
+			if !group.On {
+				continue
+			}
 			for _, set := range group.RuleSets {
+				if !set.On {
+					continue
+				}
 				for _, rule := range set.Rules {
 					if lists.ContainsString(paramList, rule.Param) {
 						continue
@@ -121,6 +133,7 @@ func (this *TestAction) RunPost(params struct {
 
 	result := []string{}
 	waf.Init()
+	defer waf.Stop()
 
 	matched := false
 	setName := ""
@@ -135,6 +148,9 @@ func (this *TestAction) RunPost(params struct {
 
 Loop:
 	for _, group := range groups {
+		if !group.On {
+			continue
+		}
 		result = append(result, "开始检查规则分组 '"+group.Name+"' "+fmt.Sprintf("%d 个规则集", len(group.RuleSets))+" ...")
 		if len(group.RuleSets) == 0 {
 			result = append(result, "　　跳过")

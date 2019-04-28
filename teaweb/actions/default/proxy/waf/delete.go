@@ -2,7 +2,6 @@ package waf
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
@@ -26,6 +25,11 @@ func (this *DeleteAction) RunPost(params struct {
 		this.Fail("要删除的WAF不存在")
 	}
 
+	// 通知刷新
+	if wafutils.IsPolicyUsed(params.WafId) {
+		this.Fail("此策略正在被使用，不能删除，点击“详情”查看使用此WAF策略的项目")
+	}
+
 	wafList := teaconfigs.SharedWAFList()
 	wafList.RemoveFile(filename)
 	err := wafList.Save()
@@ -36,11 +40,6 @@ func (this *DeleteAction) RunPost(params struct {
 	err = file.Delete()
 	if err != nil {
 		this.Fail("删除失败：" + err.Error())
-	}
-
-	// 通知刷新
-	if wafutils.IsPolicyUsed(params.WafId) {
-		proxyutils.NotifyChange()
 	}
 
 	this.Success()

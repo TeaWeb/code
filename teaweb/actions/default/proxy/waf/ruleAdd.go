@@ -1,6 +1,7 @@
 package waf
 
 import (
+	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs"
 	wafactions "github.com/TeaWeb/code/teawaf/actions"
 	"github.com/TeaWeb/code/teawaf/checkpoints"
@@ -9,6 +10,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -40,12 +42,12 @@ func (this *RuleAddAction) RunGet(params struct {
 	this.Data["group"] = group
 	this.Data["connectors"] = []maps.Map{
 		{
-			"name":        "和 (AND)",
+			"name":        "和(AND)",
 			"value":       rules.RuleConnectorAnd,
 			"description": "所有规则都满足才视为匹配",
 		},
 		{
-			"name":        "或 (OR)",
+			"name":        "或(OR)",
 			"value":       rules.RuleConnectorOr,
 			"description": "任一规则满足了就视为匹配",
 		},
@@ -61,6 +63,20 @@ func (this *RuleAddAction) RunGet(params struct {
 				"description":  def.Description,
 				"hasParams":    def.HasParams,
 				"paramOptions": def.Instance.ParamOptions(),
+				"options": lists.Map(def.Instance.Options(), func(k int, v interface{}) interface{} {
+					option := v.(*checkpoints.Option)
+					return maps.Map{
+						"name":        option.Name,
+						"maxLength":   option.MaxLength,
+						"code":        option.Code,
+						"rightLabel":  option.RightLabel,
+						"value":       option.Value,
+						"isRequired":  option.IsRequired,
+						"size":        option.Size,
+						"comment":     option.Comment,
+						"placeholder": option.Placeholder,
+					}
+				}),
 			})
 		}
 	}
@@ -73,6 +89,7 @@ func (this *RuleAddAction) RunGet(params struct {
 			"name":        def.Name,
 			"code":        def.Code,
 			"description": def.Description,
+			"case":        def.CaseInsensitive,
 		}
 	})
 
@@ -99,6 +116,8 @@ func (this *RuleAddAction) RunPost(params struct {
 	RuleParams    []string
 	RuleOperators []string
 	RuleValues    []string
+	RuleCases     []int
+	RuleOptions   []string
 
 	Connector string
 	Action    string
@@ -114,7 +133,7 @@ func (this *RuleAddAction) RunPost(params struct {
 	set := rules.NewRuleSet()
 	set.Name = params.Name
 	for index, prefix := range params.RulePrefixes {
-		if index < len(params.RuleParams) && index < len(params.RuleOperators) && index < len(params.RuleValues) {
+		if index < len(params.RuleParams) && index < len(params.RuleOperators) && index < len(params.RuleValues) && index < len(params.RuleCases) && index < len(params.RuleOptions) {
 			rule := rules.NewRule()
 			rule.Operator = params.RuleOperators[index]
 
@@ -125,9 +144,35 @@ func (this *RuleAddAction) RunPost(params struct {
 				rule.Param = "${" + prefix + "}"
 			}
 			rule.Value = params.RuleValues[index]
+			rule.IsCaseInsensitive = params.RuleCases[index] == 1
+
+			// 选项
+			options := params.RuleOptions[index]
+			if len(options) > 0 {
+				arr := []maps.Map{}
+				err := json.Unmarshal([]byte(options), &arr)
+				if err != nil {
+					logs.Error(err)
+				} else {
+					rule.CheckpointOptions = map[string]string{}
+					for _, m := range arr {
+						code := m.GetString("code")
+						value := m.GetString("value")
+						rule.CheckpointOptions[code] = value
+					}
+				}
+			}
+
+			// 校验
+			err := rule.Init()
+			if err != nil {
+				this.Fail("校验规则 '" + rule.Param + " " + rule.Operator + " " + rule.Value + "' 失败，原因：" + err.Error())
+			}
+
 			set.AddRule(rule)
 		}
 	}
+
 	set.Connector = params.Connector
 	set.Action = params.Action
 
@@ -191,6 +236,12 @@ func (this *RuleAddAction) RunPost(params struct {
 		Field("name", params.Name).
 		Require("请输入规则集名称")
 
+	// 检查设置
+	err := set.Init()
+	if err != nil {
+		this.Fail("规则校验失败：" + err.Error())
+	}
+
 	// waf
 	wafList := teaconfigs.SharedWAFList()
 	waf := wafList.FindWAF(params.WafId)
@@ -204,7 +255,7 @@ func (this *RuleAddAction) RunPost(params struct {
 	}
 
 	group.AddRuleSet(set)
-	err := wafList.SaveWAF(waf)
+	err = wafList.SaveWAF(waf)
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

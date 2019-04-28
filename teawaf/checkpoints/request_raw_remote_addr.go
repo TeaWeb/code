@@ -10,7 +10,7 @@ type RequestRawRemoteAddrCheckpoint struct {
 	Checkpoint
 }
 
-func (this *RequestRawRemoteAddrCheckpoint) RequestValue(req *requests.Request, param string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestRawRemoteAddrCheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	index := strings.LastIndex(req.RemoteAddr, ":")
 	if index > -1 {
 		value = req.RemoteAddr[:index]
@@ -20,9 +20,9 @@ func (this *RequestRawRemoteAddrCheckpoint) RequestValue(req *requests.Request, 
 	return
 }
 
-func (this *RequestRawRemoteAddrCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestRawRemoteAddrCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	if this.IsRequest() {
-		return this.RequestValue(req, param)
+		return this.RequestValue(req, param, options)
 	}
 	return
 }

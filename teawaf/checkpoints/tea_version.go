@@ -10,12 +10,12 @@ type TeaVersionCheckpoint struct {
 	Checkpoint
 }
 
-func (this *TeaVersionCheckpoint) RequestValue(requests *requests.Request, param string) (value interface{}, sysErr error, userErr error) {
+func (this *TeaVersionCheckpoint) RequestValue(requests *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	value = teaconst.TeaVersion
 	return
 }
 
-func (this *TeaVersionCheckpoint) ResponseValue(requests *requests.Request, resp *http.Response, param string) (value interface{}, sysErr error, userErr error) {
+func (this *TeaVersionCheckpoint) ResponseValue(requests *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	value = teaconst.TeaVersion
 	return
 }

@@ -12,5 +12,5 @@ func TestResponseHeaderCheckpoint_ResponseValue(t *testing.T) {
 	resp.Header.Set("Hello", "World")
 
 	checkpoint := new(ResponseHeaderCheckpoint)
-	t.Log(checkpoint.ResponseValue(nil, resp, "Hello"))
+	t.Log(checkpoint.ResponseValue(nil, resp, "Hello", nil))
 }

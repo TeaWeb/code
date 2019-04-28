@@ -67,11 +67,11 @@ func TestRequestUploadCheckpoint_RequestValue(t *testing.T) {
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 
 	checkpoint := new(RequestUploadCheckpoint)
-	t.Log(checkpoint.RequestValue(req, "field"))
-	t.Log(checkpoint.RequestValue(req, "minSize"))
-	t.Log(checkpoint.RequestValue(req, "maxSize"))
-	t.Log(checkpoint.RequestValue(req, "name"))
-	t.Log(checkpoint.RequestValue(req, "ext"))
+	t.Log(checkpoint.RequestValue(req, "field", nil))
+	t.Log(checkpoint.RequestValue(req, "minSize", nil))
+	t.Log(checkpoint.RequestValue(req, "maxSize", nil))
+	t.Log(checkpoint.RequestValue(req, "name", nil))
+	t.Log(checkpoint.RequestValue(req, "ext", nil))
 
 	data, err := ioutil.ReadAll(req.Body)
 	if err != nil {

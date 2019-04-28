@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"github.com/TeaWeb/code/teawaf/requests"
 	"net/http"
 	"testing"
 )
@@ -27,10 +28,11 @@ func TestRuleSet_MatchRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, "http://teaos.cn/hello?name=lu&age=20", nil)
+	rawReq, err := http.NewRequest(http.MethodGet, "http://teaos.cn/hello?name=lu&age=20", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	req := requests.NewRequest(rawReq)
 	t.Log(set.MatchRequest(req))
 }
 
@@ -56,9 +58,10 @@ func TestRuleSet_MatchRequest2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, "http://teaos.cn/hello?name=lu&age=20", nil)
+	rawReq, err := http.NewRequest(http.MethodGet, "http://teaos.cn/hello?name=lu&age=20", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	req := requests.NewRequest(rawReq)
 	t.Log(set.MatchRequest(req))
 }

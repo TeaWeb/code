@@ -16,5 +16,5 @@ func TestRequestHostCheckpoint_RequestValue(t *testing.T) {
 	req.Header.Set("Host", "cloud.teaos.cn")
 
 	checkpoint := new(RequestHostCheckpoint)
-	t.Log(checkpoint.RequestValue(req, ""))
+	t.Log(checkpoint.RequestValue(req, "", nil))
 }
