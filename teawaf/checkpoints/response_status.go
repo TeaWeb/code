@@ -2,7 +2,6 @@ package checkpoints
 
 import (
 	"github.com/TeaWeb/code/teawaf/requests"
-	"net/http"
 )
 
 // ${bytesSent}
@@ -19,7 +18,7 @@ func (this *ResponseStatusCheckpoint) RequestValue(req *requests.Request, param 
 	return
 }
 
-func (this *ResponseStatusCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
+func (this *ResponseStatusCheckpoint) ResponseValue(req *requests.Request, resp *requests.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	if resp != nil {
 		value = resp.StatusCode
 	}

@@ -3,7 +3,6 @@ package checkpoints
 import (
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teawaf/requests"
-	"net/http"
 )
 
 type TeaVersionCheckpoint struct {
@@ -15,7 +14,7 @@ func (this *TeaVersionCheckpoint) RequestValue(requests *requests.Request, param
 	return
 }
 
-func (this *TeaVersionCheckpoint) ResponseValue(requests *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
+func (this *TeaVersionCheckpoint) ResponseValue(requests *requests.Request, resp *requests.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	value = teaconst.TeaVersion
 	return
 }

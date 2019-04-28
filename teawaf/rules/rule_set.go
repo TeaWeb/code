@@ -5,7 +5,6 @@ import (
 	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
-	"net/http"
 )
 
 type RuleConnector = string
@@ -94,7 +93,7 @@ func (this *RuleSet) MatchRequest(req *requests.Request) (b bool, err error) {
 	return
 }
 
-func (this *RuleSet) MatchResponse(req *requests.Request, resp *http.Response) (b bool, err error) {
+func (this *RuleSet) MatchResponse(req *requests.Request, resp *requests.Response) (b bool, err error) {
 	if !this.hasRules {
 		return false, nil
 	}

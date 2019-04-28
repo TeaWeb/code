@@ -2,7 +2,6 @@ package checkpoints
 
 import (
 	"github.com/TeaWeb/code/teawaf/requests"
-	"net/http"
 )
 
 type RequestUserAgentCheckpoint struct {
@@ -14,7 +13,7 @@ func (this *RequestUserAgentCheckpoint) RequestValue(req *requests.Request, para
 	return
 }
 
-func (this *RequestUserAgentCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestUserAgentCheckpoint) ResponseValue(req *requests.Request, resp *requests.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	if this.IsRequest() {
 		return this.RequestValue(req, param, options)
 	}

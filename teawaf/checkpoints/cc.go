@@ -4,7 +4,6 @@ import (
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/types"
-	"net/http"
 	"regexp"
 	"strings"
 	"sync"
@@ -59,7 +58,7 @@ func (this *CCCheckpoint) RequestValue(req *requests.Request, param string, opti
 	return
 }
 
-func (this *CCCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
+func (this *CCCheckpoint) ResponseValue(req *requests.Request, resp *requests.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	if this.IsRequest() {
 		return this.RequestValue(req, param, options)
 	}

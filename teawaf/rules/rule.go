@@ -9,7 +9,6 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -177,7 +176,7 @@ func (this *Rule) MatchRequest(req *requests.Request) (b bool, err error) {
 	return this.Test(value), nil
 }
 
-func (this *Rule) MatchResponse(req *requests.Request, resp *http.Response) (b bool, err error) {
+func (this *Rule) MatchResponse(req *requests.Request, resp *requests.Response) (b bool, err error) {
 	if this.singleCheckpoint != nil {
 		// if is request param
 		if this.singleCheckpoint.IsRequest() {

@@ -1,12 +1,13 @@
 package checkpoints
 
 import (
+	"github.com/TeaWeb/code/teawaf/requests"
 	"net/http"
 	"testing"
 )
 
 func TestResponseHeaderCheckpoint_ResponseValue(t *testing.T) {
-	resp := new(http.Response)
+	resp := requests.NewResponse(new(http.Response))
 	resp.StatusCode = 200
 	resp.Header = http.Header{}
 	resp.Header.Set("Hello", "World")

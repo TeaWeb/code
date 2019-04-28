@@ -2,7 +2,6 @@ package checkpoints
 
 import (
 	"github.com/TeaWeb/code/teawaf/requests"
-	"net/http"
 )
 
 type RequestURICheckpoint struct {
@@ -18,7 +17,7 @@ func (this *RequestURICheckpoint) RequestValue(req *requests.Request, param stri
 	return
 }
 
-func (this *RequestURICheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestURICheckpoint) ResponseValue(req *requests.Request, resp *requests.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	if this.IsRequest() {
 		return this.RequestValue(req, param, options)
 	}

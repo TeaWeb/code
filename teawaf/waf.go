@@ -235,10 +235,11 @@ func (this *WAF) MoveOutboundRuleGroup(fromIndex int, toIndex int) {
 	this.Outbound = result
 }
 
-func (this *WAF) MatchRequest(req *requests.Request, writer http.ResponseWriter) (goNext bool, set *rules.RuleSet, err error) {
+func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) (goNext bool, set *rules.RuleSet, err error) {
 	if !this.hasInboundRules {
 		return true, nil, nil
 	}
+	req := requests.NewRequest(rawReq)
 	for _, group := range this.Inbound {
 		if !group.On {
 			continue
@@ -264,10 +265,12 @@ func (this *WAF) MatchRequest(req *requests.Request, writer http.ResponseWriter)
 	return true, nil, nil
 }
 
-func (this *WAF) MatchResponse(req *requests.Request, resp *http.Response, writer http.ResponseWriter) (goNext bool, set *rules.RuleSet, err error) {
+func (this *WAF) MatchResponse(rawReq *http.Request, rawResp *http.Response, writer http.ResponseWriter) (goNext bool, set *rules.RuleSet, err error) {
 	if !this.hasOutboundRules {
 		return true, nil, nil
 	}
+	req := requests.NewRequest(rawReq)
+	resp := requests.NewResponse(rawResp)
 	for _, group := range this.Outbound {
 		if !group.On {
 			continue

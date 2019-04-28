@@ -2,7 +2,6 @@ package checkpoints
 
 import (
 	"github.com/TeaWeb/code/teawaf/requests"
-	"net/http"
 )
 
 // ${requestAll}
@@ -36,7 +35,7 @@ func (this *RequestAllCheckpoint) RequestValue(req *requests.Request, param stri
 	return
 }
 
-func (this *RequestAllCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestAllCheckpoint) ResponseValue(req *requests.Request, resp *requests.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	value = ""
 	if this.IsRequest() {
 		return this.RequestValue(req, param, options)

@@ -2,7 +2,6 @@ package teaproxy
 
 import (
 	"github.com/TeaWeb/code/teawaf/actions"
-	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/logs"
 	"net/http"
 )
@@ -12,7 +11,7 @@ func (this *Request) callWAFRequest(writer *ResponseWriter) (blocked bool) {
 	if this.waf == nil {
 		return
 	}
-	goNext, ruleSet, err := this.waf.MatchRequest(requests.NewRequest(this.raw), writer)
+	goNext, ruleSet, err := this.waf.MatchRequest(this.raw, writer)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -35,7 +34,7 @@ func (this *Request) callWAFResponse(resp *http.Response, writer *ResponseWriter
 		return
 	}
 
-	goNext, ruleSet, err := this.waf.MatchResponse(requests.NewRequest(this.raw), resp, writer)
+	goNext, ruleSet, err := this.waf.MatchResponse(this.raw, resp, writer)
 	if err != nil {
 		logs.Error(err)
 		return

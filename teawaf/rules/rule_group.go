@@ -2,7 +2,6 @@ package rules
 
 import (
 	"github.com/TeaWeb/code/teawaf/requests"
-	"net/http"
 )
 
 // rule group
@@ -99,7 +98,7 @@ func (this *RuleGroup) MatchRequest(req *requests.Request) (b bool, set *RuleSet
 	return
 }
 
-func (this *RuleGroup) MatchResponse(req *requests.Request, resp *http.Response) (b bool, set *RuleSet, err error) {
+func (this *RuleGroup) MatchResponse(req *requests.Request, resp *requests.Response) (b bool, set *RuleSet, err error) {
 	if !this.hasRuleSets {
 		return
 	}

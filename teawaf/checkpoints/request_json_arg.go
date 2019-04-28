@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf/requests"
-	"net/http"
 	"strings"
 )
 
@@ -37,7 +36,7 @@ func (this *RequestJSONArgCheckpoint) RequestValue(req *requests.Request, param 
 	return "", nil, nil
 }
 
-func (this *RequestJSONArgCheckpoint) ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
+func (this *RequestJSONArgCheckpoint) ResponseValue(req *requests.Request, resp *requests.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
 	if this.IsRequest() {
 		return this.RequestValue(req, param, options)
 	}

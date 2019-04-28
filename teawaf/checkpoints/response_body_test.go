@@ -2,19 +2,23 @@ package checkpoints
 
 import (
 	"bytes"
+	"github.com/TeaWeb/code/teawaf/requests"
 	"io/ioutil"
 	"net/http"
 	"testing"
 )
 
 func TestResponseBodyCheckpoint_ResponseValue(t *testing.T) {
-	resp := new(http.Response)
+	resp := requests.NewResponse(new(http.Response))
 	resp.StatusCode = 200
 	resp.Header = http.Header{}
 	resp.Header.Set("Hello", "World")
 	resp.Body = ioutil.NopCloser(bytes.NewBuffer([]byte("Hello, World")))
 
 	checkpoint := new(ResponseBodyCheckpoint)
+	t.Log(checkpoint.ResponseValue(nil, resp, "", nil))
+	t.Log(checkpoint.ResponseValue(nil, resp, "", nil))
+	t.Log(checkpoint.ResponseValue(nil, resp, "", nil))
 	t.Log(checkpoint.ResponseValue(nil, resp, "", nil))
 
 	data, err := ioutil.ReadAll(resp.Body)

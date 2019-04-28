@@ -2,7 +2,6 @@ package checkpoints
 
 import (
 	"github.com/TeaWeb/code/teawaf/requests"
-	"net/http"
 )
 
 // Check Point
@@ -17,7 +16,7 @@ type CheckpointInterface interface {
 	RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error)
 
 	// get response value
-	ResponseValue(req *requests.Request, resp *http.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error)
+	ResponseValue(req *requests.Request, resp *requests.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error)
 
 	// param option list
 	ParamOptions() *ParamOptions
