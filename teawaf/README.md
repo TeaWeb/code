@@ -14,9 +14,25 @@ WAF
   	    ... 				
 ~~~
 
-# Apply WAF
+## Apply WAF
 ~~~
 Request  -->  WAF  -->   Backends
 			/
 Response  <-- WAF <----		
+~~~
+
+## Coding
+~~~go
+waf := teawaf.NewWAF()
+
+// add rule groups here
+
+err := waf.Init()
+if err != nil {
+	return
+}
+waf.Start()
+
+// stop the waf
+// waf.Stop()
 ~~~
