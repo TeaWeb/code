@@ -10,6 +10,19 @@ type RequestRemoteAddrCheckpoint struct {
 }
 
 func (this *RequestRemoteAddrCheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
+	// X-Forwarded-For
+	forwardedFor := req.Header.Get("X-Forwarded-For")
+	if len(forwardedFor) > 0 {
+		index := strings.LastIndex(forwardedFor, ":")
+		if index < 0 {
+			value = forwardedFor
+			return
+		} else {
+			value = forwardedFor[:index]
+			return
+		}
+	}
+
 	// Real-IP
 	realIP := req.Header.Get("X-Real-IP")
 	if len(realIP) > 0 {
@@ -32,19 +45,6 @@ func (this *RequestRemoteAddrCheckpoint) RequestValue(req *requests.Request, par
 			value = realIP[:index]
 		}
 		return
-	}
-
-	// X-Forwarded-For
-	forwardedFor := req.Header.Get("X-Forwarded-For")
-	if len(forwardedFor) > 0 {
-		index := strings.LastIndex(forwardedFor, ":")
-		if index < 0 {
-			value = forwardedFor
-			return
-		} else {
-			value = forwardedFor[:index]
-			return
-		}
 	}
 
 	// Remote-Addr

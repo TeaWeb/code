@@ -103,6 +103,17 @@ func (this *CCCheckpoint) Stop() {
 }
 
 func (this *CCCheckpoint) ip(req *requests.Request) string {
+	// X-Forwarded-For
+	forwardedFor := req.Header.Get("X-Forwarded-For")
+	if len(forwardedFor) > 0 {
+		index := strings.LastIndex(forwardedFor, ":")
+		if index < 0 {
+			return forwardedFor
+		} else {
+			return forwardedFor[:index]
+		}
+	}
+
 	// Real-IP
 	realIP := req.Header.Get("X-Real-IP")
 	if len(realIP) > 0 {
@@ -122,17 +133,6 @@ func (this *CCCheckpoint) ip(req *requests.Request) string {
 			return realIP
 		} else {
 			return realIP[:index]
-		}
-	}
-
-	// X-Forwarded-For
-	forwardedFor := req.Header.Get("X-Forwarded-For")
-	if len(forwardedFor) > 0 {
-		index := strings.LastIndex(forwardedFor, ":")
-		if index < 0 {
-			return forwardedFor
-		} else {
-			return forwardedFor[:index]
 		}
 	}
 

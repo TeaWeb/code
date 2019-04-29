@@ -28,7 +28,7 @@ func AllLocationPatternTypes() []maps.Map {
 		{
 			"name":        "正则表达式匹配",
 			"type":        LocationPatternTypeRegexp,
-			"description": "通过正则表达式来匹配路径",
+			"description": "通过正则表达式来匹配路径，<a href=\"http://teaos.cn/doc/regexp/Regexp.md\" target=\"_blank\">正则表达式语法 &raquo;</a>",
 		},
 	}
 }

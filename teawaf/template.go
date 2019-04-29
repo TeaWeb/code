@@ -32,7 +32,7 @@ func Template() *WAF {
 			set.AddRule(&rules.Rule{
 				Param:             "${remoteAddr}",
 				Operator:          rules.RuleOperatorMatch,
-				Value:             `127.0.0.1|0.0.0.0`,
+				Value:             `127\.0\.0\.1|0\.0\.0\.0`,
 				IsCaseInsensitive: false,
 			})
 			group.AddRuleSet(set)
@@ -61,7 +61,7 @@ func Template() *WAF {
 			set.AddRule(&rules.Rule{
 				Param:             "${remoteAddr}",
 				Operator:          rules.RuleOperatorMatch,
-				Value:             `1.1.1.1|2.2.2.2`,
+				Value:             `1\.1\.1\.1|2\.2\.2\.2`,
 				IsCaseInsensitive: false,
 			})
 			group.AddRuleSet(set)
@@ -417,13 +417,24 @@ func Template() *WAF {
 			set.AddRule(&rules.Rule{
 				Param:             "${remoteAddr}",
 				Operator:          rules.RuleOperatorNotMatch,
-				Value:             "127.0.0.1|192.168.1.100",
+				Value:             `127\.0\.0\.1|192\.168\.1\.100`,
 				IsCaseInsensitive: false,
 			})
 
 			group.AddRuleSet(set)
 		}
 
+		waf.AddRuleGroup(group)
+	}
+
+	// custom
+	{
+		group := rules.NewRuleGroup()
+		group.On = true
+		group.IsInbound = true
+		group.Name = "自定义规则分组"
+		group.Description = "我的自定义规则分组，可以将自定义的规则放在这个分组下"
+		group.Code = "custom"
 		waf.AddRuleGroup(group)
 	}
 

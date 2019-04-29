@@ -45,6 +45,7 @@ var textMimeMap = map[string]bool{
 }
 
 // 请求定义
+// HTTP HEADER RFC: https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
 type Request struct {
 	raw    *http.Request
 	server *teaconfigs.ServerConfig
@@ -864,6 +865,17 @@ func (this *Request) serverError(writer *ResponseWriter) {
 }
 
 func (this *Request) requestRemoteAddr() string {
+	// X-Forwarded-For
+	forwardedFor := this.raw.Header.Get("X-Forwarded-For")
+	if len(forwardedFor) > 0 {
+		index := strings.LastIndex(forwardedFor, ":")
+		if index < 0 {
+			return forwardedFor
+		} else {
+			return forwardedFor[:index]
+		}
+	}
+
 	// Real-IP
 	realIP := this.raw.Header.Get("X-Real-IP")
 	if len(realIP) > 0 {
@@ -883,17 +895,6 @@ func (this *Request) requestRemoteAddr() string {
 			return realIP
 		} else {
 			return realIP[:index]
-		}
-	}
-
-	// X-Forwarded-For
-	forwardedFor := this.raw.Header.Get("X-Forwarded-For")
-	if len(forwardedFor) > 0 {
-		index := strings.LastIndex(forwardedFor, ":")
-		if index < 0 {
-			return forwardedFor
-		} else {
-			return forwardedFor[:index]
 		}
 	}
 

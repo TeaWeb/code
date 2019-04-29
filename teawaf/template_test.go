@@ -3,7 +3,6 @@ package teawaf
 import (
 	"bytes"
 	"github.com/TeaWeb/code/teawaf/actions"
-	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/assert"
 	"github.com/iwind/TeaGo/lists"
 	"mime/multipart"
@@ -37,11 +36,10 @@ func Test_Template(t *testing.T) {
 }
 
 func testTemplate1001(a *assert.Assertion, t *testing.T, template *WAF) {
-	raw, err := http.NewRequest(http.MethodGet, "http://example.com/index.php?id=onmousedown%3D123", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://example.com/index.php?id=onmousedown%3D123", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := requests.NewRequest(raw)
 	_, result, err := template.MatchRequest(req, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -53,11 +51,10 @@ func testTemplate1001(a *assert.Assertion, t *testing.T, template *WAF) {
 }
 
 func testTemplate1002(a *assert.Assertion, t *testing.T, template *WAF) {
-	raw, err := http.NewRequest(http.MethodGet, "http://example.com/index.php?id=eval%28", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://example.com/index.php?id=eval%28", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := requests.NewRequest(raw)
 	_, result, err := template.MatchRequest(req, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -69,11 +66,10 @@ func testTemplate1002(a *assert.Assertion, t *testing.T, template *WAF) {
 }
 
 func testTemplate1003(a *assert.Assertion, t *testing.T, template *WAF) {
-	raw, err := http.NewRequest(http.MethodGet, "http://example.com/index.php?id=<script src=\"123.js\">", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://example.com/index.php?id=<script src=\"123.js\">", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := requests.NewRequest(raw)
 	_, result, err := template.MatchRequest(req, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -133,12 +129,11 @@ func testTemplate2001(a *assert.Assertion, t *testing.T, template *WAF) {
 
 	writer.Close()
 
-	rawReq, err := http.NewRequest(http.MethodPost, "http://teaos.cn/", body)
+	req, err := http.NewRequest(http.MethodPost, "http://teaos.cn/", body)
 	if err != nil {
 		t.Fatal()
 	}
 
-	req := requests.NewRequest(rawReq)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 
 	_, result, err := template.MatchRequest(req, nil)
@@ -152,11 +147,10 @@ func testTemplate2001(a *assert.Assertion, t *testing.T, template *WAF) {
 }
 
 func testTemplate3001(a *assert.Assertion, t *testing.T, template *WAF) {
-	raw, err := http.NewRequest(http.MethodPost, "http://example.com/index.php?exec1+(", bytes.NewReader([]byte("exec('rm -rf /hello');")))
+	req, err := http.NewRequest(http.MethodPost, "http://example.com/index.php?exec1+(", bytes.NewReader([]byte("exec('rm -rf /hello');")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := requests.NewRequest(raw)
 	_, result, err := template.MatchRequest(req, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -168,11 +162,10 @@ func testTemplate3001(a *assert.Assertion, t *testing.T, template *WAF) {
 }
 
 func testTemplate4001(a *assert.Assertion, t *testing.T, template *WAF) {
-	raw, err := http.NewRequest(http.MethodPost, "http://example.com/index.php?whoami", nil)
+	req, err := http.NewRequest(http.MethodPost, "http://example.com/index.php?whoami", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := requests.NewRequest(raw)
 	_, result, err := template.MatchRequest(req, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -185,11 +178,10 @@ func testTemplate4001(a *assert.Assertion, t *testing.T, template *WAF) {
 
 func testTemplate5001(a *assert.Assertion, t *testing.T, template *WAF) {
 	{
-		raw, err := http.NewRequest(http.MethodPost, "http://example.com/.././..", nil)
+		req, err := http.NewRequest(http.MethodPost, "http://example.com/.././..", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req := requests.NewRequest(raw)
 		_, result, err := template.MatchRequest(req, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -201,11 +193,10 @@ func testTemplate5001(a *assert.Assertion, t *testing.T, template *WAF) {
 	}
 
 	{
-		raw, err := http.NewRequest(http.MethodPost, "http://example.com/..///./", nil)
+		req, err := http.NewRequest(http.MethodPost, "http://example.com/..///./", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req := requests.NewRequest(raw)
 		_, result, err := template.MatchRequest(req, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -219,11 +210,10 @@ func testTemplate5001(a *assert.Assertion, t *testing.T, template *WAF) {
 
 func testTemplate6001(a *assert.Assertion, t *testing.T, template *WAF) {
 	{
-		raw, err := http.NewRequest(http.MethodPost, "http://example.com/.svn/123.txt", nil)
+		req, err := http.NewRequest(http.MethodPost, "http://example.com/.svn/123.txt", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req := requests.NewRequest(raw)
 		_, result, err := template.MatchRequest(req, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -235,11 +225,10 @@ func testTemplate6001(a *assert.Assertion, t *testing.T, template *WAF) {
 	}
 
 	{
-		raw, err := http.NewRequest(http.MethodPost, "http://example.com/123.git", nil)
+		req, err := http.NewRequest(http.MethodPost, "http://example.com/123.git", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req := requests.NewRequest(raw)
 		_, result, err := template.MatchRequest(req, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -259,11 +248,10 @@ func testTemplate7001(a *assert.Assertion, t *testing.T, template *WAF) {
 		"updatexml (",
 		"; delete from table",
 	} {
-		raw, err := http.NewRequest(http.MethodPost, "http://example.com/?id="+url.QueryEscape(id), nil)
+		req, err := http.NewRequest(http.MethodPost, "http://example.com/?id="+url.QueryEscape(id), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req := requests.NewRequest(raw)
 		_, result, err := template.MatchRequest(req, nil)
 		if err != nil {
 			t.Fatal(err)
