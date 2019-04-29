@@ -204,8 +204,12 @@ func (this *Listener) Reload() error {
 		this.httpServer.TLSConfig = &tls.Config{
 			Certificates: nil,
 			GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
-				if len(info.ServerName) == 0 && len(this.currentServers) > 0 && this.currentServers[0].SSL != nil {
-					return this.currentServers[0].SSL.CertificateObject(), nil
+				if len(info.ServerName) == 0 {
+					if len(this.currentServers) > 0 && this.currentServers[0].SSL != nil {
+						logs.Error(errors.New("[listener]no tls server name found"))
+						return this.currentServers[0].SSL.CertificateObject(), nil
+					}
+					return nil, errors.New("[listener]no tls server name found")
 				}
 				server, _ := this.findNamedServer(info.ServerName)
 				if server == nil || server.SSL == nil || !server.SSL.On {

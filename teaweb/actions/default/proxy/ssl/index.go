@@ -5,11 +5,13 @@ import (
 	"crypto/x509"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaproxy"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/time"
+	"strings"
 )
 
 type IndexAction actions.Action
@@ -51,6 +53,17 @@ func (this *IndexAction) Run(params struct {
 			}
 			lists.Reverse(info)
 			this.Data["info"] = info
+
+			// 检查域名是否设置
+			if len(info) > 0 {
+				domain := info[len(info)-1]["subject"].(string)
+
+				// 检查domain
+				domain = strings.Replace(domain, "*.", "", -1)
+				if !teautils.MatchDomains(server.Name, domain) {
+					this.Data["error"] = "当前代理服务的域名中没有域名可以匹配\"" + domain + "\""
+				}
+			}
 		}
 	}
 
