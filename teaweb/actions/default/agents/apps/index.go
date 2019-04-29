@@ -2,6 +2,8 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -23,6 +25,26 @@ func (this *IndexAction) Run(params struct {
 	// 用户自定义App
 	this.Data["apps"] = lists.Map(agent.Apps, func(k int, v interface{}) interface{} {
 		app := v.(*agents.AppConfig)
+
+		// 最新一条数据
+		level := notices.NoticeLevelNone
+		for _, item := range app.Items {
+			if !item.On {
+				continue
+			}
+			value, err := teamongo.NewAgentValueQuery().
+				Agent(agent.Id).
+				App(app.Id).
+				Item(item.Id).
+				Desc("_id").
+				Find()
+			if err == nil && value != nil {
+				if value.NoticeLevel == notices.NoticeLevelWarning || value.NoticeLevel == notices.NoticeLevelError && value.NoticeLevel > level {
+					level = value.NoticeLevel
+				}
+			}
+		}
+
 		return maps.Map{
 			"on":                app.On,
 			"id":                app.Id,
@@ -32,6 +54,8 @@ func (this *IndexAction) Run(params struct {
 			"manualTasks":       app.FindManualTasks(),
 			"schedulingTasks":   app.FindSchedulingTasks(),
 			"isSharedWithGroup": app.IsSharedWithGroup,
+			"isWarning":         level == notices.NoticeLevelWarning,
+			"isError":           level == notices.NoticeLevelError,
 		}
 	})
 

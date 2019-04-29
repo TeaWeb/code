@@ -86,7 +86,8 @@ func (this *MonitorAction) RunPost(params struct {
 			"thresholds":  item.Thresholds,
 			"latestValue": latestValue,
 			"latestTime":  latestTime,
-			"latestLevel": notices.FindNoticeLevel(latestLevel),
+			"isWarning":   latestLevel == notices.NoticeLevelWarning,
+			"isError":     latestLevel == notices.NoticeLevelError,
 		}
 
 		source := item.Source()
