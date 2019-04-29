@@ -14,6 +14,7 @@ type GroupConfig struct {
 }
 
 // 取得公用的配置
+// 一定会返回一个不为nil的GroupConfig
 func SharedGroupConfig() *GroupConfig {
 	config := &GroupConfig{
 		Filename: "agents/group.conf",

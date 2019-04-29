@@ -862,3 +862,20 @@ func (this *AgentConfig) FindAllNoticeReceivers(level ...notices.NoticeLevel) []
 	}
 	return result
 }
+
+// 获取分组名
+func (this *AgentConfig) GroupName() string {
+	if len(this.GroupIds) == 0 {
+		return "默认分组"
+	}
+	groupId := this.GroupIds[0]
+	if len(groupId) == 0 {
+		return "默认分组"
+	}
+
+	group := SharedGroupConfig().FindGroup(groupId)
+	if group == nil {
+		return "默认分组"
+	}
+	return group.Name
+}

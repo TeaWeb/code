@@ -104,7 +104,7 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 			receivers, found := agent.NoticeSetting[level]
 			if found && len(receivers) > 0 {
 				isNotified = true
-				receiverIds = setting.NotifyReceivers(level, receivers, fullMessage, func(receiverId string, minutes int) int {
+				receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]失去连接", fullMessage, func(receiverId string, minutes int) int {
 					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
 						"agent.agentId": agent.Id,
 						"agent.appId":   "",
@@ -124,7 +124,7 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 				receivers, found := group.NoticeSetting[level]
 				if found && len(receivers) > 0 {
 					isNotified = true
-					receiverIds = setting.NotifyReceivers(level, receivers, fullMessage, func(receiverId string, minutes int) int {
+					receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]失去连接", fullMessage, func(receiverId string, minutes int) int {
 						return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
 							"agent.agentId": agent.Id,
 							"agent.appId":   "",
@@ -136,7 +136,7 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 
 		// 默认通知媒介
 		if !isNotified {
-			receiverIds = setting.Notify(level, fullMessage, func(receiverId string, minutes int) int {
+			receiverIds = setting.Notify(level, "["+agent.GroupName()+"]["+agent.Name+"]失去连接", fullMessage, func(receiverId string, minutes int) int {
 				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
 					"agent.agentId": agent.Id,
 					"agent.appId":   "",
@@ -188,7 +188,7 @@ func sendConnectNotice(agent *agents.AgentConfig) {
 			receivers, found := agent.NoticeSetting[level]
 			if found && len(receivers) > 0 {
 				isNotified = true
-				receiverIds = setting.NotifyReceivers(level, receivers, fullMessage, func(receiverId string, minutes int) int {
+				receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]恢复连接", fullMessage, func(receiverId string, minutes int) int {
 					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
 						"agent.agentId": agent.Id,
 						"agent.appId":   "",
@@ -208,7 +208,7 @@ func sendConnectNotice(agent *agents.AgentConfig) {
 				receivers, found := group.NoticeSetting[level]
 				if found && len(receivers) > 0 {
 					isNotified = true
-					receiverIds = setting.NotifyReceivers(level, receivers, fullMessage, func(receiverId string, minutes int) int {
+					receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]恢复连接", fullMessage, func(receiverId string, minutes int) int {
 						return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
 							"agent.agentId": agent.Id,
 							"agent.appId":   "",
@@ -220,7 +220,7 @@ func sendConnectNotice(agent *agents.AgentConfig) {
 
 		// 默认通知媒介
 		if !isNotified {
-			receiverIds = setting.Notify(level, fullMessage, func(receiverId string, minutes int) int {
+			receiverIds = setting.Notify(level, "["+agent.GroupName()+"]["+agent.Name+"]恢复连接", fullMessage, func(receiverId string, minutes int) int {
 				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
 					"agent.agentId": agent.Id,
 					"agent.appId":   "",

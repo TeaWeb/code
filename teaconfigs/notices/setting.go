@@ -113,17 +113,17 @@ func (this *NoticeSetting) FindReceiver(receiverId string) (level NoticeLevel, r
 }
 
 // 发送通知
-func (this *NoticeSetting) Notify(level NoticeLevel, message string, counter func(receiverId string, minutes int) int) (receiverIds []string) {
+func (this *NoticeSetting) Notify(level NoticeLevel, subject string, message string, counter func(receiverId string, minutes int) int) (receiverIds []string) {
 	config, found := this.Levels[level]
 	if !found {
 		return
 	}
-	this.NotifyReceivers(level, config.Receivers, message, counter)
+	this.NotifyReceivers(level, config.Receivers, subject, message, counter)
 	return
 }
 
 // 发送通知给一组接收者
-func (this *NoticeSetting) NotifyReceivers(level NoticeLevel, receivers []*NoticeReceiver, message string, counter func(receiverId string, minutes int) int) (receiverIds []string) {
+func (this *NoticeSetting) NotifyReceivers(level NoticeLevel, receivers []*NoticeReceiver, subject string, message string, counter func(receiverId string, minutes int) int) (receiverIds []string) {
 	for _, r := range receivers {
 		if !r.On {
 			continue
@@ -150,7 +150,12 @@ func (this *NoticeSetting) NotifyReceivers(level NoticeLevel, receivers []*Notic
 			if types.Bool(mediaType["supportsHTML"]) {
 				body = strings.Replace(body, "\n", "<br/>", -1)
 			}
-			_, err := raw.Send(user, "[TeaWeb]["+FindNoticeLevelName(level)+"]有新的通知", body)
+			if len(subject) == 0 {
+				subject = "[TeaWeb][" + FindNoticeLevelName(level) + "]有新的通知"
+			} else {
+				subject = "[TeaWeb][" + FindNoticeLevelName(level) + "]" + subject
+			}
+			_, err := raw.Send(user, subject, body)
 			if err != nil {
 				logs.Error(err)
 			}
