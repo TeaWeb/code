@@ -101,7 +101,7 @@ func (this *MongoConnectionConfig) URI() string {
 	}
 
 	if len(this.AuthMechanism) > 0 {
-		uri += "?authMechanism=" + this.AuthMechanism
+		uri += "/?authMechanism=" + this.AuthMechanism
 
 		if len(this.AuthMechanismProperties) > 0 {
 			properties := []string{}
@@ -138,7 +138,7 @@ func (this *MongoConnectionConfig) URIMask() string {
 	}
 
 	if len(this.AuthMechanism) > 0 {
-		uri += "?authMechanism=" + this.AuthMechanism
+		uri += "/?authMechanism=" + this.AuthMechanism
 
 		if len(this.AuthMechanismProperties) > 0 {
 			properties := []string{}
