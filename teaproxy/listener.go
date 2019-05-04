@@ -209,9 +209,14 @@ func (this *Listener) Reload() error {
 					return nil, err
 				}
 
+				cipherSuites := ssl.TLSCipherSuites()
+				if len(cipherSuites) == 0 {
+					cipherSuites = nil
+				}
 				return &tls.Config{
 					Certificates: nil,
 					MinVersion:   ssl.TLSMinVersion(),
+					CipherSuites: cipherSuites,
 					GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
 						ssl, err := this.matchSSL(info.ServerName)
 						if err != nil {

@@ -30,17 +30,22 @@ func (this *UpdateAction) Run(params struct {
 		this.Data["minVersion"] = server.SSL.MinVersion
 	}
 
+	// 加密算法套件
+	this.Data["cipherSuites"] = teaconfigs.AllTLSCipherSuites
+
 	this.Show()
 }
 
 // 提交保存
 func (this *UpdateAction) RunPost(params struct {
-	ServerId   string
-	HttpsOn    bool
-	Listen     []string
-	CertFile   *actions.File
-	KeyFile    *actions.File
-	MinVersion string
+	ServerId       string
+	HttpsOn        bool
+	Listen         []string
+	CertFile       *actions.File
+	KeyFile        *actions.File
+	MinVersion     string
+	CipherSuitesOn bool
+	CipherSuites   []string
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -55,6 +60,15 @@ func (this *UpdateAction) RunPost(params struct {
 
 	if lists.ContainsString(teaconfigs.AllTlsVersions, params.MinVersion) {
 		server.SSL.MinVersion = params.MinVersion
+	}
+
+	server.SSL.CipherSuites = []string{}
+	if params.CipherSuitesOn {
+		for _, cipherSuite := range params.CipherSuites {
+			if lists.ContainsString(teaconfigs.AllTLSCipherSuites, cipherSuite) {
+				server.SSL.CipherSuites = append(server.SSL.CipherSuites, cipherSuite)
+			}
+		}
 	}
 
 	if params.CertFile != nil {
