@@ -15,20 +15,11 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 		return err
 	}
 
-	// ip
-	remoteAddr := this.requestRemoteAddr()
-	if len(remoteAddr) > 0 {
-		index := strings.Index(this.raw.RemoteAddr, ":")
-		ip := ""
-		if index > -1 {
-			ip = this.raw.RemoteAddr[:index]
-		} else {
-			ip = this.raw.RemoteAddr
-		}
-		req.Header["X-Real-IP"] = []string{ip}
-		req.Header.Set("X-Forwarded-For", ip)
-		req.Header.Set("X-Forwarded-By", ip)
-	}
+	// 添加当前Header
+	req.Header = this.raw.Header
+
+	// 代理头部
+	this.setProxyHeaders(req.Header)
 
 	var client *http.Client = nil
 	if len(req.Host) > 0 {
@@ -40,10 +31,10 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 				host += ":80"
 			}
 		}
-		client = SharedClientPool.client("", host, 30*time.Second, 0, 0)
+		client = SharedClientPool.client("", host, 60*time.Second, 0, 0)
 	} else {
 		client = &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: 60 * time.Second,
 		}
 	}
 	resp, err := client.Do(req)
@@ -56,6 +47,9 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 	defer resp.Body.Close()
 
 	// Header
+	for _, h := range this.responseHeaders {
+		writer.Header().Set(h.Name, h.Value)
+	}
 	writer.AddHeaders(resp.Header)
 	writer.Prepare(resp.ContentLength)
 

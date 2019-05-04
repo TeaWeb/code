@@ -106,33 +106,26 @@ func (this *CCCheckpoint) ip(req *requests.Request) string {
 	// X-Forwarded-For
 	forwardedFor := req.Header.Get("X-Forwarded-For")
 	if len(forwardedFor) > 0 {
-		index := strings.LastIndex(forwardedFor, ":")
-		if index < 0 {
-			return forwardedFor
-		} else {
-			return forwardedFor[:index]
+		commaIndex := strings.Index(forwardedFor, ",")
+		if commaIndex > 0 {
+			return forwardedFor[:commaIndex]
 		}
+		return forwardedFor
 	}
 
 	// Real-IP
-	realIP := req.Header.Get("X-Real-IP")
-	if len(realIP) > 0 {
-		index := strings.LastIndex(realIP, ":")
-		if index < 0 {
-			return realIP
-		} else {
-			return realIP[:index]
+	{
+		realIP, ok := req.Header["X-Real-IP"]
+		if ok && len(realIP) > 0 {
+			return realIP[0]
 		}
 	}
 
 	// Real-Ip
-	realIP = req.Header.Get("X-Real-Ip")
-	if len(realIP) > 0 {
-		index := strings.LastIndex(realIP, ":")
-		if index < 0 {
-			return realIP
-		} else {
-			return realIP[:index]
+	{
+		realIP, ok := req.Header["X-Real-Ip"]
+		if ok && len(realIP) > 0 {
+			return realIP[0]
 		}
 	}
 

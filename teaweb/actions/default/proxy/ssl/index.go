@@ -61,7 +61,7 @@ func (this *IndexAction) Run(params struct {
 				// 检查domain
 				domain = strings.Replace(domain, "*.", "", -1)
 				if !teautils.MatchDomains(server.Name, domain) {
-					this.Data["error"] = "当前代理服务的域名中没有域名可以匹配\"" + domain + "\""
+					this.Data["error"] = "当前代理服务的域名中没有域名可以匹配\"" + domain + "\"，请在代理服务的基本信息中添加此域名。"
 				}
 			}
 		}

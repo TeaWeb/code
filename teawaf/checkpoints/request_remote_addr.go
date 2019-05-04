@@ -13,38 +13,31 @@ func (this *RequestRemoteAddrCheckpoint) RequestValue(req *requests.Request, par
 	// X-Forwarded-For
 	forwardedFor := req.Header.Get("X-Forwarded-For")
 	if len(forwardedFor) > 0 {
-		index := strings.LastIndex(forwardedFor, ":")
-		if index < 0 {
-			value = forwardedFor
-			return
-		} else {
-			value = forwardedFor[:index]
+		commaIndex := strings.Index(forwardedFor, ",")
+		if commaIndex > 0 {
+			value = forwardedFor[:commaIndex]
 			return
 		}
+		value = forwardedFor
+		return
 	}
 
 	// Real-IP
-	realIP := req.Header.Get("X-Real-IP")
-	if len(realIP) > 0 {
-		index := strings.LastIndex(realIP, ":")
-		if index < 0 {
-			value = realIP
-		} else {
-			value = realIP[:index]
+	{
+		realIP, ok := req.Header["X-Real-IP"]
+		if ok && len(realIP) > 0 {
+			value = realIP[0]
+			return
 		}
-		return
 	}
 
 	// Real-Ip
-	realIP = req.Header.Get("X-Real-Ip")
-	if len(realIP) > 0 {
-		index := strings.LastIndex(realIP, ":")
-		if index < 0 {
-			value = realIP
-		} else {
-			value = realIP[:index]
+	{
+		realIP, ok := req.Header["X-Real-Ip"]
+		if ok && len(realIP) > 0 {
+			value = realIP[0]
+			return
 		}
-		return
 	}
 
 	// Remote-Addr

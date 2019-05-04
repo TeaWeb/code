@@ -217,6 +217,21 @@ func TestRequest_Format(t *testing.T) {
 	a.IsTrue(req.requestQueryString() == "name=Lu&age=20")
 	a.IsTrue(req.requestQueryParam("name") == "Lu")
 
+	req.raw.Header["X-Real-IP"] = []string{"192.168.1.100"}
+	a.IsTrue(req.requestRemoteAddr() == "192.168.1.100")
+
+	delete(req.raw.Header, "X-Real-IP")
+	req.raw.Header["X-Real-Ip"] = []string{"192.168.1.101"}
+	a.IsTrue(req.requestRemoteAddr() == "192.168.1.101")
+
+	delete(req.raw.Header, "X-Real-IP")
+	delete(req.raw.Header, "X-Real-Ip")
+	req.raw.Header["X-Forwarded-For"] = []string{"192.168.1.102, 192.168.1.103"}
+	a.IsTrue(req.requestRemoteAddr() == "192.168.1.102")
+
+	req.raw.Header["X-Forwarded-For"] = []string{"192.168.1.103"}
+	a.IsTrue(req.requestRemoteAddr() == "192.168.1.103")
+
 	t.Log(req.Format("hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test}"))
 }
 
@@ -294,7 +309,9 @@ func TestRequest_LocationVariables(t *testing.T) {
 
 		server.AddLocation(location)
 
-		matches, ok := location.Match("/hello/world")
+		matches, ok := location.Match("/hello/world", func(source string) string {
+			return source
+		})
 		if ok {
 			t.Log(matches)
 		}
@@ -318,7 +335,7 @@ func TestRequest_LocationVariables(t *testing.T) {
 	t.Log("index:", req.index)
 	t.Log("charset:", req.charset)
 
-	for _, header := range req.headers {
+	for _, header := range req.responseHeaders {
 		t.Log("headers:", header.Name, ":", header.Value)
 	}
 }
@@ -373,7 +390,7 @@ func TestRequest_RewriteVariables(t *testing.T) {
 	t.Log("index:", req.index)
 	t.Log("charset:", req.charset)
 
-	for _, header := range req.headers {
+	for _, header := range req.responseHeaders {
 		t.Log("headers:", header.Name, ":", header.Value)
 	}
 }
@@ -427,7 +444,7 @@ func TestPerformanceConfigure(t *testing.T) {
 		req := NewRequest(rawReq)
 		req.uri = "/hello/world?charset=utf-8"
 		req.host = "www.example.com"
-		req.headers = []*shared.HeaderConfig{}
+		req.responseHeaders = []*shared.HeaderConfig{}
 
 		err = req.configure(server, 0)
 		if err != nil {
@@ -488,7 +505,7 @@ func TestPerformanceFormatHeaders(t *testing.T) {
 		req := NewRequest(rawReq)
 		req.uri = "/hello/world?charset=utf-8"
 		req.host = "www.example.com"
-		req.headers = []*shared.HeaderConfig{}
+		req.responseHeaders = []*shared.HeaderConfig{}
 
 		server.FormatHeaders(req.Format)
 	}

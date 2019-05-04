@@ -868,33 +868,26 @@ func (this *Request) requestRemoteAddr() string {
 	// X-Forwarded-For
 	forwardedFor := this.raw.Header.Get("X-Forwarded-For")
 	if len(forwardedFor) > 0 {
-		index := strings.LastIndex(forwardedFor, ":")
-		if index < 0 {
-			return forwardedFor
-		} else {
-			return forwardedFor[:index]
+		commaIndex := strings.Index(forwardedFor, ",")
+		if commaIndex > 0 {
+			return forwardedFor[:commaIndex]
 		}
+		return forwardedFor
 	}
 
 	// Real-IP
-	realIP := this.raw.Header.Get("X-Real-IP")
-	if len(realIP) > 0 {
-		index := strings.LastIndex(realIP, ":")
-		if index < 0 {
-			return realIP
-		} else {
-			return realIP[:index]
+	{
+		realIP, ok := this.raw.Header["X-Real-IP"]
+		if ok && len(realIP) > 0 {
+			return realIP[0]
 		}
 	}
 
 	// Real-Ip
-	realIP = this.raw.Header.Get("X-Real-Ip")
-	if len(realIP) > 0 {
-		index := strings.LastIndex(realIP, ":")
-		if index < 0 {
-			return realIP
-		} else {
-			return realIP[:index]
+	{
+		realIP, ok := this.raw.Header["X-Real-Ip"]
+		if ok && len(realIP) > 0 {
+			return realIP[0]
 		}
 	}
 
@@ -1379,4 +1372,45 @@ func (this *Request) addError(err error) {
 		return
 	}
 	this.errors = append(this.errors, err.Error())
+}
+
+// 设置代理相关头部信息
+func (this *Request) setProxyHeaders(header http.Header) {
+	delete(header, "Connection")
+
+	remoteAddr := this.raw.RemoteAddr
+	portIndex := strings.LastIndex(remoteAddr, ":")
+	if portIndex > -1 {
+		remoteAddr = remoteAddr[:portIndex]
+	}
+
+	// x-real-ip
+	{
+		_, ok1 := header["X-Real-IP"]
+		_, ok2 := header["X-Real-Ip"]
+		if !ok1 && !ok2 {
+			header["X-Real-IP"] = []string{remoteAddr}
+		}
+	}
+
+	// X-Forwarded-For
+	{
+		forwardedFor, ok := header["X-Forwarded-For"]
+		if ok {
+			header["X-Forwarded-For"] = []string{strings.Join(forwardedFor, ", ") + ", " + remoteAddr}
+		} else {
+			header["X-Forwarded-For"] = []string{remoteAddr}
+		}
+	}
+
+	// others
+	this.raw.Header.Set("X-Forwarded-By", this.serverAddr)
+
+	if _, ok := header["X-Forwarded-Host"]; !ok {
+		this.raw.Header.Set("X-Forwarded-Host", this.host)
+	}
+
+	if _, ok := header["X-Forwarded-Proto"]; !ok {
+		this.raw.Header.Set("X-Forwarded-Proto", this.rawScheme)
+	}
 }
