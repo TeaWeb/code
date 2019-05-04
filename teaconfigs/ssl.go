@@ -2,7 +2,9 @@ package teaconfigs
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"strings"
 )
@@ -14,7 +16,8 @@ type SSLConfig struct {
 	CertificateKey string   `yaml:"certificateKey" json:"certificateKey"` // 密钥
 	Listen         []string `yaml:"listen" json:"listen"`                 // 网络地址
 
-	cert *tls.Certificate
+	cert     *tls.Certificate
+	dnsNames []string
 }
 
 // 获取新对象
@@ -49,6 +52,17 @@ func (this *SSLConfig) Validate() error {
 		return errors.New("load certificate '" + this.Certificate + "', '" + this.CertificateKey + "' failed:" + err.Error())
 	}
 
+	for _, data := range cert.Certificate {
+		c, err := x509.ParseCertificate(data)
+		if err != nil {
+			continue
+		}
+		dnsNames := c.DNSNames
+		if len(dnsNames) > 0 {
+			this.dnsNames = append(this.dnsNames, dnsNames...)
+		}
+	}
+
 	this.cert = &cert
 
 	return nil
@@ -57,4 +71,12 @@ func (this *SSLConfig) Validate() error {
 // 取得Certificate对象
 func (this *SSLConfig) CertificateObject() *tls.Certificate {
 	return this.cert
+}
+
+// 校验是否匹配某个域名
+func (this *SSLConfig) MatchDomain(domain string) bool {
+	if len(this.dnsNames) == 0 {
+		return false
+	}
+	return teautils.MatchDomains(this.dnsNames, domain)
 }

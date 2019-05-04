@@ -211,10 +211,24 @@ func (this *Listener) Reload() error {
 					}
 					return nil, errors.New("[listener]no tls server name found")
 				}
-				server, _ := this.findNamedServer(info.ServerName)
+
+				// 通过SSL证书内容中的DNSName匹配
+				domain := info.ServerName
+				this.serversLocker.RLock()
+				for _, server := range this.servers {
+					if server.SSL != nil && server.SSL.On && server.SSL.MatchDomain(domain) {
+						this.serversLocker.RUnlock()
+						return server.SSL.CertificateObject(), nil
+					}
+				}
+				this.serversLocker.RUnlock()
+
+				// 通过代理服务域名配置匹配
+				server, _ := this.findNamedServer(domain)
 				if server == nil || server.SSL == nil || !server.SSL.On {
 					return nil, errors.New("[listener]no server found for '" + info.ServerName + "'")
 				}
+
 				cert := server.SSL.CertificateObject()
 				if cert != nil {
 					return cert, nil

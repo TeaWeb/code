@@ -30,6 +30,7 @@ func (this *IndexAction) Run(params struct {
 	this.Data["errs"] = teaproxy.SharedManager.FindServerErrors(params.ServerId)
 
 	this.Data["error"] = ""
+	this.Data["warning"] = ""
 	this.Data["info"] = []maps.Map{}
 
 	if server.SSL != nil && len(server.SSL.Certificate) > 0 && len(server.SSL.CertificateKey) > 0 {
@@ -38,16 +39,23 @@ func (this *IndexAction) Run(params struct {
 			this.Data["error"] = err.Error()
 		} else {
 			info := []maps.Map{}
+			allDnsNames := []string{}
 			for _, data := range cert.Certificate {
 				c, err := x509.ParseCertificate(data)
 				if err != nil {
 					this.Data["error"] = err.Error()
 				} else {
+					dnsNames := ""
+					if len(c.DNSNames) > 0 {
+						dnsNames = "[" + strings.Join(c.DNSNames, ", ") + "]"
+						allDnsNames = append(allDnsNames, c.DNSNames...)
+					}
 					info = append(info, maps.Map{
-						"subject": c.Subject.CommonName,
-						"issuer":  c.Issuer.CommonName,
-						"before":  timeutil.Format("Y-m-d", c.NotBefore),
-						"after":   timeutil.Format("Y-m-d", c.NotAfter),
+						"subject":  c.Subject.CommonName + " " + dnsNames,
+						"issuer":   c.Issuer.CommonName,
+						"before":   timeutil.Format("Y-m-d", c.NotBefore),
+						"after":    timeutil.Format("Y-m-d", c.NotAfter),
+						"dnsNames": dnsNames,
 					})
 				}
 			}
@@ -55,13 +63,12 @@ func (this *IndexAction) Run(params struct {
 			this.Data["info"] = info
 
 			// 检查域名是否设置
-			if len(info) > 0 {
-				domain := info[len(info)-1]["subject"].(string)
-
+			if len(allDnsNames) > 0 {
 				// 检查domain
-				domain = strings.Replace(domain, "*.", "", -1)
-				if !teautils.MatchDomains(server.Name, domain) {
-					this.Data["error"] = "当前代理服务的域名中没有域名可以匹配\"" + domain + "\"，请在代理服务的基本信息中添加此域名。"
+				for _, domain := range allDnsNames {
+					if !teautils.MatchDomains(server.Name, domain) {
+						this.Data["warning"] = "当前代理服务的域名中没有域名可以匹配\"" + domain + "\"，请在代理服务的<a href=\"/proxy/update?serverId=" + server.Id + "\">基本信息</a>中添加此域名。"
+					}
 				}
 			}
 		}
