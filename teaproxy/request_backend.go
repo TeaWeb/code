@@ -71,7 +71,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		this.raw.Header.Set("X-Forwarded-By", remoteAddr)
 	}
 	this.raw.Header.Set("X-Forwarded-Host", this.host)
-	this.raw.Header.Set("X-Forwarded-Proto", this.raw.Proto)
+	this.raw.Header.Set("X-Forwarded-Proto", this.rawScheme)
 	this.raw.Header.Set("Connection", "keep-alive")
 
 	// 自定义请求Header
