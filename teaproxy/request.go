@@ -119,6 +119,8 @@ type Request struct {
 	gzipLevel     uint8
 	gzipMinLength int64
 	debug         bool
+
+	hasForwardHeader bool
 }
 
 // 获取新的请求
@@ -139,6 +141,7 @@ func NewRequest(rawRequest *http.Request) *Request {
 	backendCall.Request = rawRequest
 	backendCall.Formatter = req.Format
 	req.backendCall = backendCall
+	_, req.hasForwardHeader = rawRequest.Header["X-Forwarded-For"]
 
 	return req
 }
@@ -1105,6 +1108,13 @@ func (this *Request) Format(source string) string {
 			return teaconst.TeaVersion
 		case "remoteAddr":
 			return this.requestRemoteAddr()
+		case "rawRemoteAddr":
+			addr := this.raw.RemoteAddr
+			portIndex := strings.LastIndex(addr, ":")
+			if portIndex > -1 {
+				addr = addr[:portIndex]
+			}
+			return addr
 		case "remotePort":
 			return fmt.Sprintf("%d", this.requestRemotePort())
 		case "remoteUser":
@@ -1397,11 +1407,23 @@ func (this *Request) setProxyHeaders(header http.Header) {
 	{
 		forwardedFor, ok := header["X-Forwarded-For"]
 		if ok {
-			header["X-Forwarded-For"] = []string{strings.Join(forwardedFor, ", ") + ", " + remoteAddr}
+			if this.hasForwardHeader {
+				header["X-Forwarded-For"] = []string{strings.Join(forwardedFor, ", ") + ", " + remoteAddr}
+			}
 		} else {
 			header["X-Forwarded-For"] = []string{remoteAddr}
 		}
 	}
+
+	// Forwarded
+	/**{
+		forwarded, ok := header["Forwarded"]
+		if ok {
+			header["Forwarded"] = []string{strings.Join(forwarded, ", ") + ", by=" + this.serverAddr + "; for=" + remoteAddr + "; host=" + this.host + "; proto=" + this.rawScheme}
+		} else {
+			header["Forwarded"] = []string{"by=" + this.serverAddr + "; for=" + remoteAddr + "; host=" + this.host + "; proto=" + this.rawScheme}
+		}
+	}**/
 
 	// others
 	this.raw.Header.Set("X-Forwarded-By", this.serverAddr)
