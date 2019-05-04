@@ -6,6 +6,7 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
 )
 
@@ -22,17 +23,24 @@ func (this *UpdateAction) Run(params struct {
 
 	this.Data["selectedTab"] = "https"
 	this.Data["server"] = server
+	this.Data["versions"] = teaconfigs.AllTlsVersions
+
+	this.Data["minVersion"] = "TLS 1.0"
+	if server.SSL != nil && len(server.SSL.MinVersion) > 0 {
+		this.Data["minVersion"] = server.SSL.MinVersion
+	}
 
 	this.Show()
 }
 
 // 提交保存
 func (this *UpdateAction) RunPost(params struct {
-	ServerId string
-	HttpsOn  bool
-	Listen   []string
-	CertFile *actions.File
-	KeyFile  *actions.File
+	ServerId   string
+	HttpsOn    bool
+	Listen     []string
+	CertFile   *actions.File
+	KeyFile    *actions.File
+	MinVersion string
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -44,6 +52,10 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 	server.SSL.On = params.HttpsOn
 	server.SSL.Listen = params.Listen
+
+	if lists.ContainsString(teaconfigs.AllTlsVersions, params.MinVersion) {
+		server.SSL.MinVersion = params.MinVersion
+	}
 
 	if params.CertFile != nil {
 		data, err := params.CertFile.Read()

@@ -25,6 +25,11 @@ func (this *IndexAction) Run(params struct {
 		this.Fail("找不到Server")
 	}
 
+	this.Data["minVersion"] = "TLS 1.0"
+	if server.SSL != nil && len(server.SSL.MinVersion) > 0 {
+		this.Data["minVersion"] = server.SSL.MinVersion
+	}
+
 	this.Data["selectedTab"] = "https"
 	this.Data["server"] = server
 	this.Data["errs"] = teaproxy.SharedManager.FindServerErrors(params.ServerId)

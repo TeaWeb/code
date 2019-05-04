@@ -9,12 +9,15 @@ import (
 	"strings"
 )
 
+var AllTlsVersions = []string{"SSL 3.0", "TLS 1.0", "TLS 1.1", "TLS 1.2"}
+
 // SSL配置
 type SSLConfig struct {
 	On             bool     `yaml:"on" json:"on"`                         // 是否开启
 	Certificate    string   `yaml:"certificate" json:"certificate"`       // 证书文件
 	CertificateKey string   `yaml:"certificateKey" json:"certificateKey"` // 密钥
 	Listen         []string `yaml:"listen" json:"listen"`                 // 网络地址
+	MinVersion     string   `yaml:"minVersion" json:"minVersion"`         // 支持的最小版本
 
 	cert     *tls.Certificate
 	dnsNames []string
@@ -79,4 +82,19 @@ func (this *SSLConfig) MatchDomain(domain string) bool {
 		return false
 	}
 	return teautils.MatchDomains(this.dnsNames, domain)
+}
+
+// 取得最小版本
+func (this *SSLConfig) TLSMinVersion() uint16 {
+	switch this.MinVersion {
+	case "SSL 3.0":
+		return tls.VersionSSL30
+	case "TLS 1.0":
+		return tls.VersionTLS10
+	case "TLS 1.1":
+		return tls.VersionTLS11
+	case "TLS 1.2":
+		return tls.VersionTLS12
+	}
+	return tls.VersionTLS10
 }
