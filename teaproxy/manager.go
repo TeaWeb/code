@@ -36,14 +36,24 @@ func NewManager() *Manager {
 //  启动
 func (this *Manager) Start() error {
 	configsDir := Tea.ConfigDir()
-	files, err := filepath.Glob(configsDir + Tea.DS + "*.proxy.conf")
+
+	serverFiles := []string{}
+	serverList, err := teaconfigs.SharedServerList()
 	if err != nil {
-		return err
+		files, err := filepath.Glob(configsDir + Tea.DS + "*.proxy.conf")
+		if err != nil {
+			return err
+		}
+		serverFiles = files
+	} else {
+		for _, f := range serverList.Files {
+			serverFiles = append(serverFiles, Tea.ConfigFile(f))
+		}
 	}
 
 	this.servers = map[string]*teaconfigs.ServerConfig{}
-	for _, configFile := range files {
-		if configFile == "server.sample.www.proxy.conf" { // 跳过示例配置
+	for _, configFile := range serverFiles {
+		if strings.Contains(configFile, "server.sample.www.proxy.conf") { // 跳过示例配置
 			continue
 		}
 

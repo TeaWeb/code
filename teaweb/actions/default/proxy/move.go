@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -22,6 +23,9 @@ func (this *MoveAction) Run(params struct {
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}
+
+	// 通知刷新
+	proxyutils.NotifyChange()
 
 	this.Success()
 }
