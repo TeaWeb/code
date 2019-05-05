@@ -1,6 +1,7 @@
 package teaweb
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/iwind/TeaGo"
 	"io/ioutil"
@@ -35,6 +36,10 @@ func startTestServer() {
 					resp.Write([]byte( k + ": " + v1 + "\n"))
 				}
 			}
+
+			// 测试超过1560内容长度
+			resp.Write(bytes.Repeat([]byte{' '}, 934))
+			resp.Write([]byte{'a'})
 		}).
 		Post("/webhook", func(req *http.Request, resp http.ResponseWriter) {
 			for k, v := range req.Header {

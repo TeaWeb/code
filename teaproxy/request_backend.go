@@ -122,12 +122,19 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	bodyRead := false
 	if resp.ContentLength > 0 && resp.ContentLength < 2048 { // 内容比较少的直接读取，以加快响应速度
 		bodyRead = true
-		contentData := make([]byte, resp.ContentLength)
-		n, _ := resp.Body.Read(contentData)
-		if n > 0 {
-			data = contentData[:n]
+
+		buf := make([]byte, 512)
+		for {
+			n, err := resp.Body.Read(buf)
+			if n > 0 {
+				data = append(data, buf[:n]...)
+			}
+			if err != nil {
+				break
+			}
 		}
-		resp.ContentLength = int64(n)
+
+		resp.ContentLength = int64(len(data))
 		resp.Body.Close()
 	} else {
 		defer resp.Body.Close()
