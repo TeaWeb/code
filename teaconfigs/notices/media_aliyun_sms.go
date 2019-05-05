@@ -50,6 +50,13 @@ func (this *NoticeAliyunSmsMedia) Send(user string, subject string, body string)
 		value = strings.Replace(value, "${NoticeUser}", user, -1)
 		value = strings.Replace(value, "${NoticeSubject}", subject, -1)
 		value = strings.Replace(value, "${NoticeBody}", body, -1)
+
+		// 阿里云的限制参数长度不能超过20：
+		maxLen := 20
+		if len([]rune(value)) > maxLen {
+			value = string([]rune(value)[:maxLen-4]) + "..."
+		}
+
 		varMap[v.Name] = value
 	}
 	request.QueryParams["TemplateParam"] = stringutil.JSONEncode(varMap)
@@ -69,7 +76,7 @@ func (this *NoticeAliyunSmsMedia) Send(user string, subject string, body string)
 	if m.GetString("Code") == "OK" {
 		return data, nil
 	}
-	return data, errors.New("fail to send sms")
+	return data, errors.New("fail to send sms：" + string(data))
 }
 
 // 是否需要用户标识

@@ -84,5 +84,9 @@ func startTestServer() {
 			}
 
 		}).
+		Get("/cookie", func(req *http.Request, resp http.ResponseWriter) {
+			resp.Header().Add("Set-Cookie", "Asset_UserId=1; expires=Sun, 05-May-2019 14:42:21 GMT; path=/", )
+			resp.Write([]byte("set cookie"))
+		}).
 		StartOn("127.0.0.1:9991")
 }
