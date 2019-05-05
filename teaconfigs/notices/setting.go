@@ -150,12 +150,13 @@ func (this *NoticeSetting) NotifyReceivers(level NoticeLevel, receivers []*Notic
 			if types.Bool(mediaType["supportsHTML"]) {
 				body = strings.Replace(body, "\n", "<br/>", -1)
 			}
-			if len(subject) == 0 {
-				subject = "[TeaWeb][" + FindNoticeLevelName(level) + "]有新的通知"
-			} else {
-				subject = "[TeaWeb][" + FindNoticeLevelName(level) + "]" + subject
+			subjectContent := subject
+			if len(subjectContent) == 0 {
+				subjectContent = "[TeaWeb][" + FindNoticeLevelName(level) + "]有新的通知"
+			} else if !strings.HasPrefix(subject, "[TeaWeb]") {
+				subjectContent = "[TeaWeb][" + FindNoticeLevelName(level) + "]" + subject
 			}
-			_, err := raw.Send(user, subject, body)
+			_, err := raw.Send(user, subjectContent, body)
 			if err != nil {
 				logs.Error(err)
 			}
