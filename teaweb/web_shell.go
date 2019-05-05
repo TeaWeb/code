@@ -308,6 +308,16 @@ func (this *WebShell) checkPid() *os.Process {
 		return nil
 	}
 	pid := types.Int(pidString)
+
+	if pid <= 0 {
+		return nil
+	}
+
+	// 如果是当前进程在检查，说明没有启动
+	if pid == os.Getpid() {
+		return nil
+	}
+
 	proc, err := os.FindProcess(pid)
 	if err != nil || proc == nil {
 		return nil
