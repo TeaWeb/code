@@ -314,6 +314,7 @@ func (this *ServerConfig) Validate() error {
 	// request groups
 	for _, group := range this.RequestGroups {
 		group.Backends = []*BackendConfig{}
+		group.Scheduling = this.Scheduling
 
 		if group.IsDefault {
 			this.defaultRequestGroup = group

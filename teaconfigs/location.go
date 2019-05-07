@@ -261,6 +261,7 @@ func (this *LocationConfig) Validate() error {
 	// request groups
 	for _, group := range this.requestGroups {
 		group.Backends = []*BackendConfig{}
+		group.Scheduling = this.Scheduling
 
 		if group.IsDefault {
 			this.defaultRequestGroup = group
