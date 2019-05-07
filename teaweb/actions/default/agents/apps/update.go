@@ -60,7 +60,7 @@ func (this *UpdateAction) RunPost(params struct {
 	}))
 
 	// 同步
-	if isSharedWithGroup {
+	if isSharedWithGroup || app.IsSharedWithGroup {
 		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("UPDATE_APP", maps.Map{
 			"appId": app.Id,
 		}), nil)
