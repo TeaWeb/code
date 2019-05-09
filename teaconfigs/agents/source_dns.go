@@ -146,7 +146,7 @@ func (this *DNSSource) Form() *forms.Form {
 			field := forms.NewTextField("域名", "Domain")
 			field.IsRequired = true
 			field.Code = "domain"
-			field.MaxLength = 100
+			field.MaxLength = 500
 			group.Add(field)
 		}
 

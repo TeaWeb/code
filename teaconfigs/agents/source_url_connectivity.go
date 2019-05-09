@@ -117,7 +117,7 @@ func (this *URLConnectivitySource) Form() *forms.Form {
 			field.Code = "url"
 			field.IsRequired = true
 			field.Placeholder = "http://..."
-			field.MaxLength = 100
+			field.MaxLength = 500
 			field.ValidateCode = `
 if (value.length == 0) {
 	throw new Error("请输入URL")

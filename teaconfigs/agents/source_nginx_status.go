@@ -160,7 +160,7 @@ func (this *NginxStatusSource) Form() *forms.Form {
 		field.Comment = "<a href=\"http://nginx.org/en/docs/http/ngx_http_stub_status_module.html\" target=\"_blank\">相关配置文档&raquo;</a>"
 		field.Code = "url"
 		field.IsRequired = true
-		field.MaxLength = 200
+		field.MaxLength = 500
 		field.Attr("style", "word-wrap:break-word;word-break:break-all;line-height:1.5")
 		field.ValidateCode = `
 if (value.length == 0) {

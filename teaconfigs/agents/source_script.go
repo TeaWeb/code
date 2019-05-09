@@ -206,7 +206,7 @@ func (this *ScriptSource) Form() *forms.Form {
 		{
 			field := forms.NewTextField("当前工作目录", "CWD")
 			field.Code = "cwd"
-			field.MaxLength = 100
+			field.MaxLength = 500
 			group.Add(field)
 		}
 

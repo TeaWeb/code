@@ -86,7 +86,7 @@ func (this *SocketConnectivitySource) Form() *forms.Form {
 			field.IsRequired = true
 			field.Placeholder = ""
 			field.Comment = "如果是tcp或者udp，地址需要加端口"
-			field.MaxLength = 100
+			field.MaxLength = 500
 			field.ValidateCode = `
 if (value.length == 0) {
 	throw new Error("请输入目标地址")
