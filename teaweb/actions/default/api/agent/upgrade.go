@@ -1,8 +1,8 @@
 package agent
 
 import (
+	"github.com/TeaWeb/agent/teaconst"
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
@@ -28,11 +28,11 @@ func (this *UpgradeAction) Run(params struct{}) {
 		this.Fail("agentVersion, agentOS, agentArch should not be empty")
 	}
 
-	if agentVersion == teaconst.TeaVersion {
+	if agentVersion == teaconst.AgentVersion {
 		this.Fail("agent is latest version")
 	}
 
-	agentFile := Tea.Root + Tea.DS + "web" + Tea.DS + "upgrade" + Tea.DS + teaconst.TeaVersion + Tea.DS + agentOS + Tea.DS + agentArch + Tea.DS
+	agentFile := Tea.Root + Tea.DS + "web" + Tea.DS + "upgrade" + Tea.DS + teaconst.AgentVersion + Tea.DS + agentOS + Tea.DS + agentArch + Tea.DS
 	if agentOS == "windows" {
 		agentFile += "teaweb-agent.exe"
 	} else {
@@ -50,6 +50,6 @@ func (this *UpgradeAction) Run(params struct{}) {
 		this.Fail(err.Error())
 	}
 
-	this.AddHeader("Tea-Agent-Version", teaconst.TeaVersion)
+	this.AddHeader("Tea-Agent-Version", teaconst.AgentVersion)
 	this.Write(data)
 }
