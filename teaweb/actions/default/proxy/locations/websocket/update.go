@@ -41,6 +41,8 @@ func (this *UpdateAction) Run(params struct {
 		"cachePolicy": location.CachePolicy,
 		"rewrite":     location.Rewrite,
 		"backends":    location.Backends,
+		"wafId":       location.WafId,
+		"wafOn":       location.WAFOn,
 	}
 	this.Data["from"] = params.From
 
