@@ -271,28 +271,12 @@ func (this *WebShell) execReset() bool {
 
 // 状态
 func (this *WebShell) execStatus() bool {
-	pidString, err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").ReadAllString()
-	if err != nil {
-		fmt.Println("TeaWeb not started yet")
-		return true
-	}
-
-	pid := types.Int(pidString)
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		fmt.Println("TeaWeb not started yet")
-		return true
-	}
+	proc := this.checkPid()
 	if proc == nil {
 		fmt.Println("TeaWeb not started yet")
-		return true
+	} else {
+		fmt.Println("TeaWeb is running, pid:" + fmt.Sprintf("%d", proc.Pid))
 	}
-	err = proc.Signal(syscall.SIGHUP)
-	if err != nil {
-		fmt.Println("TeaWeb not started yet")
-		return true
-	}
-	fmt.Println("TeaWeb is running, pid:" + pidString)
 	return true
 }
 
@@ -345,9 +329,13 @@ func (this *WebShell) checkPid() *os.Process {
 	}
 
 	outputString := string(output)
-	index := strings.Index(outputString, "/")
+	index := strings.LastIndex(outputString, "/")
 	if index > -1 {
 		outputString = outputString[index+1:]
+	}
+	index2 := strings.LastIndex(outputString, "\\")
+	if index2 > 0 {
+		outputString = outputString[index2+1:]
 	}
 	if strings.Contains(outputString, "teaweb") && !strings.Contains(outputString, "teaweb-") {
 		return proc
