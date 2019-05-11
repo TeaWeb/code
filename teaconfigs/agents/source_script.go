@@ -98,7 +98,7 @@ func (this *ScriptSource) Execute(params map[string]string) (value interface{}, 
 
 	// 脚本
 	if this.ScriptType == "code" {
-		path, err := this.Generate(stringutil.Rand(16))
+		path, err := this.Generate(stringutil.Rand(16) + stringutil.Md5(this.Code()))
 		if err != nil {
 			return nil, err
 		}
