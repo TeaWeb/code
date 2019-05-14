@@ -3,6 +3,7 @@ package teaweb
 import (
 	"compress/gzip"
 	_ "github.com/TeaWeb/code/teacache"
+	_ "github.com/TeaWeb/code/teacluster"
 	"github.com/TeaWeb/code/teaproxy"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/apps"
@@ -41,6 +42,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/waf"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/backup"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/cluster"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/login"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/mongo"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/profile"

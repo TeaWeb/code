@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"github.com/TeaWeb/code/teacluster"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
@@ -144,6 +145,8 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	action.Data["teaVersion"] = teaconst.TeaVersion
 	action.Data["teaIsSuper"] = user.Granted(configs.AdminGrantAll)
 	action.Data["teaDemoEnabled"] = teaconst.DemoEnabled
+	action.Data["teaClusterActive"] = teacluster.ClusterManager.IsActive()
+	action.Data["teaClusterEnabled"] = teacluster.ClusterEnabled
 
 	return true
 }
