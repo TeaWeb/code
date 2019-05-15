@@ -23,7 +23,6 @@ func (this *IndexAction) Run(params struct{}) {
 			"date":        p.Date,
 			"description": p.Description,
 			"code":        p.Code,
-			"interfaces":  p.InterfaceNames(),
 		})
 	}
 

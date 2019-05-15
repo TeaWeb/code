@@ -16,6 +16,7 @@ func (this *UpdateAction) RunGet(params struct{}) {
 	node := teaconfigs.SharedNodeConfig()
 	if node == nil {
 		node = &teaconfigs.NodeConfig{}
+		node.On = true
 	}
 	this.Data["node"] = node
 	this.Data["roles"] = teaconfigs.AllNodeRoles()

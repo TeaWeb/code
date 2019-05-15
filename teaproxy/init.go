@@ -1,7 +1,9 @@
 package teaproxy
 
 import (
+	"github.com/TeaWeb/code/teahooks"
 	"github.com/iwind/TeaGo"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
 	"net/http"
 	"sync/atomic"
@@ -24,5 +26,12 @@ func init() {
 			QPS = qps
 			atomic.StoreInt32(&qps, 0)
 		})
+	})
+
+	teahooks.On(teahooks.EventReload, func() {
+		err := SharedManager.Restart()
+		if err != nil {
+			logs.Error(err)
+		}
 	})
 }

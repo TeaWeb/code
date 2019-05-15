@@ -2,6 +2,8 @@ package teacluster
 
 import (
 	"github.com/TeaWeb/code/teacluster/configs"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 )
 
@@ -25,7 +27,12 @@ func (this *PushAction) AddItem(item *configs.Item) {
 }
 
 func (this *PushAction) OnSuccess(success *SuccessAction) error {
-	return nil
+	sumData, err := files.NewFile(Tea.ConfigFile("node.sum")).ReadAll()
+	if err != nil {
+		return err
+	}
+	err = files.NewFile(Tea.ConfigFile("cluster.sum")).Write(sumData)
+	return err
 }
 
 func (this *PushAction) OnFail(fail *FailAction) error {

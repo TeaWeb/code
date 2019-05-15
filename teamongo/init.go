@@ -2,6 +2,7 @@ package teamongo
 
 import (
 	"context"
+	"github.com/TeaWeb/code/teahooks"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/logs"
@@ -15,6 +16,10 @@ import (
 func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		cleanAccessLogs()
+	})
+
+	teahooks.On(teahooks.EventReload, func() {
+		RestartClient()
 	})
 }
 

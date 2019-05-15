@@ -11,9 +11,18 @@ type IndexAction actions.Action
 func (this *IndexAction) RunGet(params struct{}) {
 	this.Data["teaMenu"] = "cluster"
 
-	this.Data["node"] = teaconfigs.SharedNodeConfig()
-	this.Data["isActive"] = teacluster.ClusterManager.IsActive()
-	this.Data["error"] = teacluster.ClusterManager.Error()
+	node := teaconfigs.SharedNodeConfig()
+
+	manager := teacluster.ClusterManager
+
+	if node != nil {
+		manager.BuildSum()
+	}
+
+	this.Data["node"] = node
+	this.Data["isActive"] = manager.IsActive()
+	this.Data["error"] = manager.Error()
+	this.Data["isChanged"] = manager.IsChanged()
 
 	this.Show()
 }

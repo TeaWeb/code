@@ -3,6 +3,7 @@ package agentutils
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/logs"
@@ -26,6 +27,10 @@ func checkConnecting() {
 	duration := 60 * time.Second
 	maxDisconnections := 3
 	timers.Loop(duration, func(looper *timers.Looper) {
+		if !teaconst.AgentEnabled {
+			return
+		}
+
 		for _, agent := range agents.SharedAgents() {
 			if !agent.On || !agent.CheckDisconnections {
 				continue

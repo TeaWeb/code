@@ -88,12 +88,14 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	}
 
 	// 附加功能
-	if user.Granted(configs.AdminGrantAgent) {
-		modules = append(modules, map[string]interface{}{
-			"code":     "agents",
-			"menuName": "主机",
-			"icon":     "server",
-		})
+	if teaconst.AgentEnabled {
+		if user.Granted(configs.AdminGrantAgent) {
+			modules = append(modules, map[string]interface{}{
+				"code":     "agents",
+				"menuName": "主机",
+				"icon":     "server",
+			})
+		}
 	}
 
 	if user.Granted(configs.AdminGrantPlugin) {

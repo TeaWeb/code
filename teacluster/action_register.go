@@ -29,6 +29,7 @@ func (this *RegisterAction) OnSuccess(success *SuccessAction) error {
 		ClusterManager.Write(&SumAction{})
 	} else {
 		logs.Println("[cluster]register node ok")
+		ClusterManager.Write(&SumAction{})
 	}
 	return nil
 }

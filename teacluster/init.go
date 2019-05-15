@@ -1,8 +1,10 @@
 package teacluster
 
 import (
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/timers"
 	"time"
 )
 
@@ -20,11 +22,13 @@ func init() {
 		new(PullAction),
 		new(NotifyAction),
 		new(SumAction),
+		new(SyncAction),
+		new(PingAction),
 	)
 
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		// build
-		BuildSum()
+		ClusterManager.BuildSum()
 
 		// start manager
 		go func() {
@@ -39,11 +43,19 @@ func init() {
 				select {
 				case <-ticker.C:
 					// every N seconds
-				case <-ClusterManager.Context:
+				case <-ClusterManager.RestartChan:
 					// retry immediately
 				}
 			}
 		}()
+
+		// start ping
+		timers.Loop(60*time.Second, func(looper *timers.Looper) {
+			node := teaconfigs.SharedNodeConfig()
+			if node != nil && node.On {
+				ClusterManager.Write(&PingAction{})
+			}
+		})
 	})
 
 	TeaGo.BeforeStop(func(server *TeaGo.Server) {

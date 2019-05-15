@@ -16,6 +16,7 @@ func init() {
 			Get("", new(IndexAction)).
 			GetPost("/update", new(UpdateAction)).
 			Post("/connect", new(ConnectAction)).
+			Post("/sync", new(SyncAction)).
 			EndAll()
 
 	})

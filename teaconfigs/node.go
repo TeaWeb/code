@@ -53,3 +53,8 @@ func (this *NodeConfig) Save() error {
 	configFile := files.NewFile(Tea.ConfigFile(nodeConfigFile))
 	return configFile.Write(data)
 }
+
+// 是否为Master
+func (this *NodeConfig) IsMaster() bool {
+	return this.Role == NodeRoleMaster
+}

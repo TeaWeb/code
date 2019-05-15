@@ -1,5 +1,5 @@
 package teacluster
 
 const (
-	ClusterEnabled = false
+	ClusterEnabled = true
 )

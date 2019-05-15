@@ -3,8 +3,6 @@ package teaplugins
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/TeaWeb/code/teaapps"
-	"github.com/TeaWeb/plugin/apps"
 	"github.com/TeaWeb/plugin/messages"
 	"github.com/iwind/TeaGo/logs"
 	"path/filepath"
@@ -194,34 +192,6 @@ func (this *Loader) ActionFilterRequest(action *messages.FilterRequestAction) {
 
 func (this *Loader) ActionFilterResponse(action *messages.FilterResponseAction) {
 	messages.ActionQueue.Notify(action)
-}
-
-func (this *Loader) ActionReloadApps(action *messages.ReloadAppsAction) {
-	this.plugin.ResetApps()
-
-	for _, a := range action.Apps {
-		a2 := teaapps.NewApp()
-		a2.LoadFromInterface(a)
-		func(a *apps.App) {
-			a2.OnReload(func() {
-				action := new(messages.ReloadAppAction)
-				action.App = a
-				this.Write(action)
-			})
-		}(a)
-		this.plugin.AddApp(a2)
-	}
-}
-
-// 接收到刷新App消息
-func (this *Loader) ActionReloadApp(action *messages.ReloadAppAction) {
-	a := action.App
-	if a != nil {
-		app := this.plugin.AppWithId(a.Id)
-		if app != nil {
-			app.LoadFromInterface(a)
-		}
-	}
 }
 
 func (this *Loader) Write(action messages.ActionInterface) error {
