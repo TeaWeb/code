@@ -407,6 +407,9 @@ func (this *ServerConfig) LocationAtIndex(index int) *LocationConfig {
 
 // 保存
 func (this *ServerConfig) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlockNotify()
+
 	if len(this.Filename) == 0 {
 		return errors.New("'filename' should be specified")
 	}

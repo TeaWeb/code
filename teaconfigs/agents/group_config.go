@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
@@ -69,6 +70,9 @@ func (this *GroupConfig) RemoveGroup(groupId string) {
 
 // 保存
 func (this *GroupConfig) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlockNotify()
+
 	writer, err := files.NewWriter(Tea.ConfigFile(this.Filename))
 	if err != nil {
 		return err

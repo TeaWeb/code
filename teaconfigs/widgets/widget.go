@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
@@ -88,6 +89,9 @@ func LoadAllWidgets() []*Widget {
 
 // 保存
 func (this *Widget) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlockNotify()
+
 	dir := files.NewFile(Tea.ConfigDir() + Tea.DS + "widgets")
 	if !dir.Exists() {
 		err := dir.Mkdir()

@@ -22,7 +22,12 @@ func (this *IndexAction) RunGet(params struct{}) {
 	this.Data["node"] = node
 	this.Data["isActive"] = manager.IsActive()
 	this.Data["error"] = manager.Error()
-	this.Data["isChanged"] = manager.IsChanged()
+
+	if node != nil && node.IsMaster() {
+		this.Data["isChanged"] = manager.IsChanged()
+	} else {
+		this.Data["isChanged"] = false
+	}
 
 	this.Show()
 }

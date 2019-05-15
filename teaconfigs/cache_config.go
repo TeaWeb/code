@@ -59,6 +59,9 @@ func (this *CacheConfig) FindAllPolicies() []*shared.CachePolicy {
 
 // 保存
 func (this *CacheConfig) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlockNotify()
+
 	if len(this.Filename) == 0 {
 		this.Filename = "cache.conf"
 	}

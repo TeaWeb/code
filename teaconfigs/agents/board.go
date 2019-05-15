@@ -2,6 +2,7 @@ package agents
 
 import (
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -104,6 +105,9 @@ func (this *Board) RemoveApp(appId string) {
 
 // 保存
 func (this *Board) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlockNotify()
+
 	if len(this.Filename) == 0 {
 		return errors.New("filename should be specified")
 	}

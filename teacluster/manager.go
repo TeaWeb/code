@@ -35,7 +35,8 @@ type Manager struct {
 
 	error string
 
-	isActive bool
+	isActive  bool
+	isChanged bool
 }
 
 func NewManager() *Manager {
@@ -268,6 +269,10 @@ func (this *Manager) BuildSum() {
 
 // determine cluster data changes
 func (this *Manager) IsChanged() bool {
+	if this.isChanged {
+		return true
+	}
+
 	map1 := this.clusterSumMap()
 	map2 := this.nodeSumMap()
 
@@ -291,6 +296,10 @@ func (this *Manager) IsChanged() bool {
 		}
 	}
 	return false
+}
+
+func (this *Manager) SetIsChanged(isChanged bool) {
+	this.isChanged = isChanged
 }
 
 func (this *Manager) clusterSumMap() map[string]string {

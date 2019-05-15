@@ -1,6 +1,7 @@
 package notices
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -45,6 +46,9 @@ func SharedNoticeSetting() *NoticeSetting {
 
 // 保存配置
 func (this *NoticeSetting) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlockNotify()
+
 	filename := "notice.conf"
 	writer, err := files.NewWriter(Tea.ConfigFile(filename))
 	if err != nil {

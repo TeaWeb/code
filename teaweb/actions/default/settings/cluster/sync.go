@@ -25,5 +25,7 @@ func (this *SyncAction) RunPost(params struct{}) {
 		teacluster.ClusterManager.PullItems()
 	}
 
+	teacluster.ClusterManager.SetIsChanged(false)
+
 	this.Success()
 }

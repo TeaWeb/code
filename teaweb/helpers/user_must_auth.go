@@ -149,6 +149,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	action.Data["teaDemoEnabled"] = teaconst.DemoEnabled
 	action.Data["teaClusterActive"] = teacluster.ClusterManager.IsActive()
 	action.Data["teaClusterEnabled"] = teacluster.ClusterEnabled
+	action.Data["teaClusterIsChanged"] = teacluster.ClusterManager.IsChanged()
 
 	return true
 }

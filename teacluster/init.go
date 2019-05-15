@@ -2,6 +2,7 @@ package teacluster
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teahooks"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
@@ -62,5 +63,9 @@ func init() {
 		if ClusterManager != nil {
 			ClusterManager.Stop()
 		}
+	})
+
+	teahooks.On(teahooks.EventConfigChanged, func() {
+		ClusterManager.SetIsChanged(true)
 	})
 }

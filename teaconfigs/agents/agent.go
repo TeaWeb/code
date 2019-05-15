@@ -2,6 +2,7 @@ package agents
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
@@ -116,6 +117,9 @@ func (this *AgentConfig) Filename() string {
 
 // 保存
 func (this *AgentConfig) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlockNotify()
+
 	defer func() {
 		NotifyAgentsChange() // 标记列表改变
 	}()

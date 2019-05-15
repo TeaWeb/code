@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
@@ -45,6 +46,9 @@ func SharedNodeConfig() *NodeConfig {
 
 // 保存到文件
 func (this *NodeConfig) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlock()
+
 	data, err := yaml.Marshal(this)
 	if err != nil {
 		return err

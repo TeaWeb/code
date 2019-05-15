@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teawaf"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
@@ -57,6 +58,9 @@ func (this *WAFList) RemoveFile(filename string) {
 
 // 保存文件
 func (this *WAFList) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlockNotify()
+
 	path := Tea.ConfigFile("waflist.conf")
 	file := files.NewFile(path)
 	writer, err := file.Writer()

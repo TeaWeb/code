@@ -82,6 +82,9 @@ func (this *CachePolicy) LifeDuration() time.Duration {
 
 // 保存
 func (this *CachePolicy) Save() error {
+	Locker.Lock()
+	defer Locker.WriteUnlockNotify()
+
 	if len(this.Filename) == 0 {
 		this.Id = stringutil.Rand(16)
 		this.Filename = "cache.policy." + this.Id + ".conf"

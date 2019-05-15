@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"sync"
@@ -108,6 +109,9 @@ func (this *AgentList) FindAllAgents() []*AgentConfig {
 
 // 保存
 func (this *AgentList) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlockNotify()
+
 	defer func() {
 		NotifyAgentsChange()
 	}()

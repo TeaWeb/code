@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
@@ -121,6 +122,9 @@ func (this *ServerList) MoveServer(fromIndex int, toIndex int) {
 
 // 保存
 func (this *ServerList) Save() error {
+	shared.Locker.Lock()
+	defer shared.Locker.WriteUnlockNotify()
+
 	writer, err := files.NewWriter(Tea.ConfigFile("serverlist.conf"))
 	if err != nil {
 		return err
