@@ -10,6 +10,7 @@ import (
 // 应用指标值定义
 type Value struct {
 	Id          primitive.ObjectID  `bson:"_id" json:"id"`                  // 数据库存储的ID
+	NodeId      string              `bson:"nodeId" json:"nodeId"`           // 节点ID
 	AgentId     string              `bson:"agentId" json:"agentId"`         // Agent ID
 	AppId       string              `bson:"appId" json:"appId"`             // App ID
 	ItemId      string              `bson:"itemId" json:"itemId"`           // 监控项ID

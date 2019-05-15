@@ -266,8 +266,14 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	}
 
 	// 数值记录
+	node := teaconfigs.SharedNodeConfig()
+	nodeId := ""
+	if node != nil {
+		nodeId = node.Id
+	}
 	value := &agents.Value{
 		Id:          primitive.NewObjectID(),
+		NodeId:      nodeId,
 		AppId:       appId,
 		AgentId:     agent.Id,
 		ItemId:      itemId,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -184,6 +185,12 @@ func (this *AgentValueQuery) Execute() (interface{}, error) {
 	if len(this.agentId) == 0 {
 		return nil, errors.New("AgentId should be set")
 	}
+
+	node := teaconfigs.SharedNodeConfig()
+	if node != nil {
+		this.Attr("nodeId", node.Id)
+	}
+
 	collectionName := "values.agent." + this.agentId
 	if this.action == ValueQueryActionFindAll {
 		result := []*agents.Value{}
