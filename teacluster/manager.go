@@ -273,6 +273,11 @@ func (this *Manager) IsChanged() bool {
 		return true
 	}
 
+	node := teaconfigs.SharedNodeConfig()
+	if !node.On {
+		return false
+	}
+
 	map1 := this.clusterSumMap()
 	map2 := this.nodeSumMap()
 

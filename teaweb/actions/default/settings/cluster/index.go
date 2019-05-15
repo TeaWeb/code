@@ -15,7 +15,7 @@ func (this *IndexAction) RunGet(params struct{}) {
 
 	manager := teacluster.ClusterManager
 
-	if node != nil {
+	if node != nil && node.On {
 		manager.BuildSum()
 	}
 

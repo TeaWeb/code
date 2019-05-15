@@ -95,7 +95,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 			"icon":     "server",
 		})
 	}
-	
+
 	if user.Granted(configs.AdminGrantPlugin) {
 		modules = append(modules, map[string]interface{}{
 			"code":     "plugins",

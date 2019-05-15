@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // Script文件数据源
@@ -84,9 +85,11 @@ func (this *ScriptSource) Generate(id string) (path string, err error) {
 		if err != nil {
 			return
 		}
-		err = shFile.Chmod(0777)
-		if err != nil {
-			return
+		if runtime.GOOS != "windows" {
+			err = shFile.Chmod(0777)
+			if err != nil {
+				return
+			}
 		}
 	}
 	return
@@ -159,7 +162,14 @@ func (this *ScriptSource) Execute(params map[string]string) (value interface{}, 
 
 	err = cmd.Start()
 	if err != nil {
-		return nil, err
+		if strings.Index(err.Error(), "text file busy") > -1 {
+			// try again
+			time.Sleep(100 * time.Millisecond)
+			err = cmd.Start()
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	err = cmd.Wait()

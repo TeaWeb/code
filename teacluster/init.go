@@ -66,6 +66,9 @@ func init() {
 	})
 
 	teahooks.On(teahooks.EventConfigChanged, func() {
-		ClusterManager.SetIsChanged(true)
+		node := teaconfigs.SharedNodeConfig()
+		if node != nil && node.On {
+			ClusterManager.SetIsChanged(true)
+		}
 	})
 }

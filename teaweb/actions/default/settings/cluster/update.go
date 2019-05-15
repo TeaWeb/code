@@ -73,6 +73,10 @@ func (this *UpdateAction) RunPost(params struct {
 		this.Fail("保存失败：" + err.Error())
 	}
 
+	if !node.On {
+		teacluster.ClusterManager.SetIsChanged(false)
+	}
+
 	teacluster.ClusterManager.Restart()
 
 	this.Success()
