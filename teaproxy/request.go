@@ -1212,6 +1212,21 @@ func (this *Request) Format(source string) string {
 			return ""
 		}
 
+		// node
+		if prefix == "node" {
+			node := teaconfigs.SharedNodeConfig()
+			if node != nil {
+				switch suffix {
+				case "id":
+					return node.Id
+				case "name":
+					return node.Name
+				case "role":
+					return node.Role
+				}
+			}
+		}
+
 		return "${" + varName + "}"
 	})
 }

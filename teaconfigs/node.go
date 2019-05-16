@@ -10,6 +10,7 @@ import (
 
 // 节点配置文件名
 var nodeConfigFile = "node.conf"
+var sharedNodeConfig *NodeConfig = nil
 
 // 节点配置
 type NodeConfig struct {
@@ -24,6 +25,13 @@ type NodeConfig struct {
 
 // 取得当前节点配置
 func SharedNodeConfig() *NodeConfig {
+	shared.Locker.Lock()
+	defer shared.Locker.ReadUnlock()
+
+	if sharedNodeConfig != nil {
+		return sharedNodeConfig
+	}
+
 	configFile := files.NewFile(Tea.ConfigFile(nodeConfigFile))
 	if !configFile.Exists() {
 		return nil
@@ -41,6 +49,7 @@ func SharedNodeConfig() *NodeConfig {
 		return nil
 	}
 
+	sharedNodeConfig = config
 	return config
 }
 
@@ -55,7 +64,12 @@ func (this *NodeConfig) Save() error {
 	}
 
 	configFile := files.NewFile(Tea.ConfigFile(nodeConfigFile))
-	return configFile.Write(data)
+	err = configFile.Write(data)
+	if err != nil {
+		return err
+	}
+	sharedNodeConfig = nil
+	return nil
 }
 
 // 是否为Master

@@ -274,7 +274,7 @@ func (this *Manager) IsChanged() bool {
 	}
 
 	node := teaconfigs.SharedNodeConfig()
-	if !node.On {
+	if node == nil || !node.On {
 		return false
 	}
 
