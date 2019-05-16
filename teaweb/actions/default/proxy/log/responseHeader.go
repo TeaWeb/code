@@ -15,6 +15,7 @@ func (this *ResponseHeaderAction) Run(params struct {
 }) {
 	query := teamongo.NewQuery("logs."+params.Day, new(tealogs.AccessLog))
 	query.Id(params.LogId)
+	query.Result("sentHeader", "responseBodyData")
 	one, err := query.Find()
 	if err != nil {
 		this.Fail(err.Error())

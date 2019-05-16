@@ -15,6 +15,7 @@ func (this *RequestHeaderAction) Run(params struct {
 }) {
 	query := teamongo.NewQuery("logs."+params.Day, new(tealogs.AccessLog))
 	query.Id(params.LogId)
+	query.Result("header", "requestData")
 	one, err := query.Find()
 	if err != nil {
 		this.Fail(err.Error())
