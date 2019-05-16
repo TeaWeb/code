@@ -8,6 +8,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"golang.org/x/net/context"
+	"golang.org/x/net/http2"
 	"net/http"
 	"strings"
 	"sync"
@@ -228,6 +229,7 @@ func (this *Listener) Reload() error {
 						}
 						return cert, nil
 					},
+					NextProtos: []string{http2.NextProtoTLS},
 				}, nil
 			},
 			GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
@@ -242,6 +244,10 @@ func (this *Listener) Reload() error {
 				return cert, nil
 			},
 		}
+
+		// support http/2
+		http2.ConfigureServer(this.httpServer, nil)
+
 		err = this.httpServer.ListenAndServeTLS("", "")
 		if err != nil && err != http.ErrServerClosed {
 			logs.Error(errors.New("[listener]" + this.Address + ": " + err.Error()))
