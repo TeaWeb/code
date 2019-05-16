@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/iwind/TeaGo"
+	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/utils/string"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -87,6 +89,13 @@ func startTestServer() {
 		Get("/cookie", func(req *http.Request, resp http.ResponseWriter) {
 			resp.Header().Add("Set-Cookie", "Asset_UserId=1; expires=Sun, 05-May-2019 14:42:21 GMT; path=/", )
 			resp.Write([]byte("set cookie"))
+		}).
+		GetPost("/json", func(req *http.Request, resp http.ResponseWriter) {
+			resp.Header().Set("Content-Type", "application/json")
+			data := maps.Map{
+				"hello": "world",
+			}
+			resp.Write([]byte(stringutil.JSONEncode(data)))
 		}).
 		StartOn("127.0.0.1:9991")
 }

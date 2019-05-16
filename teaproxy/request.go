@@ -1,6 +1,7 @@
 package teaproxy
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
@@ -10,9 +11,11 @@ import (
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf"
 	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -733,13 +736,29 @@ func (this *Request) call(writer *ResponseWriter) error {
 		// 判断如果Content-Length过长，则截断
 		reqData, err := httputil.DumpRequest(this.raw, true)
 		if err == nil {
-			if len(reqData) > 10240 {
-				reqData = reqData[:10240]
+			if len(reqData) > 100240 {
+				reqData = reqData[:100240]
 			}
 			this.requestData = reqData
 		}
 
 		writer.SetBodyCopying(true)
+	} else {
+		max := 512 * 1024 // 512K
+		if lists.ContainsInt(this.accessLogFields, tealogs.AccessLogFieldRequestBody) {
+			body, err := ioutil.ReadAll(this.raw.Body)
+			if err == nil {
+				if len(body) > max {
+					this.requestData = body[:max]
+				} else {
+					this.requestData = body
+				}
+			}
+			this.raw.Body = ioutil.NopCloser(bytes.NewReader(body))
+		}
+		if lists.ContainsInt(this.accessLogFields, tealogs.AccessLogFieldResponseBody) {
+			writer.SetBodyCopying(true)
+		}
 	}
 
 	// API相关

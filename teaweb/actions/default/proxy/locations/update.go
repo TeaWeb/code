@@ -33,7 +33,8 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["charsets"] = teautils.AllCharsets
 	this.Data["accessLogFields"] = lists.Map(tealogs.AccessLogFields, func(k int, v interface{}) interface{} {
 		m := v.(maps.Map)
-		m["isChecked"] = len(location.AccessLogFields) == 0 || lists.ContainsInt(location.AccessLogFields, types.Int(m["code"]))
+		code := types.Int(m["code"])
+		m["isChecked"] = (len(location.AccessLogFields) == 0 && lists.ContainsInt(tealogs.AccessLogDefaultFieldsCodes, code)) || lists.ContainsInt(location.AccessLogFields, code)
 		return m
 	})
 

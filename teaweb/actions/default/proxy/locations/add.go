@@ -8,6 +8,7 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"regexp"
 	"strconv"
 )
@@ -36,7 +37,8 @@ func (this *AddAction) Run(params struct {
 
 	this.Data["accessLogFields"] = lists.Map(tealogs.AccessLogFields, func(k int, v interface{}) interface{} {
 		m := v.(maps.Map)
-		m["isChecked"] = true
+		code := types.Int(m["code"])
+		m["isChecked"] = lists.ContainsInt(tealogs.AccessLogDefaultFieldsCodes, code)
 		return m
 	})
 
