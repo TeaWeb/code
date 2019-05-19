@@ -2,10 +2,9 @@ package teaconfigs
 
 import (
 	"crypto/tls"
-	"crypto/x509"
-	"errors"
-	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -44,15 +43,18 @@ var AllTLSCipherSuites = []TLSCipherSuite{
 
 // SSL配置
 type SSLConfig struct {
-	On             bool             `yaml:"on" json:"on"`                         // 是否开启
-	Certificate    string           `yaml:"certificate" json:"certificate"`       // 证书文件
-	CertificateKey string           `yaml:"certificateKey" json:"certificateKey"` // 密钥
-	Listen         []string         `yaml:"listen" json:"listen"`                 // 网络地址
-	MinVersion     TLSVersion       `yaml:"minVersion" json:"minVersion"`         // 支持的最小版本
-	CipherSuites   []TLSCipherSuite `yaml:"cipherSuites" json:"cipherSuites"`     // 加密算法套件
+	On bool `yaml:"on" json:"on"` // 是否开启
 
-	cert     *tls.Certificate
-	dnsNames []string
+	Certificate    string `yaml:"certificate" json:"certificate"`       // 证书文件, deprecated in v0.1.4
+	CertificateKey string `yaml:"certificateKey" json:"certificateKey"` // 密钥, deprecated in v0.1.4
+
+	Certs []*SSLCertConfig `yaml:"certs" json:"certs"`
+
+	Listen       []string         `yaml:"listen" json:"listen"`             // 网络地址
+	MinVersion   TLSVersion       `yaml:"minVersion" json:"minVersion"`     // 支持的最小版本
+	CipherSuites []TLSCipherSuite `yaml:"cipherSuites" json:"cipherSuites"` // 加密算法套件
+
+	nameMapping map[string]*tls.Certificate // dnsName => cert
 
 	minVersion   uint16
 	cipherSuites []uint16
@@ -68,12 +70,26 @@ func (this *SSLConfig) Validate() error {
 	if !this.On {
 		return nil
 	}
-	if len(this.Certificate) == 0 {
-		return errors.New("'certificate' should not be empty")
+
+	if len(this.Certs) == 0 {
+		if len(this.Certificate) > 0 && len(this.CertificateKey) > 0 {
+			newCert := NewSSLCertConfig(this.Certificate, this.CertificateKey)
+			newCert.Id = "old_version_cert"
+			this.Certs = append(this.Certs, newCert)
+		}
 	}
-	if len(this.CertificateKey) == 0 {
-		return errors.New("'certificateKey' should not be empty")
+
+	if len(this.Certs) == 0 {
+		return errors.New("no certificates in https config")
 	}
+
+	for _, cert := range this.Certs {
+		err := cert.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	if this.Listen == nil {
 		this.Listen = []string{}
 	} else {
@@ -84,24 +100,6 @@ func (this *SSLConfig) Validate() error {
 			}
 		}
 	}
-
-	cert, err := tls.LoadX509KeyPair(Tea.ConfigFile(this.Certificate), Tea.ConfigFile(this.CertificateKey))
-	if err != nil {
-		return errors.New("load certificate '" + this.Certificate + "', '" + this.CertificateKey + "' failed:" + err.Error())
-	}
-
-	for _, data := range cert.Certificate {
-		c, err := x509.ParseCertificate(data)
-		if err != nil {
-			continue
-		}
-		dnsNames := c.DNSNames
-		if len(dnsNames) > 0 {
-			this.dnsNames = append(this.dnsNames, dnsNames...)
-		}
-	}
-
-	this.cert = &cert
 
 	// min version
 	switch this.MinVersion {
@@ -172,19 +170,6 @@ func (this *SSLConfig) Validate() error {
 	return nil
 }
 
-// 取得Certificate对象
-func (this *SSLConfig) CertificateObject() *tls.Certificate {
-	return this.cert
-}
-
-// 校验是否匹配某个域名
-func (this *SSLConfig) MatchDomain(domain string) bool {
-	if len(this.dnsNames) == 0 {
-		return false
-	}
-	return teautils.MatchDomains(this.dnsNames, domain)
-}
-
 // 取得最小版本
 func (this *SSLConfig) TLSMinVersion() uint16 {
 	return this.minVersion
@@ -193,4 +178,70 @@ func (this *SSLConfig) TLSMinVersion() uint16 {
 // 套件
 func (this *SSLConfig) TLSCipherSuites() []uint16 {
 	return this.cipherSuites
+}
+
+// 校验是否匹配某个域名
+func (this *SSLConfig) MatchDomain(domain string) (cert *tls.Certificate, ok bool) {
+	for _, cert := range this.Certs {
+		if cert.MatchDomain(domain) {
+			return cert.CertObject(), true
+		}
+	}
+	return nil, false
+}
+
+// 取得第一个证书
+func (this *SSLConfig) FirstCert() *tls.Certificate {
+	for _, cert := range this.Certs {
+		return cert.CertObject()
+	}
+	return nil
+}
+
+// 是否包含某个证书或密钥路径
+func (this *SSLConfig) ContainsFile(file string) bool {
+	for _, cert := range this.Certs {
+		if cert.CertFile == file || cert.KeyFile == file {
+			return true
+		}
+	}
+	return false
+}
+
+// 删除证书文件
+func (this *SSLConfig) DeleteFiles() error {
+	var resultErr error = nil
+
+	if len(this.Certificate) > 0 {
+		err := files.NewFile(Tea.ConfigFile(this.Certificate)).Delete()
+		if err != nil {
+			resultErr = err
+		}
+	}
+
+	if len(this.CertificateKey) > 0 {
+		err := files.NewFile(Tea.ConfigFile(this.CertificateKey)).Delete()
+		if err != nil {
+			resultErr = err
+		}
+	}
+
+	for _, cert := range this.Certs {
+		err := cert.DeleteFiles()
+		if err != nil {
+			resultErr = err
+		}
+	}
+
+	return resultErr
+}
+
+// 查找单个证书配置
+func (this *SSLConfig) FindCert(certId string) *SSLCertConfig {
+	for _, cert := range this.Certs {
+		if cert.Id == certId {
+			return cert
+		}
+	}
+	return nil
 }

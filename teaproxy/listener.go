@@ -205,7 +205,7 @@ func (this *Listener) Reload() error {
 		this.httpServer.TLSConfig = &tls.Config{
 			Certificates: nil,
 			GetConfigForClient: func(info *tls.ClientHelloInfo) (config *tls.Config, e error) {
-				ssl, err := this.matchSSL(info.ServerName)
+				ssl, _, err := this.matchSSL(info.ServerName)
 				if err != nil {
 					return nil, err
 				}
@@ -219,11 +219,10 @@ func (this *Listener) Reload() error {
 					MinVersion:   ssl.TLSMinVersion(),
 					CipherSuites: cipherSuites,
 					GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
-						ssl, err := this.matchSSL(info.ServerName)
+						_, cert, err := this.matchSSL(info.ServerName)
 						if err != nil {
 							return nil, err
 						}
-						cert := ssl.CertificateObject()
 						if cert == nil {
 							return nil, errors.New("[listener]no certs found for '" + info.ServerName + "'")
 						}
@@ -233,11 +232,10 @@ func (this *Listener) Reload() error {
 				}, nil
 			},
 			GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
-				ssl, err := this.matchSSL(info.ServerName)
+				_, cert, err := this.matchSSL(info.ServerName)
 				if err != nil {
 					return nil, err
 				}
-				cert := ssl.CertificateObject()
 				if cert == nil {
 					return nil, errors.New("[listener]no certs found for '" + info.ServerName + "'")
 				}
@@ -428,43 +426,39 @@ func (this *Listener) findNamedServer(name string) (serverConfig *teaconfigs.Ser
 }
 
 // 根据域名匹配证书
-func (this *Listener) matchSSL(domain string) (*teaconfigs.SSLConfig, error) {
+func (this *Listener) matchSSL(domain string) (*teaconfigs.SSLConfig, *tls.Certificate, error) {
 	if len(domain) == 0 {
 		if len(this.currentServers) > 0 && this.currentServers[0].SSL != nil {
 			logs.Error(errors.New("[listener]no tls server name found"))
-			return this.currentServers[0].SSL, nil
+			return this.currentServers[0].SSL, this.currentServers[0].SSL.FirstCert(), nil
 		}
-		return nil, errors.New("[listener]no tls server name found")
+		return nil, nil, errors.New("[listener]no tls server name found")
 	}
 
 	// 通过代理服务域名配置匹配
 	server, _ := this.findNamedServer(domain)
 	if server == nil || server.SSL == nil || !server.SSL.On {
-		// 通过SSL证书内容中的DNSName匹配
+		// 搜索所有的Server，通过SSL证书内容中的DNSName匹配
 		this.serversLocker.RLock()
 		for _, server := range this.servers {
-			if server.SSL != nil && server.SSL.On && server.SSL.MatchDomain(domain) {
+			if server.SSL == nil || !server.SSL.On {
+				continue
+			}
+			cert, ok := server.SSL.MatchDomain(domain)
+			if ok {
 				this.serversLocker.RUnlock()
-				return server.SSL, nil
+				return server.SSL, cert, nil
 			}
 		}
 		this.serversLocker.RUnlock()
 
-		return nil, errors.New("[listener]no server found for '" + domain + "'")
+		return nil, nil, errors.New("[listener]no server found for '" + domain + "'")
 	}
 
 	// 证书是否匹配
-	if !server.SSL.MatchDomain(domain) {
-		// 通过SSL证书内容中的DNSName匹配
-		this.serversLocker.RLock()
-		for _, s := range this.servers {
-			if s.SSL != nil && s.SSL.On && s.SSL.MatchDomain(domain) {
-				this.serversLocker.RUnlock()
-				return s.SSL, nil
-			}
-		}
-		this.serversLocker.RUnlock()
+	if cert, ok := server.SSL.MatchDomain(domain); ok {
+		return server.SSL, cert, nil
 	}
 
-	return server.SSL, nil
+	return server.SSL, server.SSL.FirstCert(), nil
 }

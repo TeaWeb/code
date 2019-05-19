@@ -434,19 +434,7 @@ func (this *ServerConfig) Delete() error {
 
 	// 删除key
 	if this.SSL != nil {
-		if len(this.SSL.Certificate) > 0 {
-			err := files.NewFile(Tea.ConfigFile(this.SSL.Certificate)).Delete()
-			if err != nil {
-				return err
-			}
-		}
-
-		if len(this.SSL.CertificateKey) > 0 {
-			err := files.NewFile(Tea.ConfigFile(this.SSL.CertificateKey)).Delete()
-			if err != nil {
-				return err
-			}
-		}
+		this.SSL.DeleteFiles()
 	}
 
 	return files.NewFile(Tea.ConfigFile(this.Filename)).Delete()
