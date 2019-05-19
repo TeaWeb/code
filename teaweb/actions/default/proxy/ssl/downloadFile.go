@@ -6,6 +6,7 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 )
 
 type DownloadFileAction actions.Action
@@ -37,7 +38,11 @@ func (this *DownloadFileAction) RunGet(params struct {
 		this.Fail("the file has been forbidden to download")
 	}
 
-	data, err := ioutil.ReadFile(Tea.ConfigFile(file))
+	fullPath := file
+	if !strings.ContainsAny(file, "/\\") {
+		fullPath = Tea.ConfigFile(file)
+	}
+	data, err := ioutil.ReadFile(fullPath)
 	if err != nil {
 		this.WriteString(err.Error())
 		return

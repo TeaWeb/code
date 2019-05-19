@@ -38,6 +38,7 @@ func (this *UpdateAction) Run(params struct {
 					"certFile":    cert.CertFile,
 					"keyFile":     cert.KeyFile,
 					"description": cert.Description,
+					"isLocal":     cert.IsLocal,
 				})
 			}
 			this.Data["certs"] = certs
@@ -66,9 +67,14 @@ func (this *UpdateAction) RunPost(params struct {
 	Listen           []string
 	CertIds          []string
 	CertDescriptions []string
-	MinVersion       string
-	CipherSuitesOn   bool
-	CipherSuites     []string
+
+	CertIsLocal    []bool
+	CertFilesPaths []string
+	KeyFilesPaths  []string
+
+	MinVersion     string
+	CipherSuitesOn bool
+	CipherSuites   []string
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -120,51 +126,57 @@ func (this *UpdateAction) RunPost(params struct {
 	// 证书
 	certs := []*teaconfigs.SSLCertConfig{}
 	for index, description := range params.CertDescriptions {
-		if index >= len(params.CertIds) {
+		if index >= len(params.CertIds) || index >= len(params.CertIsLocal) || index >= len(params.CertFilesPaths) || index >= len(params.KeyFilesPaths) {
 			continue
 		}
 
 		cert := teaconfigs.NewSSLCertConfig("", "")
 		cert.Description = description
+		cert.IsLocal = params.CertIsLocal[index]
 
-		// 兼容以前的版本（v0.1.4）
-		if params.CertIds[index] == "old_version_cert" {
-			cert.CertFile = server.SSL.Certificate
-			cert.KeyFile = server.SSL.CertificateKey
+		if cert.IsLocal {
+			cert.CertFile = params.CertFilesPaths[index]
+			cert.KeyFile = params.KeyFilesPaths[index]
 		} else {
-			// 保留先前上传的文件
-			oldCert := server.SSL.FindCert(params.CertIds[index])
-			if oldCert != nil {
-				cert.CertFile = oldCert.CertFile
-				cert.KeyFile = oldCert.KeyFile
-			}
-		}
-
-		{
-			field := fmt.Sprintf("certFiles%d", index)
-			data, ok := fileBytes[field]
-			if ok {
-				filename := "ssl." + stringutil.Rand(16) + fileExts[field]
-				configFile := files.NewFile(Tea.ConfigFile(filename))
-				err := configFile.Write(data)
-				if err != nil {
-					this.Fail(err.Error())
+			// 兼容以前的版本（v0.1.4）
+			if params.CertIds[index] == "old_version_cert" {
+				cert.CertFile = server.SSL.Certificate
+				cert.KeyFile = server.SSL.CertificateKey
+			} else {
+				// 保留先前上传的文件
+				oldCert := server.SSL.FindCert(params.CertIds[index])
+				if oldCert != nil {
+					cert.CertFile = oldCert.CertFile
+					cert.KeyFile = oldCert.KeyFile
 				}
-				cert.CertFile = filename
 			}
-		}
 
-		{
-			field := fmt.Sprintf("keyFiles%d", index)
-			data, ok := fileBytes[field]
-			if ok {
-				filename := "ssl." + stringutil.Rand(16) + fileExts[field]
-				configFile := files.NewFile(Tea.ConfigFile(filename))
-				err := configFile.Write(data)
-				if err != nil {
-					this.Fail(err.Error())
+			{
+				field := fmt.Sprintf("certFiles%d", index)
+				data, ok := fileBytes[field]
+				if ok {
+					filename := "ssl." + stringutil.Rand(16) + fileExts[field]
+					configFile := files.NewFile(Tea.ConfigFile(filename))
+					err := configFile.Write(data)
+					if err != nil {
+						this.Fail(err.Error())
+					}
+					cert.CertFile = filename
 				}
-				cert.KeyFile = filename
+			}
+
+			{
+				field := fmt.Sprintf("keyFiles%d", index)
+				data, ok := fileBytes[field]
+				if ok {
+					filename := "ssl." + stringutil.Rand(16) + fileExts[field]
+					configFile := files.NewFile(Tea.ConfigFile(filename))
+					err := configFile.Write(data)
+					if err != nil {
+						this.Fail(err.Error())
+					}
+					cert.KeyFile = filename
+				}
 			}
 		}
 

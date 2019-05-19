@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
+	"strings"
 )
 
 // SSL证书
@@ -42,7 +43,7 @@ func (this *SSLCertConfig) Validate() error {
 	if len(this.KeyFile) == 0 {
 		return errors.New("key file should not be empty")
 	}
-	cert, err := tls.LoadX509KeyPair(Tea.ConfigFile(this.CertFile), Tea.ConfigFile(this.KeyFile))
+	cert, err := tls.LoadX509KeyPair(this.FullCertPath(), this.FullKeyPath())
 	if err != nil {
 		return errors.New("load certificate '" + this.CertFile + "', '" + this.KeyFile + "' failed:" + err.Error())
 	}
@@ -67,6 +68,22 @@ func (this *SSLCertConfig) Validate() error {
 	return nil
 }
 
+// 证书文件路径
+func (this *SSLCertConfig) FullCertPath() string {
+	if !strings.ContainsAny(this.CertFile, "/\\") {
+		return Tea.ConfigFile(this.CertFile)
+	}
+	return this.CertFile
+}
+
+// 密钥文件路径
+func (this *SSLCertConfig) FullKeyPath() string {
+	if !strings.ContainsAny(this.KeyFile, "/\\") {
+		return Tea.ConfigFile(this.KeyFile)
+	}
+	return this.KeyFile
+}
+
 // 校验是否匹配某个域名
 func (this *SSLCertConfig) MatchDomain(domain string) bool {
 	if len(this.dnsNames) == 0 {
@@ -87,15 +104,15 @@ func (this *SSLCertConfig) DeleteFiles() error {
 	}
 
 	var resultErr error = nil
-	if len(this.CertFile) > 0 {
-		err := files.NewFile(Tea.ConfigFile(this.CertFile)).Delete()
+	if len(this.CertFile) > 0 && !strings.ContainsAny(this.CertFile, "/\\") {
+		err := files.NewFile(this.FullCertPath()).Delete()
 		if err != nil {
 			resultErr = err
 		}
 	}
 
-	if len(this.KeyFile) > 0 {
-		err := files.NewFile(Tea.ConfigFile(this.KeyFile)).Delete()
+	if len(this.KeyFile) > 0 && !strings.ContainsAny(this.KeyFile, "/\\") {
+		err := files.NewFile(this.FullKeyPath()).Delete()
 		if err != nil {
 			resultErr = err
 		}

@@ -7,7 +7,6 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/TeaWeb/code/teautils"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -48,7 +47,7 @@ func (this *IndexAction) Run(params struct {
 		for index, certConfig := range server.SSL.Certs {
 			info := []maps.Map{}
 
-			cert, err := tls.LoadX509KeyPair(Tea.ConfigFile(certConfig.CertFile), Tea.ConfigFile(certConfig.KeyFile))
+			cert, err := tls.LoadX509KeyPair(certConfig.FullCertPath(), certConfig.FullKeyPath())
 			if err != nil {
 				errorMessages = append(errorMessages, fmt.Sprintf("证书#%d：", index+1)+err.Error())
 				certs = append(certs, maps.Map{
