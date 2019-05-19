@@ -7,27 +7,27 @@ import (
 
 func TestMemoryItem_HashKey(t *testing.T) {
 	{
-		item := NewMemoryItem("", MemoryItemTypeString)
+		item := NewMemoryItem("", MemoryItemTypeBytes)
 		t.Log(item.HashKey())
 	}
 
 	{
-		item := NewMemoryItem("0", MemoryItemTypeString)
+		item := NewMemoryItem("0", MemoryItemTypeBytes)
 		t.Log(item.HashKey())
 	}
 
 	{
-		item := NewMemoryItem("123", MemoryItemTypeString)
+		item := NewMemoryItem("123", MemoryItemTypeBytes)
 		t.Log(item.HashKey())
 	}
 
 	{
-		item := NewMemoryItem("456", MemoryItemTypeString)
+		item := NewMemoryItem("456", MemoryItemTypeBytes)
 		t.Log(item.HashKey())
 	}
 
 	{
-		item := NewMemoryItem("123456", MemoryItemTypeString)
+		item := NewMemoryItem("123456", MemoryItemTypeBytes)
 		t.Log(item.HashKey())
 	}
 }

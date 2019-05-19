@@ -1,6 +1,9 @@
 package teautils
 
 import (
+	"bytes"
+	"compress/gzip"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
 	"time"
 )
@@ -14,9 +17,11 @@ type MemoryGrid struct {
 
 	recycleIndex  int
 	recycleLooper *timers.Looper
+
+	gzipLevel int
 }
 
-func NewMemoryGrid(countCells int) *MemoryGrid {
+func NewMemoryGrid(countCells int, opt ...interface{}) *MemoryGrid {
 	cells := []*MemoryCell{}
 	if countCells <= 0 {
 		countCells = 1024
@@ -31,6 +36,13 @@ func NewMemoryGrid(countCells int) *MemoryGrid {
 		cells:        cells,
 		countCells:   int64(len(cells)),
 		recycleIndex: -1,
+	}
+
+	for _, o := range opt {
+		switch x := o.(type) {
+		case *MemoryGridCompressOpt:
+			grid.gzipLevel = x.Level
+		}
 	}
 
 	grid.recycleTimer()
@@ -60,20 +72,58 @@ func (this *MemoryGrid) IncreaseInt64(key string, delta int64, lifeSeconds int64
 }
 
 func (this *MemoryGrid) WriteString(key string, value string, lifeSeconds int64) {
-	this.WriteItem(&MemoryItem{
-		Key:         key,
-		Type:        MemoryItemTypeString,
-		ValueString: value,
-		ExpireAt:    time.Now().Unix() + lifeSeconds,
-	})
+	this.WriteBytes(key, []byte(value), lifeSeconds)
 }
 
 func (this *MemoryGrid) WriteBytes(key string, value []byte, lifeSeconds int64) {
+	isCompressed := false
+	if this.gzipLevel != gzip.NoCompression {
+		buf := bytes.NewBuffer([]byte{})
+		writer, err := gzip.NewWriterLevel(buf, this.gzipLevel)
+		if err != nil {
+			logs.Error(err)
+			this.WriteItem(&MemoryItem{
+				Key:        key,
+				Type:       MemoryItemTypeBytes,
+				ValueBytes: value,
+				ExpireAt:   time.Now().Unix() + lifeSeconds,
+			})
+			return
+		}
+
+		_, err = writer.Write([]byte(value))
+		if err != nil {
+			logs.Error(err)
+			this.WriteItem(&MemoryItem{
+				Key:        key,
+				Type:       MemoryItemTypeBytes,
+				ValueBytes: value,
+				ExpireAt:   time.Now().Unix() + lifeSeconds,
+			})
+			return
+		}
+
+		err = writer.Close()
+		if err != nil {
+			logs.Error(err)
+			this.WriteItem(&MemoryItem{
+				Key:        key,
+				Type:       MemoryItemTypeBytes,
+				ValueBytes: value,
+				ExpireAt:   time.Now().Unix() + lifeSeconds,
+			})
+			return
+		}
+		value = buf.Bytes()
+		isCompressed = true
+	}
+
 	this.WriteItem(&MemoryItem{
-		Key:        key,
-		Type:       MemoryItemTypeBytes,
-		ValueBytes: value,
-		ExpireAt:   time.Now().Unix() + lifeSeconds,
+		Key:          key,
+		Type:         MemoryItemTypeBytes,
+		ValueBytes:   value,
+		ExpireAt:     time.Now().Unix() + lifeSeconds,
+		IsCompressed: isCompressed,
 	})
 }
 
