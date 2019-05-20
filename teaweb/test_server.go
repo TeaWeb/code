@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"io/ioutil"
 	"net/http"
@@ -26,9 +27,23 @@ func startTestServer() {
 			resp.Write([]byte("Hello, World, this is benchmark url"))
 		}).
 		Get("/redirect", func(req *http.Request, resp http.ResponseWriter) {
-			http.Redirect(resp, req, "/redirect2", http.StatusTemporaryRedirect)
+			code := types.Int(req.URL.Query().Get("code"))
+			if code >= 300 && code < 400 {
+				resp.Header().Set("Location", "/redirect2")
+				resp.Header().Set("Set-Cookie", "code="+fmt.Sprintf("%d", code)+"; Max-Agent=86400; Path=/")
+				resp.WriteHeader(code)
+			} else {
+				http.Redirect(resp, req, "/redirect2", http.StatusTemporaryRedirect)
+			}
 		}).
-		Get("/redirect2", func(resp http.ResponseWriter) {
+		Get("/redirect2", func(req *http.Request, resp http.ResponseWriter) {
+			for k, v := range req.Header {
+				for _, v1 := range v {
+					resp.Write([]byte( k + ": " + v1 + "\n"))
+				}
+			}
+
+			resp.Write([]byte("\n\n"))
 			resp.Write([]byte("the page after redirect"))
 		}).
 		Get("/webhook", func(req *http.Request, resp http.ResponseWriter) {

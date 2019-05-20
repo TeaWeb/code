@@ -6,7 +6,6 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -83,31 +82,33 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 	if err != nil {
 		urlError, ok := err.(*url.Error)
+		isRedirecting := false
 		if ok {
 			if _, ok := urlError.Err.(*RedirectError); ok {
-				http.Redirect(writer, this.raw, resp.Header.Get("Location"), resp.StatusCode)
-				return nil
+				isRedirecting = true
 			}
 		}
 
-		// 如果超过最大失败次数，则下线
-		if !this.backend.HasCheckURL() {
-			currentFails := this.backend.IncreaseFails()
-			if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
-				this.backend.IsDown = true
-				this.backend.DownTime = time.Now()
-				if this.websocket != nil {
-					this.websocket.SetupScheduling(false)
-				} else {
-					this.server.SetupScheduling(false)
+		if !isRedirecting {
+			// 如果超过最大失败次数，则下线
+			if !this.backend.HasCheckURL() {
+				currentFails := this.backend.IncreaseFails()
+				if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
+					this.backend.IsDown = true
+					this.backend.DownTime = time.Now()
+					if this.websocket != nil {
+						this.websocket.SetupScheduling(false)
+					} else {
+						this.server.SetupScheduling(false)
+					}
 				}
 			}
-		}
 
-		this.serverError(writer)
-		logs.Error(err)
-		this.addError(err)
-		return nil
+			this.serverError(writer)
+			logs.Error(err)
+			this.addError(err)
+			return nil
+		}
 	}
 
 	// waf
