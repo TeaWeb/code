@@ -53,8 +53,11 @@ func init() {
 		// start ping
 		timers.Loop(60*time.Second, func(looper *timers.Looper) {
 			node := teaconfigs.SharedNodeConfig()
-			if node != nil && node.On {
-				ClusterManager.Write(&PingAction{})
+			if node != nil && node.On && ClusterManager.IsActive() {
+				err := ClusterManager.Write(&PingAction{})
+				if err != nil {
+					logs.Println("[cluster]" + err.Error())
+				}
 			}
 		})
 	})
