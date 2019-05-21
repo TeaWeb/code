@@ -9,7 +9,7 @@ import (
 	"regexp"
 )
 
-var urlPrefixRegexp = regexp.MustCompile("^(?)(http|https|ftp)://")
+var urlPrefixRegexp = regexp.MustCompile("^(?i)(http|https|ftp)://")
 
 func (this *Request) callPage(writer *ResponseWriter, status int) (shouldStop bool) {
 	if len(this.pages) == 0 {
