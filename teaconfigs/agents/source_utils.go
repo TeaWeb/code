@@ -39,6 +39,7 @@ func RegisterAllDataSources() {
 	RegisterDataSource(NewAppProcessesSource(), SourceCategoryCommon)
 	RegisterDataSource(NewFileChangeSource(), SourceCategoryCommon)
 	RegisterDataSource(NewMySQLSource(), SourceCategoryCommon)
+	RegisterDataSource(NewPostgreSQLSource(), SourceCategoryCommon)
 	RegisterDataSource(NewDockerSource(), SourceCategoryCommon)
 	RegisterDataSource(NewTeaWebSource(), SourceCategoryCommon)
 	RegisterDataSource(NewNginxStatusSource(), SourceCategoryCommon)
