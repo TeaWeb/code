@@ -23,18 +23,28 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 	cache, found := cachePolicyMap[cacheConfig.Filename]
 	cachePolicyMapLocker.RUnlock()
 	if !found {
-		cacheConfig = shared.NewCachePolicyFromFile(cacheConfig.Filename)
-		if cacheConfig == nil {
-			return true
-		}
-		cache = NewManagerFromConfig(cacheConfig)
-		if cache == nil {
-			return true
-		}
-		logs.Println("[cache]create cache policy instance:", cacheConfig.Name+"("+cacheConfig.Type+")")
 		cachePolicyMapLocker.Lock()
-		cachePolicyMap[cacheConfig.Filename] = cache
-		cachePolicyMapLocker.Unlock()
+
+		// find again
+		cache, found = cachePolicyMap[cacheConfig.Filename]
+		if found {
+			cachePolicyMapLocker.Unlock()
+		} else {
+			cacheConfig = shared.NewCachePolicyFromFile(cacheConfig.Filename)
+			if cacheConfig == nil {
+				cachePolicyMapLocker.Unlock()
+				return true
+			}
+			cache = NewManagerFromConfig(cacheConfig)
+			if cache == nil {
+				cachePolicyMapLocker.Unlock()
+				return true
+			}
+
+			logs.Println("[cache]create cache policy instance:", cacheConfig.Name+"("+cacheConfig.Type+")")
+			cachePolicyMap[cacheConfig.Filename] = cache
+			cachePolicyMapLocker.Unlock()
+		}
 	}
 
 	// key

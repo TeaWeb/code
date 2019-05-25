@@ -1,7 +1,7 @@
 package checkpoints
 
 import (
-	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teamemory"
 	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/types"
 	"regexp"
@@ -14,7 +14,7 @@ import (
 type CCCheckpoint struct {
 	Checkpoint
 
-	grid *teautils.MemoryGrid
+	grid *teamemory.Grid
 	once sync.Once
 }
 
@@ -26,7 +26,7 @@ func (this *CCCheckpoint) Start() {
 	if this.grid != nil {
 		this.grid.Destroy()
 	}
-	this.grid = teautils.NewMemoryGrid(100)
+	this.grid = teamemory.NewGrid(100)
 }
 
 func (this *CCCheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
@@ -52,7 +52,7 @@ func (this *CCCheckpoint) RequestValue(req *requests.Request, param string, opti
 
 	if param == "requests" { // requests
 		key := this.ip(req)
-		value = this.grid.IncreaseInt64(key, 1, period)
+		value = this.grid.IncreaseInt64([]byte(key), 1, period)
 	}
 
 	return

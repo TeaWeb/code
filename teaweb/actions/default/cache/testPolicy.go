@@ -43,7 +43,10 @@ func (this *TestPolicyAction) RunPost(params struct {
 	manager := teacache.FindCachePolicyManager(params.Filename)
 	if manager == nil {
 		manager = teacache.NewManagerFromConfig(policy)
-		defer manager.Close()
+
+		if policy.Type != "memory" {
+			defer manager.Close()
+		}
 	}
 
 	if manager == nil {

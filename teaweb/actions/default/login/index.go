@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"net/http"
 	"time"
@@ -85,7 +86,11 @@ func (this *IndexAction) RunPost(params struct {
 		// 记录登录IP
 		user.LoggedAt = time.Now().Unix()
 		user.LoggedIP = this.RequestRemoteIP()
-		adminConfig.Save()
+
+		// 在开发环境下不保存登录IP，以便于不干扰git
+		if !Tea.IsTesting() {
+			adminConfig.Save()
+		}
 
 		this.Next("/", nil, "").Success()
 		return

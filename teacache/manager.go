@@ -68,6 +68,11 @@ func NewManagerFromConfig(config *shared.CachePolicy) ManagerInterface {
 		m.Capacity, _ = stringutil.ParseFileSize(config.Capacity)
 		m.SetOptions(config.Options)
 		m.SetId(config.Id)
+
+		if len(config.Filename) > 0 {
+			cachePolicyMap[config.Filename] = m
+		}
+
 		return m
 	case "file":
 		m := NewFileManager()
@@ -91,5 +96,6 @@ func NewManagerFromConfig(config *shared.CachePolicy) ManagerInterface {
 		m.SetId(config.Id)
 		return m
 	}
+
 	return nil
 }

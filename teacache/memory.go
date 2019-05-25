@@ -1,8 +1,8 @@
 package teacache
 
 import (
-	"github.com/iwind/TeaGo/caches"
-	"sync"
+	"github.com/TeaWeb/code/teamemory"
+	"github.com/pkg/errors"
 	"time"
 )
 
@@ -13,28 +13,11 @@ type MemoryManager struct {
 	Capacity float64       // 容量
 	Life     time.Duration // 有效期
 
-	cache        *caches.Factory
-	memory       int64
-	count        int
-	memoryLocker sync.Mutex
+	grid *teamemory.Grid
 }
 
 func NewMemoryManager() *MemoryManager {
 	m := &MemoryManager{}
-
-	factory := caches.NewFactory()
-	factory.OnOperation(func(op caches.CacheOperation, item *caches.Item) {
-		m.memoryLocker.Lock()
-		defer m.memoryLocker.Unlock()
-		if op == caches.CacheOperationSet {
-			m.memory += int64(len(item.Value.([]byte)) + len(item.Key))
-			m.count ++
-		} else if op == caches.CacheOperationDelete {
-			m.memory -= int64(len(item.Value.([]byte)) + len(item.Key))
-			m.count --
-		}
-	})
-	m.cache = factory
 
 	return m
 }
@@ -43,50 +26,60 @@ func (this *MemoryManager) SetOptions(options map[string]interface{}) {
 	if this.Life <= 0 {
 		this.Life = 1800 * time.Second
 	}
+
+	countCells := 128
+	opts := []interface{}{}
+	if this.Capacity > 0 {
+		capacityBytes := int64(this.Capacity)
+		opts = append(opts, teamemory.NewLimitSizeOpt(capacityBytes))
+	}
+	this.grid = teamemory.NewGrid(countCells, opts ...)
 }
 
 func (this *MemoryManager) Write(key string, data []byte) error {
-	// 检查容量
-	if this.Capacity > 0 && float64(this.memory+int64(len(data))) >= this.Capacity {
-		this.memory = 0
-		this.cache.Reset()
+	if this.grid == nil {
+		return errors.New("grid has not been initialized")
 	}
-
-	this.cache.Set(key, data).Expire(this.Life)
+	life := int64(this.Life.Seconds())
+	this.grid.WriteBytes([]byte(key), data, life)
 	return nil
 }
 
 func (this *MemoryManager) Read(key string) (data []byte, err error) {
-	value, found := this.cache.Get(key)
-	if !found {
+	if this.grid == nil {
+		return nil, errors.New("grid has not been initialized")
+	}
+	item := this.grid.Read([]byte(key))
+	if item == nil {
 		return nil, ErrNotFound
 	}
-	return value.([]byte), nil
+	return item.Bytes(), nil
 }
 
 // 删除
 func (this *MemoryManager) Delete(key string) error {
-	this.cache.Delete(key)
+	this.grid.Delete([]byte(key))
 	return nil
 }
 
 // 统计
 func (this *MemoryManager) Stat() (size int64, countKeys int, err error) {
-	return this.memory, this.count, nil
+	stat := this.grid.Stat()
+	return stat.TotalBytes, stat.CountItems, nil
 }
 
 // 清理
 func (this *MemoryManager) Clean() error {
-	this.cache.Reset()
+	this.grid.Reset()
 	return nil
 }
 
 // 关闭
 func (this *MemoryManager) Close() error {
-	if this.cache == nil {
+	if this.grid == nil {
 		return nil
 	}
 	//logs.Println("[cache]close cache policy instance: memory")
-	this.cache.Close()
+	this.grid.Destroy()
 	return nil
 }

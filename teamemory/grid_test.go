@@ -1,9 +1,8 @@
-package teautils
+package teamemory
 
 import (
 	"compress/gzip"
 	"fmt"
-	"github.com/iwind/TeaGo/logs"
 	"runtime"
 	"strconv"
 	"strings"
@@ -13,29 +12,31 @@ import (
 )
 
 func TestMemoryGrid_Write(t *testing.T) {
-	grid := NewMemoryGrid(5)
-	t.Log("123456:", grid.Read("123456"))
+	grid := NewGrid(5, NewRecycleIntervalOpt(2), NewLimitSizeOpt(10240))
+	t.Log("123456:", grid.Read([]byte("123456")))
 
-	grid.WriteInt64("abc", 1, 5)
-	logs.PrintAsJSON(grid.Read("abc"), t)
+	grid.WriteInt64([]byte("abc"), 1, 5)
+	t.Log(grid.Read([]byte("abc")).ValueInt64)
 
-	grid.WriteString("abc", "123", 5)
-	logs.PrintAsJSON(grid.Read("abc"), t)
+	grid.WriteString([]byte("abc"), "123", 5)
+	t.Log(string(grid.Read([]byte("abc")).Bytes()))
 
-	grid.WriteBytes("abc", []byte("123"), 5)
-	logs.PrintAsJSON(grid.Read("abc"), t)
+	grid.WriteBytes([]byte("abc"), []byte("123"), 5)
+	t.Log(grid.Read([]byte("abc")).Bytes())
 
-	grid.Delete("abc")
-	logs.PrintAsJSON(grid.Read("abc"), t)
+	grid.Delete([]byte("abc"))
+	t.Log(grid.Read([]byte("abc")))
 
-	grid.Delete("abcd")
-	grid.WriteInt64("abcd", 123, 5)
+	for i := 0; i < 100; i ++ {
+		grid.WriteInt64([]byte(fmt.Sprintf("%d", i)), 123, 1)
+	}
 
+	t.Log("before recycle:")
 	for index, cell := range grid.cells {
 		t.Log("cell:", index, len(cell.mapping), "items")
 	}
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(3 * time.Second)
 	t.Log("after recycle:")
 	for index, cell := range grid.cells {
 		t.Log("cell:", index, len(cell.mapping), "items")
@@ -45,31 +46,31 @@ func TestMemoryGrid_Write(t *testing.T) {
 }
 
 func TestMemoryGrid_Compress(t *testing.T) {
-	grid := NewMemoryGrid(5, NewMemoryGridCompressOpt(1))
-	grid.WriteString("hello", strings.Repeat("abcd", 10240), 30)
-	t.Log(len(string(grid.Read("hello").String())))
-	t.Log(len(grid.Read("hello").ValueBytes))
+	grid := NewGrid(5, NewCompressOpt(1))
+	grid.WriteString([]byte("hello"), strings.Repeat("abcd", 10240), 30)
+	t.Log(len(string(grid.Read([]byte("hello")).String())))
+	t.Log(len(grid.Read([]byte("hello")).ValueBytes))
 }
 
 func BenchmarkMemoryGrid_Performance(b *testing.B) {
-	grid := NewMemoryGrid(1024)
+	grid := NewGrid(1024)
 	for i := 0; i < b.N; i ++ {
-		grid.WriteInt64("key:"+strconv.Itoa(i), int64(i), 3600)
+		grid.WriteInt64([]byte("key:"+strconv.Itoa(i)), int64(i), 3600)
 	}
 }
 
 func TestMemoryGrid_Performance(t *testing.T) {
 	runtime.GOMAXPROCS(1)
 
-	grid := NewMemoryGrid(1024)
+	grid := NewGrid(1024)
 
 	now := time.Now()
 
 	s := []byte(strings.Repeat("abcd", 10*1024))
 
 	for i := 0; i < 100000; i ++ {
-		grid.WriteBytes(fmt.Sprintf("key:%d_%d", i, 1), s, 3600)
-		item := grid.Read(fmt.Sprintf("key:%d_%d", i, 1))
+		grid.WriteBytes([]byte(fmt.Sprintf("key:%d_%d", i, 1)), s, 3600)
+		item := grid.Read([]byte(fmt.Sprintf("key:%d_%d", i, 1)))
 		if item != nil {
 			_ = item.String()
 		}
@@ -87,7 +88,7 @@ func TestMemoryGrid_Performance(t *testing.T) {
 func TestMemoryGrid_Performance_Concurrent(t *testing.T) {
 	//runtime.GOMAXPROCS(1)
 
-	grid := NewMemoryGrid(1024)
+	grid := NewGrid(1024)
 
 	now := time.Now()
 
@@ -100,8 +101,8 @@ func TestMemoryGrid_Performance_Concurrent(t *testing.T) {
 		go func(c int) {
 			defer wg.Done()
 			for i := 0; i < 50000; i ++ {
-				grid.WriteBytes(fmt.Sprintf("key:%d_%d", i, c), s, 3600)
-				item := grid.Read(fmt.Sprintf("key:%d_%d", i, c))
+				grid.WriteBytes([]byte(fmt.Sprintf("key:%d_%d", i, c)), s, 3600)
+				item := grid.Read([]byte(fmt.Sprintf("key:%d_%d", i, c)))
 				if item != nil {
 					_ = item.String()
 				}
@@ -122,14 +123,14 @@ func TestMemoryGrid_Performance_Concurrent(t *testing.T) {
 func TestMemoryGrid_CompressPerformance(t *testing.T) {
 	runtime.GOMAXPROCS(1)
 
-	grid := NewMemoryGrid(1024, NewMemoryGridCompressOpt(gzip.BestCompression))
+	grid := NewGrid(1024, NewCompressOpt(gzip.BestCompression))
 
 	now := time.Now()
 	data := []byte(strings.Repeat("abcd", 1024))
 
 	for i := 0; i < 100000; i ++ {
-		grid.WriteBytes(fmt.Sprintf("key:%d", i), data, 3600)
-		item := grid.Read(fmt.Sprintf("key:%d", i+100))
+		grid.WriteBytes([]byte(fmt.Sprintf("key:%d", i)), data, 3600)
+		item := grid.Read([]byte(fmt.Sprintf("key:%d", i+100)))
 		if item != nil {
 			_ = item.String()
 		}
@@ -145,17 +146,28 @@ func TestMemoryGrid_CompressPerformance(t *testing.T) {
 }
 
 func TestMemoryGrid_IncreaseInt64(t *testing.T) {
-	grid := NewMemoryGrid(1024)
-	grid.WriteInt64("abc", 123, 10)
-	grid.IncreaseInt64("abc", 123, 10)
-	grid.IncreaseInt64("abc", 123, 10)
-	t.Log(grid.Read("abc"))
+	grid := NewGrid(1024)
+	grid.WriteInt64([]byte("abc"), 123, 10)
+	grid.IncreaseInt64([]byte("abc"), 123, 10)
+	grid.IncreaseInt64([]byte("abc"), 123, 10)
+	item := grid.Read([]byte("abc"))
+	if item == nil {
+		t.Fatal("item == nil")
+	}
+
+	if item.ValueInt64 != 369 {
+		t.Fatal("not 369")
+	}
 }
 
 func TestMemoryGrid_Destroy(t *testing.T) {
-	grid := NewMemoryGrid(1024)
-	grid.WriteInt64("abc", 123, 10)
+	grid := NewGrid(1024)
+	grid.WriteInt64([]byte("abc"), 123, 10)
 	t.Log(grid.recycleLooper, grid.cells)
 	grid.Destroy()
 	t.Log(grid.recycleLooper, grid.cells)
+
+	if grid.recycleLooper != nil {
+		t.Fatal("looper != nil")
+	}
 }

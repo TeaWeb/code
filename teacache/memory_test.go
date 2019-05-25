@@ -8,13 +8,17 @@ import (
 
 func TestCacheMemoryConfig(t *testing.T) {
 	m := NewMemoryManager()
-	m.Capacity = 1024
+	m.Capacity = 1024 * 128
 	m.Life = 30 * time.Second
+	m.SetOptions(nil)
+
 	err := m.Write("/hello", []byte("Hello, World"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("memory:", m.memory, "bytes")
+
+	size, countKeys, _ := m.Stat()
+	t.Log("memory:", size, "bytes,", countKeys, "keys")
 
 	a := assert.NewAssertion(t).Quiet()
 

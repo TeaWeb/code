@@ -1,55 +1,54 @@
-package teautils
+package teamemory
 
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/md5"
+	"github.com/dchest/siphash"
 	"github.com/iwind/TeaGo/logs"
-	"math/big"
 	"sync/atomic"
+	"unsafe"
 )
 
-type MemoryItemType = int
+type ItemType = int
 
 const (
-	MemoryItemTypeInt64 = 1
-	MemoryItemTypeBytes = 2
+	ItemInt64 = 1
+	ItemBytes = 2
 )
 
-func MemoryHashKey(key string) int64 {
-	h := md5.New()
-	h.Write([]byte(key))
-
-	bi := big.NewInt(0)
-	bi.SetBytes(h.Sum(nil))
-	return bi.Int64()
+func HashKey(key []byte) uint64 {
+	return siphash.Hash(0, 0, key)
 }
 
-type MemoryItem struct {
-	Key          string
+type Item struct {
+	Key          []byte
 	ExpireAt     int64
-	Type         MemoryItemType
+	Type         ItemType
 	ValueInt64   int64
 	ValueBytes   []byte
 	IsCompressed bool
+
+	// linked list
+	Prev *Item
+	Next *Item
 }
 
-func NewMemoryItem(key string, dataType MemoryItemType) *MemoryItem {
-	return &MemoryItem{
+func NewMemoryItem(key []byte, dataType ItemType) *Item {
+	return &Item{
 		Key:  key,
 		Type: dataType,
 	}
 }
 
-func (this *MemoryItem) HashKey() int64 {
-	return MemoryHashKey(this.Key)
+func (this *Item) HashKey() uint64 {
+	return HashKey(this.Key)
 }
 
-func (this *MemoryItem) IncreaseInt64(delta int64) {
+func (this *Item) IncreaseInt64(delta int64) {
 	atomic.AddInt64(&this.ValueInt64, delta)
 }
 
-func (this *MemoryItem) Bytes() []byte {
+func (this *Item) Bytes() []byte {
 	if this.IsCompressed {
 		reader, err := gzip.NewReader(bytes.NewBuffer(this.ValueBytes))
 		if err != nil {
@@ -73,6 +72,10 @@ func (this *MemoryItem) Bytes() []byte {
 	return this.ValueBytes
 }
 
-func (this *MemoryItem) String() string {
+func (this *Item) String() string {
 	return string(this.Bytes())
+}
+
+func (this *Item) Size() int64 {
+	return int64(int(unsafe.Sizeof(*this)) + len(this.Key) + len(this.ValueBytes))
 }
