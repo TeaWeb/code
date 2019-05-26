@@ -8,6 +8,7 @@ import (
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
+	"net"
 	"sort"
 	"strings"
 	"sync"
@@ -148,9 +149,9 @@ func (this *CounterFilter) CheckNewUV(accessLog *tealogs.AccessLog, attachKey st
 		if len(ip) == 0 {
 			return false
 		}
-		lastIndex := strings.LastIndex(ip, ":")
-		if lastIndex > -1 {
-			ip = ip[:lastIndex]
+		host, _, err := net.SplitHostPort(ip)
+		if err == nil {
+			ip = host
 		}
 		uid = ip
 	}

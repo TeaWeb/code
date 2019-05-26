@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teamemory"
 	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/types"
+	"net"
 	"regexp"
 	"strings"
 	"sync"
@@ -130,11 +131,9 @@ func (this *CCCheckpoint) ip(req *requests.Request) string {
 	}
 
 	// Remote-Addr
-	remoteAddr := req.RemoteAddr
-	index := strings.LastIndex(remoteAddr, ":")
-	if index < 0 {
-		return remoteAddr
-	} else {
-		return remoteAddr[:index]
+	host, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err == nil {
+		return host
 	}
+	return req.RemoteAddr
 }

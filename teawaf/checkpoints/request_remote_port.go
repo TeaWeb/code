@@ -2,7 +2,8 @@ package checkpoints
 
 import (
 	"github.com/TeaWeb/code/teawaf/requests"
-	"strings"
+	"github.com/iwind/TeaGo/types"
+	"net"
 )
 
 type RequestRemotePortCheckpoint struct {
@@ -10,12 +11,11 @@ type RequestRemotePortCheckpoint struct {
 }
 
 func (this *RequestRemotePortCheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
-	remoteAddr := req.RemoteAddr
-	index := strings.LastIndex(remoteAddr, ":")
-	if index < 0 {
-		value = 0
+	_, port, err := net.SplitHostPort(req.RemoteAddr)
+	if err == nil {
+		value = types.Int(port)
 	} else {
-		value = remoteAddr[index+1:]
+		value = 0
 	}
 	return
 }

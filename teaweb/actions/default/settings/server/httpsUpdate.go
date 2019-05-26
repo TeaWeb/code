@@ -7,6 +7,7 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/utils/string"
+	"net"
 	"strings"
 )
 
@@ -43,8 +44,8 @@ func (this *HttpsUpdateAction) Run(params struct {
 		if len(addr) == 0 {
 			continue
 		}
-		if strings.Index(addr, ":") < 0 {
-			addr = addr + ":80"
+		if _, _, err := net.SplitHostPort(addr); err != nil {
+			addr += ":443"
 		}
 		listen = append(listen, addr)
 	}

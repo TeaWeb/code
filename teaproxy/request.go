@@ -16,6 +16,7 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -755,22 +756,20 @@ func (this *Request) requestRemoteAddr() string {
 
 	// Remote-Addr
 	remoteAddr := this.raw.RemoteAddr
-	index := strings.LastIndex(remoteAddr, ":")
-	if index < 0 {
-		return remoteAddr
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err == nil {
+		return host
 	} else {
-		return remoteAddr[:index]
+		return remoteAddr
 	}
 }
 
 func (this *Request) requestRemotePort() int {
-	remoteAddr := this.raw.RemoteAddr
-	index := strings.LastIndex(remoteAddr, ":")
-	if index < 0 {
-		return 0
-	} else {
-		return types.Int(remoteAddr[index+1:])
+	_, port, err := net.SplitHostPort(this.raw.RemoteAddr)
+	if err == nil {
+		types.Int(port)
 	}
+	return 0
 }
 
 func (this *Request) requestRemoteUser() string {
@@ -863,11 +862,11 @@ func (this *Request) requestQueryParam(name string) string {
 }
 
 func (this *Request) requestServerPort() int {
-	index := strings.LastIndex(this.serverAddr, ":")
-	if index < 0 {
-		return 0
+	_, port, err := net.SplitHostPort(this.serverAddr)
+	if err == nil {
+		return types.Int(port)
 	}
-	return types.Int(this.serverAddr[index+1:])
+	return 0
 }
 
 func (this *Request) requestHeadersString() string {
@@ -969,9 +968,9 @@ func (this *Request) Format(source string) string {
 			return this.requestRemoteAddr()
 		case "rawRemoteAddr":
 			addr := this.raw.RemoteAddr
-			portIndex := strings.LastIndex(addr, ":")
-			if portIndex > -1 {
-				addr = addr[:portIndex]
+			host, _, err := net.SplitHostPort(addr)
+			if err == nil {
+				addr = host
 			}
 			return addr
 		case "remotePort":
@@ -1254,13 +1253,14 @@ func (this *Request) addError(err error) {
 }
 
 // 设置代理相关头部信息
+// 参考：https://tools.ietf.org/html/rfc7239
 func (this *Request) setProxyHeaders(header http.Header) {
 	delete(header, "Connection")
 
 	remoteAddr := this.raw.RemoteAddr
-	portIndex := strings.LastIndex(remoteAddr, ":")
-	if portIndex > -1 {
-		remoteAddr = remoteAddr[:portIndex]
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err == nil {
+		remoteAddr = host
 	}
 
 	// x-real-ip

@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/mail"
 	"net/smtp"
-	"strings"
 	"time"
 )
 
@@ -29,7 +28,8 @@ func (this *NoticeEmailMedia) Send(user string, subject string, body string) (re
 	}
 
 	// 自动加端口
-	if strings.Index(this.SMTP, ":") < 0 {
+
+	if _, _, err := net.SplitHostPort(this.SMTP); err != nil {
 		this.SMTP += ":587"
 	}
 

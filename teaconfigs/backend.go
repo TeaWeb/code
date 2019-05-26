@@ -8,6 +8,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/utils/string"
+	"net"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -84,7 +85,8 @@ func (this *BackendConfig) Validate() error {
 	}
 
 	// 是否有端口
-	if strings.Index(this.Address, ":") == -1 {
+	_, _, err := net.SplitHostPort(this.Address)
+	if err != nil {
 		if this.Scheme == "https" {
 			this.Address += ":443"
 		} else {
@@ -93,7 +95,7 @@ func (this *BackendConfig) Validate() error {
 	}
 
 	// Headers
-	err := this.ValidateHeaders()
+	err = this.ValidateHeaders()
 	if err != nil {
 		return err
 	}

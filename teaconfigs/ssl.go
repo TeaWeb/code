@@ -2,9 +2,10 @@ package teaconfigs
 
 import (
 	"crypto/tls"
+	"errors"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
-	"github.com/pkg/errors"
+	"net"
 	"strings"
 )
 
@@ -94,9 +95,9 @@ func (this *SSLConfig) Validate() error {
 		this.Listen = []string{}
 	} else {
 		for index, addr := range this.Listen {
-			portIndex := strings.Index(addr, ":")
-			if portIndex < 0 {
-				this.Listen[index] = addr + ":443"
+			_, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				this.Listen[index] = strings.TrimSuffix(addr, ":") + ":443"
 			}
 		}
 	}

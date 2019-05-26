@@ -1,8 +1,8 @@
 package teacache
 
 import (
+	"errors"
 	"github.com/TeaWeb/code/teamemory"
-	"github.com/pkg/errors"
 	"time"
 )
 

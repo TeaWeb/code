@@ -10,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/gofcgi"
 	"io"
+	"net"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -49,9 +50,9 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 			env["SERVER_ADDR"] = this.serverAddr
 		}
 		if !env.Has("SERVER_PORT") {
-			portIndex := strings.LastIndex(this.serverAddr, ":")
-			if portIndex >= 0 {
-				env["SERVER_PORT"] = this.serverAddr[portIndex+1:]
+			_, port, err := net.SplitHostPort(this.serverAddr)
+			if err == nil {
+				env["SERVER_PORT"] = port
 			}
 		}
 	}

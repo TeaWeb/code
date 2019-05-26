@@ -6,6 +6,7 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
 	"io/ioutil"
+	"net"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -126,7 +127,7 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 			// 是否有端口
 			if teaconfigs.RegexpDigitNumber.MatchString(address) {
 				address = ":" + address
-			} else if strings.Index(address, ":") < 0 {
+			} else if _, _, err := net.SplitHostPort(address); err != nil {
 				address += ":80"
 			}
 
@@ -143,7 +144,7 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 			// 是否有端口
 			if teaconfigs.RegexpDigitNumber.MatchString(address) {
 				address = ":" + address
-			} else if strings.Index(address, ":") < 0 {
+			} else if _, _, err := net.SplitHostPort(address); err != nil {
 				address += ":443"
 			}
 

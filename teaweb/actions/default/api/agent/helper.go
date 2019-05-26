@@ -4,7 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
-	"strings"
+	"net"
 )
 
 type Helper struct {
@@ -31,9 +31,9 @@ func (this *Helper) BeforeAction(action actions.ActionObject) bool {
 
 	// 检查IP
 	addr := action.Request.RemoteAddr
-	portIndex := strings.LastIndex(addr, ":")
-	if portIndex > 0 {
-		addr = addr[:portIndex]
+	host, _, err := net.SplitHostPort(addr)
+	if err == nil {
+		addr = host
 	}
 	if !agent.IsLocal() && !agent.AllowAll && !lists.ContainsString(agent.Allow, addr) {
 		action.Fail("Access Denied 005")

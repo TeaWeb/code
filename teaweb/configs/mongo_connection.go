@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
+	"net"
 	"net/url"
 	"strings"
 	"sync"
@@ -50,10 +51,10 @@ func SharedMongoConfig() *MongoConnectionConfig {
 
 	mongoConnectionConfig.Scheme = u.Scheme
 
-	index := strings.Index(u.Host, ":")
-	if index >= 0 {
-		mongoConnectionConfig.Host = u.Host[:index]
-		mongoConnectionConfig.Port = types.Uint(u.Port())
+	host, port, err := net.SplitHostPort(u.Host)
+	if err == nil {
+		mongoConnectionConfig.Host = host
+		mongoConnectionConfig.Port = types.Uint(port)
 	} else {
 		mongoConnectionConfig.Host = u.Host
 		mongoConnectionConfig.Port = types.Uint(u.Port())

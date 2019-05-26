@@ -9,8 +9,8 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"golang.org/x/net/context"
 	"golang.org/x/net/http2"
+	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -283,12 +283,9 @@ func (this *Listener) handle(writer http.ResponseWriter, rawRequest *http.Reques
 
 	// 域名
 	reqHost := rawRequest.Host
-	colonIndex := strings.Index(reqHost, ":")
-	domain := ""
-	if colonIndex < 0 {
+	domain, _, err := net.SplitHostPort(reqHost)
+	if err != nil {
 		domain = reqHost
-	} else {
-		domain = reqHost[:colonIndex]
 	}
 	server, serverName := this.findNamedServer(domain)
 	if server == nil {
@@ -316,7 +313,7 @@ func (this *Listener) handle(writer http.ResponseWriter, rawRequest *http.Reques
 	req.charset = server.Charset
 
 	// 配置请求
-	err := req.configure(server, 0)
+	err = req.configure(server, 0)
 	if err != nil {
 		req.serverError(responseWriter)
 		logs.Error(errors.New(reqHost + rawRequest.URL.String() + ": " + err.Error()))

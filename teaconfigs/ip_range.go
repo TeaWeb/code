@@ -56,12 +56,12 @@ func (this *IPRangeConfig) Validate() error {
 		this.ipFrom = net.ParseIP(this.IPFrom)
 		this.ipTo = net.ParseIP(this.IPTo)
 
-		if this.ipFrom.To4() == nil {
-			return errors.New("from ip should in IPv4 format")
+		if this.ipFrom.To4() == nil && this.ipFrom.To16() == nil {
+			return errors.New("from ip should in IPv4 or IPV6 format")
 		}
 
-		if this.ipTo.To4() == nil {
-			return errors.New("to ip should in IPv4 format")
+		if this.ipTo.To4() == nil && this.ipTo.To16() == nil {
+			return errors.New("to ip should in IPv4 or IPV6 format")
 		}
 	}
 

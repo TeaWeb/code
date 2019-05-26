@@ -1,12 +1,13 @@
 package server
 
 import (
+	"github.com/TeaWeb/code/teaweb/actions/default/settings"
+	"github.com/iwind/TeaGo"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo"
+	"net"
 	"strings"
-	"github.com/TeaWeb/code/teaweb/actions/default/settings"
 )
 
 type HttpUpdateAction actions.Action
@@ -40,8 +41,8 @@ func (this *HttpUpdateAction) Run(params struct {
 		if len(addr) == 0 {
 			continue
 		}
-		if strings.Index(addr, ":") < 0 {
-			addr = addr + ":80"
+		if _, _, err := net.SplitHostPort(addr); err != nil {
+			addr += ":80"
 		}
 		listen = append(listen, addr)
 	}
