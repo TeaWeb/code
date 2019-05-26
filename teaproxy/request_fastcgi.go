@@ -185,14 +185,7 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	}
 
 	// 自定义Header
-	for _, header := range this.responseHeaders {
-		if header.Match(resp.StatusCode) {
-			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
-				continue
-			}
-			writer.Header().Set(header.Name, header.Value)
-		}
-	}
+	this.WriteResponseHeaders(writer, resp.StatusCode)
 
 	// 插件过滤
 	if teaplugins.HasResponseFilters {

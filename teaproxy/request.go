@@ -174,10 +174,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 	// Header
 	if server.HasHeaders() {
-		// 延迟执行，让Header有机会加入Backend, Fastcgi等信息
-		defer func() {
-			this.responseHeaders = append(this.responseHeaders, server.FormatHeaders(this.Format) ...)
-		}()
+		this.responseHeaders = append(this.responseHeaders, server.Headers ...)
 	}
 
 	if len(server.IgnoreHeaders) > 0 {
@@ -291,7 +288,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 
 			if location.HasHeaders() {
-				this.responseHeaders = append(this.responseHeaders, location.FormatHeaders(this.Format) ...)
+				this.responseHeaders = append(this.responseHeaders, location.Headers ...)
 			}
 
 			if len(location.IgnoreHeaders) > 0 {
@@ -316,9 +313,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 						this.rewriteId = rule.Id
 
 						if rule.HasHeaders() {
-							this.responseHeaders = append(this.responseHeaders, rule.FormatHeaders(func(source string) string {
-								return this.Format(source)
-							}) ...)
+							this.responseHeaders = append(this.responseHeaders, rule.Headers...)
 						}
 
 						if len(rule.IgnoreHeaders) > 0 {
@@ -719,7 +714,7 @@ func (this *Request) serverError(writer *ResponseWriter) {
 			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
 				continue
 			}
-			writer.Header().Set(header.Name, header.Value)
+			writer.Header().Set(header.Name, this.Format(header.Value))
 		}
 	}
 
@@ -941,6 +936,21 @@ func (this *Request) SetHost(host string) {
 // 获取原始的请求
 func (this *Request) Raw() *http.Request {
 	return this.raw
+}
+
+// 输出自定义Response Header
+func (this *Request) WriteResponseHeaders(writer *ResponseWriter, statusCode int) {
+	ignoreHeaders := this.convertIgnoreHeaders()
+	hasIgnoreHeaders := ignoreHeaders.Len() > 0
+
+	for _, header := range this.responseHeaders {
+		if header.Match(statusCode) {
+			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
+				continue
+			}
+			writer.Header().Set(header.Name, this.Format(header.Value))
+		}
+	}
 }
 
 // 利用请求参数格式化字符串
@@ -1243,6 +1253,11 @@ func (this *Request) addVarMapping(varMapping map[string]string) {
 	for k, v := range varMapping {
 		this.varMapping[k] = v
 	}
+}
+
+// 添加自定义变量
+func (this *Request) SetVarMapping(varName string, varValue string) {
+	this.varMapping[varName] = varValue
 }
 
 func (this *Request) addError(err error) {

@@ -135,16 +135,6 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	// length
 	respHeader.Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
 
-	// 自定义Header
-	for _, header := range this.responseHeaders {
-		if header.Match(http.StatusOK) {
-			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
-				continue
-			}
-			respHeader.Set(header.Name, header.Value)
-		}
-	}
-
 	// 支持 Last-Modified
 	modifiedTime := stat.ModTime().Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	if len(respHeader.Get("Last-Modified")) == 0 {
@@ -164,6 +154,9 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 
 	// 支持 If-None-Match
 	if this.requestHeader("If-None-Match") == eTag {
+		// 自定义Header
+		this.WriteResponseHeaders(writer, http.StatusNotModified)
+
 		writer.WriteHeader(http.StatusNotModified)
 
 		return nil
@@ -171,10 +164,16 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 
 	// 支持 If-Modified-Since
 	if this.requestHeader("If-Modified-Since") == modifiedTime {
+		// 自定义Header
+		this.WriteResponseHeaders(writer, http.StatusNotModified)
+
 		writer.WriteHeader(http.StatusNotModified)
 
 		return nil
 	}
+
+	// 自定义Header
+	this.WriteResponseHeaders(writer, http.StatusOK)
 
 	var contentReader io.Reader = nil
 	if this.server.CacheStatic {

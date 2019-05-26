@@ -47,9 +47,8 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 	defer resp.Body.Close()
 
 	// Header
-	for _, h := range this.responseHeaders {
-		writer.Header().Set(h.Name, h.Value)
-	}
+	this.WriteResponseHeaders(writer, resp.StatusCode)
+
 	writer.AddHeaders(resp.Header)
 	writer.Prepare(resp.ContentLength)
 

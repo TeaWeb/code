@@ -122,7 +122,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	if resp.ContentLength > 0 && resp.ContentLength < 2048 { // 内容比较少的直接读取，以加快响应速度
 		bodyRead = true
 
-		buf := make([]byte, 512)
+		buf := make([]byte, 256)
 		for {
 			n, err := resp.Body.Read(buf)
 			if n > 0 {
@@ -179,14 +179,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	}
 
 	// 自定义响应Headers
-	for _, header := range this.responseHeaders {
-		if header.Match(resp.StatusCode) {
-			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
-				continue
-			}
-			writer.Header().Set(header.Name, header.Value)
-		}
-	}
+	this.WriteResponseHeaders(writer, resp.StatusCode)
 
 	// 当前Backend的响应Headers
 	if this.backend.HasResponseHeaders() {

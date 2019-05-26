@@ -14,10 +14,17 @@ import (
 
 // 请求之前处理
 func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter) bool {
+	req.SetVarMapping("cache.status", "BYPASS")
+	req.SetVarMapping("cache.policy.name", "")
+	req.SetVarMapping("cache.policy.type", "")
+
 	cacheConfig := req.CachePolicy()
 	if cacheConfig == nil || !cacheConfig.On {
 		return true
 	}
+
+	req.SetVarMapping("cache.policy.name", cacheConfig.Name)
+	req.SetVarMapping("cache.policy.type", cacheConfig.Type)
 
 	cachePolicyMapLocker.RLock()
 	cache, found := cachePolicyMap[cacheConfig.Filename]
@@ -57,6 +64,8 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 	rawReq := req.Raw()
 	teaKey := rawReq.Header.Get("Tea-Key")
 	if rawReq.Header.Get("Tea-Cache-Purge") == "1" {
+		req.SetVarMapping("cache.status", "PURGE")
+
 		if len(teaKey) == 0 {
 			writer.Write([]byte("ERROR:'Tea-Key' should be set in header"))
 			return false
@@ -78,6 +87,7 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 
 	// 读取缓存
 	data, err := cache.Read(key)
+	req.SetVarMapping("cache.status", "MISS")
 	if err != nil {
 		if err != ErrNotFound {
 			logs.Error(err)
@@ -97,6 +107,7 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 		logs.Error(err)
 		return true
 	}
+
 	defer resp.Body.Close()
 
 	for k, vs := range resp.Header {
@@ -107,6 +118,17 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 			writer.Header().Add(k, v)
 		}
 	}
+
+	req.SetAttr("cache.cached", "1")
+	req.SetAttr("cache.policy.name", cacheConfig.Name)
+	req.SetAttr("cache.policy.type", cacheConfig.Type)
+
+	// 添加变量
+	req.SetVarMapping("cache.status", "HIT")
+
+	// 自定义Response
+	req.WriteResponseHeaders(writer, resp.StatusCode)
+
 	writer.WriteHeader(resp.StatusCode)
 
 	_, err = io.Copy(writer, resp.Body)
@@ -114,9 +136,6 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 		logs.Error(err)
 	}
 
-	req.SetAttr("cache.cached", "1")
-	req.SetAttr("cache.policy.name", cacheConfig.Name)
-	req.SetAttr("cache.policy.type", cacheConfig.Type)
 	return false
 }
 
