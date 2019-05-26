@@ -10,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"io"
 	"net/http"
+	"strings"
 )
 
 // 请求之前处理
@@ -158,6 +159,24 @@ func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter)
 		cacheConfig.Status = []int{http.StatusOK}
 	}
 	if !lists.ContainsInt(cacheConfig.Status, writer.StatusCode()) {
+		return true
+	}
+
+	// validate cache control
+	if len(cacheConfig.SkipCacheControlValues) > 0 {
+		cacheControl := writer.Header().Get("Cache-Control")
+		if len(cacheControl) > 0 {
+			values := strings.Split(cacheControl, ",")
+			for _, value := range values {
+				if cacheConfig.ContainsCacheControl(strings.TrimSpace(value)) {
+					return true
+				}
+			}
+		}
+	}
+
+	// validate set cookie
+	if cacheConfig.SkipSetCookie && len(writer.Header().Get("Set-Cookie")) > 0 {
 		return true
 	}
 

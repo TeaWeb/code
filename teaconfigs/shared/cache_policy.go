@@ -3,10 +3,14 @@ package shared
 import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
+	"strings"
 	"time"
 )
+
+var DefaultSkippedCacheControlValues = []string{"private", "no-cache", "no-store"}
 
 // 缓存策略配置
 type CachePolicy struct {
@@ -21,9 +25,14 @@ type CachePolicy struct {
 	Status   []int  `yaml:"status" json:"status"`     // 缓存的状态码列表
 	MaxSize  string `yaml:"maxSize" json:"maxSize"`   // 能够请求的最大尺寸
 
+	SkipCacheControlValues []string `yaml:"skipCacheControlValues" json:"skipCacheControlValues"` // 可以跳过的Cache-Control值
+	SkipSetCookie          bool     `yaml:"skipSetCookie" json:"skipSetCookie"`                   // 是否跳过Set-Cookie Header
+
 	life     time.Duration
 	maxSize  float64
 	capacity float64
+
+	uppercaseSkipCacheControlValues []string
 
 	Type    string                 `yaml:"type" json:"type"`       // 类型
 	Options map[string]interface{} `yaml:"options" json:"options"` // 选项
@@ -31,7 +40,10 @@ type CachePolicy struct {
 
 // 获取新对象
 func NewCachePolicy() *CachePolicy {
-	return &CachePolicy{}
+	return &CachePolicy{
+		SkipCacheControlValues: DefaultSkippedCacheControlValues,
+		SkipSetCookie:          true,
+	}
 }
 
 // 从文件中读取缓存策略
@@ -62,6 +74,12 @@ func (this *CachePolicy) Validate() error {
 	this.maxSize, _ = stringutil.ParseFileSize(this.MaxSize)
 	this.life, _ = time.ParseDuration(this.Life)
 	this.capacity, _ = stringutil.ParseFileSize(this.Capacity)
+
+	this.uppercaseSkipCacheControlValues = []string{}
+	for _, value := range this.SkipCacheControlValues {
+		this.uppercaseSkipCacheControlValues = append(this.uppercaseSkipCacheControlValues, strings.ToUpper(value))
+	}
+
 	return err
 }
 
@@ -104,4 +122,9 @@ func (this *CachePolicy) Delete() error {
 		return files.NewFile(Tea.ConfigFile(this.Filename)).Delete()
 	}
 	return nil
+}
+
+// 是否包含某个Cache-Control值
+func (this *CachePolicy) ContainsCacheControl(value string) bool {
+	return lists.ContainsString(this.uppercaseSkipCacheControlValues, strings.ToUpper(value))
 }

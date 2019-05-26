@@ -7,6 +7,7 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	"github.com/iwind/TeaGo/utils/time"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -111,6 +112,10 @@ func startTestServer() {
 				"hello": "world",
 			}
 			resp.Write([]byte(stringutil.JSONEncode(data)))
+		}).
+		Get("/nocache", func(req *http.Request, resp http.ResponseWriter) {
+			resp.Header().Set("Cache-Control", "no-cache")
+			resp.Write([]byte("will be not cached " + timeutil.Format("Y-m-d H:i:s")))
 		}).
 		StartOn("127.0.0.1:9991")
 }

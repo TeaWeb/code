@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaweb/actions/default/cache/cacheutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -25,33 +27,42 @@ func (this *UpdatePolicyAction) Run(params struct {
 	policy.Validate()
 
 	this.Data["policy"] = maps.Map{
-		"filename": policy.Filename,
-		"name":     policy.Name,
-		"key":      policy.Key,
-		"type":     policy.Type,
-		"options":  policy.Options,
-		"life":     policy.Life,
-		"status":   policy.Status,
-		"maxSize":  policy.MaxSize,
-		"capacity": policy.Capacity,
+		"filename":      policy.Filename,
+		"name":          policy.Name,
+		"key":           policy.Key,
+		"type":          policy.Type,
+		"options":       policy.Options,
+		"life":          policy.Life,
+		"status":        policy.Status,
+		"maxSize":       policy.MaxSize,
+		"capacity":      policy.Capacity,
+		"skipSetCookie": policy.SkipSetCookie,
 	}
+
+	if len(policy.SkipCacheControlValues) == 0 {
+		policy.SkipCacheControlValues = []string{}
+	}
+	this.Data["skippedCacheControlValues"] = policy.SkipCacheControlValues
 
 	this.Show()
 }
 
+// 提交保存
 func (this *UpdatePolicyAction) RunPost(params struct {
 	Filename string
 	Name     string
 	Key      string
 	Type     string
 
-	Capacity     float64
-	CapacityUnit string
-	Life         int
-	LifeUnit     string
-	StatusList   []int
-	MaxSize      float64
-	MaxSizeUnit  string
+	Capacity                  float64
+	CapacityUnit              string
+	Life                      int
+	LifeUnit                  string
+	StatusList                []int
+	MaxSize                   float64
+	MaxSizeUnit               string
+	SkippedCacheControlValues []string
+	SkipSetCookie             bool
 
 	FileDir string
 
@@ -91,6 +102,8 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 	}
 	policy.MaxSize = fmt.Sprintf("%.2f%s", params.MaxSize, params.MaxSizeUnit)
 	policy.Status = params.StatusList
+	policy.SkipCacheControlValues = params.SkippedCacheControlValues
+	policy.SkipSetCookie = params.SkipSetCookie
 
 	// 选项
 	switch policy.Type {
@@ -130,6 +143,10 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 
 	// 重置缓存策略实例
 	teacache.ResetCachePolicyManager(policy.Filename)
+
+	if cacheutils.IsPolicyUsed(params.Filename) {
+		proxyutils.NotifyChange()
+	}
 
 	this.Success("保存成功")
 }
