@@ -79,9 +79,9 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	resp, err := client.Do(this.raw)
 
 	if err != nil {
-		urlError, ok := err.(*url.Error)
+		urlError, isURLErr := err.(*url.Error)
 		isRedirecting := false
-		if ok {
+		if isURLErr {
 			if _, ok := urlError.Err.(*RedirectError); ok {
 				isRedirecting = true
 			}
@@ -103,7 +103,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 			}
 
 			this.serverError(writer)
-			logs.Error(err)
+			logs.Println("[proxy]" + err.Error())
 			this.addError(err)
 			return nil
 		}

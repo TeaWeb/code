@@ -3,6 +3,7 @@ package teastats
 import (
 	"fmt"
 	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -21,7 +22,8 @@ var sharedKV *KVStorage = nil
 func NewKVStorage(filename string) *KVStorage {
 	db, err := leveldb.OpenFile(Tea.LogFile(filename), nil)
 	if err != nil {
-		panic(err)
+		logs.Error(err)
+		return nil
 	}
 	kv := &KVStorage{
 		db: db,

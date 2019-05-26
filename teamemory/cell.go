@@ -73,7 +73,7 @@ func (this *Cell) Increase64(key []byte, expireAt int64, hashKey uint64, delta i
 		item.IncreaseInt64(delta)
 		result = item.ValueInt64
 	} else {
-		item := NewMemoryItem(key, ItemInt64)
+		item := NewItem(key, ItemInt64)
 		item.ValueInt64 = delta
 		item.ExpireAt = expireAt
 		this.mapping[hashKey] = item

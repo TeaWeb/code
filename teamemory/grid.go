@@ -139,6 +139,16 @@ func (this *Grid) WriteBytes(key []byte, value []byte, lifeSeconds int64) {
 	})
 }
 
+func (this *Grid) WriteInterface(key []byte, value interface{}, lifeSeconds int64) {
+	this.WriteItem(&Item{
+		Key:            key,
+		Type:           ItemInterface,
+		ValueInterface: value,
+		ExpireAt:       time.Now().Unix() + lifeSeconds,
+		IsCompressed:   false,
+	})
+}
+
 func (this *Grid) Read(key []byte) *Item {
 	if this.countCells <= 0 {
 		return nil

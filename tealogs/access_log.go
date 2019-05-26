@@ -3,19 +3,22 @@ package tealogs
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teageo"
+	"github.com/TeaWeb/code/teamemory"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/uaparser"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/utils/string"
 	"github.com/pquerna/ffjson/ffjson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"net"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
 )
+
+var userAgentGrid = teamemory.NewGrid(32)
+var charsetReg = regexp.MustCompile("(?i)charset\\s*=\\s*([\\w-]+)")
 
 type AccessLog struct {
 	Id primitive.ObjectID `var:"id" bson:"_id" json:"id"` // 数据库存储的ID
@@ -285,10 +288,12 @@ func (this *AccessLog) GetHeader(name string) string {
 
 // 分析mime，扩展名、代理设置等
 func (this *AccessLog) Parse() {
-	this.parseMime()
-	this.parseExtension()
-	this.parseUserAgent()
-	this.parseGeoIP()
+	if (len(this.writingFields) == 0 || lists.ContainsInt(this.writingFields, AccessLogFieldExtend)) || this.shouldStat {
+		this.parseMime()
+		this.parseExtension()
+		this.parseUserAgent()
+		this.parseGeoIP()
+	}
 }
 
 // 是否支持统计
@@ -358,16 +363,11 @@ func (this *AccessLog) parseMime() {
 	}
 
 	this.Extend.File.MimeType = this.ContentType[:semicolonIndex]
-	reg, err := stringutil.RegexpCompile("(?i)charset\\s*=\\s*([\\w-]+)")
-	if err != nil {
-		logs.Error(err)
+	match := charsetReg.FindStringSubmatch(this.ContentType)
+	if len(match) > 0 {
+		this.Extend.File.Charset = strings.ToUpper(match[1])
 	} else {
-		match := reg.FindStringSubmatch(this.ContentType)
-		if len(match) > 0 {
-			this.Extend.File.Charset = strings.ToUpper(match[1])
-		} else {
-			this.Extend.File.Charset = ""
-		}
+		this.Extend.File.Charset = ""
 	}
 }
 
@@ -387,8 +387,27 @@ func (this *AccessLog) parseUserAgent() {
 	// MDN上的参考：https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent
 	// 浏览器集合测试：http://www.browserscope.org/
 
-	result, found := userAgentParser.Parse(this.UserAgent)
-	if found {
+	if len(this.UserAgent) == 0 {
+		return
+	}
+
+	cacheKey := []byte(this.UserAgent)
+	item := userAgentGrid.Read(cacheKey)
+	var result *uaparser.UserAgent = nil
+	if item != nil {
+		if item.ValueInterface == nil {
+			return
+		}
+		result = item.ValueInterface.(*uaparser.UserAgent)
+	} else {
+		userAgent, found := userAgentParser.Parse(this.UserAgent)
+		if found {
+			result = userAgent
+		}
+		userAgentGrid.WriteInterface(cacheKey, userAgent, 3600)
+	}
+
+	if result != nil {
 		if this.Extend == nil {
 			this.Extend = &AccessLogExtend{}
 		}
@@ -430,22 +449,25 @@ func (this *AccessLog) parseGeoIP() {
 	}
 
 	// 是否为本地
-	if this.RemoteAddr == "127.0.0.1" {
-		return
-	}
-
-	ip := net.ParseIP(this.RemoteAddr)
-	if ip == nil {
+	// 参考 https://tools.ietf.org/html/rfc1918
+	if this.RemoteAddr == "127.0.0.1" || strings.HasPrefix(this.RemoteAddr, "10.") || strings.HasPrefix(this.RemoteAddr, "192.168.") || strings.HasPrefix(this.RemoteAddr, "172.16.") {
 		return
 	}
 
 	// 参考：https://dev.maxmind.com/geoip/geoip2/geolite2/
-	record, err := teageo.DB.City(ip)
+	record, err := teageo.IP2City(this.RemoteAddr, true)
 	if err != nil {
 		logs.Error(err)
 		return
 	}
 
+	if record == nil {
+		return
+	}
+
+	if this.Extend == nil {
+		this.Extend = &AccessLogExtend{}
+	}
 	this.Extend.Geo.Location.AccuracyRadius = record.Location.AccuracyRadius
 	this.Extend.Geo.Location.MetroCode = record.Location.MetroCode
 	this.Extend.Geo.Location.TimeZone = record.Location.TimeZone

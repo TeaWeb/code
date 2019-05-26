@@ -2,12 +2,15 @@ package tealogs
 
 import (
 	"context"
+	"github.com/TeaWeb/code/teageo"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/uaparser"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
+	"runtime"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -176,7 +179,6 @@ func TestLogParse5(t *testing.T) {
 		"hello",
 	}
 
-	beforeTime1 := time.Now()
 	for _, userAgent := range userAgents {
 		accessLog := &AccessLog{
 			UserAgent: userAgent,
@@ -189,23 +191,27 @@ func TestLogParse5(t *testing.T) {
 			t.Logf("%#v", accessLog.Extend.Client)
 		}
 	}
-	return //TODO
+}
 
-	beforeTime2 := time.Now()
-	for i := 0; i < 10000; i ++ {
-		for _, userAgent := range userAgents {
-			accessLog := &AccessLog{
-				UserAgent: userAgent,
-			}
-			accessLog.parseUserAgent()
+func BenchmarkAccessLog_ParseUserAgent(b *testing.B) {
+	runtime.GOMAXPROCS(1)
 
-			//t.Log("=======")
-			//t.Log(userAgent)
-			//t.Logf("%#v", accessLog.Extend.Client)
-		}
+	parser, err := uaparser.NewParser(Tea.Root + Tea.DS + "web" + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	if err != nil {
+		b.Fatal(err)
 	}
-	t.Log(float64(time.Since(beforeTime1).Nanoseconds())/1000000, "ms")
-	t.Log(float64(time.Since(beforeTime2).Nanoseconds())/1000000, "ms")
+	userAgentParser = parser
+	teageo.SetupDB()
+
+	for i := 0; i < b.N; i ++ {
+		accessLog := &AccessLog{}
+		accessLog.UserAgent = "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36"
+		accessLog.RemoteAddr = "160.16.241." + strconv.Itoa(i%200)
+		accessLog.ContentType = "text/html; charset=utf-8"
+		accessLog.RequestPath = "/hello.php"
+		//accessLog.SetWritingFields([]int{AccessLogFieldHeader})
+		accessLog.Parse()
+	}
 }
 
 func TestAccessLogger_DB(t *testing.T) {
@@ -278,16 +284,18 @@ func TestAccessLog_Format(t *testing.T) {
 }
 
 func TestAccessLog_ParseGEO(t *testing.T) {
+	teageo.SetupDB()
+
 	{
 		accessLog := &AccessLog{
-			RemoteAddr: "111.197.204.174",
+			RemoteAddr: "114.240.210.253",
 		}
 		accessLog.parseGeoIP()
 	}
 
 	before := time.Now()
 	accessLog := &AccessLog{
-		RemoteAddr: "183.131.156.10",
+		RemoteAddr: "114.240.210.253",
 	}
 	accessLog.parseGeoIP()
 	cost := time.Since(before).Seconds()

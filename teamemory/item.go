@@ -12,8 +12,9 @@ import (
 type ItemType = int
 
 const (
-	ItemInt64 = 1
-	ItemBytes = 2
+	ItemInt64     = 1
+	ItemBytes     = 2
+	ItemInterface = 3
 )
 
 func HashKey(key []byte) uint64 {
@@ -21,19 +22,20 @@ func HashKey(key []byte) uint64 {
 }
 
 type Item struct {
-	Key          []byte
-	ExpireAt     int64
-	Type         ItemType
-	ValueInt64   int64
-	ValueBytes   []byte
-	IsCompressed bool
+	Key            []byte
+	ExpireAt       int64
+	Type           ItemType
+	ValueInt64     int64
+	ValueBytes     []byte
+	ValueInterface interface{}
+	IsCompressed   bool
 
 	// linked list
 	Prev *Item
 	Next *Item
 }
 
-func NewMemoryItem(key []byte, dataType ItemType) *Item {
+func NewItem(key []byte, dataType ItemType) *Item {
 	return &Item{
 		Key:  key,
 		Type: dataType,
