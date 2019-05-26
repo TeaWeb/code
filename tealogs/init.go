@@ -15,6 +15,7 @@ func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		accessLogger = NewAccessLogger()
 	})
+
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		logs.Println("[proxy]start user-agent parser")
 		var err error

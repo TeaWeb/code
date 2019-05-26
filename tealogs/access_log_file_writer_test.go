@@ -1,8 +1,8 @@
 package tealogs
 
 import (
-	"testing"
 	"github.com/TeaWeb/code/teaconfigs"
+	"testing"
 )
 
 func TestAccessLogFileConfig_Init(t *testing.T) {

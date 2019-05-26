@@ -346,6 +346,10 @@ func (this *AccessLog) CleanFields() {
 }
 
 func (this *AccessLog) parseMime() {
+	if this.Extend == nil {
+		this.Extend = &AccessLogExtend{}
+	}
+
 	semicolonIndex := strings.Index(this.ContentType, ";")
 	if semicolonIndex == -1 {
 		this.Extend.File.MimeType = this.ContentType
@@ -368,6 +372,9 @@ func (this *AccessLog) parseMime() {
 }
 
 func (this *AccessLog) parseExtension() {
+	if this.Extend == nil {
+		this.Extend = &AccessLogExtend{}
+	}
 	ext := filepath.Ext(this.RequestPath)
 	if len(ext) == 0 {
 		this.Extend.File.Extension = ""
@@ -382,6 +389,9 @@ func (this *AccessLog) parseUserAgent() {
 
 	result, found := userAgentParser.Parse(this.UserAgent)
 	if found {
+		if this.Extend == nil {
+			this.Extend = &AccessLogExtend{}
+		}
 		this.Extend.Client = AccessLogClient{}
 		if result.Browser != nil {
 			this.Extend.Client.Browser = AccessLogClientBrowser{

@@ -1,13 +1,13 @@
 package tealogs
 
 import (
-	"path/filepath"
-	"github.com/iwind/TeaGo/Tea"
-	"os"
-	"github.com/iwind/TeaGo/logs"
-	"github.com/TeaWeb/code/teaconfigs"
-	"sync"
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/logs"
+	"os"
+	"path/filepath"
+	"sync"
 )
 
 type AccessLogFileWriter struct {

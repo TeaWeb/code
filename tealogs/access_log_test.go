@@ -159,6 +159,12 @@ func TestLogOSParser4(t *testing.T) {
 }
 
 func TestLogParse5(t *testing.T) {
+	parser, err := uaparser.NewParser(Tea.Root + Tea.DS + "web" + Tea.DS + "resources" + Tea.DS + "regexes.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	userAgentParser = parser
+
 	userAgents := []string{
 		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.59 Safari/537.36",
 		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:60.0) Gecko/20100101 Firefox/60.0",
@@ -179,8 +185,11 @@ func TestLogParse5(t *testing.T) {
 
 		t.Log("=======")
 		t.Log(userAgent)
-		t.Logf("%#v", accessLog.Extend.Client)
+		if accessLog.Extend != nil {
+			t.Logf("%#v", accessLog.Extend.Client)
+		}
 	}
+	return //TODO
 
 	beforeTime2 := time.Now()
 	for i := 0; i < 10000; i ++ {
@@ -283,7 +292,9 @@ func TestAccessLog_ParseGEO(t *testing.T) {
 	accessLog.parseGeoIP()
 	cost := time.Since(before).Seconds()
 
-	t.Logf("%#v", accessLog.Extend.Geo)
+	if accessLog.Extend != nil {
+		t.Logf("%#v", accessLog.Extend.Geo)
+	}
 	t.Log(1 / cost)
 }
 
