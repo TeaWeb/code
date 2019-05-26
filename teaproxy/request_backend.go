@@ -1,11 +1,9 @@
 package teaproxy
 
 import (
-	"bytes"
 	"errors"
 	"github.com/iwind/TeaGo/logs"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"strings"
 	"time"
@@ -207,21 +205,6 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 	// 设置响应代码
 	writer.WriteHeader(resp.StatusCode)
-
-	// 分析API中的status
-	if this.api != nil {
-		statusCode := resp.Header.Get("Tea-Status-Code")
-		if len(statusCode) == 0 && this.server.API.StatusScriptOn && len(this.server.API.StatusScript) > 0 {
-			data, err := ioutil.ReadAll(resp.Body)
-			if err == nil {
-				statusCode, _ = StatusCodeParser(resp.StatusCode, writer.Header(), data, this.server.API.StatusScript)
-				resp.Body = ioutil.NopCloser(bytes.NewReader(data))
-			}
-		}
-		if len(statusCode) > 0 {
-			this.responseAPIStatus = statusCode
-		}
-	}
 
 	if bodyRead {
 		_, err = writer.Write(data)

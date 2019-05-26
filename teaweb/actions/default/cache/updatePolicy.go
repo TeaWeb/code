@@ -93,7 +93,6 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 	policy.Status = params.StatusList
 
 	// 选项
-	// 选项
 	switch policy.Type {
 	case "file":
 		params.Must.

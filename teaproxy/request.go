@@ -23,8 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	apiconfig "github.com/TeaWeb/code/teaconfigs/api"
 )
 
 // 文本mime-type列表
@@ -88,9 +86,6 @@ type Request struct {
 	shutdownPageOn bool
 	shutdownPage   string
 
-	api    *apiconfig.API // API
-	mockOn bool           // 是否开启了API Mock
-
 	rewriteId           string // 匹配的rewrite id
 	rewriteReplace      string // 经过rewrite之后的URL
 	rewriteRedirectMode string // 跳转方式
@@ -110,10 +105,9 @@ type Request struct {
 	requestCost     float64   // 请求耗时
 	requestMaxSize  int64
 
-	isWatching        bool     // 是否在监控
-	requestData       []byte   // 导出的request，在监控请求的时候有用
-	responseAPIStatus string   // API状态码
-	errors            []string // 错误信息
+	isWatching  bool     // 是否在监控
+	requestData []byte   // 导出的request，在监控请求的时候有用
+	errors      []string // 错误信息
 
 	enableAccessLog bool
 	enableStat      bool
@@ -234,103 +228,6 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	if server.RedirectToHttps && this.rawScheme == "http" {
 		this.redirectToHttps = true
 		return nil
-	}
-
-	// API配置，目前只有Plus版本支持
-	if teaconst.PlusEnabled && server.API != nil && server.API.On {
-		// 查找API
-		api, params := server.API.FindActiveAPI(uri.Path, this.method)
-		if api != nil {
-			this.api = api
-
-			// cache
-			if api.CacheOn {
-				cachePolicy := api.CachePolicyObject()
-				if cachePolicy != nil && cachePolicy.On {
-					this.cachePolicy = cachePolicy
-				}
-			}
-
-			// address
-			if len(api.Address) > 0 {
-				address := api.Address
-
-				query := uri.Query()
-
-				// 匹配的参数
-				if params != nil {
-					for key, value := range params {
-						query[key] = []string{value}
-					}
-					uri.RawQuery = query.Encode()
-				}
-
-				// 支持变量
-				address = teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(address, func(s string) string {
-					match := s[2 : len(s)-1]
-					switch match {
-					case "path":
-						return api.Path
-					}
-
-					if strings.HasPrefix(match, "arg.") {
-						value, found := query[match[4:]]
-						if found {
-							return strings.Join(value, ",")
-						} else {
-							return ""
-						}
-					}
-
-					return s
-				})
-
-				this.uri = address
-
-				newURI, err := url.ParseRequestURI(address)
-				if err == nil {
-					path = newURI.Path
-
-					// query
-					if len(uri.RawQuery) > 0 {
-						if len(newURI.RawQuery) == 0 {
-							this.uri = address + "?" + uri.RawQuery
-						} else {
-							this.uri = address + "&" + uri.RawQuery
-						}
-					}
-				} else {
-					path = address
-				}
-			}
-
-			// headers
-			if api.HasHeaders() {
-				this.responseHeaders = append(this.responseHeaders, api.FormatHeaders(func(source string) string {
-					return this.Format(source)
-				}) ...)
-			}
-
-			// dump
-			if api.IsWatching() {
-				this.isWatching = true
-
-				// 判断如果Content-Length过长，则截断
-				reqData, err := httputil.DumpRequest(this.raw, true)
-				if err == nil {
-					if len(reqData) > 10240 {
-						reqData = reqData[:10240]
-					}
-					this.requestData = reqData
-				}
-			}
-
-			// 是否有Mock
-			if server.API.MockOn && api.MockOn && len(api.MockFiles) > 0 {
-				this.mockOn = true
-				return nil
-			}
-		}
 	}
 
 	// location的相关配置
@@ -726,11 +623,6 @@ func (this *Request) call(writer *ResponseWriter) error {
 		return nil
 	}
 
-	// 是否有mock
-	if this.mockOn {
-		return this.callMock(writer)
-	}
-
 	// watch
 	if this.isWatching {
 		// 判断如果Content-Length过长，则截断
@@ -758,21 +650,6 @@ func (this *Request) call(writer *ResponseWriter) error {
 		}
 		if lists.ContainsInt(this.accessLogFields, tealogs.AccessLogFieldResponseBody) {
 			writer.SetBodyCopying(true)
-		}
-	}
-
-	// API相关
-	if this.api != nil {
-		// limit
-		if this.api.Limit != nil {
-			this.api.Limit.Begin()
-			defer this.api.Limit.Done()
-		}
-
-		// 检查consumer
-		goNext := this.consumeAPI(writer)
-		if !goNext {
-			return nil
 		}
 	}
 
@@ -811,43 +688,6 @@ func (this *Request) call(writer *ResponseWriter) error {
 		return this.callRoot(writer)
 	}
 	return errors.New("unable to handle the request")
-}
-
-// 处理API
-func (this *Request) consumeAPI(writer *ResponseWriter) bool {
-	if len(this.api.AuthType) == 0 {
-		this.api.AuthType = apiconfig.APIAuthTypeNone
-	}
-	consumer, authorized := this.server.API.FindConsumerForRequest(this.api.AuthType, this.raw)
-	if !authorized {
-		writer.WriteHeader(http.StatusUnauthorized)
-		writer.Write([]byte("Unauthorized Request"))
-		return false
-	}
-	if consumer == nil {
-		return true
-	}
-
-	if !consumer.AllowAPI(this.api.Path) {
-		writer.WriteHeader(http.StatusForbidden)
-		writer.Write([]byte("Forbidden Request"))
-		return false
-	}
-
-	if !consumer.Policy.AllowAccess(this.requestRemoteAddr()) {
-		writer.WriteHeader(http.StatusForbidden)
-		writer.Write([]byte("Forbidden Request"))
-		return false
-	}
-
-	reason, allowed := consumer.Policy.AllowTraffic()
-	if !allowed {
-		writer.WriteHeader(http.StatusTooManyRequests)
-		writer.Write([]byte("[" + reason + "]Request Quota Exceeded"))
-		return false
-	}
-
-	return true
 }
 
 func (this *Request) notFoundError(writer *ResponseWriter) {
@@ -1322,11 +1162,6 @@ func (this *Request) log() {
 	accessLog.SetShouldStat(this.enableStat)
 	if this.enableAccessLog {
 		accessLog.SetWritingFields(this.accessLogFields)
-	}
-
-	if this.api != nil {
-		accessLog.APIPath = this.api.Path
-		accessLog.APIStatus = this.responseAPIStatus
 	}
 
 	if this.server != nil {
