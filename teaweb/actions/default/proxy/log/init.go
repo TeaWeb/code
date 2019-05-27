@@ -24,6 +24,7 @@ func init() {
 			Get("/list", new(ListAction)).
 			Get("/responseHeader/:logId/:day", new(ResponseHeaderAction)).
 			Get("/requestHeader/:logId/:day", new(RequestHeaderAction)).
+			Get("/responseBody/:logId/:day", new(ResponseBodyAction)).
 			Get("/cookies/:logId/:day", new(CookiesAction)).
 			Get("/history", new(HistoryAction)).
 			GetPost("/day", new(DayAction)).

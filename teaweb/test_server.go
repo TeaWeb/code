@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/iwind/TeaGo"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
@@ -116,6 +117,18 @@ func startTestServer() {
 		Get("/nocache", func(req *http.Request, resp http.ResponseWriter) {
 			resp.Header().Set("Cache-Control", "no-cache")
 			resp.Write([]byte("will be not cached " + timeutil.Format("Y-m-d H:i:s")))
+		}).
+		Get("/gzip", func(req *http.Request, resp http.ResponseWriter) {
+			compressResource(resp, Tea.PublicDir()+"/js/vue.min.js", "text/javascript; charset=utf-8")
+		}).
+		Get("/image", func(req *http.Request, resp http.ResponseWriter) {
+			data, err := ioutil.ReadFile(Tea.PublicDir() + "/images/logo.png")
+			if err != nil {
+				resp.Write([]byte(err.Error()))
+			} else {
+				resp.Header().Set("Content-Type", "image/png")
+				resp.Write(data)
+			}
 		}).
 		StartOn("127.0.0.1:9991")
 }

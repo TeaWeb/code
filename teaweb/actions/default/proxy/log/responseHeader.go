@@ -23,10 +23,10 @@ func (this *ResponseHeaderAction) Run(params struct {
 	if one != nil {
 		accessLog := one.(*tealogs.AccessLog)
 		this.Data["headers"] = accessLog.SentHeader
-		this.Data["body"] = string(accessLog.ResponseBodyData)
+		this.Data["hasBody"] = len(accessLog.ResponseBodyData) > 0
 	} else {
 		this.Data["headers"] = map[string][]string{}
-		this.Data["body"] = ""
+		this.Data["hasBody"] = false
 	}
 
 	this.Success()
