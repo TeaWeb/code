@@ -58,6 +58,8 @@ func (this *UpdateAction) Run(params struct {
 
 	// 加密算法套件
 	this.Data["cipherSuites"] = teaconfigs.AllTLSCipherSuites
+	this.Data["modernCipherSuites"] = teaconfigs.TLSModernCipherSuites
+	this.Data["intermediateCipherSuites"] = teaconfigs.TLSIntermediateCipherSuites
 
 	this.Show()
 }
