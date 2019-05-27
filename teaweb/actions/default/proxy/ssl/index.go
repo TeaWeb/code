@@ -38,6 +38,8 @@ func (this *IndexAction) Run(params struct {
 	warningMessages := []string{}
 	certs := []maps.Map{}
 
+	notMathedDomains := []string{}
+
 	if server.SSL != nil {
 		err := server.SSL.Validate()
 		if err != nil {
@@ -93,11 +95,17 @@ func (this *IndexAction) Run(params struct {
 				// 检查domain
 				for _, domain := range allDnsNames {
 					if !teautils.MatchDomains(server.Name, domain) {
-						warningMessages = append(warningMessages, fmt.Sprintf("证书#%d：", index+1)+"当前代理服务的域名中没有域名可以匹配\""+domain+"\"，请在代理服务的<a href=\"/proxy/update?serverId="+server.Id+"\">基本信息</a>中添加此域名。")
+						if !lists.ContainsString(notMathedDomains, domain) {
+							notMathedDomains = append(notMathedDomains, fmt.Sprintf("证书#%d：", index+1)+domain)
+						}
 					}
 				}
 			}
 		}
+	}
+
+	if len(notMathedDomains) > 0 {
+		warningMessages = append(warningMessages, "当前代理服务的已设置域名和证书中的域名不匹配：<br/><div class=\"ui segment\" style=\"margin:0.6em 0;line-height: 1.8;padding-top:0;padding-bottom:0\">"+strings.Join(notMathedDomains, "<br/>")+"</div>请在代理服务的<a href=\"/proxy/update?serverId="+server.Id+"\">基本信息</a>中添加这些域名。")
 	}
 
 	this.Data["errorMessages"] = errorMessages
