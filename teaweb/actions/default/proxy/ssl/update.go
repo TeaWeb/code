@@ -48,10 +48,12 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["selectedTab"] = "https"
 	this.Data["server"] = server
 	this.Data["versions"] = teaconfigs.AllTlsVersions
+	this.Data["hsts"] = false
 
 	this.Data["minVersion"] = "TLS 1.0"
 	if server.SSL != nil && len(server.SSL.MinVersion) > 0 {
 		this.Data["minVersion"] = server.SSL.MinVersion
+		this.Data["hsts"] = server.SSL.HSTS
 	}
 
 	// 加密算法套件
@@ -75,6 +77,7 @@ func (this *UpdateAction) RunPost(params struct {
 	MinVersion     string
 	CipherSuitesOn bool
 	CipherSuites   []string
+	Hsts           bool
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -90,6 +93,8 @@ func (this *UpdateAction) RunPost(params struct {
 	if lists.ContainsString(teaconfigs.AllTlsVersions, params.MinVersion) {
 		server.SSL.MinVersion = params.MinVersion
 	}
+
+	server.SSL.HSTS = params.Hsts
 
 	server.SSL.CipherSuites = []string{}
 	if params.CipherSuitesOn {

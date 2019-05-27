@@ -55,6 +55,8 @@ type SSLConfig struct {
 	MinVersion   TLSVersion       `yaml:"minVersion" json:"minVersion"`     // 支持的最小版本
 	CipherSuites []TLSCipherSuite `yaml:"cipherSuites" json:"cipherSuites"` // 加密算法套件
 
+	HSTS bool `yaml:"hsts" json:"hsts"` // 是否开启HSTS
+
 	nameMapping map[string]*tls.Certificate // dnsName => cert
 
 	minVersion   uint16

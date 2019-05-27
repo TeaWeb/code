@@ -943,13 +943,20 @@ func (this *Request) WriteResponseHeaders(writer *ResponseWriter, statusCode int
 	ignoreHeaders := this.convertIgnoreHeaders()
 	hasIgnoreHeaders := ignoreHeaders.Len() > 0
 
+	responseHeader := writer.Header()
+
 	for _, header := range this.responseHeaders {
 		if header.Match(statusCode) {
 			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
 				continue
 			}
-			writer.Header().Set(header.Name, this.Format(header.Value))
+			responseHeader.Set(header.Name, this.Format(header.Value))
 		}
+	}
+
+	// hsts
+	if this.rawScheme == "https" && this.server.SSL != nil && this.server.SSL.On && this.server.SSL.HSTS {
+		responseHeader.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 	}
 }
 
