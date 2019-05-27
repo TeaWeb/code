@@ -69,6 +69,11 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	if this.backend.HasRequestHeaders() {
 		for _, header := range this.backend.RequestHeaders {
 			this.raw.Header.Set(header.Name, this.Format(header.Value))
+
+			// 支持修改Host
+			if header.Name == "Host" {
+				this.raw.Host = header.Value
+			}
 		}
 	}
 
