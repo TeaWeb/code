@@ -21,6 +21,15 @@ func init() {
 			Post("/startHttps", new(StartHttpsAction)).
 			Post("/shutdownHttps", new(ShutdownHttpsAction)).
 			Get("/downloadFile", new(DownloadFileAction)).
+			Get("/generate", new(GenerateAction)).
+			Get("/acmeCreateTask", new(AcmeCreateTaskAction)).
+			GetPost("/acmeCreateUser", new(AcmeCreateUserAction)).
+			Get("/acmeUsers", new(AcmeUsersAction)).
+			Post("/acmeUserDelete", new(AcmeUserDeleteAction)).
+			Post("/acmeRecords", new(AcmeRecordsAction)).
+			Post("/acmeDnsChecking", new(AcmeDnsCheckingAction)).
+			Post("/acmeDeleteTask", new(AcmeDeleteTaskAction)).
+			Post("/acmeRenewTask", new(AcmeRenewTaskAction)).
 			EndAll()
 	})
 }

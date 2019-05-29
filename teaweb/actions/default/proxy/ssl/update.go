@@ -144,6 +144,12 @@ func (this *UpdateAction) RunPost(params struct {
 		if cert.IsLocal {
 			cert.CertFile = params.CertFilesPaths[index]
 			cert.KeyFile = params.KeyFilesPaths[index]
+
+			// 保留属性
+			oldCert := server.SSL.FindCert(params.CertIds[index])
+			if oldCert != nil {
+				cert.TaskId = oldCert.TaskId
+			}
 		} else {
 			// 兼容以前的版本（v0.1.4）
 			if params.CertIds[index] == "old_version_cert" {
@@ -155,6 +161,7 @@ func (this *UpdateAction) RunPost(params struct {
 				if oldCert != nil {
 					cert.CertFile = oldCert.CertFile
 					cert.KeyFile = oldCert.KeyFile
+					cert.TaskId = oldCert.TaskId
 				}
 			}
 

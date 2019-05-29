@@ -20,6 +20,7 @@ type SSLCertConfig struct {
 	CertFile    string `yaml:"certFile" json:"certFile"`
 	KeyFile     string `yaml:"keyFile" json:"keyFile"`
 	IsLocal     bool   `yaml:"isLocal" json:"isLocal"` // if is local file
+	TaskId      string `yaml:"taskId" json:"taskId"`   // 生成证书任务ID
 
 	dnsNames []string
 	cert     *tls.Certificate

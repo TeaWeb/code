@@ -22,7 +22,8 @@ type SSLConfig struct {
 	Certificate    string `yaml:"certificate" json:"certificate"`       // 证书文件, deprecated in v0.1.4
 	CertificateKey string `yaml:"certificateKey" json:"certificateKey"` // 密钥, deprecated in v0.1.4
 
-	Certs []*SSLCertConfig `yaml:"certs" json:"certs"`
+	Certs     []*SSLCertConfig `yaml:"certs" json:"certs"`
+	CertTasks []*SSLCertTask   `yaml:"certTasks" json:"certTasks"`
 
 	Listen       []string         `yaml:"listen" json:"listen"`             // 网络地址
 	MinVersion   TLSVersion       `yaml:"minVersion" json:"minVersion"`     // 支持的最小版本
@@ -157,6 +158,38 @@ func (this *SSLConfig) FindCert(certId string) *SSLCertConfig {
 	for _, cert := range this.Certs {
 		if cert.Id == certId {
 			return cert
+		}
+	}
+	return nil
+}
+
+// 添加证书
+func (this *SSLConfig) AddCert(cert *SSLCertConfig) {
+	this.Certs = append(this.Certs, cert)
+}
+
+// 添加证书任务
+func (this *SSLConfig) AddCertTask(certTask *SSLCertTask) {
+	this.CertTasks = append(this.CertTasks, certTask)
+}
+
+// 删除证书任务
+func (this *SSLConfig) RemoveCertTask(certTaskId string) {
+	result := []*SSLCertTask{}
+	for _, task := range this.CertTasks {
+		if task.Id == certTaskId {
+			continue
+		}
+		result = append(result, task)
+	}
+	this.CertTasks = result
+}
+
+// 查找证书任务
+func (this *SSLConfig) FindCertTask(certTaskId string) *SSLCertTask {
+	for _, task := range this.CertTasks {
+		if task.Id == certTaskId {
+			return task
 		}
 	}
 	return nil
