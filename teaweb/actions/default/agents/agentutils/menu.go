@@ -117,9 +117,10 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 			item.Id = agent.Id
 			item.IsSortable = true
 		} else {
-			item := menu.Add(agent.Name, "", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
+			item := menu.Add(agent.Name, "已断开连接", "/agents/"+actionCode+"?agentId="+agent.Id, agentId == agent.Id)
 			item.Id = agent.Id
 			item.IsSortable = true
+			item.SubColor = "red"
 		}
 	}
 

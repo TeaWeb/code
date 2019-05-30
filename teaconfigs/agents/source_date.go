@@ -69,7 +69,7 @@ func (this *DateSource) Variables() []*SourceVariable {
 		},
 		{
 			Code:        "offset",
-			Description: "时差，比如+800",
+			Description: "时差，比如+0800",
 		},
 	}
 }
