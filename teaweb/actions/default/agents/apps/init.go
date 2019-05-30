@@ -18,6 +18,7 @@ func init() {
 			GetPost("/add", new(AddAction)).
 			GetPost("/update", new(UpdateAction)).
 			Post("/delete", new(DeleteAction)).
+			Post("/move", new(MoveAction)).
 			Post("/on", new(OnAction)).
 			Post("/off", new(OffAction)).
 			Get("/detail", new(DetailAction)).

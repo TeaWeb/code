@@ -197,6 +197,36 @@ func (this *AgentConfig) RemoveApp(appId string) {
 	this.Apps = result
 }
 
+// 移动App位置
+func (this *AgentConfig) MoveApp(fromIndex int, toIndex int) {
+	if fromIndex < 0 || fromIndex >= len(this.Apps) {
+		return
+	}
+	if toIndex < 0 || toIndex >= len(this.Apps) {
+		return
+	}
+	if fromIndex == toIndex {
+		return
+	}
+
+	location := this.Apps[fromIndex]
+	newList := []*AppConfig{}
+	for i := 0; i < len(this.Apps); i ++ {
+		if i == fromIndex {
+			continue
+		}
+		if fromIndex > toIndex && i == toIndex {
+			newList = append(newList, location)
+		}
+		newList = append(newList, this.Apps[i])
+		if fromIndex < toIndex && i == toIndex {
+			newList = append(newList, location)
+		}
+	}
+
+	this.Apps = newList
+}
+
 // 查找App
 func (this *AgentConfig) FindApp(appId string) *AppConfig {
 	for _, a := range this.Apps {
