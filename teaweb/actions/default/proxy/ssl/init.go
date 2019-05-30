@@ -30,6 +30,8 @@ func init() {
 			Post("/acmeDnsChecking", new(AcmeDnsCheckingAction)).
 			Post("/acmeDeleteTask", new(AcmeDeleteTaskAction)).
 			Post("/acmeRenewTask", new(AcmeRenewTaskAction)).
+			Get("/acmeTask", new(AcmeTaskAction)).
+			Get("/acmeDownload", new(AcmeDownloadAction)).
 			EndAll()
 	})
 }
