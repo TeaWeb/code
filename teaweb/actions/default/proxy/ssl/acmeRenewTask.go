@@ -51,6 +51,7 @@ func (this *AcmeRenewTaskAction) RunPost(params struct {
 		this.Fail(task.RunError)
 	}
 
+	task.RunError = ""
 	err = server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
