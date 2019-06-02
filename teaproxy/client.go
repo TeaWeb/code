@@ -48,7 +48,6 @@ func (this *ClientPool) client(backendId string, address string, connectionTimeo
 			return (&net.Dialer{
 				Timeout:   connectionTimeout,
 				KeepAlive: 10 * time.Minute,
-				DualStack: true,
 			}).DialContext(ctx, network, address)
 		},
 		MaxIdleConns:          int(maxConnections), // 0表示不限
