@@ -3,6 +3,7 @@ package proxy
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teaproxy"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
@@ -68,6 +69,7 @@ func (this *DeleteAction) RunPost(params struct {
 	}
 
 	// 重启
+	teaproxy.SharedManager.RemoveServer(server.Id)
 	proxyutils.NotifyChange()
 
 	this.Success()

@@ -93,6 +93,9 @@ type ServerConfig struct {
 
 	Version int `yaml:"version" json:"version"` // 版本
 
+	// 隧道相关
+	Tunnel *TunnelConfig `yaml:"tunnel" json:"tunnel"`
+
 	maxBodySize   int64
 	gzipMinLength int64
 }
@@ -340,6 +343,14 @@ func (this *ServerConfig) Validate() error {
 	// pages
 	for _, page := range this.Pages {
 		err := page.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
+	// tunnel
+	if this.Tunnel != nil {
+		err = this.Tunnel.Validate()
 		if err != nil {
 			return err
 		}

@@ -1,0 +1,37 @@
+package tunnel
+
+import (
+	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaproxy"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/iwind/TeaGo/actions"
+)
+
+type IndexAction actions.Action
+
+// tunnel设置
+func (this *IndexAction) RunGet(params struct {
+	ServerId string
+}) {
+	server := teaconfigs.NewServerConfigFromId(params.ServerId)
+	if server == nil {
+		this.Fail("找不到Server")
+	}
+
+	proxyutils.AddServerMenu(this)
+
+	this.Data["selectedTab"] = "tunnel"
+	this.Data["server"] = proxyutils.WrapServerData(server)
+	this.Data["tunnel"] = server.Tunnel
+
+	// 状态
+	runningServer := teaproxy.SharedManager.FindServer(server.Id)
+	this.Data["isActive"] = false
+	this.Data["errors"] = []string{}
+	if runningServer != nil && runningServer.Tunnel != nil {
+		this.Data["isActive"] = runningServer.Tunnel.IsActive()
+		this.Data["errors"] = runningServer.Tunnel.Errors()
+	}
+
+	this.Show()
+}

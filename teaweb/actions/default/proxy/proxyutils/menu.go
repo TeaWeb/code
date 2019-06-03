@@ -76,6 +76,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 			"stat.",
 			"log.",
 			"servers.",
+			"tunnel.",
 		) && !action.Spec.HasClassPrefix("proxy.AddAction", "log.RuntimeAction") {
 			tabbar := []maps.Map{
 				{
@@ -104,7 +105,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 					"subName": "",
 					"url":     "/proxy/detail?serverId=" + serverId,
 					"icon":    "setting",
-					"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "websocket", "access", "servers") && !action.HasPrefix("/proxy/delete"),
+					"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "websocket", "access", "servers", "tunnel") && !action.HasPrefix("/proxy/delete"),
 				},
 				{
 					"name":    "删除",
@@ -132,5 +133,6 @@ func WrapServerData(server *teaconfigs.ServerConfig) maps.Map {
 		"locations":   server.Locations,
 		"wafOn":       server.WAFOn,
 		"wafId":       server.WafId,
+		"tunnelOn":    server.Tunnel != nil && server.Tunnel.On,
 	}
 }

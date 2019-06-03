@@ -112,11 +112,11 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 	oldServer, ok := this.oldServers[server.Id]
 	if ok {
 		if server.Version > oldServer.Version {
-			oldServer.OnDetach()
-			server.OnAttach()
+			this.detachServer(oldServer)
+			this.attachServer(server)
 		}
 	} else {
-		server.OnAttach()
+		this.attachServer(server)
 	}
 
 	keys := []string{}
@@ -199,7 +199,11 @@ func (this *Manager) RemoveServer(serverId string) {
 	this.locker.Lock()
 	defer this.locker.Unlock()
 
-	delete(this.servers, serverId)
+	server, ok := this.servers[serverId]
+	if ok {
+		this.detachServer(server)
+		delete(this.servers, serverId)
+	}
 
 	for _, listener := range this.listeners {
 		if listener.HasServer(serverId) {
@@ -254,6 +258,7 @@ func (this *Manager) Reload() error {
 		}
 	}
 
+	// 启动新的有变化的listener
 	for _, listener := range this.listeners {
 		if listener.IsChanged {
 			go func(listener *Listener) {
@@ -288,4 +293,16 @@ func (this *Manager) Shutdown() error {
 	}
 
 	return nil
+}
+
+// attach server
+func (this *Manager) attachServer(server *teaconfigs.ServerConfig) {
+	server.OnAttach()
+	SharedTunnelManager.OnAttach(server)
+}
+
+// detach server
+func (this *Manager) detachServer(server *teaconfigs.ServerConfig) {
+	server.OnDetach()
+	SharedTunnelManager.OnDetach(server)
 }

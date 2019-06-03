@@ -39,6 +39,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/servers"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/ssl"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/stat"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/tunnel"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/waf"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/backup"

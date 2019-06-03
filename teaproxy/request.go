@@ -96,6 +96,8 @@ type Request struct {
 
 	websocket *teaconfigs.WebsocketConfig
 
+	tunnel *teaconfigs.TunnelConfig
+
 	// 执行请求
 	filePath string
 
@@ -199,6 +201,13 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		}
 	} else {
 		this.waf = nil
+	}
+
+	// tunnel
+	if server.Tunnel != nil && server.Tunnel.On {
+		this.tunnel = server.Tunnel
+	} else {
+		this.tunnel = nil
 	}
 
 	// other
@@ -665,6 +674,9 @@ func (this *Request) call(writer *ResponseWriter) error {
 		}
 	}
 
+	if this.tunnel != nil {
+		return this.callTunnel(writer)
+	}
 	if this.websocket != nil {
 		return this.callWebsocket(writer)
 	}
