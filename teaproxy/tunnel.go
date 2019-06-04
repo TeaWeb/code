@@ -73,6 +73,13 @@ func (this *Tunnel) Write(req *http.Request) (resp *http.Response, err error) {
 	return this.writeRequest(req, 0)
 }
 
+// 获取连接数量
+func (this *Tunnel) CountConnections() int {
+	this.locker.Lock()
+	defer this.locker.Unlock()
+	return len(this.connections)
+}
+
 // 发送请求，并记录尝试次数
 func (this *Tunnel) writeRequest(req *http.Request, retries int) (resp *http.Response, err error) {
 	this.locker.Lock()

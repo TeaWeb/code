@@ -28,9 +28,17 @@ func (this *IndexAction) RunGet(params struct {
 	runningServer := teaproxy.SharedManager.FindServer(server.Id)
 	this.Data["isActive"] = false
 	this.Data["errors"] = []string{}
+	this.Data["countConnections"] = 0
 	if runningServer != nil && runningServer.Tunnel != nil {
 		this.Data["isActive"] = runningServer.Tunnel.IsActive()
 		this.Data["errors"] = runningServer.Tunnel.Errors()
+
+		tunnel := teaproxy.SharedTunnelManager.FindTunnel(server.Id, runningServer.Tunnel.Id)
+		if tunnel != nil {
+			this.Data["countConnections"] = tunnel.CountConnections()
+		} else {
+			this.Data["countConnections"] = 0
+		}
 	}
 
 	this.Show()

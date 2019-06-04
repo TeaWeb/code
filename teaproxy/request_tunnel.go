@@ -17,16 +17,13 @@ func (this *Request) callTunnel(writer *ResponseWriter) error {
 		return errors.New("tunnel should not be nil")
 	}
 
+	this.setProxyHeaders(this.raw.Header)
+
 	resp, err := tunnel.Write(this.raw)
 	if err != nil {
 		this.serverError(writer)
 		this.addError(err)
-
-		if err != io.EOF && err != io.ErrUnexpectedEOF {
-			logs.Println(err.Error())
-		} else {
-			logs.Println("[tunnel]" + err.Error())
-		}
+		logs.Println("[tunnel]\""+this.raw.RequestURI+"\":\n", err.Error())
 		return err
 	}
 	defer resp.Body.Close()
