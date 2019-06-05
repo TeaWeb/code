@@ -65,7 +65,7 @@ func (this *ClientPool) client(backendId string, address string, connectionTimeo
 		Timeout:   readTimeout,
 		Transport: tr,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return &RedirectError{}
+			return http.ErrUseLastResponse
 		},
 	}
 

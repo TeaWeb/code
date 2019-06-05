@@ -89,36 +89,25 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	this.raw.RequestURI = ""
 
 	resp, err := client.Do(this.raw)
-
 	if err != nil {
-		urlError, isURLErr := err.(*url.Error)
-		isRedirecting := false
-		if isURLErr {
-			if _, ok := urlError.Err.(*RedirectError); ok {
-				isRedirecting = true
-			}
-		}
-
-		if !isRedirecting {
-			// 如果超过最大失败次数，则下线
-			if !this.backend.HasCheckURL() {
-				currentFails := this.backend.IncreaseFails()
-				if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
-					this.backend.IsDown = true
-					this.backend.DownTime = time.Now()
-					if this.websocket != nil {
-						this.websocket.SetupScheduling(false)
-					} else {
-						this.server.SetupScheduling(false)
-					}
+		// 如果超过最大失败次数，则下线
+		if !this.backend.HasCheckURL() {
+			currentFails := this.backend.IncreaseFails()
+			if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
+				this.backend.IsDown = true
+				this.backend.DownTime = time.Now()
+				if this.websocket != nil {
+					this.websocket.SetupScheduling(false)
+				} else {
+					this.server.SetupScheduling(false)
 				}
 			}
-
-			this.serverError(writer)
-			logs.Println("[proxy]" + err.Error())
-			this.addError(err)
-			return nil
 		}
+
+		this.serverError(writer)
+		logs.Println("[proxy]" + err.Error())
+		this.addError(err)
+		return nil
 	}
 
 	// waf
