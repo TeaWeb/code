@@ -31,6 +31,9 @@ func init() {
 			Get("/waf", new(WafAction)).
 			Post("/waf/update", new(WafUpdateAction)).
 			Post("/test", new(TestAction)).
+			Get("/export", new(ExportAction)).
+			Post("/duplicate", new(DuplicateAction)).
+			GetPost("/import", new(ImportAction)).
 			EndAll()
 	})
 }

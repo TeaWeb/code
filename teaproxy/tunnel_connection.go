@@ -2,7 +2,7 @@ package teaproxy
 
 import (
 	"bufio"
-	"github.com/pkg/errors"
+	"errors"
 	"net"
 	"net/http"
 	"net/http/httputil"
