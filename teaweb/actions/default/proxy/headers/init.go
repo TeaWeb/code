@@ -23,6 +23,9 @@ func init() {
 			GetPost("/addIgnore", new(AddIgnoreAction)).
 			GetPost("/updateIgnore", new(UpdateIgnoreAction)).
 			Post("/deleteIgnore", new(DeleteIgnoreAction)).
+			GetPost("/addRequestHeader", new(AddRequestHeaderAction)).
+			GetPost("/updateRequestHeader", new(UpdateRequestHeaderAction)).
+			Post("/deleteRequestHeader", new(DeleteRequestHeaderAction)).
 			EndAll()
 	})
 }

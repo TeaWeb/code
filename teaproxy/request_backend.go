@@ -66,9 +66,16 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	this.raw.Header.Set("Connection", "keep-alive")
 
 	// 自定义请求Header
-	if this.backend.HasRequestHeaders() {
-		for _, header := range this.backend.RequestHeaders {
-			this.raw.Header.Set(header.Name, this.Format(header.Value))
+	if len(this.requestHeaders) > 0 {
+		for _, header := range this.requestHeaders {
+			if !header.On {
+				continue
+			}
+			if header.HasVariables() {
+				this.raw.Header.Set(header.Name, this.Format(header.Value))
+			} else {
+				this.raw.Header.Set(header.Name, header.Value)
+			}
 
 			// 支持修改Host
 			if header.Name == "Host" {
@@ -185,13 +192,6 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 	// 自定义响应Headers
 	this.WriteResponseHeaders(writer, resp.StatusCode)
-
-	// 当前Backend的响应Headers
-	if this.backend.HasResponseHeaders() {
-		for _, header := range this.backend.ResponseHeaders {
-			writer.Header().Set(header.Name, this.Format(header.Value))
-		}
-	}
 
 	// 响应回调
 	if this.responseCallback != nil {

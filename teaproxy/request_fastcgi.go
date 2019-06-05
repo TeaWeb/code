@@ -129,6 +129,20 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 		}
 	}
 
+	// 自定义请求Header
+	if len(this.requestHeaders) > 0 {
+		for _, header := range this.requestHeaders {
+			if !header.On {
+				continue
+			}
+			v := header.Value
+			if header.HasVariables() {
+				v = this.Format(v)
+			}
+			params["HTTP_"+strings.ToUpper(strings.Replace(header.Name, "-", "_", -1))] = v
+		}
+	}
+
 	host, found := params["HTTP_HOST"]
 	if !found || len(host) == 0 {
 		params["HTTP_HOST"] = this.host

@@ -7,10 +7,10 @@ import (
 	"github.com/iwind/TeaGo/maps"
 )
 
-type UpdateAction actions.Action
+type UpdateRequestHeaderAction actions.Action
 
 // 修改
-func (this *UpdateAction) Run(params struct {
+func (this *UpdateRequestHeaderAction) Run(params struct {
 	From       string
 	ServerId   string
 	LocationId string
@@ -38,7 +38,7 @@ func (this *UpdateAction) Run(params struct {
 		this.Fail(err.Error())
 	}
 
-	header := headerList.FindResponseHeader(params.HeaderId)
+	header := headerList.FindRequestHeader(params.HeaderId)
 	if header == nil {
 		this.Fail("找不到要修改的Header")
 	}
@@ -49,7 +49,7 @@ func (this *UpdateAction) Run(params struct {
 }
 
 // 提交修改
-func (this *UpdateAction) RunPost(params struct {
+func (this *UpdateRequestHeaderAction) RunPost(params struct {
 	ServerId   string
 	LocationId string
 	RewriteId  string
@@ -57,11 +57,9 @@ func (this *UpdateAction) RunPost(params struct {
 	BackendId  string
 	HeaderId   string
 
-	On         bool
-	Name       string
-	Value      string
-	AllStatus  bool
-	StatusList []int
+	On    bool
+	Name  string
+	Value string
 
 	Must *actions.Must
 }) {
@@ -79,7 +77,7 @@ func (this *UpdateAction) RunPost(params struct {
 		this.Fail(err.Error())
 	}
 
-	header := headerList.FindResponseHeader(params.HeaderId)
+	header := headerList.FindRequestHeader(params.HeaderId)
 	if header == nil {
 		this.Fail("找不到要修改的Header")
 	}
@@ -87,8 +85,6 @@ func (this *UpdateAction) RunPost(params struct {
 	header.On = params.On
 	header.Name = params.Name
 	header.Value = params.Value
-	header.Always = params.AllStatus
-	header.Status = params.StatusList
 
 	err = server.Save()
 	if err != nil {

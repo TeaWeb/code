@@ -63,8 +63,9 @@ type Request struct {
 	serverName      string // @TODO
 	serverAddr      string
 	charset         string
+	requestHeaders  []*shared.HeaderConfig // 自定义请求Header
 	responseHeaders []*shared.HeaderConfig // 自定义响应Header
-	ignoreHeaders   []string               // 忽略的Header
+	ignoreHeaders   []string               // 忽略的响应Header
 	varMapping      map[string]string      // 自定义变量
 
 	root  string   // 资源根目录
@@ -175,7 +176,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 
 	// Header
-	if server.HasHeaders() {
+	if server.HasRequestHeaders() {
+		this.requestHeaders = append(this.requestHeaders, server.RequestHeaders...)
+	}
+
+	if server.HasResponseHeaders() {
 		this.responseHeaders = append(this.responseHeaders, server.Headers ...)
 	}
 
@@ -296,7 +301,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.waf = nil
 			}
 
-			if location.HasHeaders() {
+			if location.HasRequestHeaders() {
+				this.requestHeaders = append(this.requestHeaders, location.RequestHeaders...)
+			}
+
+			if location.HasResponseHeaders() {
 				this.responseHeaders = append(this.responseHeaders, location.Headers ...)
 			}
 
@@ -321,7 +330,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 						this.addVarMapping(varMapping)
 						this.rewriteId = rule.Id
 
-						if rule.HasHeaders() {
+						if rule.HasResponseHeaders() {
 							this.responseHeaders = append(this.responseHeaders, rule.Headers...)
 						}
 
@@ -388,7 +397,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.backend = nil // 防止冲突
 				locationConfigured = true
 
-				if fastcgi.HasHeaders() {
+				if fastcgi.HasResponseHeaders() {
 					this.responseHeaders = append(this.responseHeaders, fastcgi.Headers ...)
 				}
 
@@ -423,7 +432,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.backend = backend
 				locationConfigured = true
 
-				if backend.HasHeaders() {
+				if backend.HasRequestHeaders() {
+					this.requestHeaders = append(this.requestHeaders, backend.RequestHeaders...)
+				}
+
+				if backend.HasResponseHeaders() {
 					this.responseHeaders = append(this.responseHeaders, backend.Headers ...)
 				}
 
@@ -460,7 +473,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.addVarMapping(varMapping)
 				this.rewriteId = rule.Id
 
-				if rule.HasHeaders() {
+				if rule.HasRequestHeaders() {
+					this.requestHeaders = append(this.requestHeaders, rule.RequestHeaders...)
+				}
+
+				if rule.HasResponseHeaders() {
 					this.responseHeaders = append(this.responseHeaders, rule.Headers ...)
 				}
 
@@ -525,7 +542,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		this.fastcgi = fastcgi
 		this.backend = nil // 防止冲突
 
-		if fastcgi.HasHeaders() {
+		if fastcgi.HasRequestHeaders() {
+			this.requestHeaders = append(this.requestHeaders, fastcgi.RequestHeaders...)
+		}
+
+		if fastcgi.HasResponseHeaders() {
 			this.responseHeaders = append(this.responseHeaders, fastcgi.Headers ...)
 		}
 
@@ -561,7 +582,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	this.backend = backend
 
 	if backend != nil {
-		if backend.HasHeaders() {
+		if backend.HasRequestHeaders() {
+			this.requestHeaders = append(this.requestHeaders, backend.RequestHeaders...)
+		}
+
+		if backend.HasResponseHeaders() {
 			this.responseHeaders = append(this.responseHeaders, backend.Headers ...)
 		}
 
@@ -958,11 +983,18 @@ func (this *Request) WriteResponseHeaders(writer *ResponseWriter, statusCode int
 	responseHeader := writer.Header()
 
 	for _, header := range this.responseHeaders {
+		if !header.On {
+			continue
+		}
 		if header.Match(statusCode) {
 			if hasIgnoreHeaders && ignoreHeaders.Has(strings.ToUpper(header.Name)) {
 				continue
 			}
-			responseHeader.Set(header.Name, this.Format(header.Value))
+			if header.HasVariables() {
+				responseHeader.Set(header.Name, this.Format(header.Value))
+			} else {
+				responseHeader.Set(header.Name, header.Value)
+			}
 		}
 	}
 

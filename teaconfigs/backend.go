@@ -36,7 +36,6 @@ type BackendConfig struct {
 	DownTime        time.Time              `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
 	RequestGroupIds []string               `yaml:"requestGroupIds" json:"requestGroupIds"`       // 所属请求分组
 	RequestURI      string                 `yaml:"requestURI" json:"requestURI"`                 // 转发后的请求URI
-	RequestHeaders  []*shared.HeaderConfig `yaml:"requestHeaders" json:"requestHeaders"`         // 请求Header
 	ResponseHeaders []*shared.HeaderConfig `yaml:"responseHeaders" json:"responseHeaders"`       // 响应Header
 	Host            string                 `yaml:"host" json:"host"`                             // 自定义主机名
 
@@ -321,19 +320,9 @@ func (this *BackendConfig) UpCallback(callback func(backend *BackendConfig)) {
 	this.upCallbacks = append(this.upCallbacks, callback)
 }
 
-// 添加请求Header
-func (this *BackendConfig) AddRequestHeader(header *shared.HeaderConfig) {
-	this.RequestHeaders = append(this.RequestHeaders, header)
-}
-
 // 添加响应Header
 func (this *BackendConfig) AddResponseHeader(header *shared.HeaderConfig) {
 	this.ResponseHeaders = append(this.ResponseHeaders, header)
-}
-
-// 判断是否有请求Header
-func (this *BackendConfig) HasRequestHeaders() bool {
-	return this.hasRequestHeaders
 }
 
 // 判断是否有响应Header

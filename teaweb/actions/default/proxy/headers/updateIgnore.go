@@ -61,7 +61,7 @@ func (this *UpdateIgnoreAction) RunPost(params struct {
 	if err != nil {
 		this.Fail(err.Error())
 	}
-	headerList.UpdateIgnoreHeader(params.OldName, params.Name)
+	headerList.UpdateIgnoreResponseHeader(params.OldName, params.Name)
 
 	err = server.Save()
 	if err != nil {

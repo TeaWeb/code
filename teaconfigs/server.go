@@ -738,13 +738,18 @@ func (this *ServerConfig) NextBackend(call *shared.RequestCall) *BackendConfig {
 			// request
 			if group.HasRequestHeaders() {
 				for _, h := range group.RequestHeaders {
-					call.Request.Header.Set(h.Name, call.Formatter(h.Value))
+					if h.HasVariables() {
+						call.Request.Header.Set(h.Name, call.Formatter(h.Value))
+					} else {
+						call.Request.Header.Set(h.Name, h.Value)
+					}
 				}
 			}
 
 			// response
 			if group.HasResponseHeaders() {
 				call.AddResponseCall(func(resp http.ResponseWriter) {
+					// TODO 应用ignore headers
 					for _, h := range group.ResponseHeaders {
 						resp.Header().Set(h.Name, call.Formatter(h.Value))
 					}
@@ -760,7 +765,11 @@ func (this *ServerConfig) NextBackend(call *shared.RequestCall) *BackendConfig {
 		// request
 		if this.defaultRequestGroup.HasRequestHeaders() {
 			for _, h := range this.defaultRequestGroup.RequestHeaders {
-				call.Request.Header.Set(h.Name, call.Formatter(h.Value))
+				if h.HasVariables() {
+					call.Request.Header.Set(h.Name, call.Formatter(h.Value))
+				} else {
+					call.Request.Header.Set(h.Name, h.Value)
+				}
 			}
 		}
 
@@ -768,6 +777,7 @@ func (this *ServerConfig) NextBackend(call *shared.RequestCall) *BackendConfig {
 		if this.defaultRequestGroup.HasResponseHeaders() {
 			call.AddResponseCall(func(resp http.ResponseWriter) {
 				for _, h := range this.defaultRequestGroup.ResponseHeaders {
+					// TODO 应用ignore headers
 					resp.Header().Set(h.Name, call.Formatter(h.Value))
 				}
 			})

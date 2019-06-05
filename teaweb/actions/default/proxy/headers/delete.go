@@ -26,7 +26,7 @@ func (this *DeleteAction) Run(params struct {
 	if err != nil {
 		this.Fail(err.Error())
 	}
-	headerList.RemoveHeader(params.HeaderId)
+	headerList.RemoveResponseHeader(params.HeaderId)
 
 	err = server.Save()
 	if err != nil {

@@ -6,17 +6,16 @@ import (
 	"github.com/iwind/TeaGo/actions"
 )
 
-type DeleteIgnoreAction actions.Action
+type DeleteRequestHeaderAction actions.Action
 
-// 删除屏蔽的Header
-func (this *DeleteIgnoreAction) Run(params struct {
+// 删除Header
+func (this *DeleteRequestHeaderAction) Run(params struct {
 	ServerId   string
 	LocationId string
 	RewriteId  string
 	FastcgiId  string
 	BackendId  string
-	Name       string
-	Must       *actions.Must
+	HeaderId   string
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -27,8 +26,8 @@ func (this *DeleteIgnoreAction) Run(params struct {
 	if err != nil {
 		this.Fail(err.Error())
 	}
+	headerList.RemoveRequestHeader(params.HeaderId)
 
-	headerList.RemoveIgnoreResponseHeader(params.Name)
 	err = server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())

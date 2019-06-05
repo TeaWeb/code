@@ -27,7 +27,20 @@ func (this *DataAction) Run(params struct {
 	if err != nil {
 		this.Fail(err.Error())
 	}
-	this.Data["headers"] = lists.Map(headerList.AllHeaders(), func(k int, v interface{}) interface{} {
+
+	// 请求Header
+	this.Data["requestHeaders"] = lists.Map(headerList.AllRequestHeaders(), func(k int, v interface{}) interface{} {
+		header := v.(*shared.HeaderConfig)
+		return maps.Map{
+			"on":    header.On,
+			"id":    header.Id,
+			"name":  header.Name,
+			"value": header.Value,
+		}
+	})
+
+	// 响应Header
+	this.Data["headers"] = lists.Map(headerList.AllResponseHeaders(), func(k int, v interface{}) interface{} {
 		header := v.(*shared.HeaderConfig)
 		return maps.Map{
 			"on":     header.On,
@@ -38,7 +51,9 @@ func (this *DataAction) Run(params struct {
 			"value":  header.Value,
 		}
 	})
-	this.Data["ignoreHeaders"] = headerList.AllIgnoreHeaders()
+
+	// 忽略的响应Header
+	this.Data["ignoreHeaders"] = headerList.AllIgnoreResponseHeaders()
 
 	this.Success()
 }

@@ -62,15 +62,7 @@ func (this *HeaderConfig) Match(statusCode int) bool {
 	return false
 }
 
-// 设置StatusMap
-func (this *HeaderConfig) Copy() *HeaderConfig {
-	newHeader := &HeaderConfig{}
-	newHeader.Id = this.Id
-	newHeader.On = this.On
-	newHeader.Always = this.Always
-	newHeader.Status = this.Status
-	newHeader.statusMap = this.statusMap
-	newHeader.Name = this.Name
-	newHeader.Value = this.Value
-	return newHeader
+// 是否有变量
+func (this *HeaderConfig) HasVariables() bool {
+	return this.hasVariables
 }

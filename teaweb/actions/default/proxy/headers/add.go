@@ -67,7 +67,7 @@ func (this *AddAction) RunPost(params struct {
 	header.Value = params.Value
 	header.Always = params.AllStatus
 	header.Status = params.StatusList
-	headerList.AddHeader(header)
+	headerList.AddResponseHeader(header)
 
 	err = server.Save()
 	if err != nil {

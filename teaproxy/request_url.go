@@ -18,6 +18,20 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 	// 添加当前Header
 	req.Header = this.raw.Header
 
+	// 自定义请求Header
+	if len(this.requestHeaders) > 0 {
+		for _, header := range this.requestHeaders {
+			if !header.On {
+				continue
+			}
+			if header.HasVariables() {
+				req.Header.Set(header.Name, this.Format(header.Value))
+			} else {
+				req.Header.Set(header.Name, header.Value)
+			}
+		}
+	}
+
 	// 代理头部
 	this.setProxyHeaders(req.Header)
 

@@ -54,11 +54,11 @@ func (this *AddIgnoreAction) RunPost(params struct {
 		this.Fail(err.Error())
 	}
 
-	if headerList.ContainsIgnoreHeader(params.Name) {
+	if headerList.ContainsIgnoreResponseHeader(params.Name) {
 		this.Fail("已经存在，不需要重复添加")
 	}
 
-	headerList.AddIgnoreHeader(params.Name)
+	headerList.AddIgnoreResponseHeader(params.Name)
 
 	err = server.Save()
 	if err != nil {

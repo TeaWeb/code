@@ -10,53 +10,67 @@ type HeaderListInterface interface {
 	ValidateHeaders() error
 
 	// 取得所有的IgnoreHeader
-	AllIgnoreHeaders() []string
+	AllIgnoreResponseHeaders() []string
 
 	// 添加IgnoreHeader
-	AddIgnoreHeader(name string)
+	AddIgnoreResponseHeader(name string)
 
 	// 判断是否包含IgnoreHeader
-	ContainsIgnoreHeader(name string) bool
+	ContainsIgnoreResponseHeader(name string) bool
 
 	// 移除IgnoreHeader
-	RemoveIgnoreHeader(name string)
+	RemoveIgnoreResponseHeader(name string)
 
 	// 修改IgnoreHeader
-	UpdateIgnoreHeader(oldName string, newName string)
+	UpdateIgnoreResponseHeader(oldName string, newName string)
 
 	// 取得所有的Header
-	AllHeaders() []*HeaderConfig
+	AllResponseHeaders() []*HeaderConfig
 
 	// 添加Header
-	AddHeader(header *HeaderConfig)
+	AddResponseHeader(header *HeaderConfig)
 
 	// 判断是否包含Header
-	ContainsHeader(name string) bool
+	ContainsResponseHeader(name string) bool
 
 	// 查找Header
-	FindHeader(headerId string) *HeaderConfig
+	FindResponseHeader(headerId string) *HeaderConfig
 
 	// 移除Header
-	RemoveHeader(headerId string)
+	RemoveResponseHeader(headerId string)
 
-	// 格式化Headers
-	FormatHeaders(formatter func(source string) string) []*HeaderConfig
+	// 取得所有的请求Header
+	AllRequestHeaders() []*HeaderConfig
+
+	// 添加请求Header
+	AddRequestHeader(header *HeaderConfig)
+
+	// 查找请求Header
+	FindRequestHeader(headerId string) *HeaderConfig
+
+	// 移除请求Header
+	RemoveRequestHeader(headerId string)
 }
 
 // HeaderList定义
 type HeaderList struct {
-	hasHeaders bool
-
-	// 添加的Headers
+	// 添加的响应Headers
 	Headers []*HeaderConfig `yaml:"headers" json:"headers"`
 
-	// 忽略的Headers
+	// 忽略的响应Headers
 	IgnoreHeaders []string `yaml:"ignoreHeaders" json:"ignoreHeaders"`
+
+	// 请求Headers
+	RequestHeaders []*HeaderConfig `yaml:"requestHeaders" json:"requestHeaders"`
+
+	hasResponseHeaders bool
+	hasRequestHeaders  bool
 }
 
 // 校验
 func (this *HeaderList) ValidateHeaders() error {
-	this.hasHeaders = len(this.Headers) > 0
+	this.hasResponseHeaders = len(this.Headers) > 0
+	this.hasRequestHeaders = len(this.RequestHeaders) > 0
 
 	for _, h := range this.Headers {
 		err := h.Validate()
@@ -64,16 +78,24 @@ func (this *HeaderList) ValidateHeaders() error {
 			return err
 		}
 	}
+
+	for _, h := range this.RequestHeaders {
+		err := h.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 // 是否有Headers
-func (this *HeaderList) HasHeaders() bool {
-	return this.hasHeaders
+func (this *HeaderList) HasResponseHeaders() bool {
+	return this.hasResponseHeaders
 }
 
 // 取得所有的IgnoreHeader
-func (this *HeaderList) AllIgnoreHeaders() []string {
+func (this *HeaderList) AllIgnoreResponseHeaders() []string {
 	if this.IgnoreHeaders == nil {
 		return []string{}
 	}
@@ -81,14 +103,14 @@ func (this *HeaderList) AllIgnoreHeaders() []string {
 }
 
 // 添加IgnoreHeader
-func (this *HeaderList) AddIgnoreHeader(name string) {
+func (this *HeaderList) AddIgnoreResponseHeader(name string) {
 	if !lists.ContainsString(this.IgnoreHeaders, name) {
 		this.IgnoreHeaders = append(this.IgnoreHeaders, name)
 	}
 }
 
 // 判断是否包含IgnoreHeader
-func (this *HeaderList) ContainsIgnoreHeader(name string) bool {
+func (this *HeaderList) ContainsIgnoreResponseHeader(name string) bool {
 	if len(this.IgnoreHeaders) == 0 {
 		return false
 	}
@@ -96,7 +118,7 @@ func (this *HeaderList) ContainsIgnoreHeader(name string) bool {
 }
 
 // 修改IgnoreHeader
-func (this *HeaderList) UpdateIgnoreHeader(oldName string, newName string) {
+func (this *HeaderList) UpdateIgnoreResponseHeader(oldName string, newName string) {
 	result := []string{}
 	for _, h := range this.IgnoreHeaders {
 		if h == oldName {
@@ -109,7 +131,7 @@ func (this *HeaderList) UpdateIgnoreHeader(oldName string, newName string) {
 }
 
 // 移除IgnoreHeader
-func (this *HeaderList) RemoveIgnoreHeader(name string) {
+func (this *HeaderList) RemoveIgnoreResponseHeader(name string) {
 	result := []string{}
 	for _, n := range this.IgnoreHeaders {
 		if n == name {
@@ -121,7 +143,7 @@ func (this *HeaderList) RemoveIgnoreHeader(name string) {
 }
 
 // 取得所有的Header
-func (this *HeaderList) AllHeaders() []*HeaderConfig {
+func (this *HeaderList) AllResponseHeaders() []*HeaderConfig {
 	if this.Headers == nil {
 		return []*HeaderConfig{}
 	}
@@ -129,12 +151,12 @@ func (this *HeaderList) AllHeaders() []*HeaderConfig {
 }
 
 // 添加Header
-func (this *HeaderList) AddHeader(header *HeaderConfig) {
+func (this *HeaderList) AddResponseHeader(header *HeaderConfig) {
 	this.Headers = append(this.Headers, header)
 }
 
 // 判断是否包含Header
-func (this *HeaderList) ContainsHeader(name string) bool {
+func (this *HeaderList) ContainsResponseHeader(name string) bool {
 	for _, h := range this.Headers {
 		if h.Name == name {
 			return true
@@ -144,7 +166,7 @@ func (this *HeaderList) ContainsHeader(name string) bool {
 }
 
 // 查找Header
-func (this *HeaderList) FindHeader(headerId string) *HeaderConfig {
+func (this *HeaderList) FindResponseHeader(headerId string) *HeaderConfig {
 	for _, h := range this.Headers {
 		if h.Id == headerId {
 			return h
@@ -154,7 +176,7 @@ func (this *HeaderList) FindHeader(headerId string) *HeaderConfig {
 }
 
 // 移除Header
-func (this *HeaderList) RemoveHeader(headerId string) {
+func (this *HeaderList) RemoveResponseHeader(headerId string) {
 	result := []*HeaderConfig{}
 	for _, h := range this.Headers {
 		if h.Id == headerId {
@@ -165,18 +187,39 @@ func (this *HeaderList) RemoveHeader(headerId string) {
 	this.Headers = result
 }
 
-// 格式化Header
-func (this *HeaderList) FormatHeaders(formatter func(source string) string) []*HeaderConfig {
+// 添加请求Header
+func (this *HeaderList) AddRequestHeader(header *HeaderConfig) {
+	this.RequestHeaders = append(this.RequestHeaders, header)
+}
+
+// 判断是否有请求Header
+func (this *HeaderList) HasRequestHeaders() bool {
+	return this.hasRequestHeaders
+}
+
+// 取得所有的请求Header
+func (this *HeaderList) AllRequestHeaders() []*HeaderConfig {
+	return this.RequestHeaders
+}
+
+// 查找请求Header
+func (this *HeaderList) FindRequestHeader(headerId string) *HeaderConfig {
+	for _, h := range this.RequestHeaders {
+		if h.Id == headerId {
+			return h
+		}
+	}
+	return nil
+}
+
+// 移除请求Header
+func (this *HeaderList) RemoveRequestHeader(headerId string) {
 	result := []*HeaderConfig{}
-	for _, h := range this.Headers {
-		if !h.On {
+	for _, h := range this.RequestHeaders {
+		if h.Id == headerId {
 			continue
 		}
-		newHeader := h.Copy()
-		if h.hasVariables {
-			newHeader.Value = formatter(h.Value)
-		}
-		result = append(result, newHeader)
+		result = append(result, h)
 	}
-	return result
+	this.RequestHeaders = result
 }
