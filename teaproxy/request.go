@@ -999,8 +999,13 @@ func (this *Request) WriteResponseHeaders(writer *ResponseWriter, statusCode int
 	}
 
 	// hsts
-	if this.rawScheme == "https" && this.server.SSL != nil && this.server.SSL.On && this.server.SSL.HSTS {
-		responseHeader.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+	if this.rawScheme == "https" &&
+		this.server.SSL != nil &&
+		this.server.SSL.On &&
+		this.server.SSL.HSTS != nil &&
+		this.server.SSL.HSTS.On &&
+		this.server.SSL.HSTS.Match(this.host) {
+		responseHeader.Set(this.server.SSL.HSTS.HeaderKey(), this.server.SSL.HSTS.HeaderValue())
 	}
 }
 

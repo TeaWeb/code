@@ -48,12 +48,20 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["selectedTab"] = "https"
 	this.Data["server"] = server
 	this.Data["versions"] = teaconfigs.AllTlsVersions
-	this.Data["hsts"] = false
+	if server.SSL.HSTS != nil {
+		this.Data["hsts"] = server.SSL.HSTS
+	} else {
+		this.Data["hsts"] = &teaconfigs.HSTSConfig{
+			On:                false,
+			MaxAge:            31536000,
+			IncludeSubDomains: true,
+			Preload:           false,
+		}
+	}
 
 	this.Data["minVersion"] = "TLS 1.0"
 	if server.SSL != nil && len(server.SSL.MinVersion) > 0 {
 		this.Data["minVersion"] = server.SSL.MinVersion
-		this.Data["hsts"] = server.SSL.HSTS
 	}
 
 	// 加密算法套件
@@ -79,7 +87,12 @@ func (this *UpdateAction) RunPost(params struct {
 	MinVersion     string
 	CipherSuitesOn bool
 	CipherSuites   []string
-	Hsts           bool
+
+	HstsOn                bool
+	HstsMaxAge            int
+	HstsIncludeSubDomains bool
+	HstsPreload           bool
+	HstsDomains           []string
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -96,7 +109,13 @@ func (this *UpdateAction) RunPost(params struct {
 		server.SSL.MinVersion = params.MinVersion
 	}
 
-	server.SSL.HSTS = params.Hsts
+	server.SSL.HSTS = &teaconfigs.HSTSConfig{
+		On:                params.HstsOn,
+		MaxAge:            params.HstsMaxAge,
+		Domains:           params.HstsDomains,
+		IncludeSubDomains: params.HstsIncludeSubDomains,
+		Preload:           params.HstsPreload,
+	}
 
 	server.SSL.CipherSuites = []string{}
 	if params.CipherSuitesOn {
