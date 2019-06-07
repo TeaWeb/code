@@ -20,7 +20,7 @@ type MongoConnectionConfig struct {
 	Port                    uint               `json:"port"`
 	AuthMechanism           string             `json:"authMechanism"`
 	AuthMechanismProperties []*shared.Variable `json:"authMechanismProperties"`
-	RequestURI              string // @TODO 未来版本需要实现
+	RequestURI              string             `json:"requestURI"` // @TODO 未来版本需要实现
 }
 
 var mongoConnectionConfig *MongoConnectionConfig
