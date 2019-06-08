@@ -2,14 +2,12 @@ package locations
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/locationutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/iwind/TeaGo/types"
 	"regexp"
 	"strconv"
 )
@@ -31,12 +29,11 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["patternTypes"] = teaconfigs.AllLocationPatternTypes()
 	this.Data["usualCharsets"] = teautils.UsualCharsets
 	this.Data["charsets"] = teautils.AllCharsets
-	this.Data["accessLogFields"] = lists.Map(tealogs.AccessLogFields, func(k int, v interface{}) interface{} {
-		m := v.(maps.Map)
-		code := types.Int(m["code"])
-		m["isChecked"] = (len(location.AccessLogFields) == 0 && lists.ContainsInt(tealogs.AccessLogDefaultFieldsCodes, code)) || lists.ContainsInt(location.AccessLogFields, code)
-		return m
-	})
+	this.Data["accessLogIsInherited"] = len(location.AccessLog) == 0
+	if len(location.AccessLog) == 0 {
+		location.AccessLog = []*teaconfigs.AccessLogConfig{teaconfigs.NewAccessLogConfig()}
+	}
+	this.Data["accessLogs"] = proxyutils.FormatAccessLog(location.AccessLog)
 
 	this.Data["location"] = maps.Map{
 		"id":                location.Id,
@@ -50,7 +47,6 @@ func (this *UpdateAction) Run(params struct {
 		"index":             location.Index,
 		"charset":           location.Charset,
 		"maxBodySize":       location.MaxBodySize,
-		"enableAccessLog":   !location.DisableAccessLog,
 		"enableStat":        !location.DisableStat,
 		"gzipLevel":         location.GzipLevel,
 		"gzipMinLength":     location.GzipMinLength,
@@ -76,33 +72,30 @@ func (this *UpdateAction) Run(params struct {
 
 // 保存修改
 func (this *UpdateAction) RunPost(params struct {
-	ServerId          string
-	LocationId        string
-	Pattern           string
-	PatternType       int
-	Name              string
-	Root              string
-	Charset           string
-	Index             []string
-	MaxBodySize       float64
-	MaxBodyUnit       string
-	EnableAccessLog   bool
-	AccessLogFields   []int
-	EnableStat        bool
-	GzipLevel         int8
-	GzipMinLength     float64
-	GzipMinUnit       string
-	RedirectToHttps   bool
-	On                bool
-	IsReverse         bool
-	IsCaseInsensitive bool
+	ServerId             string
+	LocationId           string
+	Pattern              string
+	PatternType          int
+	Name                 string
+	Root                 string
+	Charset              string
+	Index                []string
+	MaxBodySize          float64
+	MaxBodyUnit          string
+	AccessLogIsInherited bool
+	EnableStat           bool
+	GzipLevel            int8
+	GzipMinLength        float64
+	GzipMinUnit          string
+	RedirectToHttps      bool
+	On                   bool
+	IsReverse            bool
+	IsCaseInsensitive    bool
 
 	CondParams []string
 	CondOps    []string
 	CondValues []string
 }) {
-	params.AccessLogFields = append(params.AccessLogFields, 0)
-
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
 		this.Fail("找不到Server")
@@ -144,8 +137,11 @@ func (this *UpdateAction) RunPost(params struct {
 	location.Root = params.Root
 	location.Charset = params.Charset
 	location.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
-	location.DisableAccessLog = !params.EnableAccessLog
-	location.AccessLogFields = params.AccessLogFields
+	if params.AccessLogIsInherited {
+		location.AccessLog = []*teaconfigs.AccessLogConfig{}
+	} else {
+		location.AccessLog = proxyutils.ParseAccessLogForm(this.Request)
+	}
 	location.DisableStat = !params.EnableStat
 	location.GzipLevel = params.GzipLevel
 	location.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit

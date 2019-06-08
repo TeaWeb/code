@@ -35,16 +35,17 @@ type LocationConfig struct {
 	RedirectToHttps bool                 `yaml:"redirectToHttps" json:"redirectToHttps"` // 是否自动跳转到Https
 
 	// 日志
-	DisableAccessLog bool               `yaml:"disableAccessLog" json:"disableAccessLog"` // 是否禁用访问日志
-	AccessLog        []*AccessLogConfig `yaml:"accessLog" json:"accessLog"`               // 访问日志设置 TODO
-	AccessLogFields  []int              `yaml:"accessLogFields" json:"accessLogFields"`   // 访问日志保留的字段，如果为nil，则表示没有设置
-	DisableStat      bool               `yaml:"disableStat" json:"disableStat"`           // 是否禁用统计
+	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // 访问日志设置，如果为空表示继承上一级设置
+
+	DisableAccessLog1 bool  `yaml:"disableAccessLog" json:"disableAccessLog"` // deprecated: 是否禁用访问日志
+	AccessLogFields1  []int `yaml:"accessLogFields" json:"accessLogFields"`   // deprecated: 访问日志保留的字段，如果为nil，则表示没有设置
+	DisableStat       bool  `yaml:"disableStat" json:"disableStat"`           // 是否禁用统计
 
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` // 允许的终端地址 @TODO
 	Deny  []string `yaml:"deny" json:"deny"`   // 禁止的终端地址 @TODO
 
-	Proxy string `yaml:proxy" json:"proxy"` //  代理配置 @TODO
+	Proxy string `yaml:"proxy" json:"proxy"` //  代理配置 @TODO
 
 	CachePolicy string `yaml:"cachePolicy" json:"cachePolicy"` // 缓存策略
 	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开
@@ -285,6 +286,32 @@ func (this *LocationConfig) Validate() error {
 	}
 
 	return nil
+}
+
+// 兼容性设置
+func (this *LocationConfig) Compatible(version string) {
+	if len(version) == 0 {
+		this.CacheOn = true
+		this.WAFOn = true
+	} else if stringutil.VersionCompare(version, "0.1.3") < 0 {
+		this.CacheOn = true
+		this.WAFOn = true
+	} else if stringutil.VersionCompare(version, "0.1.5") <= 0 {
+		if len(this.AccessLog) == 0 && this.DisableAccessLog1 {
+			this.AccessLog = []*AccessLogConfig{
+				{
+					Id:      stringutil.Rand(16),
+					On:      !this.DisableAccessLog1,
+					Fields:  this.AccessLogFields1,
+					Status1: true,
+					Status2: true,
+					Status3: true,
+					Status4: true,
+					Status5: true,
+				},
+			}
+		}
+	}
 }
 
 // 最大Body尺寸

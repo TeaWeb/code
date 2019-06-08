@@ -113,9 +113,8 @@ type Request struct {
 	requestData []byte   // 导出的request，在监控请求的时候有用
 	errors      []string // 错误信息
 
-	enableAccessLog bool
-	enableStat      bool
-	accessLogFields []int
+	enableStat bool
+	accessLog  *teaconfigs.AccessLogConfig
 
 	gzipLevel     uint8
 	gzipMinLength int64
@@ -133,7 +132,6 @@ func NewRequest(rawRequest *http.Request) *Request {
 		raw:             rawRequest,
 		rawURI:          rawRequest.URL.RequestURI(),
 		requestFromTime: now,
-		enableAccessLog: true,
 		enableStat:      true,
 		attrs:           map[string]string{},
 	}
@@ -154,7 +152,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	if redirects > 8 {
 		return errors.New("too many redirects")
 	}
-	redirects ++
+	redirects++
 
 	uri, err := url.ParseRequestURI(this.uri)
 	if err != nil {
@@ -219,10 +217,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	if server.MaxBodyBytes() > 0 {
 		this.requestMaxSize = server.MaxBodyBytes()
 	}
-	if server.DisableAccessLog {
-		this.enableAccessLog = false
-	} else {
-		this.accessLogFields = server.AccessLogFields
+	if len(server.AccessLog) > 0 {
+		this.accessLog = server.AccessLog[0]
 	}
 	if server.DisableStat {
 		this.enableStat = false
@@ -264,10 +260,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			if location.MaxBodyBytes() > 0 {
 				this.requestMaxSize = location.MaxBodyBytes()
 			}
-			if location.DisableAccessLog {
-				this.enableAccessLog = false
-			} else {
-				this.accessLogFields = location.AccessLogFields
+			if len(location.AccessLog) > 0 {
+				this.accessLog = location.AccessLog[0]
 			}
 			if location.DisableStat {
 				this.enableStat = false
@@ -667,7 +661,7 @@ func (this *Request) call(writer *ResponseWriter) error {
 		writer.SetBodyCopying(true)
 	} else {
 		max := 512 * 1024 // 512K
-		if lists.ContainsInt(this.accessLogFields, tealogs.AccessLogFieldRequestBody) {
+		if this.accessLog != nil && lists.ContainsInt(this.accessLog.Fields, tealogs.AccessLogFieldRequestBody) {
 			body, err := ioutil.ReadAll(this.raw.Body)
 			if err == nil {
 				if len(body) > max {
@@ -678,7 +672,7 @@ func (this *Request) call(writer *ResponseWriter) error {
 			}
 			this.raw.Body = ioutil.NopCloser(bytes.NewReader(body))
 		}
-		if lists.ContainsInt(this.accessLogFields, tealogs.AccessLogFieldResponseBody) {
+		if this.accessLog != nil && lists.ContainsInt(this.accessLog.Fields, tealogs.AccessLogFieldResponseBody) {
 			writer.SetBodyCopying(true)
 		}
 	}
@@ -1174,7 +1168,7 @@ func (this *Request) log() {
 	// 计算请求时间
 	this.requestCost = time.Since(this.requestFromTime).Seconds()
 
-	if !this.enableAccessLog && !this.enableStat {
+	if (this.accessLog == nil || !this.accessLog.On) && !this.enableStat {
 		return
 	}
 
@@ -1223,10 +1217,10 @@ func (this *Request) log() {
 	}
 
 	// 日志和统计
-	accessLog.SetShouldWrite(this.enableAccessLog)
+	accessLog.SetShouldWrite(this.accessLog != nil && this.accessLog.On && this.accessLog.Match(this.responseWriter.statusCode))
 	accessLog.SetShouldStat(this.enableStat)
-	if this.enableAccessLog {
-		accessLog.SetWritingFields(this.accessLogFields)
+	if this.accessLog != nil {
+		accessLog.SetWritingFields(this.accessLog.Fields)
 	}
 
 	if this.server != nil {

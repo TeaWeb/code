@@ -2,13 +2,10 @@ package locations
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/maps"
-	"github.com/iwind/TeaGo/types"
 	"regexp"
 	"strconv"
 )
@@ -35,12 +32,9 @@ func (this *AddAction) Run(params struct {
 	this.Data["usualCharsets"] = teautils.UsualCharsets
 	this.Data["charsets"] = teautils.AllCharsets
 
-	this.Data["accessLogFields"] = lists.Map(tealogs.AccessLogFields, func(k int, v interface{}) interface{} {
-		m := v.(maps.Map)
-		code := types.Int(m["code"])
-		m["isChecked"] = lists.ContainsInt(tealogs.AccessLogDefaultFieldsCodes, code)
-		return m
-	})
+	accessLog := teaconfigs.NewAccessLogConfig()
+	this.Data["accessLogIsInherited"] = true
+	this.Data["accessLogs"] = proxyutils.FormatAccessLog([]*teaconfigs.AccessLogConfig{accessLog})
 
 	// 运算符
 	this.Data["operators"] = teaconfigs.AllRequestOperators()
@@ -50,28 +44,25 @@ func (this *AddAction) Run(params struct {
 
 // 保存提交
 func (this *AddAction) RunPost(params struct {
-	ServerId          string
-	Name              string
-	Pattern           string
-	PatternType       int
-	Root              string
-	Charset           string
-	Index             []string
-	MaxBodySize       float64
-	MaxBodyUnit       string
-	EnableAccessLog   bool
-	AccessLogFields   []int
-	EnableStat        bool
-	GzipLevel         int8
-	GzipMinLength     float64
-	GzipMinUnit       string
-	RedirectToHttps   bool
-	On                bool
-	IsReverse         bool
-	IsCaseInsensitive bool
+	ServerId             string
+	Name                 string
+	Pattern              string
+	PatternType          int
+	Root                 string
+	Charset              string
+	Index                []string
+	MaxBodySize          float64
+	MaxBodyUnit          string
+	AccessLogIsInherited bool
+	EnableStat           bool
+	GzipLevel            int8
+	GzipMinLength        float64
+	GzipMinUnit          string
+	RedirectToHttps      bool
+	On                   bool
+	IsReverse            bool
+	IsCaseInsensitive    bool
 }) {
-	params.AccessLogFields = append(params.AccessLogFields, 0)
-
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
 		this.Fail("找不到Server")
@@ -93,8 +84,11 @@ func (this *AddAction) RunPost(params struct {
 	location.Root = params.Root
 	location.Charset = params.Charset
 	location.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
-	location.DisableAccessLog = !params.EnableAccessLog
-	location.AccessLogFields = params.AccessLogFields
+	if params.AccessLogIsInherited {
+		location.AccessLog = []*teaconfigs.AccessLogConfig{}
+	} else {
+		location.AccessLog = proxyutils.ParseAccessLogForm(this.Request)
+	}
 	location.DisableStat = !params.EnableStat
 	location.GzipLevel = params.GzipLevel
 	location.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit

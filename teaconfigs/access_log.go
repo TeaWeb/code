@@ -1,20 +1,62 @@
 package teaconfigs
 
-import (
-	"errors"
-	"github.com/iwind/TeaGo/logs"
-)
-
-// 日志配置
-// 参考 http://nginx.org/en/docs/http/ngx_http_log_module.html#access_log
+// 代理访问日志配置
 type AccessLogConfig struct {
-	On     bool                   `yaml:"on" json:"on"`
-	Target string                 `yaml:"target" json:"target"`
-	Config map[string]interface{} `yaml:"config" json:"config"`
+	Id string `yaml:"id" json:"id"`
+	On bool   `yaml:"on" json:"on"`
+
+	Fields []int `yaml:"fields" json:"fields"` // 记录的字段
+
+	Status1 bool `yaml:"status1" json:"status1"` // 1xx
+	Status2 bool `yaml:"status2" json:"status2"` // 2xx
+	Status3 bool `yaml:"status3" json:"status3"` // 3xx
+	Status4 bool `yaml:"status4" json:"status4"` // 4xx
+	Status5 bool `yaml:"status5" json:"status5"` // 5xx
 }
 
-func (config *AccessLogConfig) Validate() {
-	if len(config.Target) == 0 {
-		logs.Error(errors.New("invalid access log target '" + config.Target + "'"))
+// 获取新对象
+func NewAccessLogConfig() *AccessLogConfig {
+	return &AccessLogConfig{
+		On:      true,
+		Fields:  []int{},
+		Status1: true,
+		Status2: true,
+		Status3: true,
+		Status4: true,
+		Status5: true,
 	}
+}
+
+// 校验
+func (this *AccessLogConfig) Validate() error {
+	return nil
+}
+
+// 判断是否应该记录
+func (this *AccessLogConfig) Match(status int) bool {
+	s := status / 100
+	switch s {
+	case 1:
+		if !this.Status1 {
+			return false
+		}
+	case 2:
+		if !this.Status2 {
+			return false
+		}
+	case 3:
+		if !this.Status3 {
+			return false
+		}
+	case 4:
+		if !this.Status4 {
+			return false
+		}
+	case 5:
+		if !this.Status5 {
+			return false
+		}
+	}
+
+	return true
 }

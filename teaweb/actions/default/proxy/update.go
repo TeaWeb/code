@@ -2,13 +2,9 @@ package proxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/maps"
-	"github.com/iwind/TeaGo/types"
 	"strconv"
 )
 
@@ -27,34 +23,30 @@ func (this *UpdateAction) Run(params struct {
 
 	this.Data["usualCharsets"] = teautils.UsualCharsets
 	this.Data["charsets"] = teautils.AllCharsets
-	this.Data["accessLogFields"] = lists.Map(tealogs.AccessLogFields, func(k int, v interface{}) interface{} {
-		m := v.(maps.Map)
-		m["isChecked"] = (len(server.AccessLogFields) == 0 && lists.ContainsInt(tealogs.AccessLogDefaultFieldsCodes, types.Int(m["code"]))) || lists.ContainsInt(server.AccessLogFields, types.Int(m["code"]))
-		return m
-	})
+
+	this.Data["accessLogs"] = proxyutils.FormatAccessLog(server.AccessLog)
 
 	this.Show()
 }
 
 // 保存提交
 func (this *UpdateAction) RunPost(params struct {
-	HttpOn          bool
-	ServerId        string
-	Description     string
-	Name            []string
-	Listen          []string
-	Root            string
-	Charset         string
-	Index           []string
-	MaxBodySize     float64
-	MaxBodyUnit     string
-	EnableAccessLog bool
-	AccessLogFields []int
-	EnableStat      bool
-	GzipLevel       uint8
-	GzipMinLength   float64
-	GzipMinUnit     string
-	CacheStatic     bool
+	HttpOn      bool
+	ServerId    string
+	Description string
+	Name        []string
+	Listen      []string
+	Root        string
+	Charset     string
+	Index       []string
+	MaxBodySize float64
+	MaxBodyUnit string
+
+	EnableStat    bool
+	GzipLevel     uint8
+	GzipMinLength float64
+	GzipMinUnit   string
+	CacheStatic   bool
 
 	PageStatus []string
 	PageURL    []string
@@ -66,9 +58,6 @@ func (this *UpdateAction) RunPost(params struct {
 
 	Must *actions.Must
 }) {
-	// 加一个0表示已经被设置
-	params.AccessLogFields = append(params.AccessLogFields, 0)
-
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
 		this.Fail("找不到Server")
@@ -86,8 +75,10 @@ func (this *UpdateAction) RunPost(params struct {
 	server.Charset = params.Charset
 	server.Index = params.Index
 	server.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
-	server.DisableAccessLog = !params.EnableAccessLog
-	server.AccessLogFields = params.AccessLogFields
+
+	// 访问日志
+	server.AccessLog = proxyutils.ParseAccessLogForm(this.Request)
+
 	server.DisableStat = !params.EnableStat
 	if params.GzipLevel <= 9 {
 		server.GzipLevel = params.GzipLevel

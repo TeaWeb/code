@@ -46,12 +46,13 @@ type ServerConfig struct {
 	GzipMinLength string            `yaml:"gzipMinLength" json:"gzipMinLength"` // 需要压缩的最小内容尺寸
 
 	// 访问日志
-	DisableAccessLog bool               `yaml:"disableAccessLog" json:"disableAccessLog"` // 是否禁用访问日志
-	AccessLog        []*AccessLogConfig `yaml:"accessLog" json:"accessLog"`               // 访问日志，TODO
-	AccessLogFields  []int              `yaml:"accessLogFields" json:"accessLogFields"`   // 访问日志保留的字段，如果为nil，则表示没有设置
-	DisableStat      bool               `yaml:"disableStat" json:"disableStat"`           // 是否禁用统计
+	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // 访问日志配置
 
-	// @TODO 支持ErrorLog
+	DisableAccessLog1 bool  `yaml:"disableAccessLog" json:"disableAccessLog"` // deprecated: 是否禁用访问日志
+	AccessLogFields1  []int `yaml:"accessLogFields" json:"accessLogFields"`   // deprecated: 访问日志保留的字段，如果为nil，则表示没有设置
+
+	// 统计
+	DisableStat bool `yaml:"disableStat" json:"disableStat"` // 是否禁用统计
 
 	// SSL
 	SSL *SSLConfig `yaml:"ssl" json:"ssl"`
@@ -356,6 +357,16 @@ func (this *ServerConfig) Validate() error {
 		}
 	}
 
+	// access log
+	if this.AccessLog != nil {
+		for _, a := range this.AccessLog {
+			err = a.Validate()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -368,18 +379,28 @@ func (this *ServerConfig) compatible() {
 
 		// waf 默认值
 		this.WAFOn = true
-
-		for _, location := range this.Locations {
-			location.CacheOn = true
-			location.WAFOn = true
-		}
-	} else if stringutil.VersionCompare(this.TeaVersion, "0.1.3") < 0 {
+	} else if stringutil.VersionCompare(this.TeaVersion, "0.1.3") < 0 { // 0.1.3
 		// waf 默认值
 		this.WAFOn = true
-
-		for _, location := range this.Locations {
-			location.WAFOn = true
+	} else if stringutil.VersionCompare(this.TeaVersion, "0.1.5") <= 0 { // 0.1.5
+		if len(this.AccessLog) == 0 {
+			this.AccessLog = []*AccessLogConfig{
+				{
+					Id:      stringutil.Rand(16),
+					On:      !this.DisableAccessLog1,
+					Fields:  this.AccessLogFields1,
+					Status1: true,
+					Status2: true,
+					Status3: true,
+					Status4: true,
+					Status5: true,
+				},
+			}
 		}
+	}
+
+	for _, location := range this.Locations {
+		location.Compatible(this.TeaVersion)
 	}
 }
 
@@ -426,7 +447,7 @@ func (this *ServerConfig) Save() error {
 	}
 
 	this.TeaVersion = teaconst.TeaVersion
-	this.Version ++
+	this.Version++
 
 	writer, err := files.NewWriter(Tea.ConfigFile(this.Filename))
 	if err != nil {
@@ -656,7 +677,7 @@ func (this *ServerConfig) MoveLocation(fromIndex int, toIndex int) {
 
 	location := this.Locations[fromIndex]
 	newList := []*LocationConfig{}
-	for i := 0; i < len(this.Locations); i ++ {
+	for i := 0; i < len(this.Locations); i++ {
 		if i == fromIndex {
 			continue
 		}
