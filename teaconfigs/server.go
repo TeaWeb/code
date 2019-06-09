@@ -226,6 +226,9 @@ func NewServerConfigFromId(serverId string) *ServerConfig {
 
 // 校验配置
 func (this *ServerConfig) Validate() error {
+	// 兼容设置
+	this.compatible()
+
 	// 最大Body尺寸
 	maxBodySize, _ := stringutil.ParseFileSize(this.MaxBodySize)
 	this.maxBodySize = int64(maxBodySize)
@@ -379,10 +382,16 @@ func (this *ServerConfig) compatible() {
 
 		// waf 默认值
 		this.WAFOn = true
-	} else if stringutil.VersionCompare(this.TeaVersion, "0.1.3") < 0 { // 0.1.3
+	}
+
+	// v0.1.3
+	if stringutil.VersionCompare(this.TeaVersion, "0.1.3") < 0 {
 		// waf 默认值
 		this.WAFOn = true
-	} else if stringutil.VersionCompare(this.TeaVersion, "0.1.5") <= 0 { // 0.1.5
+	}
+
+	// v0.1.5
+	if len(this.TeaVersion) == 0 || stringutil.VersionCompare(this.TeaVersion, "0.1.5") <= 0 {
 		if len(this.AccessLog) == 0 {
 			this.AccessLog = []*AccessLogConfig{
 				{
