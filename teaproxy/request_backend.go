@@ -1,6 +1,7 @@
 package teaproxy
 
 import (
+	"context"
 	"errors"
 	"github.com/iwind/TeaGo/logs"
 	"io"
@@ -90,23 +91,31 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 	resp, err := client.Do(this.raw)
 	if err != nil {
-		// 如果超过最大失败次数，则下线
-		if !this.backend.HasCheckURL() {
-			currentFails := this.backend.IncreaseFails()
-			if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
-				this.backend.IsDown = true
-				this.backend.DownTime = time.Now()
-				if this.websocket != nil {
-					this.websocket.SetupScheduling(false)
-				} else {
-					this.server.SetupScheduling(false)
+		// 客户端取消请求，则不提示
+		httpErr, ok := err.(*url.Error)
+		if !ok || httpErr.Err != context.Canceled {
+			// 如果超过最大失败次数，则下线
+			if !this.backend.HasCheckURL() {
+				currentFails := this.backend.IncreaseFails()
+				if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
+					this.backend.IsDown = true
+					this.backend.DownTime = time.Now()
+					if this.websocket != nil {
+						this.websocket.SetupScheduling(false)
+					} else {
+						this.server.SetupScheduling(false)
+					}
 				}
 			}
-		}
 
-		this.serverError(writer)
-		logs.Println("[proxy]" + err.Error())
-		this.addError(err)
+			this.serverError(writer)
+
+			logs.Println("[proxy]" + err.Error())
+			this.addError(err)
+		} else {
+			this.serverError(writer)
+			this.addError(err)
+		}
 		return nil
 	}
 
