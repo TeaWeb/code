@@ -18,9 +18,8 @@ func (this *Request) callRedirectToHttps(writer *ResponseWriter) {
 		// 是否有HTTPS
 		if this.server.SSL != nil && this.server.SSL.On && len(this.server.SSL.Listen) > 0 {
 			listen := this.server.SSL.Listen[0]
-			host2, port, err := net.SplitHostPort(listen)
+			_, port, err := net.SplitHostPort(listen)
 			if err == nil {
-				host = host2
 				if port == "443" {
 					u := "https://" + host + this.raw.RequestURI
 					http.Redirect(writer, this.raw, u, http.StatusTemporaryRedirect)

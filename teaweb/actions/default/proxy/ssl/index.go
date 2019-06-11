@@ -51,7 +51,9 @@ func (this *IndexAction) Run(params struct {
 
 			cert, err := tls.LoadX509KeyPair(certConfig.FullCertPath(), certConfig.FullKeyPath())
 			if err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("证书#%d：", index+1)+err.Error())
+				if server.SSL.On {
+					errorMessages = append(errorMessages, fmt.Sprintf("证书#%d：", index+1)+err.Error())
+				}
 				certs = append(certs, maps.Map{
 					"config": certConfig,
 					"info":   info,
