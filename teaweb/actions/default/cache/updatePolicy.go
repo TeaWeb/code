@@ -27,22 +27,23 @@ func (this *UpdatePolicyAction) Run(params struct {
 	policy.Validate()
 
 	this.Data["policy"] = maps.Map{
-		"filename":      policy.Filename,
-		"name":          policy.Name,
-		"key":           policy.Key,
-		"type":          policy.Type,
-		"options":       policy.Options,
-		"life":          policy.Life,
-		"status":        policy.Status,
-		"maxSize":       policy.MaxSize,
-		"capacity":      policy.Capacity,
-		"skipSetCookie": policy.SkipSetCookie,
+		"filename":                 policy.Filename,
+		"name":                     policy.Name,
+		"key":                      policy.Key,
+		"type":                     policy.Type,
+		"options":                  policy.Options,
+		"life":                     policy.Life,
+		"status":                   policy.Status,
+		"maxSize":                  policy.MaxSize,
+		"capacity":                 policy.Capacity,
+		"skipSetCookie":            policy.SkipResponseSetCookie,
+		"enableRequestCachePragma": policy.EnableRequestCachePragma,
 	}
 
-	if len(policy.SkipCacheControlValues) == 0 {
-		policy.SkipCacheControlValues = []string{}
+	if len(policy.SkipResponseCacheControlValues) == 0 {
+		policy.SkipResponseCacheControlValues = []string{}
 	}
-	this.Data["skippedCacheControlValues"] = policy.SkipCacheControlValues
+	this.Data["skippedCacheControlValues"] = policy.SkipResponseCacheControlValues
 
 	this.Show()
 }
@@ -63,6 +64,7 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 	MaxSizeUnit               string
 	SkippedCacheControlValues []string
 	SkipSetCookie             bool
+	EnableRequestCachePragma  bool
 
 	FileDir string
 
@@ -102,8 +104,9 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 	}
 	policy.MaxSize = fmt.Sprintf("%.2f%s", params.MaxSize, params.MaxSizeUnit)
 	policy.Status = params.StatusList
-	policy.SkipCacheControlValues = params.SkippedCacheControlValues
-	policy.SkipSetCookie = params.SkipSetCookie
+	policy.SkipResponseCacheControlValues = params.SkippedCacheControlValues
+	policy.SkipResponseSetCookie = params.SkipSetCookie
+	policy.EnableRequestCachePragma = params.EnableRequestCachePragma
 
 	// 选项
 	switch policy.Type {

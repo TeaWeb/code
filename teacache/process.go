@@ -24,6 +24,13 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 		return true
 	}
 
+	// 支持请求中使用Pragma或Cache-Control
+	if cacheConfig.EnableRequestCachePragma {
+		if req.Raw().Header.Get("Cache-Control") == "no-cache" || req.Raw().Header.Get("Pragma") == "no-cache" {
+			return true
+		}
+	}
+
 	req.SetVarMapping("cache.policy.name", cacheConfig.Name)
 	req.SetVarMapping("cache.policy.type", cacheConfig.Type)
 
@@ -163,7 +170,7 @@ func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter)
 	}
 
 	// validate cache control
-	if len(cacheConfig.SkipCacheControlValues) > 0 {
+	if len(cacheConfig.SkipResponseCacheControlValues) > 0 {
 		cacheControl := writer.Header().Get("Cache-Control")
 		if len(cacheControl) > 0 {
 			values := strings.Split(cacheControl, ",")
@@ -176,7 +183,7 @@ func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter)
 	}
 
 	// validate set cookie
-	if cacheConfig.SkipSetCookie && len(writer.Header().Get("Set-Cookie")) > 0 {
+	if cacheConfig.SkipResponseSetCookie && len(writer.Header().Get("Set-Cookie")) > 0 {
 		return true
 	}
 

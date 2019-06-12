@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var DefaultSkippedCacheControlValues = []string{"private", "no-cache", "no-store"}
+var DefaultSkippedResponseCacheControlValues = []string{"private", "no-cache", "no-store"}
 
 // 缓存策略配置
 type CachePolicy struct {
@@ -25,8 +25,9 @@ type CachePolicy struct {
 	Status   []int  `yaml:"status" json:"status"`     // 缓存的状态码列表
 	MaxSize  string `yaml:"maxSize" json:"maxSize"`   // 能够请求的最大尺寸
 
-	SkipCacheControlValues []string `yaml:"skipCacheControlValues" json:"skipCacheControlValues"` // 可以跳过的Cache-Control值
-	SkipSetCookie          bool     `yaml:"skipSetCookie" json:"skipSetCookie"`                   // 是否跳过Set-Cookie Header
+	SkipResponseCacheControlValues []string `yaml:"skipCacheControlValues" json:"skipCacheControlValues"`     // 可以跳过的响应的Cache-Control值
+	SkipResponseSetCookie          bool     `yaml:"skipSetCookie" json:"skipSetCookie"`                       // 是否跳过响应的Set-Cookie Header
+	EnableRequestCachePragma       bool     `yaml:"enableRequestCachePragma" json:"enableRequestCachePragma"` // 是否支持客户端的Pragma: no-cache
 
 	life     time.Duration
 	maxSize  float64
@@ -41,8 +42,8 @@ type CachePolicy struct {
 // 获取新对象
 func NewCachePolicy() *CachePolicy {
 	return &CachePolicy{
-		SkipCacheControlValues: DefaultSkippedCacheControlValues,
-		SkipSetCookie:          true,
+		SkipResponseCacheControlValues: DefaultSkippedResponseCacheControlValues,
+		SkipResponseSetCookie:          true,
 	}
 }
 
@@ -76,7 +77,7 @@ func (this *CachePolicy) Validate() error {
 	this.capacity, _ = stringutil.ParseFileSize(this.Capacity)
 
 	this.uppercaseSkipCacheControlValues = []string{}
-	for _, value := range this.SkipCacheControlValues {
+	for _, value := range this.SkipResponseCacheControlValues {
 		this.uppercaseSkipCacheControlValues = append(this.uppercaseSkipCacheControlValues, strings.ToUpper(value))
 	}
 

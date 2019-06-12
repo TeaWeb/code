@@ -15,7 +15,7 @@ type CreatePolicyAction actions.Action
 func (this *CreatePolicyAction) Run(params struct{}) {
 	this.Data["types"] = teacache.AllCacheTypes()
 
-	this.Data["skippedCacheControlValues"] = shared.DefaultSkippedCacheControlValues
+	this.Data["skippedCacheControlValues"] = shared.DefaultSkippedResponseCacheControlValues
 
 	this.Show()
 }
@@ -35,6 +35,7 @@ func (this *CreatePolicyAction) RunPost(params struct {
 	MaxSizeUnit               string
 	SkippedCacheControlValues []string
 	SkipSetCookie             bool
+	EnableRequestCachePragma  bool
 
 	FileDir string
 
@@ -71,8 +72,9 @@ func (this *CreatePolicyAction) RunPost(params struct {
 	}
 	policy.MaxSize = fmt.Sprintf("%.2f%s", params.MaxSize, params.MaxSizeUnit)
 	policy.Status = params.StatusList
-	policy.SkipCacheControlValues = params.SkippedCacheControlValues
-	policy.SkipSetCookie = params.SkipSetCookie
+	policy.SkipResponseCacheControlValues = params.SkippedCacheControlValues
+	policy.SkipResponseSetCookie = params.SkipSetCookie
+	policy.EnableRequestCachePragma = params.EnableRequestCachePragma
 
 	// 选项
 	switch policy.Type {
