@@ -45,11 +45,11 @@ func NewGrid(countCells int, opt ...interface{}) *Grid {
 
 	cells := []*Cell{}
 	if countCells <= 0 {
-		countCells = 1024
+		countCells = 1
 	} else if countCells > 100*10000 {
 		countCells = 100 * 10000
 	}
-	for i := 0; i < countCells; i ++ {
+	for i := 0; i < countCells; i++ {
 		cell := NewCell()
 		cell.LimitSize = int64(math.Floor(float64(grid.limitSize) / float64(countCells)))
 		cells = append(cells, cell)
@@ -206,7 +206,7 @@ func (this *Grid) recycleTimer() {
 		if this.countCells == 0 {
 			return
 		}
-		this.recycleIndex ++
+		this.recycleIndex++
 		if this.recycleIndex > int(this.countCells-1) {
 			this.recycleIndex = 0
 		}
