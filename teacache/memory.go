@@ -32,6 +32,7 @@ func (this *MemoryManager) SetOptions(options map[string]interface{}) {
 	if this.Capacity > 0 {
 		capacityBytes := int64(this.Capacity)
 		opts = append(opts, teamemory.NewLimitSizeOpt(capacityBytes))
+		countCells = int(capacityBytes / 1024 / 1024 / 128)
 	}
 	this.grid = teamemory.NewGrid(countCells, opts ...)
 }
