@@ -605,11 +605,6 @@ func (this *Request) call(writer *ResponseWriter) error {
 		this.raw.Body = http.MaxBytesReader(writer, this.raw.Body, this.requestMaxSize)
 	}
 
-	if this.gzipLevel > 0 && this.allowGzip() {
-		writer.Gzip(this.gzipLevel, this.gzipMinLength)
-		defer writer.Close()
-	}
-
 	// UV
 	/**uid, err := this.raw.Cookie("TeaUID")
 	if err != nil || uid == nil {
@@ -645,6 +640,12 @@ func (this *Request) call(writer *ResponseWriter) error {
 	b := CallRequestBeforeHook(this, writer)
 	if !b {
 		return nil
+	}
+
+	// gzip压缩
+	if this.gzipLevel > 0 && this.allowGzip() {
+		writer.Gzip(this.gzipLevel, this.gzipMinLength)
+		defer writer.Close()
 	}
 
 	// watch

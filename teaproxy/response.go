@@ -18,8 +18,10 @@ type ResponseWriter struct {
 	statusCode    int
 	sentBodyBytes int64
 
-	bodyCopying bool
-	body        []byte
+	bodyCopying    bool
+	body           []byte
+	gzipBodyBuffer *bytes.Buffer // 当使用gzip压缩时使用
+	gzipBodyWriter *gzip.Writer  // 当使用gzip压缩时使用
 }
 
 // 包装对象
@@ -54,6 +56,15 @@ func (this *ResponseWriter) Prepare(size int64) {
 		if err != nil {
 			logs.Error(err)
 			return
+		}
+
+		// body copy
+		if this.bodyCopying {
+			this.gzipBodyBuffer = bytes.NewBuffer([]byte{})
+			this.gzipBodyWriter, err = gzip.NewWriterLevel(this.gzipBodyBuffer, int(this.gzipLevel))
+			if err != nil {
+				logs.Error(err)
+			}
 		}
 
 		header := this.writer.Header()
@@ -106,7 +117,14 @@ func (this *ResponseWriter) Write(data []byte) (n int, err error) {
 		}
 	}
 	if this.bodyCopying {
-		this.body = append(this.body, data ...)
+		if this.gzipBodyWriter != nil {
+			_, err := this.gzipBodyWriter.Write(data)
+			if err != nil {
+				logs.Error(err)
+			}
+		} else {
+			this.body = append(this.body, data ...)
+		}
 	}
 	return
 }
@@ -172,6 +190,10 @@ func (this *ResponseWriter) HeaderData() []byte {
 // 关闭
 func (this *ResponseWriter) Close() {
 	if this.gzipWriter != nil {
+		if this.bodyCopying && this.gzipBodyWriter != nil {
+			this.gzipBodyWriter.Close()
+			this.body = this.gzipBodyBuffer.Bytes()
+		}
 		this.gzipWriter.Close()
 		this.gzipWriter = nil
 	}
