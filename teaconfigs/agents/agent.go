@@ -134,7 +134,7 @@ func (this *AgentConfig) Save() error {
 		return err
 	}
 	defer writer.Close()
-	this.Version ++
+	this.Version++
 	_, err = writer.WriteYAML(this)
 	return err
 }
@@ -211,7 +211,7 @@ func (this *AgentConfig) MoveApp(fromIndex int, toIndex int) {
 
 	location := this.Apps[fromIndex]
 	newList := []*AppConfig{}
-	for i := 0; i < len(this.Apps); i ++ {
+	for i := 0; i < len(this.Apps); i++ {
 		if i == fromIndex {
 			continue
 		}
@@ -607,17 +607,6 @@ chart.render();
 			item.Id = "clock"
 			item.Name = "时钟"
 			item.Interval = "60s"
-
-			// 阈值
-			{
-				threshold := NewThreshold()
-				threshold.Param = "new Date().getTime() / 1000 - ${timestamp}"
-				threshold.Value = "300"
-				threshold.NoticeLevel = notices.NoticeLevelWarning
-				threshold.Operator = ThresholdOperatorGte
-				threshold.NoticeMessage = "主机时间出现很大偏差"
-				item.AddThreshold(threshold)
-			}
 
 			source := NewDateSource()
 			source.DataFormat = SourceDataFormatJSON
