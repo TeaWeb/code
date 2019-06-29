@@ -31,6 +31,7 @@ func SharedClient() *mongo.Client {
 			logs.Fatal(err)
 			return nil
 		}
+		defer reader.Close()
 
 		config := &Config{}
 		err = reader.ReadYAML(config)
@@ -80,6 +81,7 @@ func NewClient() *mongo.Client {
 		logs.Fatal(err)
 		return nil
 	}
+	defer reader.Close()
 
 	config := &Config{}
 	err = reader.ReadYAML(config)
@@ -131,6 +133,7 @@ func Test() error {
 	if err != nil {
 		return err
 	}
+	defer reader.Close()
 
 	clientOptions := options.Client().ApplyURI(config.URI)
 	sharedConfig := configs.SharedMongoConfig()
