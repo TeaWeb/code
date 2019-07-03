@@ -3,6 +3,7 @@ package waf
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teawaf"
+	actions2 "github.com/TeaWeb/code/teawaf/actions"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
@@ -10,7 +11,9 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	"regexp"
 )
 
 type AddAction actions.Action
@@ -33,17 +36,32 @@ func (this *AddAction) RunGet(params struct{}) {
 func (this *AddAction) RunPost(params struct {
 	Name       string
 	GroupCodes []string
-	On         bool
-	IsInbound  bool
-	Must       *actions.Must
+
+	On bool
+
+	BlockStatusCode string
+	BlockBody       string
+	BlockURL        string
+
+	Must *actions.Must
 }) {
 	params.Must.
 		Field("name", params.Name).
 		Require("请输入策略名称")
 
+	if len(params.BlockStatusCode) > 0 && !regexp.MustCompile(`^\d{3}$`).MatchString(params.BlockStatusCode) {
+		this.FailField("blockStatusCode", "请输入正确的HTTP状态码")
+	}
+	statusCode := types.Int(params.BlockStatusCode)
+
 	waf := teawaf.NewWAF()
 	waf.Name = params.Name
 	waf.On = params.On
+	waf.ActionBlock = &actions2.BlockAction{
+		StatusCode: statusCode,
+		Body:       params.BlockBody,
+		URL:        params.BlockURL,
+	}
 
 	template := teawaf.Template()
 

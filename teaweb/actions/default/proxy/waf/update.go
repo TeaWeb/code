@@ -3,15 +3,18 @@ package waf
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teawaf"
+	actions2 "github.com/TeaWeb/code/teawaf/actions"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	"net/http"
+	"regexp"
 )
 
 type UpdateAction actions.Action
@@ -25,12 +28,19 @@ func (this *UpdateAction) RunGet(params struct {
 		this.Fail("找不到WAF")
 	}
 
+	if waf.ActionBlock == nil {
+		waf.ActionBlock = &actions2.BlockAction{
+			StatusCode: http.StatusForbidden,
+		}
+	}
+
 	this.Data["config"] = maps.Map{
 		"id":            waf.Id,
 		"name":          waf.Name,
 		"on":            waf.On,
 		"countInbound":  waf.CountInboundRuleSets(),
 		"countOutbound": waf.CountOutboundRuleSets(),
+		"actionBlock":   waf.ActionBlock,
 	}
 
 	this.Data["groups"] = lists.Map(teawaf.Template().Inbound, func(k int, v interface{}) interface{} {
@@ -52,8 +62,14 @@ func (this *UpdateAction) RunPost(params struct {
 	WafId      string
 	Name       string
 	GroupCodes []string
-	On         bool
-	Must       *actions.Must
+
+	On bool
+
+	BlockStatusCode string
+	BlockBody       string
+	BlockURL        string
+
+	Must *actions.Must
 }) {
 	waf := teaconfigs.SharedWAFList().FindWAF(params.WafId)
 	if waf == nil {
@@ -64,8 +80,18 @@ func (this *UpdateAction) RunPost(params struct {
 		Field("name", params.Name).
 		Require("请输入策略名称")
 
+	if len(params.BlockStatusCode) > 0 && !regexp.MustCompile(`^\d{3}$`).MatchString(params.BlockStatusCode) {
+		this.FailField("blockStatusCode", "请输入正确的HTTP状态码")
+	}
+	statusCode := types.Int(params.BlockStatusCode)
+
 	waf.Name = params.Name
 	waf.On = params.On
+	waf.ActionBlock = &actions2.BlockAction{
+		StatusCode: statusCode,
+		Body:       params.BlockBody,
+		URL:        params.BlockURL,
+	}
 
 	// add new group
 	template := teawaf.Template()
@@ -94,10 +120,6 @@ func (this *UpdateAction) RunPost(params struct {
 			g.On = false
 			continue
 		}
-	}
-
-	for _, g := range waf.Inbound {
-		logs.Println(g.Code, g.Name, g.Name, g.On)
 	}
 
 	filename := "waf." + waf.Id + ".conf"

@@ -23,6 +23,8 @@ type WAF struct {
 	Outbound       []*rules.RuleGroup `yaml:"outbound" json:"outbound"`
 	CreatedVersion string             `yaml:"createdVersion" json:"createdVersion"`
 
+	ActionBlock *actions.BlockAction `yaml:"actionBlock" json:"actionBlock"` // action block config
+
 	hasInboundRules  bool
 	hasOutboundRules bool
 	onActionCallback func(action actions.ActionString) (goNext bool)
@@ -190,7 +192,7 @@ func (this *WAF) MoveInboundRuleGroup(fromIndex int, toIndex int) {
 
 	group := this.Inbound[fromIndex]
 	result := []*rules.RuleGroup{}
-	for i := 0; i < len(this.Inbound); i ++ {
+	for i := 0; i < len(this.Inbound); i++ {
 		if i == fromIndex {
 			continue
 		}
@@ -219,7 +221,7 @@ func (this *WAF) MoveOutboundRuleGroup(fromIndex int, toIndex int) {
 
 	group := this.Outbound[fromIndex]
 	result := []*rules.RuleGroup{}
-	for i := 0; i < len(this.Outbound); i ++ {
+	for i := 0; i < len(this.Outbound); i++ {
 		if i == fromIndex {
 			continue
 		}
@@ -250,12 +252,16 @@ func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) 
 		}
 		if b {
 			if this.onActionCallback == nil {
-				actionObject := actions.FindActionInstance(set.Action)
-				if actionObject == nil {
-					return true, set, errors.New("no action called '" + set.Action + "'")
+				if set.Action == actions.ActionBlock && this.ActionBlock != nil {
+					return this.ActionBlock.Perform(writer), set, nil
+				} else {
+					actionObject := actions.FindActionInstance(set.Action)
+					if actionObject == nil {
+						return true, set, errors.New("no action called '" + set.Action + "'")
+					}
+					goNext := actionObject.Perform(writer)
+					return goNext, set, nil
 				}
-				goNext := actionObject.Perform(writer)
-				return goNext, set, nil
 			} else {
 				goNext = this.onActionCallback(set.Action)
 			}
@@ -281,12 +287,16 @@ func (this *WAF) MatchResponse(rawReq *http.Request, rawResp *http.Response, wri
 		}
 		if b {
 			if this.onActionCallback == nil {
-				actionObject := actions.FindActionInstance(set.Action)
-				if actionObject == nil {
-					return true, set, errors.New("no action called '" + set.Action + "'")
+				if set.Action == actions.ActionBlock && this.ActionBlock != nil {
+					return this.ActionBlock.Perform(writer), set, nil
+				} else {
+					actionObject := actions.FindActionInstance(set.Action)
+					if actionObject == nil {
+						return true, set, errors.New("no action called '" + set.Action + "'")
+					}
+					goNext := actionObject.Perform(writer)
+					return goNext, set, nil
 				}
-				goNext := actionObject.Perform(writer)
-				return goNext, set, nil
 			} else {
 				goNext = this.onActionCallback(set.Action)
 			}
