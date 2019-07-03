@@ -53,6 +53,7 @@ func (this *AddMediaAction) RunPost(params struct {
 	QyWeixinCorporateId string
 	QyWeixinAgentId     string
 	QyWeixinAppSecret   string
+	QyWeixinTextFormat  string
 
 	AliyunSmsSign              string
 	AliyunSmsTemplateCode      string
@@ -191,6 +192,7 @@ func (this *AddMediaAction) RunPost(params struct {
 		media.CorporateId = params.QyWeixinCorporateId
 		media.AgentId = params.QyWeixinAgentId
 		media.AppSecret = params.QyWeixinAppSecret
+		media.TextFormat = params.QyWeixinTextFormat
 		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
 	case notices.NoticeMediaTypeAliyunSms:
 		params.Must.

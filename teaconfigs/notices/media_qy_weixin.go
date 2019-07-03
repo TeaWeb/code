@@ -14,9 +14,10 @@ import (
 
 // 企业微信媒介
 type NoticeQyWeixinMedia struct {
-	CorporateId string `yaml:"corporateId" json:"corporateId"`
-	AgentId     string `yaml:"agentId" json:"agentId"`
-	AppSecret   string `yaml:"appSecret" json:"appSecret"`
+	CorporateId string     `yaml:"corporateId" json:"corporateId"`
+	AgentId     string     `yaml:"agentId" json:"agentId"`
+	AppSecret   string     `yaml:"appSecret" json:"appSecret"`
+	TextFormat  TextFormat `yaml:"textFormat" json:"textFormat"`
 }
 
 // 获取新对象
@@ -67,17 +68,25 @@ func (this *NoticeQyWeixinMedia) Send(user string, subject string, body string) 
 
 	// 发送消息
 	u = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + url.QueryEscape(accessToken)
+
 	msg := maps.Map{
 		"touser":  user,
 		"toparty": "",
 		"totag":   "",
 		"toall":   0,
-		"msgtype": "text",
 		"agentid": this.AgentId,
-		"text": maps.Map{
+		"safe":    0,
+	}
+	if this.TextFormat == FormatMarkdown {
+		msg["msgtype"] = "markdown"
+		msg["markdown"] = maps.Map{
 			"content": subject + "\n" + body,
-		},
-		"safe": 0,
+		}
+	} else {
+		msg["msgtype"] = "text"
+		msg["text"] = maps.Map{
+			"content": subject + "\n" + body,
+		}
 	}
 	data, err = json.Marshal(msg)
 	if err != nil {
