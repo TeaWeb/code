@@ -34,6 +34,14 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 		},
 	}
 
+	// 自动补充Header
+	if len(this.raw.Header.Get("Connection")) == 0 {
+		this.raw.Header.Set("Connection", "upgrade")
+	}
+	if len(this.raw.Header.Get("Upgrade")) == 0 {
+		this.raw.Header.Set("Upgrade", "websocket")
+	}
+
 	// 接收客户端连接
 	client, err := upgrader.Upgrade(this.responseWriter.Raw(), this.raw, nil)
 	if err != nil {
