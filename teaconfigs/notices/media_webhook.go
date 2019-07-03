@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/utils/string"
 	"io/ioutil"
 	"net/http"
@@ -95,9 +96,8 @@ func (this *NoticeWebhookMedia) Send(user string, subject string, body string) (
 		}
 	}
 
-	client := &http.Client{
-		Timeout: timeout,
-	}
+	client := teautils.NewHttpClient(timeout)
+	defer teautils.CloseHTTPClient(client)
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, err

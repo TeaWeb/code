@@ -3,6 +3,7 @@ package notices
 import (
 	"bytes"
 	"errors"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"io/ioutil"
@@ -62,9 +63,8 @@ func (this *NoticeQyWeixinRobotMedia) Send(user string, subject string, body str
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
+	client := teautils.NewHttpClient(5 * time.Second)
+	defer teautils.CloseHTTPClient(client)
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, err

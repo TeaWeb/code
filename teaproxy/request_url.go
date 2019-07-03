@@ -2,6 +2,7 @@ package teaproxy
 
 import (
 	"errors"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
 	"io"
 	"net/http"
@@ -47,9 +48,8 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 		}
 		client = SharedClientPool.client("", host, 60*time.Second, 0, 0)
 	} else {
-		client = &http.Client{
-			Timeout: 60 * time.Second,
-		}
+		client = teautils.NewHttpClient(60 * time.Second)
+		defer teautils.CloseHTTPClient(client)
 	}
 	resp, err := client.Do(req)
 	if err != nil {

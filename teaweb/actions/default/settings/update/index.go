@@ -3,6 +3,7 @@ package update
 import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 	"io/ioutil"
@@ -30,9 +31,7 @@ func (this *IndexAction) RunPost() {
 	}
 	req.Header.Set("User-Agent", runtime.GOOS+"/"+runtime.GOARCH)
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
+	client := teautils.NewHttpClient(5 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		this.Fail("无法连接TeaWeb服务：" + err.Error())

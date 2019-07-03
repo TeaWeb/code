@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"io/ioutil"
@@ -69,9 +70,8 @@ func (this *NginxStatusSource) Execute(params map[string]string) (value interfac
 	}
 	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
 
-	client := &http.Client{
-		Timeout: timeout,
-	}
+	client := teautils.NewHttpClient(timeout)
+	defer teautils.CloseHTTPClient(client)
 	resp, err := client.Do(req)
 	if err != nil {
 		return maps.Map{
@@ -126,7 +126,7 @@ func (this *NginxStatusSource) Execute(params map[string]string) (value interfac
 	if totalRequests > this.lastRequests && this.lastRequests > 0 {
 		requestsPerSecond = int(math.Ceil(float64(totalRequests-this.lastRequests) / time.Since(this.lastTime).Seconds()))
 		if requestsPerSecond > 0 {
-			requestsPerSecond -- // 减去监控系统的请求
+			requestsPerSecond-- // 减去监控系统的请求
 		}
 	}
 

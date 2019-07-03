@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/maps"
 	"io/ioutil"
 	"net/http"
@@ -65,9 +66,8 @@ func (this *TeaWebSource) Execute(params map[string]string) (value interface{}, 
 		timeout = 30
 	}
 
-	client := &http.Client{
-		Timeout: time.Duration(timeout) * time.Second,
-	}
+	client := teautils.NewHttpClient(time.Duration(timeout) * time.Second)
+	defer teautils.CloseHTTPClient(client)
 	resp, err := client.Do(req)
 	if err != nil {
 		return maps.Map{

@@ -1,9 +1,9 @@
 package teaconfigs
 
 import (
-	"crypto/tls"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
@@ -218,17 +218,10 @@ func (this *BackendConfig) CheckHealth() bool {
 		return false
 	}
 	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
+	client := teautils.NewHttpClient(10 * time.Second)
+	defer teautils.CloseHTTPClient(client)
 	if this.failTimeoutDuration > 0 {
 		client.Timeout = this.failTimeoutDuration
-	} else {
-		client.Timeout = 10 * time.Second
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -261,7 +254,7 @@ func (this *BackendConfig) RestartChecking() {
 
 			this.OnUp()
 		} else {
-			this.CurrentFails ++
+			this.CurrentFails++
 			if this.MaxFails > 0 && this.CurrentFails >= this.MaxFails {
 				this.IsDown = true
 				this.DownTime = time.Now()

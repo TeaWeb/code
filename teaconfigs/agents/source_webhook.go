@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teautils"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -67,9 +68,8 @@ func (this *WebHookSource) Execute(params map[string]string) (value interface{},
 		this.timeoutDuration = 10 * time.Second
 	}
 
-	client := http.Client{
-		Timeout: this.timeoutDuration,
-	}
+	client := teautils.NewHttpClient(this.timeoutDuration)
+	defer teautils.CloseHTTPClient(client)
 
 	query := url.Values{}
 	for name, value := range params {

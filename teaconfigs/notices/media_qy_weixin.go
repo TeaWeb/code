@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/maps"
 	"io/ioutil"
 	"net/http"
@@ -33,9 +34,10 @@ func (this *NoticeQyWeixinMedia) Send(user string, subject string, body string) 
 		return nil, err
 	}
 
-	resp1, err := (&http.Client{
-		Timeout: 5 * time.Second,
-	}).Do(req1)
+	client := teautils.NewHttpClient(5 * time.Second)
+	defer teautils.CloseHTTPClient(client)
+
+	resp1, err := client.Do(req1)
 	if err != nil {
 		return nil, err
 	}
@@ -97,9 +99,7 @@ func (this *NoticeQyWeixinMedia) Send(user string, subject string, body string) 
 		return nil, err
 	}
 
-	resp, err := (&http.Client{
-		Timeout: 5 * time.Second,
-	}).Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

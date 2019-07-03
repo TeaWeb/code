@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/maps"
 	"io/ioutil"
 	"net/http"
@@ -45,9 +46,8 @@ func (this *NoticeTeaSmsMedia) Send(user string, subject string, body string) (r
 	req.Header.Set("Tea-Access-Id", this.AccessId)
 	req.Header.Set("Tea-Access-Secret", this.AccessSecret)
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
+	client := teautils.NewHttpClient(5 * time.Second)
+	defer teautils.CloseHTTPClient(client)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
