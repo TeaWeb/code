@@ -55,6 +55,9 @@ func (this *AddMediaAction) RunPost(params struct {
 	QyWeixinAppSecret   string
 	QyWeixinTextFormat  string
 
+	QyWeixinRobotWebhookURL string
+	QyWeixinRobotTextFormat string
+
 	AliyunSmsSign              string
 	AliyunSmsTemplateCode      string
 	AliyunSmsTemplateVarNames  []string
@@ -193,6 +196,16 @@ func (this *AddMediaAction) RunPost(params struct {
 		media.AgentId = params.QyWeixinAgentId
 		media.AppSecret = params.QyWeixinAppSecret
 		media.TextFormat = params.QyWeixinTextFormat
+		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+	case notices.NoticeMediaTypeQyWeixinRobot:
+		params.Must.
+			Field("qyWeixinRobotWebhookURL", params.QyWeixinRobotWebhookURL).
+			Require("请输入Webhook地址").
+			Match("^https:", "Webhook地址必须以https://开头")
+
+		media := notices.NewNoticeQyWeixinRobotMedia()
+		media.WebhookURL = params.QyWeixinRobotWebhookURL
+		media.TextFormat = params.QyWeixinRobotTextFormat
 		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
 	case notices.NoticeMediaTypeAliyunSms:
 		params.Must.
