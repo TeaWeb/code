@@ -11,12 +11,15 @@ type UpdateAction actions.Action
 func (this *UpdateAction) Run(params struct {
 	GroupId string
 }) {
-	group := agents.SharedGroupConfig().FindGroup(params.GroupId)
-	if group == nil {
-		this.Fail("找不到Group")
+	if params.GroupId == "default" {
+		this.Data["group"] = agents.LoadDefaultGroup()
+	} else {
+		group := agents.SharedGroupConfig().FindGroup(params.GroupId)
+		if group == nil {
+			this.Fail("找不到Group")
+		}
+		this.Data["group"] = group
 	}
-
-	this.Data["group"] = group
 
 	this.Show()
 }
@@ -31,15 +34,24 @@ func (this *UpdateAction) RunPost(params struct {
 		Field("name", params.Name).
 		Require("请输入分组名称")
 
-	config := agents.SharedGroupConfig()
-	group := config.FindGroup(params.GroupId)
-	if group == nil {
-		this.Fail("找不到Group")
-	}
-	group.Name = params.Name
-	err := config.Save()
-	if err != nil {
-		this.Fail("保存失败：" + err.Error())
+	if params.GroupId == "default" {
+		group := agents.LoadDefaultGroup()
+		group.Name = params.Name
+		err := group.WriteToFile(agents.DefaultGroupFile())
+		if err != nil {
+			this.Fail("保存失败：" + err.Error())
+		}
+	} else {
+		config := agents.SharedGroupConfig()
+		group := config.FindGroup(params.GroupId)
+		if group == nil {
+			this.Fail("找不到Group")
+		}
+		group.Name = params.Name
+		err := config.Save()
+		if err != nil {
+			this.Fail("保存失败：" + err.Error())
+		}
 	}
 
 	this.Success()

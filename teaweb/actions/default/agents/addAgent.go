@@ -12,6 +12,7 @@ type AddAgentAction actions.Action
 
 // 添加代理
 func (this *AddAgentAction) Run(params struct{}) {
+	this.Data["defaultGroupName"] = agents.LoadDefaultGroup().Name
 	this.Data["groups"] = agents.SharedGroupConfig().Groups
 
 	this.Show()

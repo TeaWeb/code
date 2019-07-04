@@ -41,7 +41,8 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	if lists.ContainsAny([]string{"/agents/board", "/agents/menu"}, action.Request.URL.Path) {
 		topSubName = ""
 	}
-	menu := menuGroup.FindMenu("", "默认分组"+topSubName)
+	defaultGroup := agents.LoadDefaultGroup()
+	menu := menuGroup.FindMenu("", defaultGroup.Name+topSubName)
 	if isWaiting {
 		subName := "已连接"
 		if state != nil && len(state.OsName) > 0 {
@@ -65,7 +66,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 		if len(agent.GroupIds) > 0 {
 			group := agents.SharedGroupConfig().FindGroup(agent.GroupIds[0])
 			if group == nil {
-				menu = menuGroup.FindMenu("", "默认分组"+topSubName)
+				menu = menuGroup.FindMenu("", defaultGroup.Name+topSubName)
 			} else {
 				menu = menuGroup.FindMenu(group.Id, group.Name)
 				menu.Index = group.Index
@@ -85,7 +86,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 				}
 			}
 		} else {
-			menu = menuGroup.FindMenu("", "默认分组"+topSubName)
+			menu = menuGroup.FindMenu("", defaultGroup.Name+topSubName)
 
 			// 计算数量
 			groupId := ""

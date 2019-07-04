@@ -107,7 +107,7 @@ func (this *GroupConfig) Move(fromIndex int, toIndex int) {
 
 	group := this.Groups[fromIndex]
 	newList := []*Group{}
-	for i := 0; i < len(this.Groups); i ++ {
+	for i := 0; i < len(this.Groups); i++ {
 		if i == fromIndex {
 			continue
 		}

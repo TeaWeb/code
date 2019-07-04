@@ -12,6 +12,7 @@ type IndexAction actions.Action
 func (this *IndexAction) Run(params struct {
 	AgentId string
 }) {
+	this.Data["defaultGroupName"] = agents.LoadDefaultGroup().Name
 	this.Data["selectedTab"] = "detail"
 
 	agent := agents.NewAgentConfigFromId(params.AgentId)

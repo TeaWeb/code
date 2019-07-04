@@ -24,7 +24,7 @@ func (this *IndexAction) Run(params struct{}) {
 		countAgents := 0
 		for _, agent := range allAgents {
 			if lists.ContainsString(agent.GroupIds, group.Id) {
-				countAgents ++
+				countAgents++
 			}
 		}
 
@@ -52,13 +52,14 @@ func (this *IndexAction) Run(params struct{}) {
 	countDefaultAgents := 0
 	for _, agent := range allAgents {
 		if len(agent.GroupIds) == 0 && len(agent.Id) > 0 {
-			countDefaultAgents ++
+			countDefaultAgents++
 		}
 	}
 
+	defaultGroupObject := agents.LoadDefaultGroup()
 	defaultGroup := maps.Map{
 		"id":             "",
-		"name":           "[默认分组]",
+		"name":           "[" + defaultGroupObject.Name + "]",
 		"on":             true,
 		"countAgents":    countDefaultAgents,
 		"countReceivers": countDefaultReceivers,

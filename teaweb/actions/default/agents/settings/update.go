@@ -14,6 +14,7 @@ func (this *UpdateAction) Run(params struct {
 	AgentId string
 }) {
 	this.Data["selectedTab"] = "detail"
+	this.Data["defaultGroupName"] = agents.LoadDefaultGroup().Name
 
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {

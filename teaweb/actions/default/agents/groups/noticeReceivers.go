@@ -19,7 +19,7 @@ func (this *NoticeReceiversAction) Run(params struct {
 		if len(params.GroupId) == 0 {
 			group = &agents.Group{
 				Id:   "",
-				Name: "默认分组",
+				Name: agents.LoadDefaultGroup().Name,
 				On:   true,
 			}
 		} else {

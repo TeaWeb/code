@@ -34,7 +34,7 @@ func (this *AddAction) Run(params struct{}) {
 	// 分组信息
 	groups := agents.SharedGroupConfig().Groups
 	if len(groups) == 0 {
-		def := agents.NewGroup("默认分组")
+		def := agents.NewGroup(agents.LoadDefaultGroup().Name)
 		def.Id = ""
 		groups = append(groups, def)
 	}
