@@ -209,6 +209,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	// tunnel
 	if server.Tunnel != nil && server.Tunnel.On {
 		this.tunnel = server.Tunnel
+		return nil
 	} else {
 		this.tunnel = nil
 	}

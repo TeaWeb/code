@@ -7,6 +7,7 @@ type TunnelConfig struct {
 	Id       string           `yaml:"id" json:"id"`             // ID
 	On       bool             `yaml:"on" json:"on"`             // 是否启用
 	Endpoint string           `yaml:"endpoint" json:"endpoint"` // 终端地址
+	Secret   string           `yaml:"secret" json:"secret"`     // 连接用的密钥
 	TLS      bool             `yaml:"tls" json:"tls"`           // 是否支持TLS TODO 暂时没有实现
 	Certs    []*SSLCertConfig `yaml:"certs" json:"certs"`       // TLS证书 TODO 暂时没有实现
 

@@ -61,7 +61,23 @@ func (this *Tunnel) Start() error {
 		}
 
 		this.locker.Lock()
-		this.connections = append(this.connections, NewTunnelConnection(conn))
+		tunnelConn := NewTunnelConnection(conn, this.config)
+		tunnelConn.OnClose(func(tunnelConn *TunnelConnection) {
+			this.locker.Lock()
+			defer this.locker.Unlock()
+
+			result := []*TunnelConnection{}
+			for _, conn2 := range this.connections {
+				if conn2 == tunnelConn {
+					continue
+				}
+				result = append(result, conn2)
+			}
+
+			this.connections = result
+		})
+
+		this.connections = append(this.connections, tunnelConn)
 		this.locker.Unlock()
 	}
 
@@ -77,7 +93,13 @@ func (this *Tunnel) Write(req *http.Request) (resp *http.Response, err error) {
 func (this *Tunnel) CountConnections() int {
 	this.locker.Lock()
 	defer this.locker.Unlock()
-	return len(this.connections)
+	count := 0
+	for _, conn := range this.connections {
+		if conn.isAuthenticated {
+			count++
+		}
+	}
+	return count
 }
 
 // 发送请求，并记录尝试次数

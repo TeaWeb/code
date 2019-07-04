@@ -34,9 +34,11 @@ func (this *UpdateAction) RunGet(params struct {
 	this.Show()
 }
 
+// 提交保存
 func (this *UpdateAction) RunPost(params struct {
 	ServerId string
 	Endpoint string
+	Secret   string
 	On       bool
 	Must     *actions.Must
 }) {
@@ -52,6 +54,7 @@ func (this *UpdateAction) RunPost(params struct {
 	server.Tunnel = &teaconfigs.TunnelConfig{
 		On:       params.On,
 		Endpoint: params.Endpoint,
+		Secret:   params.Secret,
 	}
 
 	err := server.Save()

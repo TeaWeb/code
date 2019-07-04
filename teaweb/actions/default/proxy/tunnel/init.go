@@ -15,6 +15,7 @@ func init() {
 			}).
 			Get("", new(IndexAction)).
 			GetPost("/update", new(UpdateAction)).
+			Post("/generateSecret", new(GenerateSecretAction)).
 			EndAll()
 	})
 }
