@@ -3,6 +3,7 @@ package teaproxy
 import (
 	"context"
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/iwind/TeaGo/logs"
 	"io"
 	"net/url"
@@ -12,6 +13,23 @@ import (
 
 // 调用后端服务器
 func (this *Request) callBackend(writer *ResponseWriter) error {
+	// 是否为websocket请求
+	if this.raw.Header.Get("Upgrade") == "websocket" {
+		websocket := teaconfigs.NewWebsocketConfig()
+		websocket.On = true
+		websocket.AllowAllOrigins = true
+		websocket.ForwardMode = teaconfigs.WebsocketForwardModeWebsocket
+		websocket.Backends = []*teaconfigs.BackendConfig{this.backend}
+		websocket.Origins = []string{}
+		websocket.HandshakeTimeout = "5s"
+		this.websocket = websocket
+		err := websocket.Validate()
+		if err != nil {
+			logs.Error(err)
+		}
+		return this.callWebsocket(writer)
+	}
+
 	this.backend.IncreaseConn()
 	defer this.backend.DecreaseConn()
 

@@ -11,6 +11,7 @@ import (
 	"github.com/iwind/TeaGo/utils/time"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"time"
 )
 
@@ -129,6 +130,14 @@ func startTestServer() {
 				resp.Header().Set("Content-Type", "image/png")
 				resp.Write(data)
 			}
+		}).
+		Put("/put", func(req *http.Request, resp http.ResponseWriter) {
+			data, err := httputil.DumpRequest(req, true)
+			if err != nil {
+				resp.Write([]byte(err.Error()))
+				return
+			}
+			resp.Write(data)
 		}).
 		StartOn("127.0.0.1:9991")
 }

@@ -26,6 +26,9 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 	upgrader := websocket.Upgrader{
 		HandshakeTimeout: this.websocket.HandshakeTimeoutDuration(),
 		CheckOrigin: func(r *http.Request) bool {
+			if this.websocket.AllowAllOrigins {
+				return true
+			}
 			origin := r.Header.Get("Origin")
 			if len(origin) == 0 {
 				return false
@@ -35,9 +38,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 	}
 
 	// 自动补充Header
-	if len(this.raw.Header.Get("Connection")) == 0 {
-		this.raw.Header.Set("Connection", "upgrade")
-	}
+	this.raw.Header.Set("Connection", "upgrade")
 	if len(this.raw.Header.Get("Upgrade")) == 0 {
 		this.raw.Header.Set("Upgrade", "websocket")
 	}
@@ -65,12 +66,36 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 		defer this.backend.DecreaseConn()
 
 		// 连接后端服务器
-		wsURL := url.URL{Scheme: "ws", Host: this.backend.Address, Path: this.raw.RequestURI}
+		scheme := "ws"
+		if this.backend.Scheme == "https" {
+			scheme = "wss"
+		}
+		wsURL := url.URL{Scheme: scheme, Host: this.backend.Address, Path: this.raw.RequestURI}
 		dialer := websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: this.backend.FailTimeoutDuration(),
 		}
-		server, _, err := dialer.Dial(wsURL.String(), nil)
+		header := http.Header{}
+		{
+			origin, ok := this.raw.Header["Origin"]
+			if ok {
+				header["Origin"] = origin
+			}
+		}
+
+		// 自定义请求Header
+		for _, h := range this.requestHeaders {
+			if !h.On {
+				continue
+			}
+			if h.HasVariables() {
+				header[h.Name] = []string{this.Format(h.Value)}
+			} else {
+				header[h.Name] = []string{h.Value}
+			}
+		}
+
+		server, _, err := dialer.Dial(wsURL.String(), header)
 		if err != nil {
 			logs.Error(err)
 			this.addError(err)
