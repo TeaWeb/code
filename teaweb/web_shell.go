@@ -307,7 +307,11 @@ func (this *WebShell) checkPid() *os.Process {
 		return nil
 	}
 
-	err = proc.Signal(syscall.Signal(0))
+	if runtime.GOOS == "windows" {
+		return proc
+	}
+
+	err = proc.Signal(syscall.Signal(0)) // 根据方法文档：Sending Interrupt on Windows is not implemented
 	if err != nil {
 		return nil
 	}
