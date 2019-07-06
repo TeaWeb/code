@@ -49,7 +49,7 @@ func (this *ServiceManager) Start() error {
 		return fmt.Errorf("could not access service: %v", err)
 	}
 	defer s.Close()
-	err = s.Start("is", "manual-started")
+	err = s.Start("service")
 	if err != nil {
 		return fmt.Errorf("could not start service: %v", err)
 	}

@@ -1,4 +1,4 @@
-// +build NOT (linux OR windows)
+// +build !linux,!windows
 
 package teautils
 
