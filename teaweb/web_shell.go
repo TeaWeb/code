@@ -119,6 +119,8 @@ func (this *WebShell) execArgs() bool {
 		return this.execReset()
 	} else if lists.ContainsString(args, "status") { // 状态
 		return this.execStatus()
+	} else if lists.ContainsString(args, "service") && runtime.GOOS == "windows" { // Windows服务
+		return this.execService()
 	}
 
 	if len(args) > 0 {
