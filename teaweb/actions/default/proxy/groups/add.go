@@ -31,6 +31,9 @@ func (this *AddAction) Run(params struct {
 
 	this.Data["operators"] = teaconfigs.AllRequestOperators()
 
+	// 请求变量
+	this.Data["variables"] = proxyutils.DefaultRequestVariables()
+
 	this.Show()
 }
 

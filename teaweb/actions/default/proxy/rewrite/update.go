@@ -87,6 +87,9 @@ func (this *UpdateAction) Run(params struct {
 		"redirectMode": rewrite.RedirectMode(),
 	}
 
+	// 变量
+	this.Data["variables"] = proxyutils.DefaultRequestVariables()
+
 	this.Show()
 }
 

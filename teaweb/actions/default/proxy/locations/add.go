@@ -39,6 +39,9 @@ func (this *AddAction) Run(params struct {
 	// 运算符
 	this.Data["operators"] = teaconfigs.AllRequestOperators()
 
+	// 变量
+	this.Data["variables"] = proxyutils.DefaultRequestVariables()
+
 	this.Show()
 }
 
@@ -62,6 +65,10 @@ func (this *AddAction) RunPost(params struct {
 	On                   bool
 	IsReverse            bool
 	IsCaseInsensitive    bool
+
+	CondParams []string
+	CondOps    []string
+	CondValues []string
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -77,6 +84,25 @@ func (this *AddAction) RunPost(params struct {
 	}
 
 	location := teaconfigs.NewLocation()
+
+	// 匹配条件
+	location.Cond = []*teaconfigs.RequestCond{}
+	if len(params.CondParams) > 0 {
+		for index, param := range params.CondParams {
+			if index < len(params.CondOps) && index < len(params.CondValues) {
+				cond := teaconfigs.NewRequestCond()
+				cond.Param = param
+				cond.Value = params.CondValues[index]
+				cond.Operator = params.CondOps[index]
+				err := cond.Validate()
+				if err != nil {
+					this.Fail("匹配条件\"" + cond.Param + " " + cond.Value + "\"校验失败：" + err.Error())
+				}
+				location.AddCond(cond)
+			}
+		}
+	}
+
 	location.SetPattern(params.Pattern, params.PatternType, params.IsCaseInsensitive, params.IsReverse)
 	location.On = params.On
 	location.CacheOn = true

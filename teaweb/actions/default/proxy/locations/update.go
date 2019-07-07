@@ -67,6 +67,9 @@ func (this *UpdateAction) Run(params struct {
 	// 运算符
 	this.Data["operators"] = teaconfigs.AllRequestOperators()
 
+	// 变量
+	this.Data["variables"] = proxyutils.DefaultRequestVariables()
+
 	this.Show()
 }
 
