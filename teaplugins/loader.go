@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/TeaWeb/plugin/messages"
 	"github.com/iwind/TeaGo/logs"
+	"io"
 	"path/filepath"
 	"reflect"
 )
@@ -35,7 +36,7 @@ func NewLoader(path string) *Loader {
 
 	// 当前methods
 	t := reflect.TypeOf(loader)
-	for i := 0; i < t.NumMethod(); i ++ {
+	for i := 0; i < t.NumMethod(); i++ {
 		method := t.Method(i)
 		loader.methods[method.Name] = method
 	}
@@ -96,7 +97,9 @@ func (this *Loader) pipe(reader PipeInterface, writer PipeInterface) {
 		}
 
 		if err != nil {
-			logs.Println("[plugin][" + this.shortFileName() + "]break:" + err.Error())
+			if err != io.EOF && err != io.ErrUnexpectedEOF {
+				logs.Println("[plugin][" + this.shortFileName() + "]break:" + err.Error())
+			}
 			break
 		}
 	}
