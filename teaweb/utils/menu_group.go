@@ -7,7 +7,8 @@ import (
 
 // 菜单分组
 type MenuGroup struct {
-	Menus []*Menu `json:"menus"`
+	Menus      []*Menu `json:"menus"`
+	AlwaysMenu *Menu   `json:"alwaysMenu"`
 }
 
 // 获取新菜单分组对象

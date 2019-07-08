@@ -129,6 +129,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 	{
 		menu := menuGroup.FindMenu("operations", "[操作]")
 		menu.AlwaysActive = true
+		menuGroup.AlwaysMenu = menu
 		menu.Index = 10000
 		menu.Add("[添加新主机]", "", "/agents/addAgent", action.HasPrefix("/agents/addAgent", "/agents/cluster/add"))
 		menu.Add("[分组管理]", "", "/agents/groups", action.HasPrefix("/agents/groups"))
