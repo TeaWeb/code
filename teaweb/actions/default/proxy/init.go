@@ -28,6 +28,8 @@ func init() {
 			Post("/updateCache", new(UpdateCacheAction)).
 			Post("/startHttp", new(StartHttpAction)).
 			Post("/shutdownHttp", new(ShutdownHttpAction)).
+			Post("/localAddrs", new(LocalAddrsAction)).
+			Post("/localListens", new(LocalListensAction)).
 
 			EndAll()
 	})
