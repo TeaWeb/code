@@ -1,5 +1,7 @@
 package teaconfigs
 
+import "github.com/iwind/TeaGo/lists"
+
 // 代理访问日志配置
 type AccessLogConfig struct {
 	Id string `yaml:"id" json:"id"`
@@ -12,6 +14,9 @@ type AccessLogConfig struct {
 	Status3 bool `yaml:"status3" json:"status3"` // 3xx
 	Status4 bool `yaml:"status4" json:"status4"` // 4xx
 	Status5 bool `yaml:"status5" json:"status5"` // 5xx
+
+	StorageOnly     bool     `yaml:"storageOnly" json:"storageOnly"`         // 是否只输出到存储策略
+	StoragePolicies []string `yaml:"storagePolicies" json:"storagePolicies"` // 存储策略Ids
 }
 
 // 获取新对象
@@ -59,4 +64,9 @@ func (this *AccessLogConfig) Match(status int) bool {
 	}
 
 	return true
+}
+
+// 是否包含某个存储策略
+func (this *AccessLogConfig) ContainsStoragePolicy(storagePolicyId string) bool {
+	return lists.ContainsString(this.StoragePolicies, storagePolicyId)
 }

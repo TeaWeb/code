@@ -1223,6 +1223,8 @@ func (this *Request) log() {
 	accessLog.SetShouldStat(this.enableStat)
 	if this.accessLog != nil {
 		accessLog.SetWritingFields(this.accessLog.Fields)
+		accessLog.StorageOnly = this.accessLog.StorageOnly
+		accessLog.StoragePolicyIds = this.accessLog.StoragePolicies
 	}
 
 	if this.server != nil {

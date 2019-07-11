@@ -40,7 +40,7 @@ func (this *DetailAction) RunGet(params struct {
 		}
 	})
 
-	// 正在使用此缓存策略的项目
+	// 正在使用此策略的项目
 	configItems := []maps.Map{}
 	serverList, _ := teaconfigs.SharedServerList()
 	if serverList != nil {

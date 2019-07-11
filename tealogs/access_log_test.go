@@ -203,7 +203,7 @@ func BenchmarkAccessLog_ParseUserAgent(b *testing.B) {
 	userAgentParser = parser
 	teageo.SetupDB()
 
-	for i := 0; i < b.N; i ++ {
+	for i := 0; i < b.N; i++ {
 		accessLog := &AccessLog{}
 		accessLog.UserAgent = "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36"
 		accessLog.RemoteAddr = "160.16.241." + strconv.Itoa(i%200)
@@ -276,8 +276,15 @@ func TestAccessLog_Format(t *testing.T) {
 		},
 	}
 
+	accessLog.Parse()
+
 	format := "${args} ${arg.name} ${cookie.sid} ${remoteAddr} - [${timeLocal}] \"${request}\" ${status} ${bodyBytesSent} \"${http.Referer}\" \"${http.UserAgent}\""
-	t.Log(accessLog.Format(format))
+
+	for i := 0; i < 2; i++ {
+		before := time.Now()
+		t.Log(accessLog.Format(format))
+		t.Log(time.Since(before).Seconds()*1000, "ms")
+	}
 
 	format = "Extend:${extend.File} ${extend.Geo}"
 	t.Log(accessLog.Format(format))

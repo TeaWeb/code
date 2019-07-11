@@ -9,7 +9,7 @@ import (
 type Helper struct {
 }
 
-// 缓存相关Helper
+// 相关Helper
 func (this *Helper) BeforeAction(action *actions.ActionObject) {
 	if action.Request.Method == http.MethodGet {
 		proxyutils.AddServerMenu(action)

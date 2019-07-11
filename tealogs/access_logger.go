@@ -24,9 +24,10 @@ type AccessLogger struct {
 	queue chan *AccessLog
 
 	collectionCacheMap    map[string]*teamongo.Collection
-	collectionCacheLocker sync.Mutex
+	collectionCacheLocker sync.RWMutex
 }
 
+// 获取新日志对象
 func NewAccessLogger() *AccessLogger {
 	logger := &AccessLogger{
 		queue:              make(chan *AccessLog, 10*10000),
@@ -37,29 +38,35 @@ func NewAccessLogger() *AccessLogger {
 	return logger
 }
 
+// 获取共享的对象
 func SharedLogger() *AccessLogger {
 	return accessLogger
 }
 
+// 推送日志
 func (this *AccessLogger) Push(log *AccessLog) {
 	this.queue <- log
 }
 
+// 获取MongoDB客户端
 func (this *AccessLogger) client() *mongo.Client {
 	return teamongo.SharedClient()
 }
 
+// 获取当天的collection
 func (this *AccessLogger) collection() *teamongo.Collection {
-	this.collectionCacheLocker.Lock()
-	defer this.collectionCacheLocker.Unlock()
+	this.collectionCacheLocker.RLock()
 
 	collName := "logs." + timeutil.Format("Ymd")
 	coll, found := this.collectionCacheMap[collName]
 	if found {
+		this.collectionCacheLocker.RUnlock()
 		return coll
 	}
+	this.collectionCacheLocker.RUnlock()
 
 	// 构建索引
+	this.collectionCacheLocker.Lock()
 	coll = teamongo.FindCollection(collName)
 	coll.CreateIndex(map[string]bool{
 		"serverId": true,
@@ -78,7 +85,7 @@ func (this *AccessLogger) collection() *teamongo.Collection {
 	})
 
 	this.collectionCacheMap[collName] = coll
-
+	this.collectionCacheLocker.Unlock()
 	return coll
 }
 
@@ -104,6 +111,7 @@ func (this *AccessLogger) wait() {
 		}
 	}
 
+	// 打开leveldb数据库
 	var logDBs = []*leveldb.DB{}
 	for _, dbName := range logDBNames {
 		db, err := leveldb.OpenFile(Tea.Root+"/logs/"+dbName, nil)
@@ -114,6 +122,7 @@ func (this *AccessLogger) wait() {
 		logDBs = append(logDBs, db)
 	}
 
+	// 启动queue
 	for index, db := range logDBs {
 		func(index int, db *leveldb.DB) {
 			queue := NewAccessLogQueue(db, index)
@@ -123,7 +132,7 @@ func (this *AccessLogger) wait() {
 	}
 }
 
-// 关闭
+// 关闭MongoDB客户端连接
 func (this *AccessLogger) Close() {
 	if this.client() != nil {
 		this.client().Disconnect(context.Background())

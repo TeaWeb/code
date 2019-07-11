@@ -19,6 +19,7 @@ import (
 
 var userAgentGrid = teamemory.NewGrid(32)
 var charsetReg = regexp.MustCompile("(?i)charset\\s*=\\s*([\\w-]+)")
+var headerReg = regexp.MustCompile("([A-Z])")
 
 type AccessLog struct {
 	Id primitive.ObjectID `var:"id" bson:"_id" json:"id"` // 数据库存储的ID
@@ -82,12 +83,13 @@ type AccessLog struct {
 	HasErrors bool     `var:"hasErrors" bson:"hasErrors" json:"hasErrors"` // 是否包含有错误信息
 
 	// 扩展
-	Extend *AccessLogExtend `bson:"extend" json:"extend"`
-	Attrs  map[string]string
+	Extend *AccessLogExtend  `bson:"extend" json:"extend"`
+	Attrs  map[string]string `bson:"attrs" json:"attrs"`
 
-	// 格式化的正则表达式
-	formatReg     *regexp.Regexp
-	headerReg     *regexp.Regexp
+	// 日志
+	StorageOnly      bool     `bson:"storageOnly" json:"storageOnly"`           // 是否只存储到日志策略中
+	StoragePolicyIds []string `bson:"storagePolicyIds" json:"storagePolicyIds"` // 日志策略Ids
+
 	shouldStat    bool  // 是否应该统计
 	shouldWrite   bool  // 是否写入
 	writingFields []int // 写入的字段
@@ -166,20 +168,10 @@ func (this *AccessLog) SentContentType() string {
 }
 
 func (this *AccessLog) Format(format string) string {
-	if this.formatReg == nil {
-		this.formatReg = regexp.MustCompile("\\${[\\w.]+}")
-	}
-
-	if this.headerReg == nil {
-		this.headerReg = regexp.MustCompile("([A-Z])")
-	}
-
 	refValue := reflect.ValueOf(*this)
 
 	// 处理变量${varName}
-	format = this.formatReg.ReplaceAllStringFunc(format, func(s string) string {
-		varName := s[2 : len(s)-1]
-
+	format = teautils.ParseVariables(format, func(varName string) (value string) {
 		fieldName, found := accessLogVars[varName]
 		if found {
 			field := refValue.FieldByName(fieldName)
@@ -192,6 +184,12 @@ func (this *AccessLog) Format(format string) string {
 			}
 
 			return ""
+		}
+
+		// json log
+		if varName == "log" {
+			data, _ := ffjson.Marshal(this)
+			return string(data)
 		}
 
 		// arg
@@ -228,7 +226,7 @@ func (this *AccessLog) Format(format string) string {
 					return values[0]
 				}
 			} else {
-				varName = strings.TrimPrefix(this.headerReg.ReplaceAllString(varName, "-${1}"), "-")
+				varName = strings.TrimPrefix(headerReg.ReplaceAllString(varName, "-${1}"), "-")
 				values, found := this.Header[varName]
 				if found && len(values) > 0 {
 					return values[0]
@@ -247,7 +245,7 @@ func (this *AccessLog) Format(format string) string {
 					return values[0]
 				}
 			} else {
-				varName = strings.TrimPrefix(this.headerReg.ReplaceAllString(varName, "-${1}"), "-")
+				varName = strings.TrimPrefix(headerReg.ReplaceAllString(varName, "-${1}"), "-")
 				values, found := this.Header[varName]
 				if found && len(values) > 0 {
 					return values[0]
@@ -268,7 +266,7 @@ func (this *AccessLog) Format(format string) string {
 			}
 		}
 
-		return s
+		return "${" + varName + "}"
 	})
 
 	return format

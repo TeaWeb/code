@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -51,7 +52,7 @@ func (this *ClientPool) client(backendId string, address string, connectionTimeo
 			}).DialContext(ctx, network, address)
 		},
 		MaxIdleConns:          int(maxConnections), // 0表示不限
-		MaxIdleConnsPerHost:   1024,
+		MaxIdleConnsPerHost:   runtime.NumCPU() * 512,
 		IdleConnTimeout:       0,
 		ExpectContinueTimeout: 1 * time.Second,
 		TLSHandshakeTimeout:   0, // 不限

@@ -92,9 +92,9 @@ func (this *AccessLogQueue) Receive(ch chan *AccessLog) {
 
 // 导出日志到别的媒介
 func (this *AccessLogQueue) Dump(mongoCollFunc func() *teamongo.Collection) {
-	for {
+	ticker := time.NewTicker(1 * time.Second)
+	for range ticker.C {
 		this.dumpInterval(mongoCollFunc)
-		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -116,9 +116,14 @@ func (this *AccessLogQueue) dumpInterval(mongoCollFunc func() *teamongo.Collecti
 	}
 	this.locker.Unlock()
 
+	if len(logIds) == 0 {
+		return
+	}
+
 	accessLogs := []interface{}{}
 	batch := new(leveldb.Batch)
 
+	storageLogs := map[string][]*AccessLog{} // policyId => accessLogs
 	for _, logId := range logIds {
 		key := []byte("accesslog_" + logId)
 		value, err := this.db.Get(key, nil)
@@ -136,10 +141,38 @@ func (this *AccessLogQueue) dumpInterval(mongoCollFunc func() *teamongo.Collecti
 			this.db.Delete(key, nil)
 			continue
 		}
-		accessLog.Id = primitive.NewObjectID()
-		accessLogs = append(accessLogs, accessLog)
+
+		// 如果非storageOnly则可以存储到MongoDB中
+		if !accessLog.StorageOnly {
+			accessLog.Id = primitive.NewObjectID()
+			accessLogs = append(accessLogs, accessLog)
+		}
+
+		// 日志存储策略
+		if len(accessLog.StoragePolicyIds) > 0 {
+			for _, policyId := range accessLog.StoragePolicyIds {
+				_, ok := storageLogs[policyId]
+				if !ok {
+					storageLogs[policyId] = []*AccessLog{}
+				}
+				storageLogs[policyId] = append(storageLogs[policyId], accessLog)
+			}
+		}
 
 		batch.Delete(key)
+	}
+
+	if len(storageLogs) > 0 {
+		for policyId, storageAccessLogs := range storageLogs {
+			storage := FindPolicyStorage(policyId)
+			if storage == nil {
+				continue
+			}
+			err := storage.Write(storageAccessLogs)
+			if err != nil {
+				logs.Println("access log storage policy '"+policyId+"/"+FindPolicyName(policyId)+"'", err.Error())
+			}
+		}
 	}
 
 	if batch.Len() > 0 {

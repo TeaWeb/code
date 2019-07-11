@@ -15,13 +15,14 @@ func FormatAccessLog(accessLogs []*teaconfigs.AccessLogConfig) []maps.Map {
 	result := []maps.Map{}
 	for _, accessLog := range accessLogs {
 		m := maps.Map{
-			"id":      accessLog.Id,
-			"on":      accessLog.On,
-			"status1": accessLog.Status1,
-			"status2": accessLog.Status2,
-			"status3": accessLog.Status3,
-			"status4": accessLog.Status4,
-			"status5": accessLog.Status5,
+			"id":          accessLog.Id,
+			"on":          accessLog.On,
+			"status1":     accessLog.Status1,
+			"status2":     accessLog.Status2,
+			"status3":     accessLog.Status3,
+			"status4":     accessLog.Status4,
+			"status5":     accessLog.Status5,
+			"storageOnly": accessLog.StorageOnly,
 		}
 
 		// fields
@@ -42,6 +43,18 @@ func FormatAccessLog(accessLogs []*teaconfigs.AccessLogConfig) []maps.Map {
 			})
 		}
 		m["fields"] = fields
+
+		// 存储策略
+		m["storagePolicies"] = lists.Map(teaconfigs.SharedAccessLogStoragePolicyList().FindAllPolicies(), func(k int, v interface{}) interface{} {
+			policy := v.(*teaconfigs.AccessLogStoragePolicy)
+			return maps.Map{
+				"id":        policy.Id,
+				"name":      policy.Name,
+				"type":      policy.Type,
+				"isChecked": accessLog.ContainsStoragePolicy(policy.Id),
+			}
+		})
+		m["hasSelectedStoragePolicies"] = len(accessLog.StoragePolicies) > 0
 
 		result = append(result, m)
 	}
@@ -67,6 +80,8 @@ func ParseAccessLogForm(req *http.Request) (result []*teaconfigs.AccessLogConfig
 		status3 := req.FormValue("accessLog" + index + "Status3")
 		status4 := req.FormValue("accessLog" + index + "Status4")
 		status5 := req.FormValue("accessLog" + index + "Status5")
+		storagePolicyIds, _ := req.Form["accessLog"+index+"StoragePolicyIds"]
+		storageOnly := req.FormValue("accessLog" + index + "StorageOnly")
 
 		accessLog := teaconfigs.NewAccessLogConfig()
 		accessLog.Id = id
@@ -91,6 +106,9 @@ func ParseAccessLogForm(req *http.Request) (result []*teaconfigs.AccessLogConfig
 		accessLog.Status3 = status3 == "1"
 		accessLog.Status4 = status4 == "1"
 		accessLog.Status5 = status5 == "1"
+
+		accessLog.StoragePolicies = storagePolicyIds
+		accessLog.StorageOnly = storageOnly == "1"
 
 		result = append(result, accessLog)
 	}
