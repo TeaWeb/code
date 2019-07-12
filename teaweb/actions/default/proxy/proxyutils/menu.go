@@ -21,6 +21,8 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 
 	// 服务
 	var hasServer = false
+	var isTCP = false
+
 	serverId := action.ParamString("serverId")
 	serverList, err := teaconfigs.SharedServerList()
 	if err != nil {
@@ -28,15 +30,28 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 	}
 	for _, server := range serverList.FindAllServers() {
 		urlPrefix := "/proxy/board"
-		if action.HasPrefix("/proxy/stat") {
-			urlPrefix = "/proxy/stat"
-		} else if action.HasPrefix("/proxy/log") {
-			urlPrefix = "/proxy/log"
-		} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
+		if server.IsTCP() { // TCP
 			urlPrefix = "/proxy/detail"
+		} else { // HTTP
+			if action.HasPrefix("/proxy/stat") {
+				urlPrefix = "/proxy/stat"
+			} else if action.HasPrefix("/proxy/log") {
+				urlPrefix = "/proxy/log"
+			} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
+				urlPrefix = "/proxy/detail"
+			}
 		}
+
 		item := menu.Add(server.Description, "", urlPrefix+"?serverId="+server.Id, serverId == server.Id)
 		item.IsSortable = true
+
+		if server.IsTCP() {
+			item.SupName = "tcp"
+		}
+
+		if server.Id == serverId {
+			isTCP = server.IsTCP()
+		}
 
 		hasServer = true
 	}
@@ -79,44 +94,64 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 			"servers.",
 			"tunnel.",
 		) && !action.Spec.HasClassPrefix("proxy.AddAction", "log.RuntimeAction") {
-			tabbar := []maps.Map{
-				{
-					"name":    "看板",
-					"subName": "",
-					"url":     "/proxy/board?serverId=" + serverId,
-					"active":  action.HasPrefix("/proxy/board") && action.ParamString("boardType") != "stat",
-					"icon":    "dashboard",
-				},
-				{
-					"name":    "日志",
-					"subName": "",
-					"url":     "/proxy/log?serverId=" + serverId,
-					"active":  action.HasPrefix("/proxy/log"),
-					"icon":    "history",
-				},
-				{
-					"name":    "统计",
-					"subName": "",
-					"url":     "/proxy/stat?serverId=" + serverId,
-					"active":  action.HasPrefix("/proxy/stat") || (action.HasPrefix("/proxy/board") && action.ParamString("boardType") == "stat"),
-					"icon":    "chart area",
-				},
-				{
-					"name":    "设置",
-					"subName": "",
-					"url":     "/proxy/detail?serverId=" + serverId,
-					"icon":    "setting",
-					"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "websocket", "access", "servers", "tunnel") && !action.HasPrefix("/proxy/delete"),
-				},
-				{
-					"name":    "删除",
-					"subName": "",
-					"url":     "/proxy/delete?serverId=" + serverId,
-					"icon":    "trash",
-					"active":  action.HasPrefix("/proxy/delete"),
-				},
+			if isTCP { // TCP
+				tabbar := []maps.Map{
+					{
+						"name":    "设置",
+						"subName": "",
+						"url":     "/proxy/detail?serverId=" + serverId,
+						"icon":    "setting",
+						"active":  !action.HasPrefix("/proxy/delete"),
+					},
+					{
+						"name":    "删除",
+						"subName": "",
+						"url":     "/proxy/delete?serverId=" + serverId,
+						"icon":    "trash",
+						"active":  action.HasPrefix("/proxy/delete"),
+					},
+				}
+				action.Data["teaTabbar"] = tabbar
+			} else { // HTTP
+				tabbar := []maps.Map{
+					{
+						"name":    "看板",
+						"subName": "",
+						"url":     "/proxy/board?serverId=" + serverId,
+						"active":  action.HasPrefix("/proxy/board") && action.ParamString("boardType") != "stat",
+						"icon":    "dashboard",
+					},
+					{
+						"name":    "日志",
+						"subName": "",
+						"url":     "/proxy/log?serverId=" + serverId,
+						"active":  action.HasPrefix("/proxy/log"),
+						"icon":    "history",
+					},
+					{
+						"name":    "统计",
+						"subName": "",
+						"url":     "/proxy/stat?serverId=" + serverId,
+						"active":  action.HasPrefix("/proxy/stat") || (action.HasPrefix("/proxy/board") && action.ParamString("boardType") == "stat"),
+						"icon":    "chart area",
+					},
+					{
+						"name":    "设置",
+						"subName": "",
+						"url":     "/proxy/detail?serverId=" + serverId,
+						"icon":    "setting",
+						"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "websocket", "access", "servers", "tunnel") && !action.HasPrefix("/proxy/delete"),
+					},
+					{
+						"name":    "删除",
+						"subName": "",
+						"url":     "/proxy/delete?serverId=" + serverId,
+						"icon":    "trash",
+						"active":  action.HasPrefix("/proxy/delete"),
+					},
+				}
+				action.Data["teaTabbar"] = tabbar
 			}
-			action.Data["teaTabbar"] = tabbar
 		}
 	}
 }

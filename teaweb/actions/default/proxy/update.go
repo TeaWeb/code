@@ -20,6 +20,7 @@ func (this *UpdateAction) Run(params struct {
 	}
 	this.Data["server"] = server
 	this.Data["selectedTab"] = "basic"
+	this.Data["isTCP"] = server.IsTCP()
 
 	this.Data["usualCharsets"] = teautils.UsualCharsets
 	this.Data["charsets"] = teautils.AllCharsets
@@ -31,11 +32,14 @@ func (this *UpdateAction) Run(params struct {
 
 // 保存提交
 func (this *UpdateAction) RunPost(params struct {
-	HttpOn      bool
+	// 通用
 	ServerId    string
 	Description string
 	Name        []string
 	Listen      []string
+
+	// HTTP
+	HttpOn      bool
 	Root        string
 	Charset     string
 	Index       []string
@@ -56,6 +60,9 @@ func (this *UpdateAction) RunPost(params struct {
 
 	RedirectToHttps bool
 
+	// TCP
+	TcpOn bool
+
 	Must *actions.Must
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
@@ -67,42 +74,47 @@ func (this *UpdateAction) RunPost(params struct {
 		Field("description", params.Description).
 		Require("代理服务名称不能为空")
 
-	server.Http = params.HttpOn
 	server.Description = params.Description
 	server.Name = params.Name
 	server.Listen = params.Listen
-	server.Root = params.Root
-	server.Charset = params.Charset
-	server.Index = params.Index
-	server.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
 
-	// 访问日志
-	server.AccessLog = proxyutils.ParseAccessLogForm(this.Request)
+	if server.TCP != nil { // TCP
+		server.TCP.TCPOn = params.TcpOn
+	} else { // HTTP
+		server.Http = params.HttpOn
+		server.Root = params.Root
+		server.Charset = params.Charset
+		server.Index = params.Index
+		server.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
 
-	server.DisableStat = !params.EnableStat
-	if params.GzipLevel <= 9 {
-		server.GzipLevel = params.GzipLevel
-	}
-	server.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
-	server.CacheStatic = params.CacheStatic
+		// 访问日志
+		server.AccessLog = proxyutils.ParseAccessLogForm(this.Request)
 
-	server.Pages = []*teaconfigs.PageConfig{}
-	for index, status := range params.PageStatus {
-		if index < len(params.PageURL) {
-			page := teaconfigs.NewPageConfig()
-			page.Status = []string{status}
-			page.URL = params.PageURL[index]
-			server.AddPage(page)
+		server.DisableStat = !params.EnableStat
+		if params.GzipLevel <= 9 {
+			server.GzipLevel = params.GzipLevel
 		}
-	}
+		server.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
+		server.CacheStatic = params.CacheStatic
 
-	server.ShutdownPageOn = params.ShutdownPageOn
-	if server.ShutdownPageOn && len(params.ShutdownPage) == 0 {
-		this.FailField("shutdownPage", "请输入临时关闭页面文件路径")
-	}
-	server.ShutdownPage = params.ShutdownPage
+		server.Pages = []*teaconfigs.PageConfig{}
+		for index, status := range params.PageStatus {
+			if index < len(params.PageURL) {
+				page := teaconfigs.NewPageConfig()
+				page.Status = []string{status}
+				page.URL = params.PageURL[index]
+				server.AddPage(page)
+			}
+		}
 
-	server.RedirectToHttps = params.RedirectToHttps
+		server.ShutdownPageOn = params.ShutdownPageOn
+		if server.ShutdownPageOn && len(params.ShutdownPage) == 0 {
+			this.FailField("shutdownPage", "请输入临时关闭页面文件路径")
+		}
+		server.ShutdownPage = params.ShutdownPage
+
+		server.RedirectToHttps = params.RedirectToHttps
+	}
 
 	err := server.Validate()
 	if err != nil {

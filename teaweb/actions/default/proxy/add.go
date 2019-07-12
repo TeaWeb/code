@@ -55,7 +55,7 @@ func (this *AddAction) RunPost(params struct {
 		}
 	}
 
-	if params.ServerType == "proxy" { // 代理服务
+	if params.ServerType == "proxy" { // HTTP代理服务
 		for _, backend := range params.Backends {
 			backend = strings.TrimSpace(backend)
 			if len(backend) > 0 {
@@ -75,6 +75,30 @@ func (this *AddAction) RunPost(params struct {
 				server.AddBackend(backendObject)
 			}
 		}
+	} else if params.ServerType == "tcp" { // TCP代理服务
+		for _, backend := range params.Backends {
+			backend = strings.TrimSpace(backend)
+			if len(backend) > 0 {
+				backendObject := teaconfigs.NewBackendConfig()
+				if strings.HasPrefix(backend, "tcp://") {
+					backend = strings.TrimPrefix(backend, "tcp://")
+					backendObject.Scheme = "tcp"
+				} else if strings.HasPrefix(backend, "tls://") {
+					backend = strings.TrimPrefix(backend, "tls://")
+					backendObject.Scheme = "tcp+tls"
+				} else if strings.HasPrefix(backend, "ssl://") {
+					backend = strings.TrimPrefix(backend, "ssl://")
+					backendObject.Scheme = "tcp+tls"
+				} else {
+					backendObject.Scheme = "tcp"
+				}
+
+				backendObject.Address = backend
+				backendObject.Weight = 10
+				server.AddBackend(backendObject)
+			}
+		}
+		server.TCP = teaconfigs.NewTCPConfig()
 	} else if params.ServerType == "static" { // 普通服务
 		server.Root = params.Root
 	}

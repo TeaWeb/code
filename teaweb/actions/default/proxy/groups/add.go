@@ -26,6 +26,10 @@ func (this *AddAction) Run(params struct {
 		this.Data["selectedTab"] = "backend"
 	}
 	this.Data["server"] = server
+
+	this.Data["isTCP"] = server.IsTCP()
+	this.Data["isHTTP"] = server.IsHTTP()
+
 	this.Data["locationId"] = params.LocationId
 	this.Data["websocket"] = params.Websocket
 

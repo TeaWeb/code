@@ -19,17 +19,19 @@ import (
 type Scheme = uint8
 
 const (
-	SchemeHTTP  = Scheme(1)
-	SchemeHTTPS = Scheme(2)
+	SchemeHTTP   Scheme = 1
+	SchemeHTTPS  Scheme = 2
+	SchemeTCP    Scheme = 3
+	SchemeTCPTLS Scheme = 4
 )
 
 // 代理服务监听器
 type Listener struct {
-	httpServer *http.Server
+	httpServer *http.Server // HTTP SERVER
 
 	IsChanged bool // 标记是否改变，用来在其他地方重启改变的监听器
 
-	Scheme  Scheme // http & https
+	Scheme  Scheme // http, https, tcp, tcp+tls
 	Address string
 	Error   error
 
@@ -39,12 +41,18 @@ type Listener struct {
 
 	serversLocker      sync.RWMutex
 	namedServersLocker sync.RWMutex
+
+	// TCP
+	tcpServer           net.Listener
+	connectingTCPMap    map[net.Conn]*TCPPair
+	connectingTCPLocker sync.Mutex
 }
 
 // 获取新对象
 func NewListener() *Listener {
 	return &Listener{
-		namedServers: map[string]*NamedServer{},
+		namedServers:     map[string]*NamedServer{},
+		connectingTCPMap: map[net.Conn]*TCPPair{},
 	}
 }
 
@@ -59,6 +67,10 @@ func (this *Listener) ApplyServer(server *teaconfigs.ServerConfig) {
 	if this.Scheme == SchemeHTTP && server.Http {
 		isAvailable = true
 	} else if this.Scheme == SchemeHTTPS && server.SSL != nil && server.SSL.On {
+		isAvailable = true
+	} else if this.Scheme == SchemeTCP && server.TCP != nil && server.TCP.TCPOn {
+		isAvailable = true
+	} else if this.Scheme == SchemeTCPTLS && server.TCP != nil && server.SSL != nil && server.SSL.On {
 		isAvailable = true
 	}
 
@@ -156,19 +168,64 @@ func (this *Listener) Reload() error {
 		defer this.serversLocker.Unlock()
 
 		// 检查是否已启动
-		if this.httpServer != nil {
-			return this.Shutdown()
-		}
-
-		return nil
+		return this.Shutdown()
 	} else {
 		this.serversLocker.Unlock()
 	}
 
+	var err error
+
+	if this.Scheme == SchemeHTTP || this.Scheme == SchemeHTTPS { // HTTP
+		err = this.startHTTPServer()
+	} else if this.Scheme == SchemeTCP || this.Scheme == SchemeTCPTLS { // TCP
+		err = this.startTCPServer()
+	}
+
+	this.httpServer = nil
+	this.tcpServer = nil
+
+	return err
+}
+
+// 关闭
+func (this *Listener) Shutdown() error {
+	if this.Scheme == SchemeHTTP || this.Scheme == SchemeHTTPS { // HTTP
+		if this.httpServer != nil {
+			logs.Println("shutdown listener on", this.Address)
+			err := this.httpServer.Shutdown(context.Background())
+			this.httpServer = nil
+			return err
+		}
+	} else if this.Scheme == SchemeTCP || this.Scheme == SchemeTCPTLS {
+		if this.tcpServer != nil {
+			logs.Println("shutdown listener on", this.Address)
+
+			// 关闭listener
+			err := this.tcpServer.Close()
+
+			// 关闭现有连接
+			this.connectingTCPLocker.Lock()
+			for _, pair := range this.connectingTCPMap {
+				pair.Close()
+			}
+			this.connectingTCPMap = map[net.Conn]*TCPPair{}
+			this.connectingTCPLocker.Unlock()
+
+			this.tcpServer = nil
+			return err
+		}
+	}
+	return nil
+}
+
+// 启动HTTP Server
+func (this *Listener) startHTTPServer() error {
 	// 如果已经启动，则不做任何事情
 	if this.httpServer != nil {
 		return nil
 	}
+
+	var err error
 
 	// 如果没启动，则启动
 	httpHandler := http.NewServeMux()
@@ -177,10 +234,8 @@ func (this *Listener) Reload() error {
 		atomic.AddInt32(&qps, 1)
 
 		// 处理
-		this.handle(writer, req)
+		this.handleHTTP(writer, req)
 	})
-
-	var err error
 
 	this.httpServer = &http.Server{
 		Addr:        this.Address,
@@ -202,46 +257,7 @@ func (this *Listener) Reload() error {
 	if this.Scheme == SchemeHTTPS {
 		logs.Println("start ssl listener on", this.Address)
 
-		this.httpServer.TLSConfig = &tls.Config{
-			Certificates: nil,
-			GetConfigForClient: func(info *tls.ClientHelloInfo) (config *tls.Config, e error) {
-				ssl, _, err := this.matchSSL(info.ServerName)
-				if err != nil {
-					return nil, err
-				}
-
-				cipherSuites := ssl.TLSCipherSuites()
-				if len(cipherSuites) == 0 {
-					cipherSuites = nil
-				}
-				return &tls.Config{
-					Certificates: nil,
-					MinVersion:   ssl.TLSMinVersion(),
-					CipherSuites: cipherSuites,
-					GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
-						_, cert, err := this.matchSSL(info.ServerName)
-						if err != nil {
-							return nil, err
-						}
-						if cert == nil {
-							return nil, errors.New("[listener]no certs found for '" + info.ServerName + "'")
-						}
-						return cert, nil
-					},
-					NextProtos: []string{http2.NextProtoTLS},
-				}, nil
-			},
-			GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
-				_, cert, err := this.matchSSL(info.ServerName)
-				if err != nil {
-					return nil, err
-				}
-				if cert == nil {
-					return nil, errors.New("[listener]no certs found for '" + info.ServerName + "'")
-				}
-				return cert, nil
-			},
-		}
+		this.httpServer.TLSConfig = this.buildTLSConfig()
 
 		// support http/2
 		http2.ConfigureServer(this.httpServer, nil)
@@ -254,22 +270,126 @@ func (this *Listener) Reload() error {
 		}
 	}
 
-	this.httpServer = nil
+	return err
+}
+
+// 启动TCP Server
+func (this *Listener) startTCPServer() error {
+	if this.tcpServer != nil {
+		return nil
+	}
+
+	var err error
+
+	if this.Scheme == SchemeTCP {
+		logs.Println("start listener on tcp", this.Address)
+		listener, err := net.Listen("tcp", this.Address)
+		if err != nil {
+			return errors.New("[listener]tcp " + this.Address + ": " + err.Error())
+		}
+		this.tcpServer = listener
+	} else if this.Scheme == SchemeTCPTLS {
+		logs.Println("start listener on tcp+tls", this.Address)
+		listener, err := tls.Listen("tcp", this.Address, this.buildTLSConfig())
+		if err != nil {
+			return errors.New("[listener]tcp " + this.Address + ": " + err.Error())
+		}
+		this.tcpServer = listener
+	}
+
+	// Accept
+	server := this.tcpServer
+	if server != nil {
+		for {
+			clientConn, err := server.Accept()
+			if err != nil {
+				break
+			}
+
+			go func(clientConn net.Conn) {
+				if len(this.currentServers) == 0 {
+					return
+				}
+				server := this.currentServers[0]
+				backend := server.NextBackend(nil)
+				if backend == nil {
+					clientConn.Close()
+					logs.Println("[proxy][tcp]no backends for '" + server.Description + "'")
+					return
+				}
+
+				currentConns := backend.IncreaseConn()
+				defer backend.DecreaseConn()
+
+				// 是否超过最大连接数
+				if backend.MaxConns > 0 && currentConns > backend.MaxConns {
+					clientConn.Close()
+					logs.Printf("[proxy][tcp]too many connections for '" + server.Description + "' backend: '" + backend.Address + "'")
+					return
+				}
+
+				// 连接后端
+				var backEndConn net.Conn = nil
+				failFunc := func(err error) {
+					logs.Println("[proxy][tcp]can not connect to backend '" + backend.Address + "'" + "for server '" + server.Description + "': " + err.Error())
+					clientConn.Close()
+
+					currentFails := backend.IncreaseFails()
+
+					if backend.MaxFails > 0 && currentFails >= backend.MaxFails {
+						backend.IsDown = true
+						backend.DownTime = time.Now()
+						server.SetupScheduling(false)
+					}
+				}
+				if backend.Scheme == "tcp" || len(backend.Scheme) == 0 { // TCP
+					backEndConn, err = net.DialTimeout("tcp", backend.Address, backend.FailTimeoutDuration())
+					if err != nil {
+						failFunc(err)
+						return
+					}
+				} else if backend.Scheme == "tcp+tls" { // TCP+TLS
+					backEndConn, err = tls.Dial("tcp", backend.Address, &tls.Config{
+						InsecureSkipVerify: true,
+					})
+					if err != nil {
+						failFunc(err)
+						return
+					}
+				} else { // neither tcp nor tcp+tls
+					failFunc(errors.New("invalid scheme"))
+					return
+				}
+
+				// 创建传输对
+				pair := NewTCPPair(clientConn, backEndConn)
+
+				// 记录到Map
+				this.connectingTCPLocker.Lock()
+				this.connectingTCPMap[clientConn] = pair
+				this.connectingTCPLocker.Unlock()
+
+				defer func() {
+					this.connectingTCPLocker.Lock()
+					delete(this.connectingTCPMap, clientConn)
+					this.connectingTCPLocker.Unlock()
+				}()
+
+				// 开始传输
+				err = pair.Transfer()
+				if err != nil {
+					logs.Println("[proxy][tcp]" + err.Error())
+					return
+				}
+			}(clientConn)
+		}
+	}
 
 	return err
 }
 
-// 关闭
-func (this *Listener) Shutdown() error {
-	if this.httpServer != nil {
-		logs.Println("shutdown listener on", this.Address)
-		return this.httpServer.Shutdown(context.Background())
-	}
-	return nil
-}
-
 // 处理请求
-func (this *Listener) handle(writer http.ResponseWriter, rawRequest *http.Request) {
+func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Request) {
 	responseWriter := NewResponseWriter(writer)
 
 	// 插件过滤
@@ -459,4 +579,48 @@ func (this *Listener) matchSSL(domain string) (*teaconfigs.SSLConfig, *tls.Certi
 	}
 
 	return server.SSL, server.SSL.FirstCert(), nil
+}
+
+// 构造TLS配置
+func (this *Listener) buildTLSConfig() *tls.Config {
+	return &tls.Config{
+		Certificates: nil,
+		GetConfigForClient: func(info *tls.ClientHelloInfo) (config *tls.Config, e error) {
+			ssl, _, err := this.matchSSL(info.ServerName)
+			if err != nil {
+				return nil, err
+			}
+
+			cipherSuites := ssl.TLSCipherSuites()
+			if len(cipherSuites) == 0 {
+				cipherSuites = nil
+			}
+			return &tls.Config{
+				Certificates: nil,
+				MinVersion:   ssl.TLSMinVersion(),
+				CipherSuites: cipherSuites,
+				GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
+					_, cert, err := this.matchSSL(info.ServerName)
+					if err != nil {
+						return nil, err
+					}
+					if cert == nil {
+						return nil, errors.New("[listener]no certs found for '" + info.ServerName + "'")
+					}
+					return cert, nil
+				},
+				NextProtos: []string{http2.NextProtoTLS},
+			}, nil
+		},
+		GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
+			_, cert, err := this.matchSSL(info.ServerName)
+			if err != nil {
+				return nil, err
+			}
+			if cert == nil {
+				return nil, errors.New("[listener]no certs found for '" + info.ServerName + "'")
+			}
+			return cert, nil
+		},
+	}
 }

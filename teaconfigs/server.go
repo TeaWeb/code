@@ -57,6 +57,9 @@ type ServerConfig struct {
 	// SSL
 	SSL *SSLConfig `yaml:"ssl" json:"ssl"`
 
+	// TCP，如果有此配置的说明为TCP代理
+	TCP *TCPConfig `yaml:"tcp" json:"tcp"`
+
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` //TODO
 	Deny  []string `yaml:"deny" json:"deny"`   //TODO
@@ -901,4 +904,14 @@ func (this *ServerConfig) OnDetach() {
 		this.waf.Stop()
 		this.waf = nil
 	}
+}
+
+// 判断是否为TCP
+func (this *ServerConfig) IsTCP() bool {
+	return this.TCP != nil
+}
+
+// 判断是否为HTTP
+func (this *ServerConfig) IsHTTP() bool {
+	return this.TCP == nil
 }

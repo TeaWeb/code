@@ -23,7 +23,7 @@ type BackendConfig struct {
 	Id              string                 `yaml:"id" json:"id"`                                 // ID
 	Code            string                 `yaml:"code" json:"code"`                             // 代号
 	Address         string                 `yaml:"address" json:"address"`                       // 地址
-	Scheme          string                 `yaml:"scheme" json:"scheme"`                         // 协议，http或者https
+	Scheme          string                 `yaml:"scheme" json:"scheme"`                         // 协议，http、https、tcp、tcp+tls
 	Weight          uint                   `yaml:"weight" json:"weight"`                         // 权重
 	IsBackup        bool                   `yaml:"backup" json:"isBackup"`                       // 是否为备份
 	FailTimeout     string                 `yaml:"failTimeout" json:"failTimeout"`               // 连接失败超时
@@ -157,14 +157,14 @@ func (this *BackendConfig) IncreaseFails() int32 {
 	return this.CurrentFails
 }
 
-// 增加连接数
-func (this *BackendConfig) IncreaseConn() {
-	atomic.AddInt32(&this.CurrentConns, 1)
+// 增加连接数，并返回增加之后的数字
+func (this *BackendConfig) IncreaseConn() int32 {
+	return atomic.AddInt32(&this.CurrentConns, 1)
 }
 
-// 减少连接数
-func (this *BackendConfig) DecreaseConn() {
-	atomic.AddInt32(&this.CurrentConns, -1)
+// 减少连接数，并返回减少之后的数字
+func (this *BackendConfig) DecreaseConn() int32 {
+	return atomic.AddInt32(&this.CurrentConns, -1)
 }
 
 // 添加请求分组

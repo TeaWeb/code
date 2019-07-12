@@ -6,10 +6,10 @@ import (
 	"github.com/iwind/TeaGo/actions"
 )
 
-type StartHttpAction actions.Action
+type ShutdownTcpAction actions.Action
 
-// 启动HTTP服务
-func (this *StartHttpAction) Run(params struct {
+// 关闭Tcp服务
+func (this *ShutdownTcpAction) Run(params struct {
 	ServerId string
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
@@ -17,21 +17,9 @@ func (this *StartHttpAction) Run(params struct {
 		this.Fail("找不到Server")
 	}
 
-	isChanged := false
-	if !server.On {
-		server.On = true
-		isChanged = true
+	if server.IsTCP() {
+		server.TCP.TCPOn = false
 	}
-
-	if !server.Http {
-		server.Http = true
-		isChanged = true
-	}
-
-	if !isChanged {
-		this.Success()
-	}
-
 	err := server.Validate()
 	if err != nil {
 		this.Fail("Server校验失败：" + err.Error())

@@ -121,35 +121,72 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 
 	keys := []string{}
 
-	// HTTP
-	if server.Http {
-		for _, address := range server.Listen {
-			// 是否有端口
-			if teaconfigs.RegexpDigitNumber.MatchString(address) {
-				address = ":" + address
-			} else if _, _, err := net.SplitHostPort(address); err != nil {
-				address += ":80"
-			}
+	if server.IsHTTP() { // HTTP
+		// HTTP
+		if server.Http {
+			for _, address := range server.Listen {
+				// 是否有端口
+				if teaconfigs.RegexpDigitNumber.MatchString(address) {
+					address = ":" + address
+				} else if _, _, err := net.SplitHostPort(address); err != nil {
+					address += ":80"
+				}
 
-			if len(address) > 0 {
-				keys = append(keys, "http://"+address)
+				if len(address) > 0 {
+					keys = append(keys, "http://"+address)
+				}
 			}
 		}
-	}
 
-	// HTTPS
-	if server.SSL != nil && server.SSL.On {
-		server.SSL.Validate()
-		for _, address := range server.SSL.Listen {
-			// 是否有端口
-			if teaconfigs.RegexpDigitNumber.MatchString(address) {
-				address = ":" + address
-			} else if _, _, err := net.SplitHostPort(address); err != nil {
-				address += ":443"
+		// HTTPS
+		if server.SSL != nil && server.SSL.On {
+			server.SSL.Validate()
+			for _, address := range server.SSL.Listen {
+				// 是否有端口
+				if teaconfigs.RegexpDigitNumber.MatchString(address) {
+					address = ":" + address
+				} else if _, _, err := net.SplitHostPort(address); err != nil {
+					address += ":443"
+				}
+
+				if len(address) > 0 {
+					keys = append(keys, "https://"+address)
+				}
 			}
+		}
+	} else if server.IsTCP() { // TCP
+		// TCP
+		if server.TCP.TCPOn {
+			for _, address := range server.Listen {
+				// 是否有端口
+				if teaconfigs.RegexpDigitNumber.MatchString(address) {
+					address = ":" + address
+				} else if _, _, err := net.SplitHostPort(address); err != nil {
+					logs.Println("invalid tcp address: '" + address + "'")
+					continue
+				}
 
-			if len(address) > 0 {
-				keys = append(keys, "https://"+address)
+				if len(address) > 0 {
+					keys = append(keys, "tcp://"+address)
+				}
+			}
+		}
+
+		// TCP+TLS
+		if server.SSL != nil && server.SSL.On {
+			server.SSL.Validate()
+			for _, address := range server.SSL.Listen {
+				// 是否有端口
+				if teaconfigs.RegexpDigitNumber.MatchString(address) {
+					address = ":" + address
+				} else if _, _, err := net.SplitHostPort(address); err != nil {
+					logs.Println("invalid tcp+tls address: '" + address + "'")
+					continue
+				}
+
+				if len(address) > 0 {
+					keys = append(keys, "tcp+tls://"+address)
+				}
 			}
 		}
 	}
@@ -176,6 +213,12 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 		if scheme == "https" && (server.SSL == nil || !server.SSL.On) {
 			continue
 		}
+		if scheme == "tcp" && (server.TCP == nil || !server.TCP.TCPOn) {
+			continue
+		}
+		if scheme == "tcp+tls" && (server.TCP == nil || server.SSL == nil || !server.SSL.On) {
+			continue
+		}
 
 		listener, found := this.listeners[key]
 		if found {
@@ -186,6 +229,10 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 				listener.Scheme = SchemeHTTP
 			} else if scheme == "https" {
 				listener.Scheme = SchemeHTTPS
+			} else if scheme == "tcp" {
+				listener.Scheme = SchemeTCP
+			} else if scheme == "tcp+tcp" {
+				listener.Scheme = SchemeTCPTLS
 			}
 			listener.Address = address
 			listener.ApplyServer(server)

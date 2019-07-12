@@ -32,6 +32,9 @@ func (this *AddAction) Run(params struct {
 	}
 	this.Data["server"] = server
 
+	this.Data["isTCP"] = server.IsTCP()
+	this.Data["isHTTP"] = server.IsHTTP()
+
 	this.Data["from"] = params.From
 	this.Data["locationId"] = params.LocationId
 	this.Data["websocket"] = types.Int(params.Websocket)

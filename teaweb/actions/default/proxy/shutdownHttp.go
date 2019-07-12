@@ -8,7 +8,7 @@ import (
 
 type ShutdownHttpAction actions.Action
 
-// 启动
+// 关闭HTTP服务
 func (this *ShutdownHttpAction) Run(params struct {
 	ServerId string
 }) {
