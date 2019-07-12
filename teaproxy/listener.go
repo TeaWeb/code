@@ -8,7 +8,6 @@ import (
 	"github.com/TeaWeb/code/teaplugins"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
-	"golang.org/x/net/context"
 	"golang.org/x/net/http2"
 	"net"
 	"net/http"
@@ -182,9 +181,6 @@ func (this *Listener) Reload() error {
 		err = this.startTCPServer()
 	}
 
-	this.httpServer = nil
-	this.tcpServer = nil
-
 	return err
 }
 
@@ -193,7 +189,7 @@ func (this *Listener) Shutdown() error {
 	if this.Scheme == SchemeHTTP || this.Scheme == SchemeHTTPS { // HTTP
 		if this.httpServer != nil {
 			logs.Println("shutdown listener on", this.Address)
-			err := this.httpServer.Shutdown(context.Background())
+			err := this.httpServer.Close()
 			this.httpServer = nil
 			return err
 		}
@@ -261,6 +257,10 @@ func (this *Listener) startHTTPServer() error {
 		return nil
 	}
 
+	defer func() {
+		this.httpServer = nil
+	}()
+
 	var err error
 
 	// 如果没启动，则启动
@@ -314,6 +314,10 @@ func (this *Listener) startTCPServer() error {
 	if this.tcpServer != nil {
 		return nil
 	}
+
+	defer func() {
+		this.tcpServer = nil
+	}()
 
 	var err error
 

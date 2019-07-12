@@ -8,6 +8,7 @@ import (
 
 type RestartAction actions.Action
 
+// 试图重启所有服务
 func (this *RestartAction) Run(params struct{}) {
 	err := teaproxy.SharedManager.Restart()
 	if err != nil {
