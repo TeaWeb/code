@@ -40,5 +40,6 @@ func (this *HashScheduling) Summary() maps.Map {
 		"code":        "hash",
 		"name":        "Hash算法",
 		"description": "根据自定义的键值的Hash值分配后端服务器",
+		"networks":    []string{"http"},
 	}
 }

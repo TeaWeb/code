@@ -65,7 +65,7 @@ func (this *RoundRobinScheduling) Next(call *shared.RequestCall) CandidateInterf
 
 	c := this.Candidates[this.index]
 	this.currentWeights[this.index] --
-	this.index ++
+	this.index++
 	return c
 }
 
@@ -75,5 +75,6 @@ func (this *RoundRobinScheduling) Summary() maps.Map {
 		"code":        "roundRobin",
 		"name":        "RoundRobin轮询算法",
 		"description": "根据权重，依次分配后端服务器",
+		"networks":    []string{"http", "tcp"},
 	}
 }

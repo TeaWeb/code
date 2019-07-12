@@ -99,7 +99,7 @@ func (this *BackendList) NextBackend(call *shared.RequestCall) *BackendConfig {
 		return nil
 	}
 
-	if this.Scheduling != nil {
+	if this.Scheduling != nil && call.Options != nil {
 		for k, v := range this.Scheduling.Options {
 			call.Options[k] = v
 		}

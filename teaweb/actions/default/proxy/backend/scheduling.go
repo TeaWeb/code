@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/scheduling"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 )
@@ -44,7 +45,22 @@ func (this *SchedulingAction) Run(params struct {
 		})
 	}
 	this.Data["scheduling"] = backendList.SchedulingConfig()
-	this.Data["schedulingTypes"] = scheduling.AllSchedulingTypes()
+
+	// 调度类型
+	schedulingTypes := []maps.Map{}
+	for _, m := range scheduling.AllSchedulingTypes() {
+		networks, ok := m["networks"]
+		if !ok {
+			continue
+		}
+		if !types.IsSlice(networks) {
+			continue
+		}
+		if (server.IsHTTP() && lists.Contains(networks, "http")) || (server.IsTCP() && lists.Contains(networks, "tcp")) {
+			schedulingTypes = append(schedulingTypes, m)
+		}
+	}
+	this.Data["schedulingTypes"] = schedulingTypes
 
 	this.Show()
 }
