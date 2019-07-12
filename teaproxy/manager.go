@@ -231,7 +231,7 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 				listener.Scheme = SchemeHTTPS
 			} else if scheme == "tcp" {
 				listener.Scheme = SchemeTCP
-			} else if scheme == "tcp+tcp" {
+			} else if scheme == "tcp+tls" {
 				listener.Scheme = SchemeTCPTLS
 			}
 			listener.Address = address

@@ -47,6 +47,9 @@ func (this *UpdateAction) Run(params struct {
 
 	this.Data["selectedTab"] = "https"
 	this.Data["server"] = server
+	this.Data["isHTTP"] = server.IsHTTP()
+	this.Data["isTCP"] = server.IsTCP()
+
 	this.Data["versions"] = teaconfigs.AllTlsVersions
 	if server.SSL != nil && server.SSL.HSTS != nil {
 		this.Data["hsts"] = server.SSL.HSTS

@@ -32,6 +32,9 @@ func (this *IndexAction) Run(params struct {
 
 	this.Data["selectedTab"] = "https"
 	this.Data["server"] = server
+	this.Data["isHTTP"] = server.IsHTTP()
+	this.Data["isTCP"] = server.IsTCP()
+
 	this.Data["errs"] = teaproxy.SharedManager.FindServerErrors(params.ServerId)
 
 	errorMessages := []string{}

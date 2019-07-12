@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaplugins"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -311,7 +312,8 @@ func (this *Listener) startTCPServer() error {
 					return
 				}
 				server := this.currentServers[0]
-				backend := server.NextBackend(nil)
+				requestCall := shared.NewRequestCall()
+				backend := server.NextBackend(requestCall)
 				if backend == nil {
 					clientConn.Close()
 					logs.Println("[proxy][tcp]no backends for '" + server.Description + "'")
@@ -547,9 +549,10 @@ func (this *Listener) matchSSL(domain string) (*teaconfigs.SSLConfig, *tls.Certi
 	this.serversLocker.RLock()
 	defer this.serversLocker.RUnlock()
 
+	// 如果域名为空，则取第一个
+	// 通常域名为空是因为是直接通过IP访问的
 	if len(domain) == 0 {
 		if len(this.currentServers) > 0 && this.currentServers[0].SSL != nil {
-			logs.Error(errors.New("[listener]no tls server name found"))
 			return this.currentServers[0].SSL, this.currentServers[0].SSL.FirstCert(), nil
 		}
 		return nil, nil, errors.New("[listener]no tls server name found")
