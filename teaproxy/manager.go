@@ -289,6 +289,22 @@ func (this *Manager) FindServerErrors(serverId string) []string {
 	return errs
 }
 
+//  查找Server对应的Listener
+func (this *Manager) FindServerListeners(serverId string) []*Listener {
+	this.locker.RLock()
+	defer this.locker.RUnlock()
+
+	result := []*Listener{}
+	for _, listener := range this.listeners {
+		if !listener.HasServer(serverId) {
+			continue
+		}
+		result = append(result, listener)
+	}
+
+	return result
+}
+
 // 重载配置
 func (this *Manager) Reload() error {
 	this.locker.Lock()

@@ -219,6 +219,41 @@ func (this *Listener) Shutdown() error {
 	return nil
 }
 
+// 获取TCP连接列表
+func (this *Listener) TCPPairs(maxSize int) []*TCPPair {
+	result := []*TCPPair{}
+	this.connectingTCPLocker.Lock()
+	index := 0
+	for _, pair := range this.connectingTCPMap {
+		index++
+		result = append(result, pair)
+		if maxSize > 0 && index == maxSize-1 {
+			break
+		}
+	}
+	this.connectingTCPLocker.Unlock()
+	lists.Sort(result, func(i int, j int) bool {
+		c1 := result[i].LConn().RemoteAddr().String()
+		c2 := result[j].LConn().RemoteAddr().String()
+		return c1 < c2
+	})
+	return result
+}
+
+// 关闭某个TCP连接
+func (this *Listener) CloseTCPPairWithLAddr(lAddr string) error {
+	var err error
+	this.connectingTCPLocker.Lock()
+	for _, pair := range this.connectingTCPMap {
+		if pair.LConn().RemoteAddr().String() == lAddr {
+			err = pair.Close()
+			break
+		}
+	}
+	this.connectingTCPLocker.Unlock()
+	return err
+}
+
 // 启动HTTP Server
 func (this *Listener) startHTTPServer() error {
 	// 如果已经启动，则不做任何事情

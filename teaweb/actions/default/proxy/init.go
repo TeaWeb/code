@@ -32,6 +32,8 @@ func init() {
 			Post("/shutdownTcp", new(ShutdownTcpAction)).
 			Post("/localAddrs", new(LocalAddrsAction)).
 			Post("/localListens", new(LocalListensAction)).
+			GetPost("/clients", new(ClientsAction)).
+			Post("/clientDisconnect", new(ClientDisconnectAction)).
 
 			EndAll()
 	})

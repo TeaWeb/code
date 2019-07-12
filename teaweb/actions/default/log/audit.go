@@ -55,7 +55,7 @@ func (this *AuditAction) Run(params struct {
 			ip, ok := log.Options["ip"]
 			location := ""
 			if ok && len(ip) > 0 {
-				if ip == "127.0.0.1" || strings.HasPrefix(ip, "192.168.") {
+				if ip == "127.0.0.1" || strings.HasPrefix(ip, "192.168.")  {
 					location = ""
 				} else {
 					ipObj := net.ParseIP(ip)
