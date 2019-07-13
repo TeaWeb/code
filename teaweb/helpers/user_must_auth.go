@@ -91,7 +91,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	if user.Granted(configs.AdminGrantAgent) {
 		modules = append(modules, map[string]interface{}{
 			"code":     "agents",
-			"menuName": "主机",
+			"menuName": "监控",
 			"icon":     "server",
 		})
 	}
