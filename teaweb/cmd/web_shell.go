@@ -73,7 +73,7 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 					proxyutils.FinishChange()
 				}
 			} else {
-				if sig == syscall.SIGINT {
+				if sig == syscall.SIGINT { // 终止进程
 					if server != nil {
 						server.Stop()
 						time.Sleep(1 * time.Second)
@@ -246,6 +246,9 @@ func (this *WebShell) ExecRestart(writer io.Writer) bool {
 			this.write(writer, "TeaWeb stop error:", err.Error())
 			return true
 		}
+
+		// 等待进程结束
+		time.Sleep(1 * time.Second)
 	}
 
 	cmd := exec.Command(os.Args[0])
