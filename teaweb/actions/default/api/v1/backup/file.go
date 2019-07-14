@@ -12,7 +12,7 @@ type FileAction actions.Action
 func (this *FileAction) RunGet(params struct {
 	Filename string
 }) {
-	backuputils.DownloadFile(params.Filename, this.ResponseWriter, func() {
+	backuputils.ActionDownloadFile(params.Filename, this.ResponseWriter, func() {
 		this.ResponseWriter.WriteHeader(http.StatusNotFound)
 		this.WriteString("file not found")
 	})

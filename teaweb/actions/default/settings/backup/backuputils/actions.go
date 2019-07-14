@@ -23,7 +23,7 @@ import (
 var shouldRestart = false
 
 // 列出所有文件
-func ListFiles() []maps.Map {
+func ActionListFiles() []maps.Map {
 	// 已备份
 	result := []maps.Map{}
 
@@ -55,7 +55,7 @@ func ListFiles() []maps.Map {
 }
 
 // 下载文件
-func DownloadFile(filename string, responseWriter http.ResponseWriter, onNotFound func()) {
+func ActionDownloadFile(filename string, responseWriter http.ResponseWriter, onNotFound func()) {
 	reg := regexp.MustCompile("^\\d{8}\\.zip$")
 	if !reg.MatchString(filename) {
 		onNotFound()
@@ -78,7 +78,7 @@ func DownloadFile(filename string, responseWriter http.ResponseWriter, onNotFoun
 }
 
 // 删除文件
-func DeleteFile(filename string, onError func(err error)) (goNext bool) {
+func ActionDeleteFile(filename string, onError func(err error)) (goNext bool) {
 	file := files.NewFile(Tea.Root + "/backups/" + filename)
 	if file.Exists() {
 		err := file.Delete()
@@ -92,7 +92,7 @@ func DeleteFile(filename string, onError func(err error)) (goNext bool) {
 }
 
 // 还原
-func RestoreFile(filename string, onFail func(message string)) (goNext bool) {
+func ActionRestoreFile(filename string, onFail func(message string)) (goNext bool) {
 	file := files.NewFile(Tea.Root + "/backups/" + filename)
 	if !file.Exists() {
 		onFail("指定的备份文件不存在")

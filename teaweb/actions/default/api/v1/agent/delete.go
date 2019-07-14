@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"github.com/TeaWeb/code/teaweb/actions/default/agents"
+	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/apiutils"
 	"github.com/iwind/TeaGo/actions"
 )
@@ -12,14 +12,11 @@ type DeleteAction actions.Action
 func (this *DeleteAction) RunGet(params struct {
 	AgentId string
 }) {
-	defer apiutils.Recover(this, false)
+	if !agentutils.ActionDeleteAgent(params.AgentId, func(message string) {
+		apiutils.Fail(this, message)
+	}) {
+		return
+	}
 
-	act := new(agents.DeleteAction)
-	act.Request = this.Request
-	act.ResponseWriter = new(actions.TestingResponseWriter)
-	act.RunPost(struct {
-		AgentId string
-	}{
-		AgentId: params.AgentId,
-	})
+	apiutils.SuccessOK(this)
 }

@@ -20,7 +20,7 @@ func (this *RestoreAction) Run(params struct {
 		this.Fail("请指定要恢复的文件")
 	}
 
-	if !backuputils.RestoreFile(params.File, func(message string) {
+	if !backuputils.ActionRestoreFile(params.File, func(message string) {
 		this.Fail(message)
 	}) {
 		return

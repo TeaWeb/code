@@ -9,7 +9,7 @@ type IndexAction actions.Action
 
 // 备份列表
 func (this *IndexAction) Run(params struct{}) {
-	this.Data["files"] = backuputils.ListFiles()
+	this.Data["files"] = backuputils.ActionListFiles()
 
 	this.Data["shouldRestart"] = backuputils.ShouldRestart()
 

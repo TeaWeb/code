@@ -10,5 +10,5 @@ type FilesAction actions.Action
 
 // 文件名
 func (this *FilesAction) RunGet(params struct{}) {
-	apiutils.Success(this, backuputils.ListFiles())
+	apiutils.Success(this, backuputils.ActionListFiles())
 }

@@ -17,7 +17,7 @@ func (this *DeleteAction) RunGet(params struct {
 		return
 	}
 
-	if !backuputils.DeleteFile(params.Filename, func(err error) {
+	if !backuputils.ActionDeleteFile(params.Filename, func(err error) {
 		apiutils.Fail(this, err.Error())
 	}) {
 		return

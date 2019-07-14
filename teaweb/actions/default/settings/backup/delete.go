@@ -20,7 +20,7 @@ func (this *DeleteAction) Run(params struct {
 		this.Fail("请指定要删除的备份文件")
 	}
 
-	if !backuputils.DeleteFile(params.File, func(err error) {
+	if !backuputils.ActionDeleteFile(params.File, func(err error) {
 		this.Fail("删除失败：" + err.Error())
 	}) {
 		return

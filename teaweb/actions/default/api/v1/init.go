@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/TeaWeb/code/teaweb/actions/default/api/v1/agent"
+	"github.com/TeaWeb/code/teaweb/actions/default/api/v1/agent/app"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/v1/agent/item"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/v1/agent/task"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/v1/backup"
@@ -26,6 +27,8 @@ func init() {
 			Get("/agent/:agentId/start", new(agent.StartAction)).
 			Get("/agent/:agentId/stop", new(agent.StopAction)).
 			Get("/agent/:agentId/delete", new(agent.DeleteAction)).
+			Get("/agent/:agentId/apps", new(app.AppsAction)).
+			Get("/agent/:agentId/app/:appId", new(app.AppAction)).
 			Get("/agent/:agentId/app/:appId/item/:itemId", new(item.ItemAction)).
 			Get("/agent/:agentId/app/:appId/item/:itemId/latest", new(item.LatestAction)).
 			Get("/agent/:agentId/app/:appId/item/:itemId/execute", new(item.ExecuteAction)).

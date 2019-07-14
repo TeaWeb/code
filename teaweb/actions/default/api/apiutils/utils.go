@@ -3,7 +3,6 @@ package apiutils
 import (
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/pquerna/ffjson/ffjson"
 )
@@ -46,33 +45,4 @@ func SuccessOK(actionPtr actions.ActionWrapper) {
 	actionPtr.Object().WriteJSON(maps.Map{
 		"ok": 1,
 	})
-}
-
-//从panic中恢复信息
-func Recover(actionPtr actions.ActionWrapper, containsData bool) {
-	i := recover()
-	if i != nil {
-		action, ok := i.(*actions.ActionObject)
-		if ok {
-			w, ok := action.ResponseWriter.(*actions.TestingResponseWriter)
-			if !ok {
-				return
-			}
-			m := maps.Map{}
-			err := ffjson.Unmarshal(w.Data, &m)
-			if err != nil {
-				logs.Error(err)
-				return
-			}
-			if m.GetInt("code") != 200 {
-				Fail(actionPtr, m.GetString("message"))
-			} else {
-				if containsData {
-					Success(actionPtr, m.Get("data"))
-				} else {
-					SuccessOK(actionPtr)
-				}
-			}
-		}
-	}
 }

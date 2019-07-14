@@ -12,7 +12,7 @@ type RestoreAction actions.Action
 func (this *RestoreAction) RunGet(params struct {
 	Filename string
 }) {
-	if !backuputils.RestoreFile(params.Filename, func(message string) {
+	if !backuputils.ActionRestoreFile(params.Filename, func(message string) {
 		apiutils.Fail(this, message)
 	}) {
 		return
