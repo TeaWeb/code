@@ -129,6 +129,11 @@ func (this *ResponseWriter) Write(data []byte) (n int, err error) {
 	return
 }
 
+// 写入字符串
+func (this *ResponseWriter) WriteString(s string) (n int, err error) {
+	return this.Write([]byte(s))
+}
+
 // 读取发送的字节数
 func (this *ResponseWriter) SentBodyBytes() int64 {
 	return this.sentBodyBytes
