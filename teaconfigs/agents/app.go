@@ -14,8 +14,8 @@ type AppConfig struct {
 	Items []*Item       `yaml:"item" json:"items"`  // 监控项
 	Name  string        `yaml:"name" json:"name"`   // 名称
 
-	IsSharedWithGroup bool     // 是否与当前组共享
-	SharedAgentIds    []string // 共享的Agents TODO 暂不实现
+	IsSharedWithGroup bool     `yaml:"issharedwithgroup" json:"isSharedWithGroup"` // 是否与当前组共享，使用issharedwithgroup是为了兼容v0.1.6之前的版本
+	SharedAgentIds    []string `yaml:"sharedAgentIds" json:"sharedAgentIds"`       // 共享的Agents TODO 暂不实现
 
 	NoticeSetting map[notices.NoticeLevel][]*notices.NoticeReceiver `yaml:"noticeSetting" json:"noticeSetting"`
 }
