@@ -14,6 +14,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/settings"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/api/agent"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/api/monitor"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/api/v1"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/cache"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/dashboard"
 	"github.com/TeaWeb/code/teaweb/actions/default/index"
@@ -50,6 +51,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/profile"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/server"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/settings/update"
+	"github.com/TeaWeb/code/teaweb/cmd"
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
@@ -65,8 +67,8 @@ var server *TeaGo.Server
 
 func Start() {
 	// 命令行
-	shell := &WebShell{}
-	shell.Start()
+	shell := cmd.NewWebShell()
+	shell.Start(server)
 	if shell.ShouldStop {
 		return
 	}

@@ -1,4 +1,4 @@
-package teaweb
+package cmd
 
 import "testing"
 

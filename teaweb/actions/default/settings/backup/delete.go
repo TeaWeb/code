@@ -2,9 +2,8 @@ package backup
 
 import (
 	"github.com/TeaWeb/code/teaconst"
-	"github.com/iwind/TeaGo/Tea"
+	"github.com/TeaWeb/code/teaweb/actions/default/settings/backup/backuputils"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/files"
 )
 
 type DeleteAction actions.Action
@@ -21,12 +20,10 @@ func (this *DeleteAction) Run(params struct {
 		this.Fail("请指定要删除的备份文件")
 	}
 
-	file := files.NewFile(Tea.Root + "/backups/" + params.File)
-	if file.Exists() {
-		err := file.Delete()
-		if err != nil {
-			this.Fail("删除失败：" + err.Error())
-		}
+	if !backuputils.DeleteFile(params.File, func(err error) {
+		this.Fail("删除失败：" + err.Error())
+	}) {
+		return
 	}
 
 	this.Success()

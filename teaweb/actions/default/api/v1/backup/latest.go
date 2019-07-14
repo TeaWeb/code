@@ -1,0 +1,23 @@
+package backup
+
+import (
+	"github.com/TeaWeb/code/teaweb/actions/default/api/apiutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/settings/backup/backuputils"
+	"github.com/iwind/TeaGo/actions"
+)
+
+type LatestAction actions.Action
+
+// 下载最新的备份文件
+func (this *LatestAction) RunGet(params struct{}) {
+	backupFiles := backuputils.ListFiles()
+	if len(backupFiles) == 0 {
+		apiutils.Fail(this, "no backup files")
+		return
+	}
+
+	file := backupFiles[0]
+	backuputils.DownloadFile(file.GetString("name"), this.ResponseWriter, func() {
+		apiutils.Fail(this, "file not found")
+	})
+}

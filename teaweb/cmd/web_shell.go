@@ -1,4 +1,4 @@
-package teaweb
+package cmd
 
 import (
 	"fmt"
@@ -6,11 +6,13 @@ import (
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/TeaWeb/code/teaweb/configs"
+	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
+	"io"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -21,18 +23,31 @@ import (
 	"time"
 )
 
+var sharedShell *WebShell = nil
+
 // 命令行相关封装
 type WebShell struct {
 	ShouldStop bool
 }
 
+// 获取新对象
+func NewWebShell() *WebShell {
+	sharedShell = &WebShell{}
+	return sharedShell
+}
+
+// 获取共享的对象
+func SharedShell() *WebShell {
+	return sharedShell
+}
+
 // 启动
-func (this *WebShell) Start() {
+func (this *WebShell) Start(server *TeaGo.Server) {
 	// 重置ROOT
 	this.resetRoot()
 
 	// 执行参数
-	if this.execArgs() {
+	if this.execArgs(os.Stdout) {
 		this.ShouldStop = true
 		return
 	}
@@ -92,125 +107,125 @@ func (this *WebShell) resetRoot() {
 }
 
 // 检查命令行参数
-func (this *WebShell) execArgs() bool {
+func (this *WebShell) execArgs(writer io.Writer) bool {
 	if len(os.Args) == 1 {
 		// 检查是否已经启动
 		proc := this.checkPid()
 		if proc != nil {
-			fmt.Println("TeaWeb is already running, pid:", proc.Pid)
+			this.write(writer, "TeaWeb is already running, pid:", proc.Pid)
 			return true
 		}
 		return false
 	}
 	args := os.Args[1:]
 	if lists.ContainsAny(args, "?", "help", "-help", "h", "-h") { // 帮助
-		return this.execHelp()
+		return this.ExecHelp(writer)
 	} else if lists.ContainsAny(args, "-v", "version", "-version") { // 版本号
-		return this.execVersion()
+		return this.ExecVersion(writer)
 	} else if lists.ContainsString(args, "start") { // 启动
-		return this.execStart()
+		return this.ExecStart(writer)
 	} else if lists.ContainsString(args, "stop") { // 停止
-		return this.execStop()
+		return this.ExecStop(os.Stdout)
 	} else if lists.ContainsString(args, "reload") { // 重新加载代理配置
-		return this.execReload()
+		return this.ExecReload(writer)
 	} else if lists.ContainsString(args, "restart") { // 重启
-		return this.execRestart()
+		return this.ExecRestart(writer)
 	} else if lists.ContainsString(args, "reset") { // 重置
-		return this.execReset()
+		return this.ExecReset(writer)
 	} else if lists.ContainsString(args, "status") { // 状态
-		return this.execStatus()
+		return this.ExecStatus(writer)
 	} else if lists.ContainsString(args, "service") && runtime.GOOS == "windows" { // Windows服务
-		return this.execService()
+		return this.ExecService(writer)
 	}
 
 	if len(args) > 0 {
-		fmt.Println("Unknown command option '" + strings.Join(args, " ") + "', run './bin/teaweb -h' to lookup the usage.")
+		this.write(writer, "Unknown command option '"+strings.Join(args, " ")+"', run './bin/teaweb -h' to lookup the usage.")
 		return true
 	}
 	return false
 }
 
 // 帮助
-func (this *WebShell) execHelp() bool {
-	fmt.Println("TeaWeb v" + teaconst.TeaVersion)
-	fmt.Println("Usage:", "\n   ./bin/teaweb [option]")
-	fmt.Println("")
-	fmt.Println("Options:")
-	fmt.Println("  -h", "\n     print this help")
-	fmt.Println("  -v", "\n     print version")
-	fmt.Println("  start", "\n     start the server in background")
-	fmt.Println("  stop", "\n     stop the server")
-	fmt.Println("  reload", "\n     reload all proxy servers configs")
-	fmt.Println("  restart", "\n     restart the server")
-	fmt.Println("  reset", "\n     reset the server locker status")
-	fmt.Println("  status", "\n     print server status")
-	fmt.Println("")
-	fmt.Println("To run the server in foreground:", "\n   ./bin/teaweb")
+func (this *WebShell) ExecHelp(writer io.Writer) bool {
+	this.write(writer, "TeaWeb v"+teaconst.TeaVersion)
+	this.write(writer, "Usage:", "\n   ./bin/teaweb [option]")
+	this.write(writer, "")
+	this.write(writer, "Options:")
+	this.write(writer, "  -h", "\n     print this help")
+	this.write(writer, "  -v", "\n     print version")
+	this.write(writer, "  start", "\n     start the server in background")
+	this.write(writer, "  stop", "\n     stop the server")
+	this.write(writer, "  reload", "\n     reload all proxy servers configs")
+	this.write(writer, "  restart", "\n     restart the server")
+	this.write(writer, "  reset", "\n     reset the server locker status")
+	this.write(writer, "  status", "\n     print server status")
+	this.write(writer, "")
+	this.write(writer, "To run the server in foreground:", "\n   ./bin/teaweb")
 
 	return true
 }
 
 // 版本号
-func (this *WebShell) execVersion() bool {
-	fmt.Println("TeaWeb v"+teaconst.TeaVersion, "(build: "+runtime.Version(), runtime.GOOS, runtime.GOARCH+")")
+func (this *WebShell) ExecVersion(writer io.Writer) bool {
+	this.write(writer, "TeaWeb v"+teaconst.TeaVersion, "(build: "+runtime.Version(), runtime.GOOS, runtime.GOARCH+")")
 	return true
 }
 
 // 启动
-func (this *WebShell) execStart() bool {
+func (this *WebShell) ExecStart(writer io.Writer) bool {
 	proc := this.checkPid()
 	if proc != nil {
-		fmt.Println("TeaWeb already started, pid:", proc.Pid)
+		this.write(writer, "TeaWeb already started, pid:", proc.Pid)
 		return true
 	}
 
 	cmd := exec.Command(os.Args[0])
 	err := cmd.Start()
 	if err != nil {
-		fmt.Println("TeaWeb  start failed:", err.Error())
+		this.write(writer, "TeaWeb  start failed:", err.Error())
 		return true
 	}
-	fmt.Println("TeaWeb started ok, pid:", cmd.Process.Pid)
+	this.write(writer, "TeaWeb started ok, pid:", cmd.Process.Pid)
 
 	return true
 }
 
 // 停止
-func (this *WebShell) execStop() bool {
+func (this *WebShell) ExecStop(writer io.Writer) bool {
 	proc := this.checkPid()
 	if proc == nil {
-		fmt.Println("TeaWeb not started")
+		this.write(writer, "TeaWeb not started")
 		return true
 	}
 
 	err := proc.Kill()
 	if err != nil {
-		fmt.Println("TeaWeb stop error:", err.Error())
+		this.write(writer, "TeaWeb stop error:", err.Error())
 		return true
 	}
 
 	files.NewFile(Tea.Root + "/bin/pid").Delete()
-	fmt.Println("TeaWeb stopped ok, pid:", proc.Pid)
+	this.write(writer, "TeaWeb stopped ok, pid:", proc.Pid)
 
 	return true
 }
 
 // 重载代理配置
-func (this *WebShell) execReload() bool {
+func (this *WebShell) ExecReload(writer io.Writer) bool {
 	pidString, err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").ReadAllString()
 	if err != nil {
-		logs.Error(err)
+		this.write(writer, err.Error())
 		return true
 	}
 
 	pid := types.Int(pidString)
 	proc, err := os.FindProcess(pid)
 	if err != nil {
-		logs.Error(err)
+		this.write(writer, err.Error())
 		return true
 	}
 	if proc == nil {
-		logs.Println("can not find process")
+		this.write(writer, "can not find process")
 		return true
 	}
 	err = proc.Signal(syscall.Signal(0x1e) /**syscall.SIGUSR1**/)
@@ -218,17 +233,17 @@ func (this *WebShell) execReload() bool {
 		logs.Error(err)
 		return true
 	}
-	fmt.Println("reload success")
+	this.write(writer, "reload success")
 	return true
 }
 
 // 重启
-func (this *WebShell) execRestart() bool {
+func (this *WebShell) ExecRestart(writer io.Writer) bool {
 	proc := this.checkPid()
 	if proc != nil {
 		err := proc.Kill()
 		if err != nil {
-			fmt.Println("TeaWeb stop error:", err.Error())
+			this.write(writer, "TeaWeb stop error:", err.Error())
 			return true
 		}
 	}
@@ -236,48 +251,48 @@ func (this *WebShell) execRestart() bool {
 	cmd := exec.Command(os.Args[0])
 	err := cmd.Start()
 	if err != nil {
-		fmt.Println("TeaWeb restart failed:", err.Error())
+		this.write(writer, "TeaWeb restart failed:", err.Error())
 		return true
 	}
-	fmt.Println("TeaWeb restarted ok, pid:", cmd.Process.Pid)
+	this.write(writer, "TeaWeb restarted ok, pid:", cmd.Process.Pid)
 
 	return true
 }
 
 // 重置
-func (this *WebShell) execReset() bool {
+func (this *WebShell) ExecReset(writer io.Writer) bool {
 	pidString, err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").ReadAllString()
 	if err != nil {
-		logs.Error(err)
+		this.write(writer, err.Error())
 		return true
 	}
 
 	pid := types.Int(pidString)
 	proc, err := os.FindProcess(pid)
 	if err != nil {
-		logs.Error(err)
+		this.write(writer, err.Error())
 		return true
 	}
 	if proc == nil {
-		logs.Println("can not find process")
+		this.write(writer, "can not find process")
 		return true
 	}
 	err = proc.Signal(syscall.SIGHUP)
 	if err != nil {
-		logs.Error(err)
+		this.write(writer, err.Error())
 		return true
 	}
-	fmt.Println("reset success")
+	this.write(writer, "reset success")
 	return true
 }
 
 // 状态
-func (this *WebShell) execStatus() bool {
+func (this *WebShell) ExecStatus(writer io.Writer) bool {
 	proc := this.checkPid()
 	if proc == nil {
-		fmt.Println("TeaWeb not started yet")
+		this.write(writer, "TeaWeb not started yet")
 	} else {
-		fmt.Println("TeaWeb is running, pid:" + fmt.Sprintf("%d", proc.Pid))
+		this.write(writer, "TeaWeb is running, pid:"+fmt.Sprintf("%d", proc.Pid))
 	}
 	return true
 }
@@ -348,4 +363,9 @@ func (this *WebShell) checkPid() *os.Process {
 	}
 
 	return nil
+}
+
+// 写入string到writer
+func (this *WebShell) write(writer io.Writer, args ...interface{}) {
+	fmt.Fprintln(writer, args ...)
 }

@@ -1,4 +1,4 @@
-package monitor
+package v1
 
 import (
 	"github.com/TeaWeb/code/teaconst"
@@ -6,18 +6,19 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/api/apiutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
+	"os"
 	"runtime"
 )
 
-type IndexAction actions.Action
+type StatusAction actions.Action
 
-// 监控信息
-func (this *IndexAction) Run(params struct{}) {
-	apiutils.ValidateUser(this)
-
+// 状态
+func (this *StatusAction) RunGet(params struct{}) {
 	result := maps.Map{
+		"pid":      os.Getpid(),
 		"os":       runtime.GOOS,
 		"arch":     runtime.GOARCH,
+		"go":       runtime.Version(),
 		"routines": runtime.NumGoroutine(),
 		"version":  teaconst.TeaVersion,
 	}

@@ -1,36 +1,39 @@
-package apps
+package item
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/api/apiutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 )
 
-type ExecItemSourceAction actions.Action
+type ExecuteAction actions.Action
 
-// 立即执行监控项数据源
-func (this *ExecItemSourceAction) Run(params struct {
+// 执行一次监控项
+func (this *ExecuteAction) RunGet(params struct {
 	AgentId string
 	AppId   string
 	ItemId  string
 }) {
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {
-		this.Fail("找不到要操作的Agent")
+		apiutils.Fail(this, "agent not found")
+		return
 	}
 
 	app := agent.FindApp(params.AppId)
 	if app == nil {
-		this.Fail("找不到App")
+		apiutils.Fail(this, "app not found")
+		return
 	}
 
 	item := app.FindItem(params.ItemId)
 	if item == nil {
-		this.Fail("找不到Item")
+		apiutils.Fail(this, "item not found")
+		return
 	}
 
-	// 通知更新
 	agentutils.PostAgentEvent(agent.Id, agentutils.NewAgentEvent("RUN_ITEM", maps.Map{
 		"appId":  app.Id,
 		"itemId": params.ItemId,
@@ -47,5 +50,5 @@ func (this *ExecItemSourceAction) Run(params struct {
 		})
 	}
 
-	this.Success()
+	apiutils.SuccessOK(this)
 }

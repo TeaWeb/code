@@ -1,22 +1,19 @@
 package backup
 
 import (
-	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaweb/actions/default/settings/backup/backuputils"
 	"github.com/iwind/TeaGo/actions"
+	"net/http"
 )
 
-type DownloadAction actions.Action
+type FileAction actions.Action
 
-// 下载
-func (this *DownloadAction) Run(params struct {
+// 下载文件
+func (this *FileAction) RunGet(params struct {
 	Filename string
 }) {
-	if teaconst.DemoEnabled {
-		this.Fail("演示版无法下载")
-	}
-
 	backuputils.DownloadFile(params.Filename, this.ResponseWriter, func() {
+		this.ResponseWriter.WriteHeader(http.StatusNotFound)
 		this.WriteString("file not found")
 	})
 }
