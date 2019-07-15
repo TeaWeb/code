@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-var ClusterManager = NewManager()
+var SharedManager = NewManager()
 
 // cluster communication manager
 type Manager struct {
@@ -228,7 +228,7 @@ func (this *Manager) PushItems() {
 		return
 	}
 
-	err := ClusterManager.Write(action)
+	err := SharedManager.Write(action)
 	if err != nil {
 		logs.Error(err)
 	}
@@ -243,7 +243,7 @@ func (this *Manager) PullItems() {
 			Sum: sum,
 		})
 	}
-	err := ClusterManager.Write(action)
+	err := SharedManager.Write(action)
 	if err != nil {
 		logs.Error(err)
 	}

@@ -44,7 +44,7 @@ func (this *SyncAction) Execute() error {
 		}
 	}
 
-	ClusterManager.BuildSum()
+	SharedManager.BuildSum()
 
 	// reload system
 	teahooks.Call(teahooks.EventReload)

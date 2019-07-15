@@ -15,17 +15,17 @@ func (this *SyncAction) RunPost(params struct{}) {
 		this.Fail("节点配置不存在")
 	}
 
-	if !teacluster.ClusterManager.IsActive() {
+	if !teacluster.SharedManager.IsActive() {
 		this.Fail("当前节点没有连接到集群服务器")
 	}
 
 	if node.IsMaster() {
-		teacluster.ClusterManager.PushItems()
+		teacluster.SharedManager.PushItems()
 	} else {
-		teacluster.ClusterManager.PullItems()
+		teacluster.SharedManager.PullItems()
 	}
 
-	teacluster.ClusterManager.SetIsChanged(false)
+	teacluster.SharedManager.SetIsChanged(false)
 
 	this.Success()
 }

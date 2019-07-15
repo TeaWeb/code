@@ -45,9 +45,9 @@ func (this *SumAction) OnSuccess(success *SuccessAction) error {
 	}
 
 	if node.IsMaster() {
-		ClusterManager.PushItems()
+		SharedManager.PushItems()
 	} else {
-		ClusterManager.PullItems()
+		SharedManager.PullItems()
 	}
 
 	return nil

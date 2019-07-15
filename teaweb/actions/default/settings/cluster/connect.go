@@ -7,7 +7,8 @@ import (
 
 type ConnectAction actions.Action
 
+// 连接到集群
 func (this *ConnectAction) RunPost(params struct{}) {
-	teacluster.ClusterManager.Restart()
+	teacluster.SharedManager.Restart()
 	this.Success()
 }

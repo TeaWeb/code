@@ -14,6 +14,6 @@ func (this *NotifyAction) TypeId() int8 {
 }
 
 func (this *NotifyAction) Execute() error {
-	ClusterManager.PullItems()
+	SharedManager.PullItems()
 	return nil
 }

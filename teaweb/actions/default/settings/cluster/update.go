@@ -74,10 +74,10 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 
 	if !node.On {
-		teacluster.ClusterManager.SetIsChanged(false)
+		teacluster.SharedManager.SetIsChanged(false)
 	}
 
-	teacluster.ClusterManager.Restart()
+	teacluster.SharedManager.Restart()
 
 	this.Success()
 }

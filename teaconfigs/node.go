@@ -24,6 +24,7 @@ type NodeConfig struct {
 }
 
 // 取得当前节点配置
+// 如果为nil，表示尚未配置集群
 func SharedNodeConfig() *NodeConfig {
 	shared.Locker.Lock()
 	defer shared.Locker.ReadUnlock()

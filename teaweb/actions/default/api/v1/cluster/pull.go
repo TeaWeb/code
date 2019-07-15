@@ -17,14 +17,14 @@ func (this *PullAction) RunGet(params struct{}) {
 		return
 	}
 
-	if !teacluster.ClusterManager.IsActive() {
+	if !teacluster.SharedManager.IsActive() {
 		apiutils.Fail(this, "the node is not connecting to cluster")
 		return
 	}
 
 	if !node.IsMaster() {
-		teacluster.ClusterManager.PullItems()
-		teacluster.ClusterManager.SetIsChanged(false)
+		teacluster.SharedManager.PullItems()
+		teacluster.SharedManager.SetIsChanged(false)
 	}
 
 	apiutils.SuccessOK(this)

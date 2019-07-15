@@ -13,7 +13,7 @@ func (this *IndexAction) RunGet(params struct{}) {
 
 	node := teaconfigs.SharedNodeConfig()
 
-	manager := teacluster.ClusterManager
+	manager := teacluster.SharedManager
 
 	if node != nil && node.On {
 		manager.BuildSum()

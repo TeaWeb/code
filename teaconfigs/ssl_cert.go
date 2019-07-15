@@ -71,6 +71,9 @@ func (this *SSLCertConfig) Validate() error {
 
 // 证书文件路径
 func (this *SSLCertConfig) FullCertPath() string {
+	if len(this.CertFile) == 0 {
+		return ""
+	}
 	if !strings.ContainsAny(this.CertFile, "/\\") {
 		return Tea.ConfigFile(this.CertFile)
 	}
@@ -79,6 +82,9 @@ func (this *SSLCertConfig) FullCertPath() string {
 
 // 密钥文件路径
 func (this *SSLCertConfig) FullKeyPath() string {
+	if len(this.KeyFile) == 0 {
+		return ""
+	}
 	if !strings.ContainsAny(this.KeyFile, "/\\") {
 		return Tea.ConfigFile(this.KeyFile)
 	}

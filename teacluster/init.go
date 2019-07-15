@@ -29,13 +29,13 @@ func init() {
 
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		// build
-		ClusterManager.BuildSum()
+		SharedManager.BuildSum()
 
 		// start manager
 		go func() {
 			ticker := time.NewTicker(60 * time.Second)
 			for {
-				err := ClusterManager.Start()
+				err := SharedManager.Start()
 				if err != nil {
 					logs.Println("[cluster]" + err.Error())
 				}
@@ -44,7 +44,7 @@ func init() {
 				select {
 				case <-ticker.C:
 					// every N seconds
-				case <-ClusterManager.RestartChan:
+				case <-SharedManager.RestartChan:
 					// retry immediately
 				}
 			}
@@ -53,8 +53,8 @@ func init() {
 		// start ping
 		timers.Loop(60*time.Second, func(looper *timers.Looper) {
 			node := teaconfigs.SharedNodeConfig()
-			if node != nil && node.On && ClusterManager.IsActive() {
-				err := ClusterManager.Write(&PingAction{})
+			if node != nil && node.On && SharedManager.IsActive() {
+				err := SharedManager.Write(&PingAction{})
 				if err != nil {
 					logs.Println("[cluster]" + err.Error())
 				}
@@ -63,15 +63,15 @@ func init() {
 	})
 
 	TeaGo.BeforeStop(func(server *TeaGo.Server) {
-		if ClusterManager != nil {
-			ClusterManager.Stop()
+		if SharedManager != nil {
+			SharedManager.Stop()
 		}
 	})
 
 	teahooks.On(teahooks.EventConfigChanged, func() {
 		node := teaconfigs.SharedNodeConfig()
 		if node != nil && node.On {
-			ClusterManager.SetIsChanged(true)
+			SharedManager.SetIsChanged(true)
 		}
 	})
 }

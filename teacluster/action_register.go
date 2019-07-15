@@ -26,10 +26,10 @@ func (this *RegisterAction) Execute() error {
 func (this *RegisterAction) OnSuccess(success *SuccessAction) error {
 	if this.NodeRole == teaconfigs.NodeRoleMaster {
 		logs.Println("[cluster]register master ok")
-		ClusterManager.Write(&SumAction{})
+		SharedManager.Write(&SumAction{})
 	} else {
 		logs.Println("[cluster]register node ok")
-		ClusterManager.Write(&SumAction{})
+		SharedManager.Write(&SumAction{})
 	}
 	return nil
 }

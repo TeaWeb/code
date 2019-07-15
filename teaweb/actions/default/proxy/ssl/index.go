@@ -52,6 +52,31 @@ func (this *IndexAction) Run(params struct {
 		for index, certConfig := range server.SSL.Certs {
 			info := []maps.Map{}
 
+			// 证书是否为空
+			if len(certConfig.FullCertPath()) == 0 {
+				if server.SSL.On {
+					errorMessages = append(errorMessages, fmt.Sprintf("证书#%d：", index+1)+"证书文件不能为空")
+				}
+				certs = append(certs, maps.Map{
+					"config": certConfig,
+					"info":   info,
+				})
+				continue
+			}
+
+			// 密钥是否为空
+			if len(certConfig.FullKeyPath()) == 0 {
+				if server.SSL.On {
+					errorMessages = append(errorMessages, fmt.Sprintf("证书#%d：", index+1)+"密钥文件不能为空")
+				}
+				certs = append(certs, maps.Map{
+					"config": certConfig,
+					"info":   info,
+				})
+				continue
+			}
+
+			// 证书和密钥是否匹配
 			cert, err := tls.LoadX509KeyPair(certConfig.FullCertPath(), certConfig.FullKeyPath())
 			if err != nil {
 				if server.SSL.On {

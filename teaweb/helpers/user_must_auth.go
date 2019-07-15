@@ -145,9 +145,9 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	action.Data["teaVersion"] = teaconst.TeaVersion
 	action.Data["teaIsSuper"] = user.Granted(configs.AdminGrantAll)
 	action.Data["teaDemoEnabled"] = teaconst.DemoEnabled
-	action.Data["teaClusterActive"] = teacluster.ClusterManager.IsActive()
+	action.Data["teaClusterActive"] = teacluster.SharedManager.IsActive()
 	action.Data["teaClusterEnabled"] = teacluster.ClusterEnabled
-	action.Data["teaClusterIsChanged"] = teacluster.ClusterManager.IsChanged()
+	action.Data["teaClusterIsChanged"] = teacluster.SharedManager.IsChanged()
 
 	return true
 }

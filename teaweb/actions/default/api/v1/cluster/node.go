@@ -18,8 +18,8 @@ func (this *NodeAction) RunGet(params struct{}) {
 		return
 	}
 	apiutils.Success(this, maps.Map{
-		"isActive":  teacluster.ClusterManager.IsActive(),
-		"isChanged": teacluster.ClusterManager.IsChanged(),
+		"isActive":  teacluster.SharedManager.IsActive(),
+		"isChanged": teacluster.SharedManager.IsChanged(),
 		"config":    config,
 	})
 }
