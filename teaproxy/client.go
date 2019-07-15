@@ -43,17 +43,17 @@ func (this *ClientPool) client(backendId string, address string, connectionTimeo
 		connectionTimeout = 15 * time.Second
 	}
 
-	tr := &http.Transport{
+	transport := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			// 握手配置
 			return (&net.Dialer{
 				Timeout:   connectionTimeout,
-				KeepAlive: 10 * time.Minute,
+				KeepAlive: 2 * time.Minute,
 			}).DialContext(ctx, network, address)
 		},
 		MaxIdleConns:          int(maxConnections), // 0表示不限
 		MaxIdleConnsPerHost:   runtime.NumCPU() * 512,
-		IdleConnTimeout:       0,
+		IdleConnTimeout:       2 * time.Minute, // TODO 需要可以设置
 		ExpectContinueTimeout: 1 * time.Second,
 		TLSHandshakeTimeout:   0, // 不限
 		TLSClientConfig: &tls.Config{
@@ -62,19 +62,19 @@ func (this *ClientPool) client(backendId string, address string, connectionTimeo
 		Proxy: nil,
 	}
 
-	c := &http.Client{
+	client = &http.Client{
 		Timeout:   readTimeout,
-		Transport: tr,
+		Transport: transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
 
 	this.locker.Lock()
-	this.clientsMap[key] = c
+	this.clientsMap[key] = client
 	this.locker.Unlock()
 
-	return c
+	return client
 }
 
 // 重置
