@@ -139,7 +139,8 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 
 	writer.WriteHeader(resp.StatusCode)
 
-	_, err = io.Copy(writer, resp.Body)
+	buf := make([]byte, 1024)
+	_, err = io.CopyBuffer(writer, resp.Body, buf)
 	if err != nil {
 		logs.Error(err)
 	}

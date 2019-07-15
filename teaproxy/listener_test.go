@@ -126,7 +126,7 @@ func TestListener_Reload_RemoveServer(t *testing.T) {
 			Address: "127.0.0.1:9991",
 			Weight:  10,
 		})
-		server.AddHeader(&shared.HeaderConfig{
+		server.AddResponseHeader(&shared.HeaderConfig{
 			On:     true,
 			Name:   "Backend",
 			Value:  "${backend.id}",
@@ -147,7 +147,7 @@ func TestListener_Reload_RemoveServer(t *testing.T) {
 			Address: "127.0.0.1:9991",
 			Weight:  10,
 		})
-		server.AddHeader(&shared.HeaderConfig{
+		server.AddResponseHeader(&shared.HeaderConfig{
 			On:     true,
 			Name:   "Backend",
 			Value:  "${backend.id}",
@@ -189,7 +189,7 @@ func TestListener_Reload_ChangeServer(t *testing.T) {
 			Address: "127.0.0.1:9991",
 			Weight:  10,
 		})
-		server.AddHeader(&shared.HeaderConfig{
+		server.AddResponseHeader(&shared.HeaderConfig{
 			On:     true,
 			Name:   "Backend",
 			Value:  "${backend.id}",
@@ -213,7 +213,7 @@ func TestListener_Reload_ChangeServer(t *testing.T) {
 			Address: "127.0.0.1:9991",
 			Weight:  10,
 		})
-		server.AddHeader(&shared.HeaderConfig{
+		server.AddResponseHeader(&shared.HeaderConfig{
 			On:     true,
 			Name:   "Backend",
 			Value:  "${backend.id}",
@@ -238,7 +238,7 @@ func TestListener_Reload_ChangeServer(t *testing.T) {
 				Address: "wx2.teaos.cn",
 				Weight:  10,
 			})
-			server.AddHeader(&shared.HeaderConfig{
+			server.AddResponseHeader(&shared.HeaderConfig{
 				On:     true,
 				Name:   "Backend",
 				Value:  "${backend.id}",
@@ -264,7 +264,7 @@ func TestListener_Reload_FindNamedServer(t *testing.T) {
 	listener := NewListener()
 	listener.Scheme = SchemeHTTP
 	listener.Address = "127.0.0.1:8881"
-	for i := 0; i < 10; i ++ {
+	for i := 0; i < 10; i++ {
 		server := teaconfigs.NewServerConfig()
 		server.Id = "web00" + fmt.Sprintf("%d", i)
 		server.Http = true
@@ -291,7 +291,7 @@ func TestListener_Reload_FindNamedServer(t *testing.T) {
 
 	count := 10000
 	before := time.Now()
-	for i := 0; i < count; i ++ {
+	for i := 0; i < count; i++ {
 		listener.findNamedServer("teaos5.cn")
 		listener.findNamedServer("wx.teaos.cn")
 		//listener.findNamedServer("127.0.0.1:8881")

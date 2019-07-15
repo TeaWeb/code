@@ -50,7 +50,8 @@ func (this *BlockAction) Perform(writer http.ResponseWriter) (allow bool) {
 					}
 				}
 
-				io.Copy(writer, resp.Body)
+				buf := make([]byte, 1024)
+				io.CopyBuffer(writer, resp.Body, buf)
 			} else {
 				path := this.URL
 				if !filepath.IsAbs(this.URL) {

@@ -25,6 +25,7 @@ func (this *Request) ReadBody(max int64) (data []byte, err error) {
 
 func (this *Request) RestoreBody(data []byte) {
 	rawReader := bytes.NewBuffer(data)
-	io.Copy(rawReader, this.Request.Body)
+	buf := make([]byte, 1024)
+	io.CopyBuffer(rawReader, this.Request.Body, buf)
 	this.Request.Body = ioutil.NopCloser(rawReader)
 }

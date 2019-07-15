@@ -38,7 +38,8 @@ func (this *Request) callPage(writer *ResponseWriter, status int) (shouldStop bo
 				// writer.WriteHeader(status)
 				// 状态码改成200
 				writer.WriteHeader(http.StatusOK)
-				_, err = io.Copy(writer, fp)
+				buf := make([]byte, 1024)
+				_, err = io.CopyBuffer(writer, fp, buf)
 				if err != nil {
 					logs.Error(err)
 				}

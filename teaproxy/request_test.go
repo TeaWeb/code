@@ -252,8 +252,8 @@ func TestRequest_FormatPerformance(t *testing.T) {
 	count := 10000
 	before := time.Now()
 	result := ""
-	for i := 0; i < count; i ++ {
-		for n := 0; n < 5; n ++ {
+	for i := 0; i < count; i++ {
+		for n := 0; n < 5; n++ {
 			source := "hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test} /hello " + fmt.Sprintf("%d", n)
 			result = req.Format(source)
 		}
@@ -301,7 +301,7 @@ func TestRequest_LocationVariables(t *testing.T) {
 		location.Root = "/hello/${1}/${host}"
 		location.Index = []string{"hello_${1}${2}"}
 		location.Charset = "${arg.charset}"
-		location.AddHeader(&shared.HeaderConfig{
+		location.AddResponseHeader(&shared.HeaderConfig{
 			On: true, Name: "hello", Value: "${1}",
 		})
 		err := location.Validate()
@@ -351,7 +351,7 @@ func TestRequest_RewriteVariables(t *testing.T) {
 	server := teaconfigs.NewServerConfig()
 	server.Root = "/home/${arg.charset}"
 	server.Charset = "[${arg.charset}]"
-	server.AddHeader(&shared.HeaderConfig{
+	server.AddResponseHeader(&shared.HeaderConfig{
 		Name:  "Charset",
 		Value: "${arg.charset}",
 	})
@@ -411,28 +411,28 @@ func TestPerformanceConfigure(t *testing.T) {
 		h := shared.NewHeaderConfig()
 		h.Name = "TeaVersion"
 		h.Value = "${teaVersion}"
-		server.AddHeader(h)
+		server.AddResponseHeader(h)
 	}
 
 	{
 		h := shared.NewHeaderConfig()
 		h.Name = "TeaPort"
 		h.Value = "${remotePort}"
-		server.AddHeader(h)
+		server.AddResponseHeader(h)
 	}
 
 	{
 		h := shared.NewHeaderConfig()
 		h.Name = "TeaFile"
 		h.Value = "${requestFilename}"
-		server.AddHeader(h)
+		server.AddResponseHeader(h)
 	}
 
 	{
 		h := shared.NewHeaderConfig()
 		h.Name = "Scheme"
 		h.Value = "${scheme}"
-		server.AddHeader(h)
+		server.AddResponseHeader(h)
 	}
 
 	err = server.Validate()
@@ -440,7 +440,7 @@ func TestPerformanceConfigure(t *testing.T) {
 	count := 10000
 	before := time.Now()
 
-	for i := 0; i < count; i ++ {
+	for i := 0; i < count; i++ {
 		req := NewRequest(rawReq)
 		req.uri = "/hello/world?charset=utf-8"
 		req.host = "www.example.com"
@@ -472,28 +472,28 @@ func TestPerformanceFormatHeaders(t *testing.T) {
 		h := shared.NewHeaderConfig()
 		h.Name = "TeaVersion"
 		h.Value = "${teaVersion}"
-		server.AddHeader(h)
+		server.AddResponseHeader(h)
 	}
 
 	{
 		h := shared.NewHeaderConfig()
 		h.Name = "TeaPort"
 		h.Value = "${remotePort}"
-		server.AddHeader(h)
+		server.AddResponseHeader(h)
 	}
 
 	{
 		h := shared.NewHeaderConfig()
 		h.Name = "TeaFile"
 		h.Value = "${requestFilename}"
-		server.AddHeader(h)
+		server.AddResponseHeader(h)
 	}
 
 	{
 		h := shared.NewHeaderConfig()
 		h.Name = "Scheme"
 		h.Value = "${scheme}"
-		server.AddHeader(h)
+		server.AddResponseHeader(h)
 	}
 
 	err = server.Validate()
@@ -501,13 +501,11 @@ func TestPerformanceFormatHeaders(t *testing.T) {
 	count := 10000
 	before := time.Now()
 
-	for i := 0; i < count; i ++ {
+	for i := 0; i < count; i++ {
 		req := NewRequest(rawReq)
 		req.uri = "/hello/world?charset=utf-8"
 		req.host = "www.example.com"
 		req.responseHeaders = []*shared.HeaderConfig{}
-
-		server.FormatHeaders(req.Format)
 	}
 
 	cost := time.Since(before).Seconds()
@@ -526,9 +524,9 @@ func TestPerformanceBackend(t *testing.T) {
 	connections := 100
 	wg.Add(threads)
 
-	for i := 0; i < threads; i ++ {
+	for i := 0; i < threads; i++ {
 		go func() {
-			for j := 0; j < connections; j ++ {
+			for j := 0; j < connections; j++ {
 				req, err := http.NewRequest("GET", "http://127.0.0.1:9992/benchmark", nil)
 
 				if err != nil {
@@ -540,17 +538,17 @@ func TestPerformanceBackend(t *testing.T) {
 
 				if err != nil {
 					locker.Lock()
-					countFail ++
+					countFail++
 					locker.Unlock()
 				} else {
 					data, err := ioutil.ReadAll(resp.Body)
 					if err != nil || len(data) == 0 || strings.Index(string(data), "benchmark") == -1 {
 						locker.Lock()
-						countFail ++
+						countFail++
 						locker.Unlock()
 					} else {
 						locker.Lock()
-						countSuccess ++
+						countSuccess++
 						locker.Unlock()
 					}
 
@@ -579,9 +577,9 @@ func TestPerformanceStatic(t *testing.T) {
 	connections := 100
 	wg.Add(threads)
 
-	for i := 0; i < threads; i ++ {
+	for i := 0; i < threads; i++ {
 		go func() {
-			for j := 0; j < connections; j ++ {
+			for j := 0; j < connections; j++ {
 				req, err := http.NewRequest("GET", "http://127.0.0.1:9993/css/semantic.min.css", nil)
 
 				if err != nil {
@@ -593,17 +591,17 @@ func TestPerformanceStatic(t *testing.T) {
 
 				if err != nil {
 					locker.Lock()
-					countFail ++
+					countFail++
 					locker.Unlock()
 				} else {
 					data, err := ioutil.ReadAll(resp.Body)
 					if err != nil || len(data) == 0 || strings.Index(string(data), "Semantic") == -1 {
 						locker.Lock()
-						countFail ++
+						countFail++
 						locker.Unlock()
 					} else {
 						locker.Lock()
-						countSuccess ++
+						countSuccess++
 						locker.Unlock()
 					}
 
@@ -638,14 +636,14 @@ func BenchmarkNewRequest(b *testing.B) {
 
 	var req *Request
 
-	for i := 0; i < b.N; i ++ {
+	for i := 0; i < b.N; i++ {
 		req = NewRequest(rawReq)
 		_ = req
 	}
 }
 
 func BenchmarkParseURI(b *testing.B) {
-	for i := 0; i < b.N; i ++ {
+	for i := 0; i < b.N; i++ {
 		url.ParseRequestURI("http://teaos.cn/hello?name=liu")
 	}
 }

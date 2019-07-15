@@ -36,7 +36,6 @@ func TestManager_AddServer(t *testing.T) {
 	{
 		server := teaconfigs.NewServerConfig()
 		server.Id = "web001"
-		server.DisableAccessLog = true
 
 		// http
 		server.Http = true
@@ -58,7 +57,6 @@ func TestManager_AddServer(t *testing.T) {
 
 			server := teaconfigs.NewServerConfig()
 			server.Id = "web001"
-			server.DisableAccessLog = true
 
 			// http
 			server.Http = true

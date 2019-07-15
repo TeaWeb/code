@@ -64,7 +64,8 @@ func (this *Request) callTunnel(writer *ResponseWriter) error {
 	// 设置响应代码
 	writer.WriteHeader(resp.StatusCode)
 
-	_, err = io.Copy(writer, resp.Body)
+	buf := make([]byte, 1024) // TODO 可以配置
+	_, err = io.CopyBuffer(writer, resp.Body, buf)
 	if err != nil {
 		this.addError(err)
 		logs.Println("[tunnel]write response: " + err.Error())

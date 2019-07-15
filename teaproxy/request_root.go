@@ -201,7 +201,8 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	}
 
 	writer.Prepare(stat.Size())
-	_, err = io.Copy(writer, contentReader)
+	buf := make([]byte, 1024) // TODO buffer size应该可以设置，或者根据stat.Size()动态调整
+	_, err = io.CopyBuffer(writer, contentReader, buf)
 
 	if err != nil {
 		if this.debug {

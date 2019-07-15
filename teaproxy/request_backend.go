@@ -145,27 +145,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		}
 	}
 
-	data := []byte{}
-	bodyRead := false
-	if resp.ContentLength > 0 && resp.ContentLength < 2048 { // 内容比较少的直接读取，以加快响应速度
-		bodyRead = true
-
-		buf := make([]byte, 256)
-		for {
-			n, err := resp.Body.Read(buf)
-			if n > 0 {
-				data = append(data, buf[:n]...)
-			}
-			if err != nil {
-				break
-			}
-		}
-
-		resp.ContentLength = int64(len(data))
-		resp.Body.Close()
-	} else {
-		defer resp.Body.Close()
-	}
+	defer resp.Body.Close()
 
 	// 清除错误次数
 	if resp.StatusCode >= 200 && !this.backend.HasCheckURL() {
@@ -220,11 +200,9 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	// 设置响应代码
 	writer.WriteHeader(resp.StatusCode)
 
-	if bodyRead {
-		_, err = writer.Write(data)
-	} else {
-		_, err = io.Copy(writer, resp.Body)
-	}
+	buf := make([]byte, 1024) // TODO 可以配置
+	_, err = io.CopyBuffer(writer, resp.Body, buf)
+
 	if err != nil {
 		logs.Error(err)
 		this.addError(err)

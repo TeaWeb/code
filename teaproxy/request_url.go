@@ -70,7 +70,8 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 	writer.WriteHeader(resp.StatusCode)
 
 	// 输出内容
-	_, err = io.Copy(writer, resp.Body)
+	buf := make([]byte, 1024) // TODO 可以配置
+	_, err = io.CopyBuffer(writer, resp.Body, buf)
 
 	return err
 }
