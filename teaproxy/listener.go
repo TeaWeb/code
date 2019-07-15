@@ -281,7 +281,7 @@ func (this *Listener) startHTTPServer() error {
 	this.httpServer.SetKeepAlivesEnabled(true)
 
 	if this.Scheme == SchemeHTTP {
-		logs.Println("start listener on", this.Address)
+		logs.Println("start listener on http", this.Address)
 		err = this.httpServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			logs.Error(errors.New("[listener]" + this.Address + ": " + err.Error()))
@@ -291,7 +291,7 @@ func (this *Listener) startHTTPServer() error {
 	}
 
 	if this.Scheme == SchemeHTTPS {
-		logs.Println("start ssl listener on", this.Address)
+		logs.Println("start listener on https", this.Address)
 
 		this.httpServer.TLSConfig = this.buildTLSConfig()
 

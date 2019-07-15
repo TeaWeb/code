@@ -46,7 +46,7 @@ func (this *StaticDelivery) init() {
 // 读取
 func (this *StaticDelivery) Read(path string, stat os.FileInfo) (reader io.Reader, shouldClose bool, err error) {
 	if stat.Size() > 10*1024 { // <10K
-		reader, err = os.OpenFile(path, os.O_RDONLY, 444)
+		reader, err = os.OpenFile(path, os.O_RDONLY, 0444)
 		shouldClose = true
 		return
 	}

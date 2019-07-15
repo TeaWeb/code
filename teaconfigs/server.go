@@ -119,6 +119,7 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 
 		// sample
 		if configFile.Name() == "server.sample.www.proxy.conf" {
+			reader.Close()
 			continue
 		}
 

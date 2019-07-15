@@ -52,6 +52,7 @@ func NewWAFFromFile(path string) (waf *WAF, err error) {
 	if err != nil {
 		return nil, err
 	}
+	defer reader.Close()
 
 	waf = &WAF{}
 	err = reader.ReadYAML(waf)

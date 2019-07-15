@@ -2,15 +2,16 @@ package teaproxy
 
 import (
 	"fmt"
+	"github.com/dchest/siphash"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/utils/string"
 	"io"
 	"mime"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -133,7 +134,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	}
 
 	// length
-	respHeader.Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
+	respHeader.Set("Content-Length", strconv.FormatInt(stat.Size(), 10))
 
 	// 支持 Last-Modified
 	modifiedTime := stat.ModTime().Format("Mon, 02 Jan 2006 15:04:05 GMT")
@@ -142,7 +143,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	}
 
 	// 支持 ETag
-	eTag := "\"et" + stringutil.Md5(fmt.Sprintf("%d,%d", stat.ModTime().UnixNano(), stat.Size())) + "\""
+	eTag := "\"et" + fmt.Sprintf("%0x", siphash.Hash(0, 0, []byte(filename+strconv.FormatInt(stat.ModTime().UnixNano(), 10)+strconv.FormatInt(stat.Size(), 10)))) + "\""
 	if len(respHeader.Get("ETag")) == 0 {
 		respHeader.Set("ETag", eTag)
 	}
@@ -176,6 +177,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	this.WriteResponseHeaders(writer, http.StatusOK)
 
 	var contentReader io.Reader = nil
+	isOpen := false
 	if this.server.CacheStatic {
 		reader, shouldClose, err := ShareStaticDelivery.Read(filePath, stat)
 		if err != nil {
@@ -189,7 +191,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 			defer contentReader.(*os.File).Close()
 		}
 	} else {
-		reader, err := os.OpenFile(filePath, os.O_RDONLY, 444)
+		reader, err := os.OpenFile(filePath, os.O_RDONLY, 0444)
 		if err != nil {
 			this.serverError(writer)
 			logs.Error(err)
@@ -197,12 +199,17 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 			return nil
 		}
 		contentReader = reader
-		defer reader.Close()
+		isOpen = true
 	}
 
 	writer.Prepare(stat.Size())
 	buf := make([]byte, 1024) // TODO buffer size应该可以设置，或者根据stat.Size()动态调整
 	_, err = io.CopyBuffer(writer, contentReader, buf)
+
+	// 不使用defer，以便于加快速度
+	if isOpen {
+		contentReader.(*os.File).Close()
+	}
 
 	if err != nil {
 		if this.debug {

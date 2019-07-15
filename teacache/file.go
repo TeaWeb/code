@@ -57,6 +57,7 @@ func NewFileManager() *FileManager {
 					}
 					data := reader.Read(12)
 					if len(data) != 12 {
+						reader.Close()
 						continue
 					}
 					timestamp := types.Int64(string(data))
@@ -191,7 +192,7 @@ func (this *FileManager) Stat() (size int64, countKeys int, err error) {
 			return nil
 		}
 		size += info.Size()
-		countKeys ++
+		countKeys++
 
 		return nil
 	})

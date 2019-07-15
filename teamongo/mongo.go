@@ -127,13 +127,13 @@ func Test() error {
 	if err != nil {
 		return err
 	}
+	defer reader.Close()
 
 	config := &Config{}
 	err = reader.ReadYAML(config)
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
 
 	clientOptions := options.Client().ApplyURI(config.URI)
 	sharedConfig := configs.SharedMongoConfig()
