@@ -25,7 +25,7 @@ func (this *Request) callShutdown(writer *ResponseWriter) error {
 		}
 
 		writer.WriteHeader(http.StatusOK)
-		buf := make([]byte, 1024) // TODO 可以配置
+		buf := make([]byte, 1024)
 		_, err = io.CopyBuffer(writer, fp, buf)
 		fp.Close()
 

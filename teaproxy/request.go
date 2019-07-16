@@ -1374,3 +1374,17 @@ func (this *Request) setProxyHeaders(header http.Header) {
 		this.raw.Header.Set("X-Forwarded-Proto", this.rawScheme)
 	}
 }
+
+// 计算合适的buffer size
+func (this *Request) calculateBufferSize(length int64) int {
+	if length <= 0 {
+		return 1024
+	}
+	if length < 1024 {
+		return 256
+	}
+	if length < 1048576 {
+		return 1024
+	}
+	return 128 * 1024
+}

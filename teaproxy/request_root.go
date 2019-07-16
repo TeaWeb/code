@@ -203,7 +203,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	}
 
 	writer.Prepare(stat.Size())
-	buf := make([]byte, 1024) // TODO buffer size应该可以设置，或者根据stat.Size()动态调整
+	buf := make([]byte, this.calculateBufferSize(stat.Size()))
 	_, err = io.CopyBuffer(writer, contentReader, buf)
 
 	// 不使用defer，以便于加快速度

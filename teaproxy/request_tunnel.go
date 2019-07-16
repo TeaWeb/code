@@ -64,7 +64,7 @@ func (this *Request) callTunnel(writer *ResponseWriter) error {
 	// 设置响应代码
 	writer.WriteHeader(resp.StatusCode)
 
-	buf := make([]byte, 1024) // TODO 可以配置
+	buf := make([]byte, this.calculateBufferSize(resp.ContentLength))
 	_, err = io.CopyBuffer(writer, resp.Body, buf)
 	if err != nil {
 		this.addError(err)
