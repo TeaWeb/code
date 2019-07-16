@@ -70,8 +70,7 @@ func (this *NginxStatusSource) Execute(params map[string]string) (value interfac
 	}
 	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
 
-	client := teautils.NewHttpClient(timeout)
-	defer teautils.CloseHTTPClient(client)
+	client := teautils.SharedHttpClient(timeout)
 	resp, err := client.Do(req)
 	if err != nil {
 		return maps.Map{

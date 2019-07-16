@@ -99,8 +99,7 @@ func (this *ESStorage) Write(accessLogs []*AccessLog) error {
 	if err != nil {
 		return err
 	}
-	client := teautils.NewHttpClient(10 * time.Second)
-	defer teautils.CloseHTTPClient(client)
+	client := teautils.SharedHttpClient(10 * time.Second)
 	defer req.Body.Close()
 
 	resp, err := client.Do(req)

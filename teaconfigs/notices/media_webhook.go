@@ -96,8 +96,7 @@ func (this *NoticeWebhookMedia) Send(user string, subject string, body string) (
 		}
 	}
 
-	client := teautils.NewHttpClient(timeout)
-	defer teautils.CloseHTTPClient(client)
+	client := teautils.SharedHttpClient(timeout)
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, err

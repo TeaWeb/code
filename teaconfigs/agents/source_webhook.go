@@ -68,8 +68,7 @@ func (this *WebHookSource) Execute(params map[string]string) (value interface{},
 		this.timeoutDuration = 10 * time.Second
 	}
 
-	client := teautils.NewHttpClient(this.timeoutDuration)
-	defer teautils.CloseHTTPClient(client)
+	client := teautils.SharedHttpClient(this.timeoutDuration)
 
 	query := url.Values{}
 	for name, value := range params {

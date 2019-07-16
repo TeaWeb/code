@@ -46,8 +46,7 @@ func (this *NoticeTeaSmsMedia) Send(user string, subject string, body string) (r
 	req.Header.Set("Tea-Access-Id", this.AccessId)
 	req.Header.Set("Tea-Access-Secret", this.AccessSecret)
 
-	client := teautils.NewHttpClient(5 * time.Second)
-	defer teautils.CloseHTTPClient(client)
+	client := teautils.SharedHttpClient(5 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

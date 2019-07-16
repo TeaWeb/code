@@ -63,8 +63,7 @@ func (this *NoticeQyWeixinRobotMedia) Send(user string, subject string, body str
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	client := teautils.NewHttpClient(5 * time.Second)
-	defer teautils.CloseHTTPClient(client)
+	client := teautils.SharedHttpClient(5 * time.Second)
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, err

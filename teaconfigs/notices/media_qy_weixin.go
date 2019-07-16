@@ -34,9 +34,7 @@ func (this *NoticeQyWeixinMedia) Send(user string, subject string, body string) 
 		return nil, err
 	}
 
-	client := teautils.NewHttpClient(5 * time.Second)
-	defer teautils.CloseHTTPClient(client)
-
+	client := teautils.SharedHttpClient(5 * time.Second)
 	resp1, err := client.Do(req1)
 	if err != nil {
 		return nil, err

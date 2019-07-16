@@ -5,8 +5,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"sync"
 	"time"
 )
+
+// 根据timeout->client的映射
+var timeoutClientMap = map[time.Duration]*http.Client{}
+var timeoutClientLocker = sync.Mutex{}
 
 // 导出响应
 func DumpResponse(resp *http.Response) (header []byte, body []byte, err error) {
@@ -15,14 +20,14 @@ func DumpResponse(resp *http.Response) (header []byte, body []byte, err error) {
 	return
 }
 
-// 获取一个Client
-func NewHttpClient(timeout time.Duration) *http.Client {
+// 获取一个新的Client
+func NewHTTPClient(timeout time.Duration) *http.Client {
 	return &http.Client{
 		Timeout: timeout,
 		Transport: &http.Transport{
 			MaxIdleConns:          1024,
 			MaxIdleConnsPerHost:   100,
-			IdleConnTimeout:       0,
+			IdleConnTimeout:       2 * time.Minute,
 			ExpectContinueTimeout: 1 * time.Second,
 			TLSHandshakeTimeout:   0,
 			TLSClientConfig: &tls.Config{
@@ -30,4 +35,18 @@ func NewHttpClient(timeout time.Duration) *http.Client {
 			},
 		},
 	}
+}
+
+// 获取一个公用的Client
+func SharedHttpClient(timeout time.Duration) *http.Client {
+	timeoutClientLocker.Lock()
+	defer timeoutClientLocker.Unlock()
+
+	client, ok := timeoutClientMap[timeout]
+	if ok {
+		return client
+	}
+	client = NewHTTPClient(timeout)
+	timeoutClientMap[timeout] = client
+	return client
 }

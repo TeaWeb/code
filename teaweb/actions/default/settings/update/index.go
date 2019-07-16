@@ -31,7 +31,7 @@ func (this *IndexAction) RunPost() {
 	}
 	req.Header.Set("User-Agent", runtime.GOOS+"/"+runtime.GOARCH)
 
-	client := teautils.NewHttpClient(5 * time.Second)
+	client := teautils.SharedHttpClient(5 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		this.Fail("无法连接TeaWeb服务：" + err.Error())

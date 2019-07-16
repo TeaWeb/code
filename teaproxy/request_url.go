@@ -48,8 +48,7 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 		}
 		client = SharedClientPool.client("", host, 60*time.Second, 0, 0)
 	} else {
-		client = teautils.NewHttpClient(60 * time.Second)
-		defer teautils.CloseHTTPClient(client)
+		client = teautils.SharedHttpClient(60 * time.Second)
 	}
 	resp, err := client.Do(req)
 	if err != nil {

@@ -66,8 +66,7 @@ func (this *TeaWebSource) Execute(params map[string]string) (value interface{}, 
 		timeout = 30
 	}
 
-	client := teautils.NewHttpClient(time.Duration(timeout) * time.Second)
-	defer teautils.CloseHTTPClient(client)
+	client := teautils.SharedHttpClient(time.Duration(timeout) * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		return maps.Map{

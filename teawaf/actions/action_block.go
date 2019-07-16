@@ -15,7 +15,7 @@ import (
 
 // url client configure
 var urlPrefixReg = regexp.MustCompile("^(?i)(http|https)://")
-var httpClient = teautils.NewHttpClient(5 * time.Second)
+var httpClient = teautils.SharedHttpClient(5 * time.Second)
 
 type BlockAction struct {
 	StatusCode int    `yaml:"statusCode" json:"statusCode"`

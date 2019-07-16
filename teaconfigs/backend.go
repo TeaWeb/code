@@ -218,11 +218,11 @@ func (this *BackendConfig) CheckHealth() bool {
 		return false
 	}
 	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
-	client := teautils.NewHttpClient(10 * time.Second)
-	defer teautils.CloseHTTPClient(client)
+	timeout := 10 * time.Second
 	if this.failTimeoutDuration > 0 {
-		client.Timeout = this.failTimeoutDuration
+		timeout = this.failTimeoutDuration
 	}
+	client := teautils.SharedHttpClient(timeout)
 	resp, err := client.Do(req)
 	if err != nil {
 		return false
