@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaplugins"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -346,83 +345,7 @@ func (this *Listener) startTCPServer() error {
 				break
 			}
 
-			go func(clientConn net.Conn) {
-				if len(this.currentServers) == 0 {
-					return
-				}
-				server := this.currentServers[0]
-				requestCall := shared.NewRequestCall()
-				backend := server.NextBackend(requestCall)
-				if backend == nil {
-					clientConn.Close()
-					logs.Println("[proxy][tcp]no backends for '" + server.Description + "'")
-					return
-				}
-
-				currentConns := backend.IncreaseConn()
-				defer backend.DecreaseConn()
-
-				// 是否超过最大连接数
-				if backend.MaxConns > 0 && currentConns > backend.MaxConns {
-					clientConn.Close()
-					logs.Printf("[proxy][tcp]too many connections for '" + server.Description + "' backend: '" + backend.Address + "'")
-					return
-				}
-
-				// 连接后端
-				var backEndConn net.Conn = nil
-				failFunc := func(err error) {
-					logs.Println("[proxy][tcp]can not connect to backend '" + backend.Address + "'" + "for server '" + server.Description + "': " + err.Error())
-					clientConn.Close()
-
-					currentFails := backend.IncreaseFails()
-
-					if backend.MaxFails > 0 && currentFails >= backend.MaxFails {
-						backend.IsDown = true
-						backend.DownTime = time.Now()
-						server.SetupScheduling(false)
-					}
-				}
-				if backend.Scheme == "tcp" || len(backend.Scheme) == 0 { // TCP
-					backEndConn, err = net.DialTimeout("tcp", backend.Address, backend.FailTimeoutDuration())
-					if err != nil {
-						failFunc(err)
-						return
-					}
-				} else if backend.Scheme == "tcp+tls" { // TCP+TLS
-					backEndConn, err = tls.Dial("tcp", backend.Address, &tls.Config{
-						InsecureSkipVerify: true,
-					})
-					if err != nil {
-						failFunc(err)
-						return
-					}
-				} else { // neither tcp nor tcp+tls
-					failFunc(errors.New("invalid scheme"))
-					return
-				}
-
-				// 创建传输对
-				pair := NewTCPPair(clientConn, backEndConn)
-
-				// 记录到Map
-				this.connectingTCPLocker.Lock()
-				this.connectingTCPMap[clientConn] = pair
-				this.connectingTCPLocker.Unlock()
-
-				defer func() {
-					this.connectingTCPLocker.Lock()
-					delete(this.connectingTCPMap, clientConn)
-					this.connectingTCPLocker.Unlock()
-				}()
-
-				// 开始传输
-				err = pair.Transfer()
-				if err != nil {
-					logs.Println("[proxy][tcp]" + err.Error())
-					return
-				}
-			}(clientConn)
+			go this.connectTCPBackend(clientConn)
 		}
 	}
 
@@ -665,4 +588,27 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 			return cert, nil
 		},
 	}
+}
+
+// 连接TCP后端
+func (this *Listener) connectTCPBackend(clientConn net.Conn) {
+	// 查找后端服务器
+	servers := this.currentServers
+	if len(servers) == 0 {
+		return
+	}
+	server := servers[0]
+
+	backend := NewTCPBackend(server, clientConn)
+	backend.OnSuccess(func(pair *TCPPair) {
+		this.connectingTCPLocker.Lock()
+		this.connectingTCPMap[clientConn] = pair
+		this.connectingTCPLocker.Unlock()
+	})
+	backend.OnFail(func(pair *TCPPair) {
+		this.connectingTCPLocker.Lock()
+		delete(this.connectingTCPMap, clientConn)
+		this.connectingTCPLocker.Unlock()
+	})
+	backend.Connect()
 }

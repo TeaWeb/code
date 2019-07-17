@@ -61,7 +61,9 @@ func (this *UpdateAction) RunPost(params struct {
 	RedirectToHttps bool
 
 	// TCP
-	TcpOn bool
+	TcpOn            bool
+	TcpFailReconnect bool
+	TcpFailResend    bool
 
 	Must *actions.Must
 }) {
@@ -80,6 +82,8 @@ func (this *UpdateAction) RunPost(params struct {
 
 	if server.TCP != nil { // TCP
 		server.TCP.TCPOn = params.TcpOn
+		server.TCP.FailReconnect = params.TcpFailReconnect
+		server.TCP.FailResend = params.TcpFailResend
 	} else { // HTTP
 		server.Http = params.HttpOn
 		server.Root = params.Root

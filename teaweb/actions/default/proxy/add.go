@@ -22,9 +22,14 @@ func (this *AddAction) RunPost(params struct {
 	ServerType  string
 	Names       []string
 	Listens     []string
-	Backends    []string
-	Root        string
-	Must        *actions.Must
+
+	Backends []string
+	Root     string
+
+	FailReconnect bool // TCP专有
+	FailResend    bool // TCP专有
+
+	Must *actions.Must
 }) {
 	if len(params.Description) == 0 {
 		params.Description = "新代理服务"
@@ -99,6 +104,8 @@ func (this *AddAction) RunPost(params struct {
 			}
 		}
 		server.TCP = teaconfigs.NewTCPConfig()
+		server.TCP.FailReconnect = params.FailReconnect
+		server.TCP.FailResend = params.FailResend
 	} else if params.ServerType == "static" { // 普通服务
 		server.Root = params.Root
 	}

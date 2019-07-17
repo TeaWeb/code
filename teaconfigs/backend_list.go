@@ -3,6 +3,7 @@ package teaconfigs
 import (
 	"github.com/TeaWeb/code/teaconfigs/scheduling"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/iwind/TeaGo/lists"
 	"sync"
 )
 
@@ -73,6 +74,21 @@ func (this *BackendList) DeleteBackend(backendId string) {
 	result := []*BackendConfig{}
 	for _, backend := range this.Backends {
 		if backend.Id == backendId {
+			continue
+		}
+		result = append(result, backend)
+	}
+	this.Backends = result
+}
+
+// 删除一组后端服务器
+func (this *BackendList) DeleteBackends(backendIds []string) {
+	if len(backendIds) == 0 {
+		return
+	}
+	result := []*BackendConfig{}
+	for _, backend := range this.Backends {
+		if lists.ContainsString(backendIds, backend.Id) {
 			continue
 		}
 		result = append(result, backend)
@@ -172,4 +188,14 @@ func (this *BackendList) SetSchedulingConfig(scheduling *SchedulingConfig) {
 // 判断是否有后端服务器
 func (this *BackendList) HasBackends() bool {
 	return this.hasBackends
+}
+
+// 克隆
+func (this *BackendList) CloneBackendList() *BackendList {
+	newBackendList := new(BackendList)
+	newBackendList.Backends = this.Backends
+	newBackendList.Scheduling = this.Scheduling
+	newBackendList.hasBackends = this.hasBackends
+	newBackendList.SetupScheduling(false)
+	return newBackendList
 }

@@ -374,6 +374,14 @@ func (this *ServerConfig) Validate() error {
 		}
 	}
 
+	// tcp
+	if this.TCP != nil {
+		err = this.TCP.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -821,6 +829,74 @@ func (this *ServerConfig) NextBackend(call *shared.RequestCall) *BackendConfig {
 	}
 
 	return this.BackendList.NextBackend(call)
+}
+
+// 取得下一个可用的后端服务，并排除某个后端
+func (this *ServerConfig) NextBackendIgnore(call *shared.RequestCall, backendIds []string) *BackendConfig {
+	if this.hasRequestGroupFilters {
+		group := this.MatchRequestGroup(call.Formatter)
+		if group != nil {
+			// request
+			if group.HasRequestHeaders() {
+				for _, h := range group.RequestHeaders {
+					if h.HasVariables() {
+						call.Request.Header.Set(h.Name, call.Formatter(h.Value))
+					} else {
+						call.Request.Header.Set(h.Name, h.Value)
+					}
+				}
+			}
+
+			// response
+			if group.HasResponseHeaders() {
+				call.AddResponseCall(func(resp http.ResponseWriter) {
+					// TODO 应用ignore headers
+					for _, h := range group.ResponseHeaders {
+						resp.Header().Set(h.Name, call.Formatter(h.Value))
+					}
+				})
+			}
+
+			backendList := group.BackendList.CloneBackendList()
+			backendList.DeleteBackends(backendIds)
+			backendList.SetupScheduling(false)
+			return backendList.NextBackend(call)
+		}
+	}
+
+	// 默认分组
+	if this.defaultRequestGroup != nil {
+		// request
+		if this.defaultRequestGroup.HasRequestHeaders() {
+			for _, h := range this.defaultRequestGroup.RequestHeaders {
+				if h.HasVariables() {
+					call.Request.Header.Set(h.Name, call.Formatter(h.Value))
+				} else {
+					call.Request.Header.Set(h.Name, h.Value)
+				}
+			}
+		}
+
+		// response
+		if this.defaultRequestGroup.HasResponseHeaders() {
+			call.AddResponseCall(func(resp http.ResponseWriter) {
+				for _, h := range this.defaultRequestGroup.ResponseHeaders {
+					// TODO 应用ignore headers
+					resp.Header().Set(h.Name, call.Formatter(h.Value))
+				}
+			})
+		}
+
+		backendList := this.defaultRequestGroup.CloneBackendList()
+		backendList.DeleteBackends(backendIds)
+		backendList.SetupScheduling(false)
+		return backendList.NextBackend(call)
+	}
+
+	backendList := this.BackendList.CloneBackendList()
+	backendList.DeleteBackends(backendIds)
+	backendList.SetupScheduling(false)
+	return backendList.NextBackend(call)
 }
 
 // 设置调度算法
