@@ -174,3 +174,19 @@ func (this *WebsocketConfig) SetupScheduling(isBackup bool) {
 	}
 	this.BackendList.SetupScheduling(isBackup)
 }
+
+// 克隆运行时状态
+func (this *WebsocketConfig) CloneState(oldWebsocket *WebsocketConfig) {
+	if oldWebsocket == nil {
+		return
+	}
+
+	// backends
+	for _, backend := range this.Backends {
+		oldBackend := oldWebsocket.FindBackend(backend.Id)
+		if oldBackend == nil {
+			continue
+		}
+		backend.CloneState(oldBackend)
+	}
+}

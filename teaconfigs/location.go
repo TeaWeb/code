@@ -580,3 +580,24 @@ func (this *LocationConfig) OnDetach() {
 		this.waf = nil
 	}
 }
+
+// 克隆运行时状态
+func (this *LocationConfig) CloneState(oldLocation *LocationConfig) {
+	if oldLocation == nil {
+		return
+	}
+
+	// backends
+	for _, backend := range this.Backends {
+		oldBackend := oldLocation.FindBackend(backend.Id)
+		if oldBackend == nil {
+			continue
+		}
+		backend.CloneState(oldBackend)
+	}
+
+	// websocket
+	if this.Websocket != nil && oldLocation.Websocket != nil {
+		this.Websocket.CloneState(oldLocation.Websocket)
+	}
+}

@@ -992,3 +992,28 @@ func (this *ServerConfig) IsTCP() bool {
 func (this *ServerConfig) IsHTTP() bool {
 	return this.TCP == nil
 }
+
+// 克隆运行时状态
+func (this *ServerConfig) CloneState(oldServer *ServerConfig) {
+	if oldServer == nil {
+		return
+	}
+
+	// backends
+	for _, backend := range this.Backends {
+		oldBackend := oldServer.FindBackend(backend.Id)
+		if oldBackend == nil {
+			continue
+		}
+		backend.CloneState(oldBackend)
+	}
+
+	// 路径规则
+	for _, location := range this.Locations {
+		oldLocation := oldServer.FindLocation(location.Id)
+		if oldLocation == nil {
+			continue
+		}
+		location.CloneState(oldLocation)
+	}
+}

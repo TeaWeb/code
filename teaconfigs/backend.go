@@ -327,3 +327,14 @@ func (this *BackendConfig) HasResponseHeaders() bool {
 func (this *BackendConfig) HasHost() bool {
 	return this.hasHost
 }
+
+// 克隆状态
+func (this *BackendConfig) CloneState(oldBackend *BackendConfig) {
+	if oldBackend == nil {
+		return
+	}
+	this.IsDown = oldBackend.IsDown
+	this.DownTime = oldBackend.DownTime
+	this.CurrentFails = oldBackend.CurrentFails
+	this.CurrentConns = oldBackend.CurrentConns
+}

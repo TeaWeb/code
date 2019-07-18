@@ -71,6 +71,12 @@ func (this *Manager) Start() error {
 			continue
 		}
 
+		// 老的server
+		oldServer, foundOldServer := this.oldServers[server.Id]
+		if foundOldServer {
+			server.CloneState(oldServer)
+		}
+
 		err = server.Validate()
 		if err != nil {
 			logs.Error(err)
