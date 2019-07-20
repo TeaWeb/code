@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
@@ -81,6 +82,11 @@ func (this *AddAction) RunPost(params struct {
 			}
 		}
 	} else if params.ServerType == "tcp" { // TCP代理服务
+		// DEMO版防止通过代理获取服务器数据库数据
+		if teaconst.DemoEnabled {
+			this.Fail("为了安全起见，演示版不提供TCP代理功能")
+		}
+
 		for _, backend := range params.Backends {
 			backend = strings.TrimSpace(backend)
 			if len(backend) > 0 {

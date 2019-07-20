@@ -37,6 +37,7 @@ type TCPClient struct {
 	writeSpeed int64
 }
 
+// 创建新的客户端对象
 func NewTCPClient(serverPool func() *teaconfigs.ServerConfig, conn net.Conn) *TCPClient {
 	return &TCPClient{
 		serverPool: serverPool,
@@ -46,14 +47,17 @@ func NewTCPClient(serverPool func() *teaconfigs.ServerConfig, conn net.Conn) *TC
 	}
 }
 
+// 获取左连接 - 客户端
 func (this *TCPClient) LConn() net.Conn {
 	return this.lConn
 }
 
+// 获取右连接 - 后端服务器
 func (this *TCPClient) RConn() net.Conn {
 	return this.rConn
 }
 
+// 连接后端服务器
 func (this *TCPClient) Connect() {
 	ticker := timers.Every(1*time.Second, func(ticker *time.Ticker) {
 		atomic.StoreInt64(&this.readSpeed, 0)
@@ -66,6 +70,7 @@ func (this *TCPClient) Connect() {
 	ticker.Stop()
 }
 
+// 关闭
 func (this *TCPClient) Close() error {
 	this.lActive = false
 	lCloseError := this.lConn.Close()
@@ -83,14 +88,17 @@ func (this *TCPClient) Close() error {
 	return lCloseError
 }
 
+// 获取读取的速度
 func (this *TCPClient) ReadSpeed() int64 {
 	return atomic.LoadInt64(&this.readSpeed)
 }
 
+// 获取写入的速度
 func (this *TCPClient) WriteSpeed() int64 {
 	return atomic.LoadInt64(&this.writeSpeed)
 }
 
+// 连接后端服务器
 func (this *TCPClient) connect() {
 	if this.serverPool == nil {
 		logs.Error(errors.New("'serverPool' must not be nil"))
@@ -220,6 +228,7 @@ func (this *TCPClient) connect() {
 	}
 }
 
+// 读取客户端数据
 func (this *TCPClient) read() {
 	buf := make([]byte, TCPClientBufferSize)
 	for {
