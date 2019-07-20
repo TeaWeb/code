@@ -44,5 +44,9 @@ func (this *LatestAction) RunGet(params struct {
 		return
 	}
 
+	if value == nil {
+		apiutils.Success(this, nil)
+		return
+	}
 	apiutils.Success(this, value.Value)
 }

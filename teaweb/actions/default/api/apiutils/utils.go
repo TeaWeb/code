@@ -1,6 +1,7 @@
 package apiutils
 
 import (
+	"encoding/json"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -32,12 +33,21 @@ func Fail(actionPtr actions.ActionWrapper, message string) {
 
 // 成功并返回数据
 func Success(actionPtr actions.ActionWrapper, data interface{}) {
-	dataBytes, err := ffjson.Marshal(data)
-	if err != nil {
-		Fail(actionPtr, err.Error())
-		return
+	if actionPtr.Object().HasParam("TeaPretty") {
+		dataBytes, err := json.MarshalIndent(data, "", "  ")
+		if err != nil {
+			Fail(actionPtr, err.Error())
+			return
+		}
+		actionPtr.Object().Write(dataBytes)
+	} else {
+		dataBytes, err := ffjson.Marshal(data)
+		if err != nil {
+			Fail(actionPtr, err.Error())
+			return
+		}
+		actionPtr.Object().Write(dataBytes)
 	}
-	actionPtr.Object().Write(dataBytes)
 }
 
 // 成功

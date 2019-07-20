@@ -21,7 +21,7 @@ func init() {
 			Get("/reset", new(ResetAction)).
 			Get("/stop", new(StopAction)).
 			Get("/proxy/servers", new(proxy.ServersAction)).
-			Get("/proxy/server/:serverId", new(proxy.ServerAction)).
+			Get("/proxy/:serverId", new(proxy.ServerAction)).
 			Get("/agents", new(agent.AgentsAction)).
 			Get("/agent/:agentId", new(agent.AgentAction)).
 			Get("/agent/:agentId/start", new(agent.StartAction)).
