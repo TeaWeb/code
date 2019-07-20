@@ -13,7 +13,7 @@ func (this *ClientDisconnectAction) RunPost(params struct {
 	Addr     string // client addr
 }) {
 	for _, listener := range teaproxy.SharedManager.FindServerListeners(params.ServerId) {
-		listener.CloseTCPPairWithLAddr(params.Addr)
+		listener.CloseTCPClient(params.Addr)
 	}
 	this.Success()
 }

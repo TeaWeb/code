@@ -48,7 +48,7 @@ func (this *ClientsAction) RunPost(params struct {
 
 	clients := []maps.Map{}
 	for _, listener := range teaproxy.SharedManager.FindServerListeners(params.ServerId) {
-		for _, pair := range listener.TCPPairs(params.Size) {
+		for _, pair := range listener.TCPClients(params.Size) {
 			clientAddr := pair.LConn().RemoteAddr().String()
 			ip, _, err := net.SplitHostPort(clientAddr)
 			location := ""

@@ -43,7 +43,7 @@ type Listener struct {
 
 	// TCP
 	tcpServer           net.Listener
-	connectingTCPMap    map[net.Conn]*TCPPair
+	connectingTCPMap    map[net.Conn]*TCPClient
 	connectingTCPLocker sync.Mutex
 }
 
@@ -51,7 +51,7 @@ type Listener struct {
 func NewListener() *Listener {
 	return &Listener{
 		namedServers:     map[string]*NamedServer{},
-		connectingTCPMap: map[net.Conn]*TCPPair{},
+		connectingTCPMap: map[net.Conn]*TCPClient{},
 	}
 }
 
@@ -201,10 +201,10 @@ func (this *Listener) Shutdown() error {
 
 			// 关闭现有连接
 			this.connectingTCPLocker.Lock()
-			for _, pair := range this.connectingTCPMap {
-				pair.Close()
+			for _, client := range this.connectingTCPMap {
+				client.Close()
 			}
-			this.connectingTCPMap = map[net.Conn]*TCPPair{}
+			this.connectingTCPMap = map[net.Conn]*TCPClient{}
 			this.connectingTCPLocker.Unlock()
 
 			this.tcpServer = nil
@@ -215,13 +215,22 @@ func (this *Listener) Shutdown() error {
 }
 
 // 获取TCP连接列表
-func (this *Listener) TCPPairs(maxSize int) []*TCPPair {
-	result := []*TCPPair{}
+func (this *Listener) TCPClients(maxSize int) []*TCPClient {
+	result := []*TCPClient{}
+
+	if maxSize == 0 {
+		return result
+	}
+
 	this.connectingTCPLocker.Lock()
 	index := 0
-	for _, pair := range this.connectingTCPMap {
+	for _, client := range this.connectingTCPMap {
+		if client.LConn() == nil || client.RConn() == nil {
+			continue
+		}
+
 		index++
-		result = append(result, pair)
+		result = append(result, client)
 		if maxSize > 0 && index == maxSize-1 {
 			break
 		}
@@ -236,12 +245,12 @@ func (this *Listener) TCPPairs(maxSize int) []*TCPPair {
 }
 
 // 关闭某个TCP连接
-func (this *Listener) CloseTCPPairWithLAddr(lAddr string) error {
+func (this *Listener) CloseTCPClient(lAddr string) error {
 	var err error
 	this.connectingTCPLocker.Lock()
-	for _, pair := range this.connectingTCPMap {
-		if pair.LConn().RemoteAddr().String() == lAddr {
-			err = pair.Close()
+	for _, client := range this.connectingTCPMap {
+		if client.LConn().RemoteAddr().String() == lAddr {
+			err = client.Close()
 			break
 		}
 	}
@@ -592,23 +601,19 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 
 // 连接TCP后端
 func (this *Listener) connectTCPBackend(clientConn net.Conn) {
-	// 查找后端服务器
-	servers := this.currentServers
-	if len(servers) == 0 {
-		return
-	}
-	server := servers[0]
+	client := NewTCPClient(func() *teaconfigs.ServerConfig {
+		if len(this.currentServers) == 0 {
+			return nil
+		}
+		return this.currentServers[0]
+	}, clientConn)
+	this.connectingTCPLocker.Lock()
+	this.connectingTCPMap[clientConn] = client
+	this.connectingTCPLocker.Unlock()
 
-	backend := NewTCPBackend(server, clientConn)
-	backend.OnSuccess(func(pair *TCPPair) {
-		this.connectingTCPLocker.Lock()
-		this.connectingTCPMap[clientConn] = pair
-		this.connectingTCPLocker.Unlock()
-	})
-	backend.OnFail(func(pair *TCPPair) {
-		this.connectingTCPLocker.Lock()
-		delete(this.connectingTCPMap, clientConn)
-		this.connectingTCPLocker.Unlock()
-	})
-	backend.Connect()
+	client.Connect()
+
+	this.connectingTCPLocker.Lock()
+	delete(this.connectingTCPMap, clientConn)
+	this.connectingTCPLocker.Unlock()
 }
