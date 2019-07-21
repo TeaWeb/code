@@ -20,6 +20,14 @@ func NewRequestCall() *RequestCall {
 	}
 }
 
+// 重置
+func (this *RequestCall) Reset() {
+	this.Formatter = nil
+	this.Request = nil
+	this.ResponseCallbacks = nil
+	this.Options = nil
+}
+
 // 添加响应回调
 func (this *RequestCall) AddResponseCall(callback func(resp http.ResponseWriter)) {
 	this.ResponseCallbacks = append(this.ResponseCallbacks, callback)

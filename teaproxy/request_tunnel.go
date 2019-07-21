@@ -64,8 +64,10 @@ func (this *Request) callTunnel(writer *ResponseWriter) error {
 	// 设置响应代码
 	writer.WriteHeader(resp.StatusCode)
 
-	buf := make([]byte, this.calculateBufferSize(resp.ContentLength))
+	pool := this.bytePool(resp.ContentLength)
+	buf := pool.Get()
 	_, err = io.CopyBuffer(writer, resp.Body, buf)
+	pool.Put(buf)
 	if err != nil {
 		this.addError(err)
 		logs.Println("[tunnel]write response: " + err.Error())

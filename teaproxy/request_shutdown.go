@@ -25,8 +25,9 @@ func (this *Request) callShutdown(writer *ResponseWriter) error {
 		}
 
 		writer.WriteHeader(http.StatusOK)
-		buf := make([]byte, 1024)
+		buf := bytePool1k.Get()
 		_, err = io.CopyBuffer(writer, fp, buf)
+		bytePool1k.Put(buf)
 		fp.Close()
 
 		return err

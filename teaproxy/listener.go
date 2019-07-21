@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaplugins"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"golang.org/x/net/http2"
@@ -15,6 +16,7 @@ import (
 	"time"
 )
 
+// 协议
 type Scheme = uint8
 
 const (
@@ -23,6 +25,13 @@ const (
 	SchemeTCP    Scheme = 3
 	SchemeTCPTLS Scheme = 4
 )
+
+// 对象pool
+var requestPool = teautils.NewObjectPool(10240, func() interface{} {
+	return &Request{
+		isNew: true,
+	}
+})
 
 // 代理服务监听器
 type Listener struct {
@@ -363,8 +372,6 @@ func (this *Listener) startTCPServer() error {
 
 // 处理请求
 func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Request) {
-	responseWriter := NewResponseWriter(writer)
-
 	// 插件过滤
 	if teaplugins.HasRequestFilters {
 		result, willContinue := teaplugins.FilterRequest(rawRequest)
@@ -387,7 +394,16 @@ func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Re
 	}
 
 	// 包装新的请求
-	req := NewRequest(rawRequest)
+	req := requestPool.Get().(*Request)
+	if req.isNew {
+		req.isNew = false
+		req.init(rawRequest)
+		req.responseWriter = NewResponseWriter(writer)
+	} else {
+		req.reset(rawRequest)
+		req.responseWriter.Reset(writer)
+	}
+
 	req.host = reqHost
 	req.method = rawRequest.Method
 	req.uri = rawRequest.URL.RequestURI()
@@ -408,13 +424,19 @@ func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Re
 	// 配置请求
 	err = req.configure(server, 0)
 	if err != nil {
-		req.serverError(responseWriter)
+		req.serverError(req.responseWriter)
 		logs.Error(errors.New(reqHost + rawRequest.URL.String() + ": " + err.Error()))
+
+		// 返还request
+		requestPool.Put(req)
 		return
 	}
 
 	// 处理请求
-	req.call(responseWriter)
+	req.call(req.responseWriter)
+
+	// 返还request
+	requestPool.Put(req)
 }
 
 // 根据域名来查找匹配的域名

@@ -226,8 +226,10 @@ func (this *Request) callFastcgi(writer *ResponseWriter) error {
 	writer.WriteHeader(resp.StatusCode)
 
 	// 输出内容
-	buf := make([]byte, this.calculateBufferSize(resp.ContentLength))
+	pool := this.bytePool(resp.ContentLength)
+	buf := pool.Get()
 	_, err = io.CopyBuffer(writer, resp.Body, buf)
+	pool.Put(buf)
 	if err != nil {
 		logs.Error(err)
 		this.addError(err)

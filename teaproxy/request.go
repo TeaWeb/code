@@ -46,27 +46,34 @@ var textMimeMap = map[string]bool{
 	"text/sgml":                           true,
 }
 
+// byte pool
+var bytePool256b = teautils.NewBytePool(10240, 256)
+var bytePool1k = teautils.NewBytePool(10240, 1024)
+var bytePool32k = teautils.NewBytePool(10240, 32*1024)
+var bytePool128k = teautils.NewBytePool(10240, 128*1024)
+
 // 请求定义
 // HTTP HEADER RFC: https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
 type Request struct {
+	isNew  bool
 	raw    *http.Request
 	server *teaconfigs.ServerConfig
 
 	attrs map[string]string // 附加参数
 
-	scheme          string
-	rawScheme       string // 原始的scheme
-	uri             string
-	rawURI          string // 跳转之前的uri
-	host            string
-	method          string
-	serverName      string // @TODO
-	serverAddr      string
-	charset         string
-	requestHeaders  []*shared.HeaderConfig // 自定义请求Header
-	responseHeaders []*shared.HeaderConfig // 自定义响应Header
-	ignoreHeaders   []string               // 忽略的响应Header
-	varMapping      map[string]string      // 自定义变量
+	scheme                 string
+	rawScheme              string // 原始的scheme
+	uri                    string
+	rawURI                 string // 跳转之前的uri
+	host                   string
+	method                 string
+	serverName             string // @TODO
+	serverAddr             string
+	charset                string
+	requestHeaders         []*shared.HeaderConfig // 自定义请求Header
+	responseHeaders        []*shared.HeaderConfig // 自定义响应Header
+	uppercaseIgnoreHeaders []string               // 忽略的响应Header
+	varMapping             map[string]string      // 自定义变量
 
 	root  string   // 资源根目录
 	index []string // 目录下默认访问的文件
@@ -125,24 +132,91 @@ type Request struct {
 
 // 获取新的请求
 func NewRequest(rawRequest *http.Request) *Request {
-	now := time.Now()
-
 	req := &Request{
 		varMapping:      map[string]string{},
 		raw:             rawRequest,
 		rawURI:          rawRequest.URL.RequestURI(),
-		requestFromTime: now,
+		requestFromTime: time.Now(),
 		enableStat:      true,
 		attrs:           map[string]string{},
 	}
 
-	backendCall := shared.NewRequestCall()
-	backendCall.Request = rawRequest
-	backendCall.Formatter = req.Format
-	req.backendCall = backendCall
+	req.backendCall = shared.NewRequestCall()
+	req.backendCall.Reset()
+	req.backendCall.Request = rawRequest
+	req.backendCall.Formatter = req.Format
+
 	_, req.hasForwardHeader = rawRequest.Header["X-Forwarded-For"]
 
 	return req
+}
+
+// 初始化
+func (this *Request) init(rawRequest *http.Request) {
+	this.varMapping = map[string]string{}
+	this.raw = rawRequest
+	this.rawURI = rawRequest.URL.RequestURI()
+	this.requestFromTime = time.Now()
+	this.enableStat = true
+	this.attrs = map[string]string{}
+
+	if this.backendCall != nil {
+		this.backendCall.Reset()
+	} else {
+		this.backendCall = shared.NewRequestCall()
+	}
+	this.backendCall.Request = rawRequest
+	this.backendCall.Formatter = this.Format
+
+	_, this.hasForwardHeader = rawRequest.Header["X-Forwarded-For"]
+}
+
+// 重置
+func (this *Request) reset(rawRequest *http.Request) {
+	this.requestHeaders = nil
+	this.responseHeaders = nil
+	this.uppercaseIgnoreHeaders = nil
+
+	this.backend = nil
+	this.fastcgi = nil
+	this.proxy = nil
+	this.location = nil
+	this.accessPolicy = nil
+	this.cachePolicy = nil
+	this.cacheEnabled = false
+	this.waf = nil
+	this.pages = nil
+	this.shutdownPageOn = false
+	this.shutdownPage = ""
+
+	this.rewriteId = ""
+	this.rewriteReplace = ""
+	this.rewriteRedirectMode = ""
+	this.rewriteIsExternal = false
+
+	this.redirectToHttps = false
+
+	this.websocket = nil
+	this.tunnel = nil
+
+	this.filePath = ""
+
+	this.responseCallback = nil
+
+	this.requestCost = 0
+	this.requestMaxSize = 0
+
+	this.isWatching = false
+	this.requestData = nil
+	this.errors = nil
+
+	this.accessLog = nil
+
+	this.gzipLevel = 0
+	this.gzipMinLength = 0
+	this.debug = false
+
+	this.init(rawRequest)
 }
 
 func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) error {
@@ -182,8 +256,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		this.responseHeaders = append(this.responseHeaders, server.Headers ...)
 	}
 
-	if len(server.IgnoreHeaders) > 0 {
-		this.ignoreHeaders = append(this.ignoreHeaders, server.IgnoreHeaders ...)
+	if server.HasIgnoreHeaders() {
+		this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, server.UppercaseIgnoreHeaders() ...)
 	}
 
 	// cache
@@ -304,8 +378,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.responseHeaders = append(this.responseHeaders, location.Headers ...)
 			}
 
-			if len(location.IgnoreHeaders) > 0 {
-				this.ignoreHeaders = append(this.ignoreHeaders, location.IgnoreHeaders ...)
+			if location.HasIgnoreHeaders() {
+				this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, location.UppercaseIgnoreHeaders() ...)
 			}
 
 			if location.AccessPolicy != nil {
@@ -329,8 +403,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 							this.responseHeaders = append(this.responseHeaders, rule.Headers...)
 						}
 
-						if len(rule.IgnoreHeaders) > 0 {
-							this.ignoreHeaders = append(this.ignoreHeaders, rule.IgnoreHeaders ...)
+						if rule.HasIgnoreHeaders() {
+							this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, rule.UppercaseIgnoreHeaders() ...)
 						}
 
 						// 外部URL
@@ -396,8 +470,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					this.responseHeaders = append(this.responseHeaders, fastcgi.Headers ...)
 				}
 
-				if len(fastcgi.IgnoreHeaders) > 0 {
-					this.ignoreHeaders = append(this.ignoreHeaders, fastcgi.IgnoreHeaders ...)
+				if fastcgi.HasIgnoreHeaders() {
+					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, fastcgi.UppercaseIgnoreHeaders() ...)
 				}
 
 				continue
@@ -435,8 +509,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					this.responseHeaders = append(this.responseHeaders, backend.Headers ...)
 				}
 
-				if len(backend.IgnoreHeaders) > 0 {
-					this.ignoreHeaders = append(this.ignoreHeaders, backend.IgnoreHeaders ...)
+				if backend.HasIgnoreHeaders() {
+					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, backend.UppercaseIgnoreHeaders() ...)
 				}
 
 				continue
@@ -476,8 +550,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					this.responseHeaders = append(this.responseHeaders, rule.Headers ...)
 				}
 
-				if len(rule.IgnoreHeaders) > 0 {
-					this.ignoreHeaders = append(this.ignoreHeaders, rule.IgnoreHeaders ...)
+				if rule.HasIgnoreHeaders() {
+					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, rule.UppercaseIgnoreHeaders() ...)
 				}
 
 				// 外部URL
@@ -545,8 +619,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			this.responseHeaders = append(this.responseHeaders, fastcgi.Headers ...)
 		}
 
-		if len(fastcgi.IgnoreHeaders) > 0 {
-			this.ignoreHeaders = append(this.ignoreHeaders, fastcgi.IgnoreHeaders ...)
+		if fastcgi.HasIgnoreHeaders() {
+			this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, fastcgi.UppercaseIgnoreHeaders() ...)
 		}
 
 		return nil
@@ -570,6 +644,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		if len(this.root) == 0 {
 			return errors.New("no backends available")
 		}
+		this.backend = nil
+		return nil
 	}
 	if len(this.backendCall.ResponseCallbacks) > 0 {
 		this.responseCallback = this.backendCall.CallResponseCallbacks
@@ -585,8 +661,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			this.responseHeaders = append(this.responseHeaders, backend.Headers ...)
 		}
 
-		if len(backend.IgnoreHeaders) > 0 {
-			this.ignoreHeaders = append(this.ignoreHeaders, backend.IgnoreHeaders ...)
+		if backend.HasIgnoreHeaders() {
+			this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, backend.UppercaseIgnoreHeaders() ...)
 		}
 	}
 
@@ -1296,9 +1372,13 @@ func (this *Request) findIndexFile(dir string) string {
 }
 
 func (this *Request) convertIgnoreHeaders() maps.Map {
+	if len(this.uppercaseIgnoreHeaders) == 0 {
+		return nil
+	}
+
 	m := maps.Map{}
-	for _, h := range this.ignoreHeaders {
-		m[strings.ToUpper(h)] = true
+	for _, h := range this.uppercaseIgnoreHeaders {
+		m[h] = true
 	}
 	return m
 }
@@ -1376,15 +1456,18 @@ func (this *Request) setProxyHeaders(header http.Header) {
 }
 
 // 计算合适的buffer size
-func (this *Request) calculateBufferSize(length int64) int {
-	if length <= 0 {
-		return 1024
+func (this *Request) bytePool(contentLength int64) *teautils.BytePool {
+	if contentLength <= 0 {
+		return bytePool1k
 	}
-	if length < 1024 {
-		return 256
+	if contentLength < 1024 { // 1K
+		return bytePool256b
 	}
-	if length < 1048576 {
-		return 1024
+	if contentLength < 32768 { // 32K
+		return bytePool1k
 	}
-	return 128 * 1024
+	if contentLength < 1048576 { // 1M
+		return bytePool32k
+	}
+	return bytePool128k
 }

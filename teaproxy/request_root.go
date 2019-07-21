@@ -134,7 +134,8 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	}
 
 	// length
-	respHeader.Set("Content-Length", strconv.FormatInt(stat.Size(), 10))
+	fileSize := stat.Size()
+	respHeader.Set("Content-Length", strconv.FormatInt(fileSize, 10))
 
 	// 支持 Last-Modified
 	modifiedTime := stat.ModTime().Format("Mon, 02 Jan 2006 15:04:05 GMT")
@@ -202,9 +203,12 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 		isOpen = true
 	}
 
-	writer.Prepare(stat.Size())
-	buf := make([]byte, this.calculateBufferSize(stat.Size()))
+	writer.Prepare(fileSize)
+
+	pool := this.bytePool(fileSize)
+	buf := pool.Get()
 	_, err = io.CopyBuffer(writer, contentReader, buf)
+	pool.Put(buf)
 
 	// 不使用defer，以便于加快速度
 	if isOpen {

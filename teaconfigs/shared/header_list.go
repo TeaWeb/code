@@ -2,6 +2,7 @@ package shared
 
 import (
 	"github.com/iwind/TeaGo/lists"
+	"strings"
 )
 
 // HeaderList相关操作接口
@@ -65,6 +66,9 @@ type HeaderList struct {
 
 	hasResponseHeaders bool
 	hasRequestHeaders  bool
+
+	hasIgnoreHeaders       bool
+	uppercaseIgnoreHeaders []string
 }
 
 // 校验
@@ -84,6 +88,12 @@ func (this *HeaderList) ValidateHeaders() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	this.hasIgnoreHeaders = len(this.IgnoreHeaders) > 0
+	this.uppercaseIgnoreHeaders = []string{}
+	for _, headerKey := range this.IgnoreHeaders {
+		this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, strings.ToUpper(headerKey))
 	}
 
 	return nil
@@ -222,4 +232,14 @@ func (this *HeaderList) RemoveRequestHeader(headerId string) {
 		result = append(result, h)
 	}
 	this.RequestHeaders = result
+}
+
+// 判断是否有Ignore Headers
+func (this *HeaderList) HasIgnoreHeaders() bool {
+	return this.hasIgnoreHeaders
+}
+
+// 查找大写的Ignore Headers
+func (this *HeaderList) UppercaseIgnoreHeaders() []string {
+	return this.uppercaseIgnoreHeaders
 }

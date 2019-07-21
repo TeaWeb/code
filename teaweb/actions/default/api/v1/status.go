@@ -27,6 +27,7 @@ func (this *StatusAction) RunGet(params struct{}) {
 	runtime.ReadMemStats(&stat)
 	result["heap"] = stat.HeapAlloc
 	result["memory"] = stat.Sys
+	result["objects"] = stat.HeapObjects
 	result["mongo"] = teamongo.Test() == nil
 
 	apiutils.Success(this, result)

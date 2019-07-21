@@ -31,6 +31,23 @@ func NewResponseWriter(httpResponseWriter http.ResponseWriter) *ResponseWriter {
 	}
 }
 
+// 重置
+func (this *ResponseWriter) Reset(httpResponseWriter http.ResponseWriter) {
+	this.writer = httpResponseWriter
+
+	this.gzipLevel = 0
+	this.gzipMinLength = 0
+	this.gzipWriter = nil
+
+	this.statusCode = 0
+	this.sentBodyBytes = 0
+
+	this.bodyCopying = false
+	this.body = nil
+	this.gzipBodyBuffer = nil
+	this.gzipBodyWriter = nil
+}
+
 // 设置Gzip
 func (this *ResponseWriter) Gzip(level uint8, minLength int64) {
 	this.gzipLevel = level
