@@ -2,11 +2,13 @@ package tealogs
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/TeaWeb/code/teageo"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/uaparser"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
+	"github.com/pquerna/ffjson/ffjson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"runtime"
@@ -327,4 +329,42 @@ func TestAccessLog_CleanFields(t *testing.T) {
 	t.Log(accessLog.Cookie)
 
 	a.IsNil(accessLog.Extend)
+}
+
+func TestAccessLog_JSON(t *testing.T) {
+	accessLog := NewAccessLog()
+	accessLog.Request = "GET /hello"
+	data, err := ffjson.Marshal(accessLog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(data))
+}
+
+func BenchmarkAccessLog_JSON_ffjson(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		accessLog := NewAccessLog()
+		accessLog.Request = "GET /hello"
+		accessLog.Host = "teaos.cn"
+		_, _ = ffjson.Marshal(accessLog)
+	}
+}
+
+func BenchmarkAccessLog_JSON_ffjson_pool(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		accessLog := NewAccessLog()
+		accessLog.Request = "GET /hello"
+		accessLog.Host = "teaos.cn"
+		data, _ := ffjson.Marshal(accessLog)
+		ffjson.Pool(data)
+	}
+}
+
+func BenchmarkAccessLog_JSON_raw(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		accessLog := NewAccessLog()
+		accessLog.Request = "GET /hello"
+		accessLog.Host = "teaos.cn"
+		_, _ = json.Marshal(accessLog)
+	}
 }

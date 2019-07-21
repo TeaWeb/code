@@ -13,6 +13,11 @@ import (
 	"time"
 )
 
+// 导入的步长
+const (
+	MongoLogSize = 256
+)
+
 // 访问日志队列
 type AccessLogQueue struct {
 	index  int
@@ -180,11 +185,26 @@ func (this *AccessLogQueue) dumpInterval(mongoCollFunc func() *teamongo.Collecti
 		this.db.Write(batch, nil)
 	}
 
+	// 导入MongoDB
 	if len(accessLogs) > 0 {
-		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		_, err := mongoCollFunc().InsertMany(ctx, accessLogs)
-		if err != nil {
-			logs.Println("[mongo]insert access logs:", err.Error())
+		count := len(accessLogs)
+		offset := 0
+		to := offset + MongoLogSize
+		for {
+			if to > count {
+				to = count
+			}
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			_, err := mongoCollFunc().InsertMany(ctx, accessLogs[offset:to])
+			if err != nil {
+				logs.Println("[mongo]insert access logs:", err.Error())
+			}
+
+			offset += MongoLogSize
+			if offset >= count {
+				break
+			}
+			to = offset + MongoLogSize
 		}
 	}
 }

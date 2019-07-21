@@ -145,8 +145,6 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		}
 	}
 
-	defer resp.Body.Close()
-
 	// 清除错误次数
 	if resp.StatusCode >= 200 && !this.backend.HasCheckURL() {
 		if !this.backend.IsDown && this.backend.CurrentFails > 0 {
@@ -156,6 +154,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 	// 特殊页面
 	if len(this.pages) > 0 && this.callPage(writer, resp.StatusCode) {
+		resp.Body.Close()
 		return nil
 	}
 
@@ -205,10 +204,13 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	_, err = io.CopyBuffer(writer, resp.Body, buf)
 	pool.Put(buf)
 
+	resp.Body.Close()
+
 	if err != nil {
 		logs.Error(err)
 		this.addError(err)
 		return nil
 	}
+
 	return nil
 }
