@@ -5,8 +5,8 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/timers"
 	"io"
 	"net"
 	"sync/atomic"
@@ -59,7 +59,7 @@ func (this *TCPClient) RConn() net.Conn {
 
 // 连接后端服务器
 func (this *TCPClient) Connect() {
-	ticker := timers.Every(1*time.Second, func(ticker *time.Ticker) {
+	ticker := teautils.Every(1*time.Second, func(ticker *teautils.Ticker) {
 		atomic.StoreInt64(&this.readSpeed, 0)
 		atomic.StoreInt64(&this.writeSpeed, 0)
 	})

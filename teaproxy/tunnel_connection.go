@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
 	"net"
@@ -26,7 +27,7 @@ type TunnelConnection struct {
 	isClosed     bool
 	closeHandler func(tunnelConn *TunnelConnection)
 
-	ticker *time.Ticker
+	ticker *teautils.Ticker
 }
 
 // 获取新对象
@@ -49,7 +50,7 @@ func NewTunnelConnection(conn net.Conn, tunnelConfig *teaconfigs.TunnelConfig) *
 		})
 
 		// Ping
-		tunnelConn.ticker = timers.Every(30*time.Second, func(ticker *time.Ticker) {
+		tunnelConn.ticker = teautils.Every(30*time.Second, func(ticker *teautils.Ticker) {
 			err := tunnelConn.Ping()
 			if err != nil {
 				tunnelConn.Close()

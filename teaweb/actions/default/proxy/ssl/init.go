@@ -3,6 +3,7 @@ package ssl
 import (
 	"github.com/TeaWeb/code/teacluster"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/ssl/sslutils"
 	"github.com/TeaWeb/code/teaweb/configs"
@@ -10,7 +11,6 @@ import (
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/utils/time"
 	"time"
 )
@@ -46,7 +46,7 @@ func init() {
 
 	// 检查ACME证书更新
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
-		timers.Every(24*time.Hour, func(ticker *time.Ticker) {
+		teautils.Every(24*time.Hour, func(ticker *teautils.Ticker) {
 			renewACMECerts()
 		})
 	})

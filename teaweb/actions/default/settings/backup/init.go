@@ -3,6 +3,7 @@ package backup
 import (
 	"archive/zip"
 	"errors"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/settings"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
@@ -10,7 +11,6 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/utils/time"
 	"os"
 	"strings"
@@ -40,7 +40,7 @@ func init() {
 
 // 自动备份
 func backup() {
-	timers.Every(24*time.Hour, func(ticker *time.Ticker) {
+	teautils.Every(24*time.Hour, func(ticker *teautils.Ticker) {
 		err := backupTask()
 		if err != nil {
 			logs.Error(err)

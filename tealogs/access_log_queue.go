@@ -3,6 +3,7 @@ package tealogs
 import (
 	"context"
 	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -30,7 +31,7 @@ func NewAccessLogQueue(db *leveldb.DB, index int) *AccessLogQueue {
 
 // 从队列中接收日志
 func (this *AccessLogQueue) Receive(ch chan *AccessLog) {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := teautils.NewTicker(1 * time.Second)
 	batch := new(leveldb.Batch)
 	logIds := []string{}
 	id := uint64(time.Now().UnixNano())
@@ -92,7 +93,7 @@ func (this *AccessLogQueue) Receive(ch chan *AccessLog) {
 
 // 导出日志到别的媒介
 func (this *AccessLogQueue) Dump(mongoCollFunc func() *teamongo.Collection) {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := teautils.NewTicker(1 * time.Second)
 	for range ticker.C {
 		this.dumpInterval(mongoCollFunc)
 	}

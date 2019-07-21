@@ -3,6 +3,7 @@ package teacluster
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teahooks"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
@@ -33,7 +34,7 @@ func init() {
 
 		// start manager
 		go func() {
-			ticker := time.NewTicker(60 * time.Second)
+			ticker := teautils.NewTicker(60 * time.Second)
 			for {
 				err := SharedManager.Start()
 				if err != nil {
