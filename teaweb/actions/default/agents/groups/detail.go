@@ -15,7 +15,7 @@ type DetailAction actions.Action
 func (this *DetailAction) Run(params struct {
 	GroupId string
 }) {
-	if len(params.GroupId) == 0 {
+	if len(params.GroupId) == 0 || params.GroupId == "default" {
 		this.Data["group"] = agents.LoadDefaultGroup()
 	} else {
 		group := agents.SharedGroupConfig().FindGroup(params.GroupId)

@@ -16,7 +16,7 @@ func (this *NoticeReceiversAction) Run(params struct {
 }) {
 	group := agents.SharedGroupConfig().FindGroup(params.GroupId)
 	if group == nil {
-		if len(params.GroupId) == 0 {
+		if len(params.GroupId) == 0 || params.GroupId == "default" {
 			group = &agents.Group{
 				Id:   "",
 				Name: agents.LoadDefaultGroup().Name,
