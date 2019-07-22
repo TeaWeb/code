@@ -15,7 +15,7 @@ func (this *AddNoticeReceiversAction) Run(params struct {
 	Level   notices.NoticeLevel
 }) {
 	var group *agents.Group = nil
-	if len(params.GroupId) == 0 {
+	if len(params.GroupId) == 0 || params.GroupId == "default" {
 		group = &agents.Group{
 			Id:   "",
 			Name: agents.LoadDefaultGroup().Name,
