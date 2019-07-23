@@ -3,9 +3,12 @@ package teaproxy
 import (
 	"context"
 	"crypto/tls"
+	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teautils"
 	"net"
 	"net/http"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -15,7 +18,7 @@ var SharedClientPool = NewClientPool()
 
 // 客户端池
 type ClientPool struct {
-	clientsMap map[string]*http.Client // backend id => client
+	clientsMap map[string]*http.Client // backend key => client
 	locker     sync.RWMutex
 }
 
@@ -27,22 +30,34 @@ func NewClientPool() *ClientPool {
 }
 
 // 根据地址获取客户端
-func (this *ClientPool) client(backendId string, address string, connectionTimeout time.Duration, readTimeout time.Duration, maxConnections int32) *http.Client {
-	key := backendId + "_" + address
+func (this *ClientPool) client(backend *teaconfigs.BackendConfig) *http.Client {
+	key := backend.UniqueKey()
+	maxConnections := int(backend.MaxConns)
+	connectionTimeout := backend.FailTimeoutDuration()
+	address := backend.Address
+	readTimeout := backend.ReadTimeoutDuration()
 
 	this.locker.RLock()
 	client, found := this.clientsMap[key]
 	if found {
-		defer this.locker.RUnlock()
+		this.locker.RUnlock()
 		return client
 	}
 	this.locker.RUnlock()
+	this.locker.Lock()
 
 	// 超时时间
 	if connectionTimeout <= 0 {
 		connectionTimeout = 15 * time.Second
 	}
 
+	numberCPU := runtime.NumCPU()
+	if numberCPU == 0 {
+		numberCPU = 1
+	}
+	if maxConnections == 0 {
+		maxConnections = numberCPU
+	}
 	transport := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			// 握手配置
@@ -51,8 +66,9 @@ func (this *ClientPool) client(backendId string, address string, connectionTimeo
 				KeepAlive: 2 * time.Minute,
 			}).DialContext(ctx, network, address)
 		},
-		MaxIdleConns:          int(maxConnections), // 0表示不限
-		MaxIdleConnsPerHost:   runtime.NumCPU() * 512,
+		MaxIdleConns:          0,
+		MaxIdleConnsPerHost:   maxConnections,
+		MaxConnsPerHost:       maxConnections,
 		IdleConnTimeout:       2 * time.Minute, // TODO 需要可以设置
 		ExpectContinueTimeout: 1 * time.Second,
 		TLSHandshakeTimeout:   0, // 不限
@@ -70,16 +86,25 @@ func (this *ClientPool) client(backendId string, address string, connectionTimeo
 		},
 	}
 
-	this.locker.Lock()
 	this.clientsMap[key] = client
+
+	// 关闭老的
+	this.closeOldClient(key)
+
 	this.locker.Unlock()
 
 	return client
 }
 
-// 重置
-func (this *ClientPool) Reset() {
-	this.locker.Lock()
-	defer this.locker.Unlock()
-	this.clientsMap = map[string]*http.Client{}
+// 关闭老的client
+func (this *ClientPool) closeOldClient(key string) {
+	backendId := strings.Split(key, "@")[0]
+	for key2, client := range this.clientsMap {
+		backendId2 := strings.Split(key2, "@")[0]
+		if backendId == backendId2 && key != key2 {
+			teautils.CloseHTTPClient(client)
+			delete(this.clientsMap, key2)
+			break
+		}
+	}
 }

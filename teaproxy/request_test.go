@@ -7,11 +7,8 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
-	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 )
@@ -510,112 +507,6 @@ func TestPerformanceFormatHeaders(t *testing.T) {
 
 	cost := time.Since(before).Seconds()
 	t.Log(float64(count)/cost, "qps")
-}
-
-func TestPerformanceBackend(t *testing.T) {
-	beforeTime := time.Now()
-
-	countSuccess := 0
-	countFail := 0
-
-	locker := sync.Mutex{}
-	wg := sync.WaitGroup{}
-	threads := 1000
-	connections := 100
-	wg.Add(threads)
-
-	for i := 0; i < threads; i++ {
-		go func() {
-			for j := 0; j < connections; j++ {
-				req, err := http.NewRequest("GET", "http://127.0.0.1:9992/benchmark", nil)
-
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c := SharedClientPool.client("123456", "127.0.0.1:9992", 15*time.Second, 0, 0)
-				resp, err := c.Do(req)
-
-				if err != nil {
-					locker.Lock()
-					countFail++
-					locker.Unlock()
-				} else {
-					data, err := ioutil.ReadAll(resp.Body)
-					if err != nil || len(data) == 0 || strings.Index(string(data), "benchmark") == -1 {
-						locker.Lock()
-						countFail++
-						locker.Unlock()
-					} else {
-						locker.Lock()
-						countSuccess++
-						locker.Unlock()
-					}
-
-					//io.Copy(ioutil.Discard, resp.Body)
-					resp.Body.Close()
-				}
-			}
-			wg.Done()
-		}()
-	}
-
-	wg.Wait()
-
-	t.Log("success:", countSuccess, "fail:", countFail, "qps:", int(float64(countSuccess+countFail)/time.Since(beforeTime).Seconds()))
-}
-
-func TestPerformanceStatic(t *testing.T) {
-	beforeTime := time.Now()
-
-	countSuccess := 0
-	countFail := 0
-
-	locker := sync.Mutex{}
-	wg := sync.WaitGroup{}
-	threads := 100
-	connections := 100
-	wg.Add(threads)
-
-	for i := 0; i < threads; i++ {
-		go func() {
-			for j := 0; j < connections; j++ {
-				req, err := http.NewRequest("GET", "http://127.0.0.1:9993/css/semantic.min.css", nil)
-
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c := SharedClientPool.client("123456", "127.0.0.1:9993", 15*time.Second, 0, 0)
-				resp, err := c.Do(req)
-
-				if err != nil {
-					locker.Lock()
-					countFail++
-					locker.Unlock()
-				} else {
-					data, err := ioutil.ReadAll(resp.Body)
-					if err != nil || len(data) == 0 || strings.Index(string(data), "Semantic") == -1 {
-						locker.Lock()
-						countFail++
-						locker.Unlock()
-					} else {
-						locker.Lock()
-						countSuccess++
-						locker.Unlock()
-					}
-
-					//io.Copy(ioutil.Discard, resp.Body)
-					resp.Body.Close()
-				}
-			}
-			wg.Done()
-		}()
-	}
-
-	wg.Wait()
-
-	t.Log("success:", countSuccess, "fail:", countFail, "qps:", int(float64(countSuccess+countFail)/time.Since(beforeTime).Seconds()))
 }
 
 func TestRequest_Format2(t *testing.T) {

@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
@@ -61,6 +62,8 @@ type BackendConfig struct {
 	hasResponseHeaders bool
 
 	hasHost bool
+
+	uniqueKey string
 }
 
 // 获取新对象
@@ -73,6 +76,9 @@ func NewBackendConfig() *BackendConfig {
 
 // 校验
 func (this *BackendConfig) Validate() error {
+	// unique key
+	this.uniqueKey = this.Id + "@" + fmt.Sprintf("%p", this)
+
 	// failTimeout
 	if len(this.FailTimeout) > 0 {
 		this.failTimeoutDuration, _ = time.ParseDuration(this.FailTimeout)
@@ -337,4 +343,9 @@ func (this *BackendConfig) CloneState(oldBackend *BackendConfig) {
 	this.DownTime = oldBackend.DownTime
 	this.CurrentFails = oldBackend.CurrentFails
 	this.CurrentConns = oldBackend.CurrentConns
+}
+
+// 获取唯一ID
+func (this *BackendConfig) UniqueKey() string {
+	return this.uniqueKey
 }

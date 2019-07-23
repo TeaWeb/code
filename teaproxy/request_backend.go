@@ -103,7 +103,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		}
 	}
 
-	client := SharedClientPool.client(this.backend.Id, this.backend.Address, this.backend.FailTimeoutDuration(), this.backend.ReadTimeoutDuration(), this.backend.MaxConns)
+	client := SharedClientPool.client(this.backend)
 
 	this.raw.RequestURI = ""
 
@@ -164,6 +164,15 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 	// 设置Header
 	hasCharset := len(this.charset) > 0
+	if hasCharset {
+		contentTypes, ok := resp.Header["Content-Type"]
+		if ok && len(contentTypes) > 0 {
+			contentType := contentTypes[0]
+			if _, found := textMimeMap[contentType]; found {
+				resp.Header["Content-Type"][0] = contentType + "; charset=" + this.charset
+			}
+		}
+	}
 	for k, v := range resp.Header {
 		if k == "Connection" {
 			continue
@@ -172,15 +181,6 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 			continue
 		}
 		for _, subV := range v {
-			// 字符集
-			if hasCharset && k == "Content-Type" {
-				if _, found := textMimeMap[subV]; found {
-					if !strings.Contains(subV, "charset=") {
-						subV += "; charset=" + this.charset
-					}
-				}
-			}
-
 			writer.Header().Add(k, subV)
 		}
 	}

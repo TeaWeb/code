@@ -260,7 +260,7 @@ func TestListener_Reload_ChangeServer(t *testing.T) {
 	}
 }
 
-func TestListener_Reload_FindNamedServer(t *testing.T) {
+func BenchmarkListener_FindNamedServer(b *testing.B) {
 	listener := NewListener()
 	listener.Scheme = SchemeHTTP
 	listener.Address = "127.0.0.1:8881"
@@ -272,7 +272,7 @@ func TestListener_Reload_FindNamedServer(t *testing.T) {
 		server.AddName("teaos" + fmt.Sprintf("%d", i) + ".cn")
 		err := server.Validate()
 		if err != nil {
-			t.Fatal(err)
+			b.Fatal(err)
 		}
 		listener.ApplyServer(server)
 	}
@@ -283,20 +283,16 @@ func TestListener_Reload_FindNamedServer(t *testing.T) {
 		server.AddName("*.teaos.cn")
 		err := server.Validate()
 		if err != nil {
-			t.Fatal(err)
+			b.Fatal(err)
 		}
 		listener.ApplyServer(server)
 	}
 	listener.currentServers = listener.servers
 
-	count := 10000
-	before := time.Now()
-	for i := 0; i < count; i++ {
+	for i := 0; i < b.N; i++ {
 		listener.findNamedServer("teaos5.cn")
 		listener.findNamedServer("wx.teaos.cn")
-		//listener.findNamedServer("127.0.0.1:8881")
 	}
-	t.Logf("%f", float64(count)/time.Since(before).Seconds())
 }
 
 func printListener(listener *Listener, t *testing.T) {

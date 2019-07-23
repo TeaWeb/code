@@ -25,8 +25,9 @@ func NewHTTPClient(timeout time.Duration) *http.Client {
 	return &http.Client{
 		Timeout: timeout,
 		Transport: &http.Transport{
-			MaxIdleConns:          1024,
-			MaxIdleConnsPerHost:   100,
+			MaxIdleConns:          4096,
+			MaxIdleConnsPerHost:   32,
+			MaxConnsPerHost:       32,
 			IdleConnTimeout:       2 * time.Minute,
 			ExpectContinueTimeout: 1 * time.Second,
 			TLSHandshakeTimeout:   0,

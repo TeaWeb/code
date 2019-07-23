@@ -25,6 +25,7 @@ func init() {
 	})
 
 	teahooks.On(teahooks.EventReload, func() {
+		// 重启服务
 		err := SharedManager.Restart()
 		if err != nil {
 			logs.Error(err)

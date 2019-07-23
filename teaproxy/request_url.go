@@ -6,7 +6,6 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -36,20 +35,7 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 	// 代理头部
 	this.setProxyHeaders(req.Header)
 
-	var client *http.Client = nil
-	if len(req.Host) > 0 {
-		host := req.Host
-		if !strings.Contains(host, ":") {
-			if req.URL.Scheme == "https" {
-				host += ":443"
-			} else {
-				host += ":80"
-			}
-		}
-		client = SharedClientPool.client("", host, 60*time.Second, 0, 0)
-	} else {
-		client = teautils.SharedHttpClient(60 * time.Second)
-	}
+	var client = teautils.SharedHttpClient(60 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		logs.Error(errors.New(req.URL.String() + ": " + err.Error()))
