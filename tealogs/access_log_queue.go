@@ -39,7 +39,7 @@ func (this *AccessLogQueue) Receive(ch chan *AccessLog) {
 	ticker := teautils.NewTicker(1 * time.Second)
 	batch := new(leveldb.Batch)
 	logIds := []string{}
-	id := uint64(time.Now().UnixNano())
+	id := uint64(time.Now().UnixNano() * int64(this.index+1))
 
 	for {
 		select {
@@ -61,6 +61,7 @@ func (this *AccessLogQueue) Receive(ch chan *AccessLog) {
 							logs.Error(err)
 							continue
 						}
+						id++
 						idString := strconv.FormatUint(id, 10)
 						logIds = append(logIds, idString)
 						batch.Put([]byte("accesslog_"+idString), data)
