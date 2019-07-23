@@ -34,7 +34,7 @@ func (this *PullAction) Run(params struct{}) {
 		}
 	}
 
-	c := make(chan *agentutils.Event)
+	c := make(chan *agentutils.AgentEvent)
 	agentutils.WaitAgentQueue(agentId, agentVersion, osName, speed, this.RequestRemoteIP(), c)
 
 	// 监控是否中断请求
@@ -47,14 +47,12 @@ func (this *PullAction) Run(params struct{}) {
 		close(c)
 	}()
 
-	events := []*agentutils.Event{}
+	events := []*agentutils.AgentEvent{}
 	for {
 		event := <-c
-		func() {
-			if event != nil {
-				events = append(events, event)
-			}
-		}()
+		if event != nil {
+			events = append(events, event)
+		}
 
 		break
 	}

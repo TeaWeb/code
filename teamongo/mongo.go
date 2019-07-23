@@ -20,50 +20,51 @@ func RestartClient() {
 
 // 获取共享的Client
 func SharedClient() *mongo.Client {
-	if sharedClient == nil {
-		configFile := files.NewFile(Tea.ConfigFile("mongo.conf"))
-		if !configFile.Exists() {
-			logs.Fatal(errors.New("'mongo.conf' not found"))
-			return nil
-		}
-		reader, err := configFile.Reader()
-		if err != nil {
-			logs.Fatal(err)
-			return nil
-		}
-		defer reader.Close()
+	if sharedClient != nil {
+		return sharedClient
+	}
+	configFile := files.NewFile(Tea.ConfigFile("mongo.conf"))
+	if !configFile.Exists() {
+		logs.Fatal(errors.New("'mongo.conf' not found"))
+		return nil
+	}
+	reader, err := configFile.Reader()
+	if err != nil {
+		logs.Fatal(err)
+		return nil
+	}
+	defer reader.Close()
 
-		config := &Config{}
-		err = reader.ReadYAML(config)
-		if err != nil {
-			logs.Fatal(err)
-			return nil
-		}
+	config := &Config{}
+	err = reader.ReadYAML(config)
+	if err != nil {
+		logs.Fatal(err)
+		return nil
+	}
 
-		clientOptions := options.Client().ApplyURI(config.URI)
-		sharedConfig := configs.SharedMongoConfig()
+	clientOptions := options.Client().ApplyURI(config.URI)
+	sharedConfig := configs.SharedMongoConfig()
 
-		if sharedConfig != nil && len(sharedConfig.AuthMechanism) > 0 {
-			clientOptions.SetAuth(options.Credential{
-				Username:                sharedConfig.Username,
-				Password:                sharedConfig.Password,
-				AuthMechanism:           sharedConfig.AuthMechanism,
-				AuthMechanismProperties: sharedConfig.AuthMechanismPropertiesMap(),
-				AuthSource:              DatabaseName,
-			})
-		}
+	if sharedConfig != nil && len(sharedConfig.AuthMechanism) > 0 {
+		clientOptions.SetAuth(options.Credential{
+			Username:                sharedConfig.Username,
+			Password:                sharedConfig.Password,
+			AuthMechanism:           sharedConfig.AuthMechanism,
+			AuthMechanismProperties: sharedConfig.AuthMechanismPropertiesMap(),
+			AuthSource:              DatabaseName,
+		})
+	}
 
-		sharedClient, err = mongo.NewClient(clientOptions)
-		if err != nil {
-			logs.Fatal(err)
-			return nil
-		}
+	sharedClient, err = mongo.NewClient(clientOptions)
+	if err != nil {
+		logs.Fatal(err)
+		return nil
+	}
 
-		err = sharedClient.Connect(context.Background())
-		if err != nil {
-			logs.Fatal(err)
-			return nil
-		}
+	err = sharedClient.Connect(context.Background())
+	if err != nil {
+		logs.Fatal(err)
+		return nil
 	}
 
 	return sharedClient

@@ -41,7 +41,7 @@ func (this *ExecuteAction) RunGet(params struct {
 
 	// 同步
 	if app.IsSharedWithGroup {
-		agentutils.SyncAppEvent(agent.Id, agent.GroupIds, app, &agentutils.Event{
+		agentutils.SyncAppEvent(agent.Id, agent.GroupIds, app, &agentutils.AgentEvent{
 			Name: "RUN_ITEM",
 			Data: maps.Map{
 				"appId":  app.Id,

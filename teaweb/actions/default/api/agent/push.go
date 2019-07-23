@@ -216,6 +216,11 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 		if shouldNotify {
 			isNotified = true
 
+			// 添加状态
+			agentutils.AddItemState(item.Id, &agentutils.ItemState{
+				IsFailed: true,
+			})
+
 			notice := notices.NewNotice()
 			notice.SetTime(t)
 			notice.Message = message
@@ -297,6 +302,13 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 
 	// 是否发送恢复通知
 	if len(item.Id) > 0 && !notices.IsFailureLevel(level) {
+		// 是否已经存在
+		itemState, ok := agentutils.FindItemState(item.Id)
+
+		if !ok || !itemState.IsFailed {
+			return
+		}
+
 		recoverSuccesses := item.RecoverSuccesses
 		if recoverSuccesses <= 0 {
 			recoverSuccesses = 1
@@ -326,7 +338,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 		}
 
 		success := true
-		for i := 1; i < countValues; i ++ {
+		for i := 1; i < countValues; i++ {
 			if notices.IsFailureLevel(values[i].NoticeLevel) {
 				success = false
 				break
@@ -334,6 +346,9 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 		}
 
 		if success {
+			// 删除错误的状态
+			agentutils.RemoveItemState(item.Id)
+
 			// 发送成功级别的通知
 			notice := notices.NewNotice()
 			notice.SetTime(t)

@@ -4,44 +4,36 @@ import (
 	"sync"
 )
 
-type Event struct {
+type AgentEvent struct {
 	Name string      `json:"name"`
 	Data interface{} `json:"data"`
 }
 
-// Agent状态
-type State struct {
-	Version string  // 版本号
-	OsName  string  // 操作系统
-	Speed   float64 // 连接速度，ms
-	IP      string  // IP地址
-}
-
-var eventQueueMap = map[string]map[chan *Event]*State{} // agentId => { chan => State }
+var eventQueueMap = map[string]map[chan *AgentEvent]*AgentState{} // agentId => { chan => State }
 var eventQueueLocker = sync.Mutex{}
 
 // 新Agent事件
-func NewAgentEvent(name string, data interface{}) *Event {
-	return &Event{
+func NewAgentEvent(name string, data interface{}) *AgentEvent {
+	return &AgentEvent{
 		Name: name,
 		Data: data,
 	}
 }
 
 // 等待Agent事件
-func WaitAgentQueue(agentId string, agentVersion string, osName string, speed float64, ip string, c chan *Event) {
+func WaitAgentQueue(agentId string, agentVersion string, osName string, speed float64, ip string, c chan *AgentEvent) {
 	eventQueueLocker.Lock()
 	defer eventQueueLocker.Unlock()
 	_, found := eventQueueMap[agentId]
 	if found {
-		eventQueueMap[agentId][c] = &State{
+		eventQueueMap[agentId][c] = &AgentState{
 			Version: agentVersion,
 			OsName:  osName,
 			Speed:   speed,
 			IP:      ip,
 		}
 	} else {
-		eventQueueMap[agentId] = map[chan *Event]*State{
+		eventQueueMap[agentId] = map[chan *AgentEvent]*AgentState{
 			c: {
 				Version: agentVersion,
 				OsName:  osName,
@@ -53,7 +45,7 @@ func WaitAgentQueue(agentId string, agentVersion string, osName string, speed fl
 }
 
 // 删除Agent
-func RemoveAgentQueue(agentId string, c chan *Event) {
+func RemoveAgentQueue(agentId string, c chan *AgentEvent) {
 	eventQueueLocker.Lock()
 	defer eventQueueLocker.Unlock()
 	_, ok := eventQueueMap[agentId]
@@ -67,7 +59,7 @@ func RemoveAgentQueue(agentId string, c chan *Event) {
 }
 
 // 发送Agent事件
-func PostAgentEvent(agentId string, event *Event) {
+func PostAgentEvent(agentId string, event *AgentEvent) {
 	eventQueueLocker.Lock()
 	defer eventQueueLocker.Unlock()
 	m, found := eventQueueMap[agentId]
@@ -79,7 +71,7 @@ func PostAgentEvent(agentId string, event *Event) {
 }
 
 // 检查Agent是否正在运行
-func CheckAgentIsWaiting(agentId string) (state *State, isWaiting bool) {
+func CheckAgentIsWaiting(agentId string) (state *AgentState, isWaiting bool) {
 	eventQueueLocker.Lock()
 	defer eventQueueLocker.Unlock()
 	queue, _ := eventQueueMap[agentId]

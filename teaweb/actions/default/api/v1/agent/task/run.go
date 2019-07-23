@@ -34,7 +34,7 @@ func (this *RunAction) RunGet(params struct {
 		return
 	}
 
-	agentutils.PostAgentEvent(params.AgentId, &agentutils.Event{
+	agentutils.PostAgentEvent(params.AgentId, &agentutils.AgentEvent{
 		Name: "RUN_TASK",
 		Data: maps.Map{
 			"taskId": params.TaskId,
@@ -43,7 +43,7 @@ func (this *RunAction) RunGet(params struct {
 
 	// 同步
 	if app.IsSharedWithGroup {
-		agentutils.SyncAppEvent(agent.Id, agent.GroupIds, app, &agentutils.Event{
+		agentutils.SyncAppEvent(agent.Id, agent.GroupIds, app, &agentutils.AgentEvent{
 			Name: "RUN_TASK",
 			Data: maps.Map{
 				"taskId": params.TaskId,

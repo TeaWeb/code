@@ -46,7 +46,7 @@ func InitAppData(actionWrapper actions.ActionWrapper, agentId string, appId stri
 func FormatTask(task *agents.TaskConfig, agentId string) maps.Map {
 	// 最近执行
 	ctx, _ := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	cursor, err := teamongo.FindCollection("logs.agent." + agentId).Find(ctx, map[string]interface{}{
+	cursor, err := teamongo.FindCollection("logs.agent."+agentId).Find(ctx, map[string]interface{}{
 		"taskId": task.Id,
 	}, options.Find().SetSort(map[string]interface{}{
 		"_id": -1,
@@ -97,7 +97,7 @@ func FindSharedAgents(currentAgentId string, groupIds []string, app *agents.AppC
 
 // 同步App到其他Agents
 // op是附加操作
-func SyncApp(currentAgentId string, groupIds []string, app *agents.AppConfig, event *Event, op func(agent *agents.AgentConfig) error) error {
+func SyncApp(currentAgentId string, groupIds []string, app *agents.AppConfig, event *AgentEvent, op func(agent *agents.AgentConfig) error) error {
 	if app.IsSharedWithGroup { // 添加共享
 		for _, agent := range agents.AllSharedAgents() {
 			if agent.Id == currentAgentId || !agent.InGroups(groupIds) {
@@ -161,7 +161,7 @@ func SyncApp(currentAgentId string, groupIds []string, app *agents.AppConfig, ev
 }
 
 // 仅同步Event
-func SyncAppEvent(currentAgentId string, groupIds []string, app *agents.AppConfig, event *Event) error {
+func SyncAppEvent(currentAgentId string, groupIds []string, app *agents.AppConfig, event *AgentEvent) error {
 	if app.IsSharedWithGroup {
 		for _, agent := range agents.AllSharedAgents() {
 			if agent.Id == currentAgentId || !agent.InGroups(groupIds) {
