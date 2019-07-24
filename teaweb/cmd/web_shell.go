@@ -13,6 +13,8 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"io"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -79,6 +81,9 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 						time.Sleep(1 * time.Second)
 					}
 				}
+
+				// 删除PID
+				files.NewFile(Tea.Root + "/bin/pid").Delete()
 				os.Exit(0)
 			}
 		}
@@ -118,24 +123,30 @@ func (this *WebShell) execArgs(writer io.Writer) bool {
 		return false
 	}
 	args := os.Args[1:]
-	if lists.ContainsAny(args, "?", "help", "-help", "h", "-h") { // 帮助
+	arg0 := ""
+	if len(args) > 0 {
+		arg0 = args[0]
+	}
+	if this.hasArg(arg0, "?", "help", "-help", "h", "-h") { // 帮助
 		return this.ExecHelp(writer)
-	} else if lists.ContainsAny(args, "-v", "version", "-version") { // 版本号
+	} else if this.hasArg(arg0, "-v", "version", "-version") { // 版本号
 		return this.ExecVersion(writer)
-	} else if lists.ContainsString(args, "start") { // 启动
+	} else if this.hasArg(arg0, "start") { // 启动
 		return this.ExecStart(writer)
-	} else if lists.ContainsString(args, "stop") { // 停止
+	} else if this.hasArg(arg0, "stop") { // 停止
 		return this.ExecStop(os.Stdout)
-	} else if lists.ContainsString(args, "reload") { // 重新加载代理配置
+	} else if this.hasArg(arg0, "reload") { // 重新加载代理配置
 		return this.ExecReload(writer)
-	} else if lists.ContainsString(args, "restart") { // 重启
+	} else if this.hasArg(arg0, "restart") { // 重启
 		return this.ExecRestart(writer)
-	} else if lists.ContainsString(args, "reset") { // 重置
+	} else if this.hasArg(arg0, "reset") { // 重置
 		return this.ExecReset(writer)
-	} else if lists.ContainsString(args, "status") { // 状态
+	} else if this.hasArg(arg0, "status") { // 状态
 		return this.ExecStatus(writer)
-	} else if lists.ContainsString(args, "service") && runtime.GOOS == "windows" { // Windows服务
+	} else if this.hasArg(arg0, "service") && runtime.GOOS == "windows" { // Windows服务
 		return this.ExecService(writer)
+	} else if this.hasArg(arg0, "pprof") {
+		return this.ExecPprof(writer)
 	}
 
 	if len(args) > 0 {
@@ -159,6 +170,7 @@ func (this *WebShell) ExecHelp(writer io.Writer) bool {
 	this.write(writer, "  restart", "\n     restart the server")
 	this.write(writer, "  reset", "\n     reset the server locker status")
 	this.write(writer, "  status", "\n     print server status")
+	this.write(writer, "  pprof [address]", "\n     start pprof server")
 	this.write(writer, "")
 	this.write(writer, "To run the server in foreground:", "\n   ./bin/teaweb")
 
@@ -300,6 +312,23 @@ func (this *WebShell) ExecStatus(writer io.Writer) bool {
 	return true
 }
 
+// 启动pprof
+func (this *WebShell) ExecPprof(writer io.Writer) bool {
+	addr := ":6060"
+	if len(os.Args) == 3 {
+		addr = os.Args[2]
+	}
+	this.write(writer, "===\nstart pprof server '"+addr+"'\n===")
+	go func() {
+		err := http.ListenAndServe(addr, nil)
+		if err != nil {
+			this.write(writer, "[error]"+err.Error())
+		}
+	}()
+
+	return false
+}
+
 // 检查PID
 func (this *WebShell) checkPid() *os.Process {
 	// check pid file
@@ -371,4 +400,9 @@ func (this *WebShell) checkPid() *os.Process {
 // 写入string到writer
 func (this *WebShell) write(writer io.Writer, args ...interface{}) {
 	fmt.Fprintln(writer, args ...)
+}
+
+// 判断命令
+func (this *WebShell) hasArg(arg string, value ...string) bool {
+	return lists.ContainsAny(value, arg)
 }
