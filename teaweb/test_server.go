@@ -139,5 +139,17 @@ func startTestServer() {
 			}
 			resp.Write(data)
 		}).
+		Get("/basicAuth", func(req *http.Request, resp http.ResponseWriter) {
+			if len(req.Header.Get("Authorization")) == 0 {
+				resp.Header().Set("WWW-Authenticate", `Basic realm="My Realm"`)
+				resp.WriteHeader(401)
+			}
+
+			for k, v := range req.Header {
+				for _, v1 := range v {
+					resp.Write([]byte("Header " + k + " " + v1 + "\n"))
+				}
+			}
+		}).
 		StartOn("127.0.0.1:9991")
 }

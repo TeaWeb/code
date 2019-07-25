@@ -1,6 +1,7 @@
 package locations
 
 import (
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/locationutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
@@ -16,6 +17,10 @@ func (this *DetailAction) Run(params struct {
 	LocationId string
 }) {
 	server, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "detail")
+
+	if len(location.Pages) == 0 {
+		location.Pages = []*teaconfigs.PageConfig{}
+	}
 
 	this.Data["location"] = maps.Map{
 		"on":              location.On,
@@ -42,6 +47,10 @@ func (this *DetailAction) Run(params struct {
 		"websocket":   location.Websocket,
 		"backends":    location.Backends,
 		"wafId":       location.WafId,
+
+		"shutdownPage":   location.ShutdownPage,
+		"shutdownPageOn": location.ShutdownPageOn,
+		"pages":          location.Pages,
 	}
 	this.Data["server"] = server
 

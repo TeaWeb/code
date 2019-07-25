@@ -347,6 +347,13 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			if location.GzipMinBytes() > 0 {
 				this.gzipMinLength = location.GzipMinBytes()
 			}
+			if len(location.Pages) > 0 {
+				this.pages = append(this.pages, location.Pages ...)
+			}
+			if location.ShutdownPageOn {
+				this.shutdownPageOn = true
+				this.shutdownPage = location.ShutdownPage
+			}
 			if location.RedirectToHttps && this.rawScheme == "http" {
 				this.redirectToHttps = true
 				return nil

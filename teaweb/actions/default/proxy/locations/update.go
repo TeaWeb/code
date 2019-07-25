@@ -35,6 +35,10 @@ func (this *UpdateAction) Run(params struct {
 	}
 	this.Data["accessLogs"] = proxyutils.FormatAccessLog(location.AccessLog)
 
+	if len(location.Pages) == 0 {
+		location.Pages = []*teaconfigs.PageConfig{}
+	}
+
 	this.Data["location"] = maps.Map{
 		"id":                location.Id,
 		"on":                location.On,
@@ -62,6 +66,10 @@ func (this *UpdateAction) Run(params struct {
 		"backends":    location.Backends,
 		"wafOn":       location.WAFOn,
 		"wafId":       location.WafId,
+
+		"shutdownPage":   location.ShutdownPage,
+		"shutdownPageOn": location.ShutdownPageOn,
+		"pages":          location.Pages,
 	}
 
 	// 运算符
@@ -94,6 +102,12 @@ func (this *UpdateAction) RunPost(params struct {
 	On                   bool
 	IsReverse            bool
 	IsCaseInsensitive    bool
+
+	PageStatus []string
+	PageURL    []string
+
+	ShutdownPageOn bool
+	ShutdownPage   string
 
 	CondParams []string
 	CondOps    []string
@@ -150,6 +164,24 @@ func (this *UpdateAction) RunPost(params struct {
 	location.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
 	location.RedirectToHttps = params.RedirectToHttps
 
+	// 特殊页面
+	location.Pages = []*teaconfigs.PageConfig{}
+	for index, status := range params.PageStatus {
+		if index < len(params.PageURL) {
+			page := teaconfigs.NewPageConfig()
+			page.Status = []string{status}
+			page.URL = params.PageURL[index]
+			location.AddPage(page)
+		}
+	}
+
+	location.ShutdownPageOn = params.ShutdownPageOn
+	if location.ShutdownPageOn && len(params.ShutdownPage) == 0 {
+		this.FailField("shutdownPage", "请输入临时关闭页面文件路径")
+	}
+	location.ShutdownPage = params.ShutdownPage
+
+	// 首页
 	index := []string{}
 	for _, i := range params.Index {
 		if len(i) > 0 && !lists.ContainsString(index, i) {

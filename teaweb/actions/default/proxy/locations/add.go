@@ -66,6 +66,12 @@ func (this *AddAction) RunPost(params struct {
 	IsReverse            bool
 	IsCaseInsensitive    bool
 
+	PageStatus []string
+	PageURL    []string
+
+	ShutdownPageOn bool
+	ShutdownPage   string
+
 	CondParams []string
 	CondOps    []string
 	CondValues []string
@@ -120,6 +126,24 @@ func (this *AddAction) RunPost(params struct {
 	location.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
 	location.RedirectToHttps = params.RedirectToHttps
 
+	// 特殊页面
+	location.Pages = []*teaconfigs.PageConfig{}
+	for index, status := range params.PageStatus {
+		if index < len(params.PageURL) {
+			page := teaconfigs.NewPageConfig()
+			page.Status = []string{status}
+			page.URL = params.PageURL[index]
+			location.AddPage(page)
+		}
+	}
+
+	location.ShutdownPageOn = params.ShutdownPageOn
+	if location.ShutdownPageOn && len(params.ShutdownPage) == 0 {
+		this.FailField("shutdownPage", "请输入临时关闭页面文件路径")
+	}
+	location.ShutdownPage = params.ShutdownPage
+
+	// 首页
 	index := []string{}
 	for _, i := range params.Index {
 		if len(i) > 0 && !lists.ContainsString(index, i) {

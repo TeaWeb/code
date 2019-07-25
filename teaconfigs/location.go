@@ -65,6 +65,10 @@ type LocationConfig struct {
 	// - cond ${requestPath} regexp .*\.png
 	Cond []*RequestCond `yaml:"cond" json:"cond"`
 
+	Pages          []*PageConfig `yaml:"pages" json:"pages"`                   // 特殊页
+	ShutdownPageOn bool          `yaml:"shutdownPageOn" json:"shutdownPageOn"` // 是否开启临时关闭页面
+	ShutdownPage   string        `yaml:"shutdownPage" json:"shutdownPage"`     // 临时关闭页面
+
 	// 请求分组（从server复制而来）
 	requestGroups          []*RequestGroup
 	defaultRequestGroup    *RequestGroup
@@ -282,6 +286,14 @@ func (this *LocationConfig) Validate() error {
 		}
 		if group.HasFilters() {
 			this.hasRequestGroupFilters = true
+		}
+	}
+
+	// pages
+	for _, page := range this.Pages {
+		err := page.Validate()
+		if err != nil {
+			return err
 		}
 	}
 
@@ -600,4 +612,9 @@ func (this *LocationConfig) CloneState(oldLocation *LocationConfig) {
 	if this.Websocket != nil && oldLocation.Websocket != nil {
 		this.Websocket.CloneState(oldLocation.Websocket)
 	}
+}
+
+// 添加Page
+func (this *LocationConfig) AddPage(page *PageConfig) {
+	this.Pages = append(this.Pages, page)
 }
