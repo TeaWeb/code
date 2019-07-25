@@ -20,6 +20,8 @@ import (
 type BackendConfig struct {
 	shared.HeaderList `yaml:",inline"`
 
+	TeaVersion string `yaml:"teaVersion" json:"teaVersion"`
+
 	On           bool   `yaml:"on" json:"on"`                     // 是否启用
 	Id           string `yaml:"id" json:"id"`                     // ID
 	Version      int    `yaml:"version" json:"version"`           // 版本号
@@ -47,6 +49,7 @@ type BackendConfig struct {
 
 	// 健康检查URL，目前支持：
 	// - http|https 返回2xx-3xx认为成功
+	CheckOn       bool   `yaml:"checkOn" json:"checkOn"` // 是否开启
 	CheckURL      string `yaml:"checkURL" json:"checkURL"`
 	CheckInterval int    `yaml:"checkInterval" json:"checkInterval"`
 	CheckTimeout  string `yaml:"checkTimeout" json:"checkTimeout"` // 超时时间
@@ -77,13 +80,16 @@ type BackendConfig struct {
 // 获取新对象
 func NewBackendConfig() *BackendConfig {
 	return &BackendConfig{
-		On: true,
-		Id: stringutil.Rand(16),
+		On:         true,
+		Id:         stringutil.Rand(16),
+		TeaVersion: teaconst.TeaVersion,
 	}
 }
 
 // 校验
 func (this *BackendConfig) Validate() error {
+	this.Compatible()
+
 	// unique key
 	this.uniqueKey = this.Id + "@" + fmt.Sprintf("%d", this.Version)
 
@@ -134,7 +140,7 @@ func (this *BackendConfig) Validate() error {
 	}
 
 	// check
-	this.hasCheckURL = len(this.CheckURL) > 0
+	this.hasCheckURL = this.CheckOn && len(this.CheckURL) > 0
 	if len(this.CheckTimeout) > 0 {
 		this.checkTimeoutDuration, _ = time.ParseDuration(this.CheckTimeout)
 	}
@@ -147,6 +153,13 @@ func (this *BackendConfig) Validate() error {
 	this.hasHost = len(this.Host) > 0
 
 	return nil
+}
+
+// 处理兼容性
+func (this *BackendConfig) Compatible() {
+	if len(this.TeaVersion) == 0 {
+		this.CheckOn = len(this.CheckURL) > 0
+	}
 }
 
 // 连接超时时间
@@ -236,6 +249,9 @@ func (this *BackendConfig) RequestArgs() string {
 
 // 健康检查
 func (this *BackendConfig) CheckHealth() bool {
+	if !this.CheckOn {
+		return true
+	}
 	if len(this.CheckURL) == 0 {
 		return true
 	}
@@ -267,7 +283,7 @@ func (this *BackendConfig) RestartChecking() {
 		this.checkLooper = nil
 	}
 
-	if len(this.CheckURL) == 0 {
+	if !this.CheckOn || len(this.CheckURL) == 0 {
 		return
 	}
 

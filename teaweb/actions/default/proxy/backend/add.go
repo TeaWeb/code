@@ -62,9 +62,11 @@ func (this *AddAction) RunPost(params struct {
 	IsBackup        bool
 	RequestGroupIds []string
 	RequestURI      string
-	CheckURL        string
-	CheckInterval   int
-	CheckTimeout    string
+
+	CheckOn       bool
+	CheckURL      string
+	CheckInterval int
+	CheckTimeout  string
 
 	RequestHeaderNames  []string
 	RequestHeaderValues []string
@@ -85,9 +87,16 @@ func (this *AddAction) RunPost(params struct {
 		Field("address", params.Address).
 		Require("请输入后端服务器地址")
 
-	if len(params.CheckURL) > 0 {
-		if !regexp.MustCompile("(?i)(http://|https://)").MatchString(params.CheckURL) {
-			this.FailField("checkURL", "健康检查URL必须以http://或https://开头")
+	// 健康检查
+	if params.CheckOn {
+		if len(params.CheckURL) == 0 {
+			this.FailField("checkURL", "健康检查URL不能为空")
+		}
+
+		if len(params.CheckURL) > 0 {
+			if !regexp.MustCompile("(?i)(http://|https://)").MatchString(params.CheckURL) {
+				this.FailField("checkURL", "健康检查URL必须以http://或https://开头")
+			}
 		}
 	}
 
@@ -105,6 +114,7 @@ func (this *AddAction) RunPost(params struct {
 	backend.MaxConns = params.MaxConns
 	backend.IsBackup = params.IsBackup
 	backend.RequestURI = params.RequestURI
+	backend.CheckOn = params.CheckOn
 	backend.CheckURL = params.CheckURL
 	backend.CheckInterval = params.CheckInterval
 	backend.CheckTimeout = params.CheckTimeout + "s"

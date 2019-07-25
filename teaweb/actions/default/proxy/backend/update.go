@@ -77,6 +77,7 @@ func (this *UpdateAction) Run(params struct {
 		"isBackup":        backend.IsBackup,
 		"requestGroupIds": backend.RequestGroupIds,
 		"requestURI":      backend.RequestURI,
+		"checkOn":         backend.CheckOn,
 		"checkURL":        backend.CheckURL,
 		"checkInterval":   backend.CheckInterval,
 		"checkTimeout":    strings.TrimSuffix(backend.CheckTimeout, "s"),
@@ -109,6 +110,7 @@ func (this *UpdateAction) RunPost(params struct {
 	RequestGroupIds []string
 	RequestURI      string
 
+	CheckOn       bool
 	CheckURL      string
 	CheckInterval int
 	CheckTimeout  string
@@ -132,9 +134,16 @@ func (this *UpdateAction) RunPost(params struct {
 		Field("address", params.Address).
 		Require("请输入后端服务器地址")
 
-	if len(params.CheckURL) > 0 {
-		if !regexp.MustCompile("(?i)(http://|https://)").MatchString(params.CheckURL) {
-			this.FailField("checkURL", "健康检查URL必须以http://或https://开头")
+	// 健康检查
+	if params.CheckOn {
+		if len(params.CheckURL) == 0 {
+			this.FailField("checkURL", "健康检查URL不能为空")
+		}
+
+		if len(params.CheckURL) > 0 {
+			if !regexp.MustCompile("(?i)(http://|https://)").MatchString(params.CheckURL) {
+				this.FailField("checkURL", "健康检查URL必须以http://或https://开头")
+			}
 		}
 	}
 
@@ -162,9 +171,12 @@ func (this *UpdateAction) RunPost(params struct {
 	backend.IsBackup = params.IsBackup
 	backend.RequestGroupIds = params.RequestGroupIds
 	backend.RequestURI = params.RequestURI
+
+	backend.CheckOn = params.CheckOn
 	backend.CheckURL = params.CheckURL
 	backend.CheckInterval = params.CheckInterval
 	backend.CheckTimeout = params.CheckTimeout + "s"
+
 	backend.IdleConns = params.IdleConns
 	backend.IdleTimeout = params.IdleTimeout + "s"
 
