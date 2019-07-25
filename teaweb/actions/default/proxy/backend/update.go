@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"regexp"
+	"strings"
 )
 
 type UpdateAction actions.Action
@@ -67,8 +68,10 @@ func (this *UpdateAction) Run(params struct {
 		"weight":          backend.Weight,
 		"failTimeout":     int(backend.FailTimeoutDuration().Seconds()),
 		"readTimeout":     int(backend.ReadTimeoutDuration().Seconds()),
+		"idleTimeout":     strings.TrimSuffix(backend.IdleTimeout, "s"),
 		"on":              backend.On,
 		"maxConns":        backend.MaxConns,
+		"idleConns":       backend.IdleConns,
 		"maxFails":        backend.MaxFails,
 		"isDown":          backend.IsDown,
 		"isBackup":        backend.IsBackup,
@@ -76,6 +79,7 @@ func (this *UpdateAction) Run(params struct {
 		"requestURI":      backend.RequestURI,
 		"checkURL":        backend.CheckURL,
 		"checkInterval":   backend.CheckInterval,
+		"checkTimeout":    strings.TrimSuffix(backend.CheckTimeout, "s"),
 		"requestHeaders":  backend.RequestHeaders,
 		"responseHeaders": backend.ResponseHeaders,
 		"host":            backend.Host,
@@ -97,13 +101,17 @@ func (this *UpdateAction) RunPost(params struct {
 	Code            string
 	FailTimeout     uint
 	ReadTimeout     uint
+	IdleTimeout     string
 	MaxFails        int32
 	MaxConns        int32
+	IdleConns       int32
 	IsBackup        bool
 	RequestGroupIds []string
 	RequestURI      string
-	CheckURL        string
-	CheckInterval   int
+
+	CheckURL      string
+	CheckInterval int
+	CheckTimeout  string
 
 	RequestHeaderNames  []string
 	RequestHeaderValues []string
@@ -139,6 +147,7 @@ func (this *UpdateAction) RunPost(params struct {
 	if backend == nil {
 		this.Fail("找不到要修改的后端服务器")
 	}
+	backend.Touch()
 
 	backend.Address = params.Address
 	backend.Scheme = params.Scheme
@@ -155,6 +164,9 @@ func (this *UpdateAction) RunPost(params struct {
 	backend.RequestURI = params.RequestURI
 	backend.CheckURL = params.CheckURL
 	backend.CheckInterval = params.CheckInterval
+	backend.CheckTimeout = params.CheckTimeout + "s"
+	backend.IdleConns = params.IdleConns
+	backend.IdleTimeout = params.IdleTimeout + "s"
 
 	// 请求Header
 	backend.RequestHeaders = []*shared.HeaderConfig{}

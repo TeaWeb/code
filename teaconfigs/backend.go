@@ -20,40 +20,48 @@ import (
 type BackendConfig struct {
 	shared.HeaderList `yaml:",inline"`
 
-	On              bool                   `yaml:"on" json:"on"`                                 // 是否启用
-	Id              string                 `yaml:"id" json:"id"`                                 // ID
-	Code            string                 `yaml:"code" json:"code"`                             // 代号
-	Address         string                 `yaml:"address" json:"address"`                       // 地址
-	Scheme          string                 `yaml:"scheme" json:"scheme"`                         // 协议，http、https、tcp、tcp+tls
-	Weight          uint                   `yaml:"weight" json:"weight"`                         // 权重
-	IsBackup        bool                   `yaml:"backup" json:"isBackup"`                       // 是否为备份
-	FailTimeout     string                 `yaml:"failTimeout" json:"failTimeout"`               // 连接失败超时
-	ReadTimeout     string                 `yaml:"readTimeout" json:"readTimeout"`               // 读取超时时间
-	MaxFails        int32                  `yaml:"maxFails" json:"maxFails"`                     // 最多失败次数
-	CurrentFails    int32                  `yaml:"currentFails" json:"currentFails"`             // 当前已失败次数
-	MaxConns        int32                  `yaml:"maxConns" json:"maxConns"`                     // 最大并发连接数
-	CurrentConns    int32                  `yaml:"currentConns" json:"currentConns"`             // 当前连接数
-	IsDown          bool                   `yaml:"down" json:"isDown"`                           // 是否下线
-	DownTime        time.Time              `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
-	RequestGroupIds []string               `yaml:"requestGroupIds" json:"requestGroupIds"`       // 所属请求分组
-	RequestURI      string                 `yaml:"requestURI" json:"requestURI"`                 // 转发后的请求URI
-	ResponseHeaders []*shared.HeaderConfig `yaml:"responseHeaders" json:"responseHeaders"`       // 响应Header
-	Host            string                 `yaml:"host" json:"host"`                             // 自定义主机名
+	On           bool   `yaml:"on" json:"on"`                     // 是否启用
+	Id           string `yaml:"id" json:"id"`                     // ID
+	Version      int    `yaml:"version" json:"version"`           // 版本号
+	Code         string `yaml:"code" json:"code"`                 // 代号
+	Address      string `yaml:"address" json:"address"`           // 地址
+	Scheme       string `yaml:"scheme" json:"scheme"`             // 协议，http、https、tcp、tcp+tls
+	Weight       uint   `yaml:"weight" json:"weight"`             // 权重
+	IsBackup     bool   `yaml:"backup" json:"isBackup"`           // 是否为备份
+	FailTimeout  string `yaml:"failTimeout" json:"failTimeout"`   // 连接失败超时
+	ReadTimeout  string `yaml:"readTimeout" json:"readTimeout"`   // 读取超时时间
+	IdleTimeout  string `yaml:"idleTimeout" json:"idleTimeout"`   // 空闲连接超时时间
+	MaxFails     int32  `yaml:"maxFails" json:"maxFails"`         // 最多失败次数
+	CurrentFails int32  `yaml:"currentFails" json:"currentFails"` // 当前已失败次数
+	MaxConns     int32  `yaml:"maxConns" json:"maxConns"`         // 最大并发连接数
+	CurrentConns int32  `yaml:"currentConns" json:"currentConns"` // 当前连接数
+	IdleConns    int32  `yaml:"idleConns" json:"idleConns"`       // 最大空闲连接数
+
+	IsDown   bool      `yaml:"down" json:"isDown"`                           // 是否下线
+	DownTime time.Time `yaml:"downTime,omitempty" json:"downTime,omitempty"` // 下线时间
+
+	RequestGroupIds []string               `yaml:"requestGroupIds" json:"requestGroupIds"` // 所属请求分组
+	RequestURI      string                 `yaml:"requestURI" json:"requestURI"`           // 转发后的请求URI
+	ResponseHeaders []*shared.HeaderConfig `yaml:"responseHeaders" json:"responseHeaders"` // 响应Header
+	Host            string                 `yaml:"host" json:"host"`                       // 自定义主机名
 
 	// 健康检查URL，目前支持：
 	// - http|https 返回2xx-3xx认为成功
 	CheckURL      string `yaml:"checkURL" json:"checkURL"`
 	CheckInterval int    `yaml:"checkInterval" json:"checkInterval"`
+	CheckTimeout  string `yaml:"checkTimeout" json:"checkTimeout"` // 超时时间
 
 	failTimeoutDuration time.Duration
 	readTimeoutDuration time.Duration
+	idleTimeoutDuration time.Duration
 
 	hasRequestURI bool
 	requestPath   string
 	requestArgs   string
 
-	hasCheckURL bool
-	checkLooper *timers.Looper
+	hasCheckURL          bool
+	checkLooper          *timers.Looper
+	checkTimeoutDuration time.Duration
 
 	upCallbacks   []func(backend *BackendConfig)
 	downCallbacks []func(backend *BackendConfig)
@@ -77,7 +85,7 @@ func NewBackendConfig() *BackendConfig {
 // 校验
 func (this *BackendConfig) Validate() error {
 	// unique key
-	this.uniqueKey = this.Id + "@" + fmt.Sprintf("%p", this)
+	this.uniqueKey = this.Id + "@" + fmt.Sprintf("%d", this.Version)
 
 	// failTimeout
 	if len(this.FailTimeout) > 0 {
@@ -87,6 +95,11 @@ func (this *BackendConfig) Validate() error {
 	// readTimeout
 	if len(this.ReadTimeout) > 0 {
 		this.readTimeoutDuration, _ = time.ParseDuration(this.ReadTimeout)
+	}
+
+	// idleTimeout
+	if len(this.IdleTimeout) > 0 {
+		this.idleTimeoutDuration, _ = time.ParseDuration(this.IdleTimeout)
 	}
 
 	// 是否有端口
@@ -122,6 +135,9 @@ func (this *BackendConfig) Validate() error {
 
 	// check
 	this.hasCheckURL = len(this.CheckURL) > 0
+	if len(this.CheckTimeout) > 0 {
+		this.checkTimeoutDuration, _ = time.ParseDuration(this.CheckTimeout)
+	}
 
 	// headers
 	this.hasRequestHeaders = len(this.RequestHeaders) > 0
@@ -141,6 +157,11 @@ func (this *BackendConfig) FailTimeoutDuration() time.Duration {
 // 读取超时时间
 func (this *BackendConfig) ReadTimeoutDuration() time.Duration {
 	return this.readTimeoutDuration
+}
+
+// 保持空闲连接时间
+func (this *BackendConfig) IdleTimeoutDuration() time.Duration {
+	return this.idleTimeoutDuration
 }
 
 // 候选对象代号
@@ -225,7 +246,9 @@ func (this *BackendConfig) CheckHealth() bool {
 	}
 	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
 	timeout := 10 * time.Second
-	if this.failTimeoutDuration > 0 {
+	if this.checkTimeoutDuration > 0 {
+		timeout = this.checkTimeoutDuration
+	} else if this.failTimeoutDuration > 0 {
 		timeout = this.failTimeoutDuration
 	}
 	client := teautils.SharedHttpClient(timeout)
@@ -348,4 +371,9 @@ func (this *BackendConfig) CloneState(oldBackend *BackendConfig) {
 // 获取唯一ID
 func (this *BackendConfig) UniqueKey() string {
 	return this.uniqueKey
+}
+
+// 更新
+func (this *BackendConfig) Touch() {
+	this.Version++
 }

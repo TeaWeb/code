@@ -32,10 +32,6 @@ func NewClientPool() *ClientPool {
 // 根据地址获取客户端
 func (this *ClientPool) client(backend *teaconfigs.BackendConfig) *http.Client {
 	key := backend.UniqueKey()
-	maxConnections := int(backend.MaxConns)
-	connectionTimeout := backend.FailTimeoutDuration()
-	address := backend.Address
-	readTimeout := backend.ReadTimeoutDuration()
 
 	this.locker.RLock()
 	client, found := this.clientsMap[key]
@@ -46,18 +42,34 @@ func (this *ClientPool) client(backend *teaconfigs.BackendConfig) *http.Client {
 	this.locker.RUnlock()
 	this.locker.Lock()
 
+	maxConnections := int(backend.MaxConns)
+	connectionTimeout := backend.FailTimeoutDuration()
+	address := backend.Address
+	readTimeout := backend.ReadTimeoutDuration()
+	idleTimeout := backend.IdleTimeoutDuration()
+	idleConns := int(backend.IdleConns)
+
 	// 超时时间
 	if connectionTimeout <= 0 {
 		connectionTimeout = 15 * time.Second
+	}
+
+	if idleTimeout <= 0 {
+		idleTimeout = 2 * time.Minute
 	}
 
 	numberCPU := runtime.NumCPU()
 	if numberCPU == 0 {
 		numberCPU = 1
 	}
-	if maxConnections == 0 {
+	if maxConnections <= 0 {
 		maxConnections = numberCPU
 	}
+
+	if idleConns <= 0 {
+		idleConns = numberCPU
+	}
+
 	transport := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			// 握手配置
@@ -67,9 +79,9 @@ func (this *ClientPool) client(backend *teaconfigs.BackendConfig) *http.Client {
 			}).DialContext(ctx, network, address)
 		},
 		MaxIdleConns:          0,
-		MaxIdleConnsPerHost:   maxConnections,
+		MaxIdleConnsPerHost:   idleConns,
 		MaxConnsPerHost:       maxConnections,
-		IdleConnTimeout:       2 * time.Minute, // TODO 需要可以设置
+		IdleConnTimeout:       idleTimeout,
 		ExpectContinueTimeout: 1 * time.Second,
 		TLSHandshakeTimeout:   0, // 不限
 		TLSClientConfig: &tls.Config{

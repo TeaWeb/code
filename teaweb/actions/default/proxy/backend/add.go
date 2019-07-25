@@ -55,13 +55,16 @@ func (this *AddAction) RunPost(params struct {
 	Code            string
 	FailTimeout     uint
 	ReadTimeout     uint
+	IdleTimeout     string
 	MaxFails        int32
 	MaxConns        int32
+	IdleConns       int32
 	IsBackup        bool
 	RequestGroupIds []string
 	RequestURI      string
 	CheckURL        string
 	CheckInterval   int
+	CheckTimeout    string
 
 	RequestHeaderNames  []string
 	RequestHeaderValues []string
@@ -104,6 +107,9 @@ func (this *AddAction) RunPost(params struct {
 	backend.RequestURI = params.RequestURI
 	backend.CheckURL = params.CheckURL
 	backend.CheckInterval = params.CheckInterval
+	backend.CheckTimeout = params.CheckTimeout + "s"
+	backend.IdleConns = params.IdleConns
+	backend.IdleTimeout = params.IdleTimeout + "s"
 
 	// 请求Header
 	if len(params.RequestHeaderNames) > 0 {
