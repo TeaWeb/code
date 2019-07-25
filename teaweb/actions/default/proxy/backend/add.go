@@ -89,11 +89,11 @@ func (this *AddAction) RunPost(params struct {
 
 	// 健康检查
 	if params.CheckOn {
-		if len(params.CheckURL) == 0 {
-			this.FailField("checkURL", "健康检查URL不能为空")
-		}
+		if server.IsHTTP() {
+			if len(params.CheckURL) == 0 {
+				this.FailField("checkURL", "健康检查URL不能为空")
+			}
 
-		if len(params.CheckURL) > 0 {
 			if !regexp.MustCompile("(?i)(http://|https://)").MatchString(params.CheckURL) {
 				this.FailField("checkURL", "健康检查URL必须以http://或https://开头")
 			}

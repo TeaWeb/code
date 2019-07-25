@@ -149,7 +149,9 @@ func (this *TCPClient) connect() {
 			}
 			this.rConn = conn
 		case "tcp+tls":
-			conn, err := tls.Dial("tcp", this.backend.Address, &tls.Config{
+			conn, err := tls.DialWithDialer(&net.Dialer{
+				Timeout: this.backend.FailTimeoutDuration(),
+			}, "tcp", this.backend.Address, &tls.Config{
 				InsecureSkipVerify: true,
 			})
 			if err != nil {

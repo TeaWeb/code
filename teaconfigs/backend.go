@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
@@ -252,28 +253,57 @@ func (this *BackendConfig) CheckHealth() bool {
 	if !this.CheckOn {
 		return true
 	}
-	if len(this.CheckURL) == 0 {
-		return true
-	}
-	req, err := http.NewRequest(http.MethodGet, this.CheckURL, nil)
-	if err != nil {
-		logs.Error(err)
-		return false
-	}
-	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
-	timeout := 10 * time.Second
+
+	timeout := 5 * time.Second
 	if this.checkTimeoutDuration > 0 {
 		timeout = this.checkTimeoutDuration
 	} else if this.failTimeoutDuration > 0 {
 		timeout = this.failTimeoutDuration
 	}
-	client := teautils.SharedHttpClient(timeout)
-	resp, err := client.Do(req)
-	if err != nil {
-		return false
+
+	// http, https
+	if this.IsHTTP() {
+		if len(this.CheckURL) == 0 {
+			return true
+		}
+		req, err := http.NewRequest(http.MethodGet, this.CheckURL, nil)
+		if err != nil {
+			logs.Error(err)
+			return false
+		}
+		req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
+		client := teautils.SharedHttpClient(timeout)
+		resp, err := client.Do(req)
+		if err != nil {
+			return false
+		}
+		defer resp.Body.Close()
+		return resp.StatusCode >= 200 && resp.StatusCode < 400
 	}
-	defer resp.Body.Close()
-	return resp.StatusCode >= 200 && resp.StatusCode < 400
+
+	// tcp, tcp+tls
+	if this.IsTCP() {
+		if this.Scheme == "tcp" {
+			conn, err := net.DialTimeout("tcp", this.Address, timeout)
+			if err != nil {
+				return false
+			}
+			conn.Close()
+			return true
+		} else if this.Scheme == "tcp+tls" {
+			conn, err := tls.DialWithDialer(&net.Dialer{
+				Timeout: timeout,
+			}, "tcp", this.Address, &tls.Config{
+				InsecureSkipVerify: true,
+			})
+			if err != nil {
+				return false
+			}
+			conn.Close()
+		}
+	}
+
+	return true
 }
 
 // 重启检查
@@ -283,7 +313,11 @@ func (this *BackendConfig) RestartChecking() {
 		this.checkLooper = nil
 	}
 
-	if !this.CheckOn || len(this.CheckURL) == 0 {
+	if !this.CheckOn {
+		return
+	}
+
+	if this.IsHTTP() && len(this.CheckURL) == 0 {
 		return
 	}
 
@@ -392,4 +426,14 @@ func (this *BackendConfig) UniqueKey() string {
 // 更新
 func (this *BackendConfig) Touch() {
 	this.Version++
+}
+
+//是否为HTTP
+func (this *BackendConfig) IsHTTP() bool {
+	return len(this.Scheme) == 0 || this.Scheme == "http" || this.Scheme == "https"
+}
+
+// 是否为TCP
+func (this *BackendConfig) IsTCP() bool {
+	return this.Scheme == "tcp" || this.Scheme == "tcp+tls"
 }
