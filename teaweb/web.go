@@ -5,6 +5,7 @@ import (
 	_ "github.com/TeaWeb/code/teacache"
 	_ "github.com/TeaWeb/code/teacluster"
 	"github.com/TeaWeb/code/teaproxy"
+	"github.com/TeaWeb/code/teautils"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/apps"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/board"
@@ -72,6 +73,9 @@ func Start() {
 	if shell.ShouldStop {
 		return
 	}
+
+	// 设置资源限制
+	teautils.SetSuitableRLimit()
 
 	// 日志
 	writer := new(utils.LogWriter)
