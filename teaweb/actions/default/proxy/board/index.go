@@ -24,6 +24,11 @@ func (this *IndexAction) Run(params struct {
 		this.Fail("找不到要查看的代理服务")
 	}
 
+	if !server.IsHTTP() {
+		this.RedirectURL("/proxy/detail?serverId=" + server.Id)
+		return
+	}
+
 	this.Data["server"] = maps.Map{
 		"id": server.Id,
 	}

@@ -33,6 +33,8 @@ func ConvertName(name string) string {
 		name = "广东省"
 	case "北京":
 		name = "北京市"
+	case "陕西":
+		name = "陕西省"
 	}
 	return name
 }

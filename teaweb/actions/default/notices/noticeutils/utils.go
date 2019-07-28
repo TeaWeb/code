@@ -1,6 +1,7 @@
 package noticeutils
 
 import (
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
@@ -151,4 +152,42 @@ func ExistNoticesWithHash(hash string, cond map[string]interface{}, duration tim
 		logs.Error(err)
 	}
 	return result == nil
+}
+
+// 发送一个代理的通知
+func NotifyProxyMessage(cond notices.ProxyCond, message string) error {
+	notice := notices.NewNotice()
+	notice.Message = message
+	notice.SetTime(time.Now())
+	notice.Proxy = cond
+	notice.Hash()
+
+	return NewNoticeQuery().Insert(notice)
+}
+
+// 发送一个代理的通知
+func NotifyProxyServerMessage(serverId string, level notices.NoticeLevel, message string) error {
+	return NotifyProxyMessage(notices.ProxyCond{
+		ServerId: serverId,
+		Level:    level,
+	}, message)
+}
+
+// 发送一个后端下线通知
+func NotifyProxyBackendDownMessage(serverId string, backend *teaconfigs.BackendConfig, location *teaconfigs.LocationConfig, websocket *teaconfigs.WebsocketConfig) error {
+	cond := notices.ProxyCond{
+		ServerId:  serverId,
+		BackendId: backend.Id,
+		Level:     notices.NoticeLevelWarning,
+	}
+	if location != nil {
+		cond.LocationId = location.Id
+	}
+	if websocket != nil {
+		cond.Websocket = true
+	}
+
+	// 不阻塞
+	go NotifyProxyMessage(cond, "后端服务器'"+backend.Address+"'因错误过多已经下线")
+	return nil
 }

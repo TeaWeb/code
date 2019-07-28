@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/gorilla/websocket"
 	"github.com/iwind/TeaGo/logs"
 	"io/ioutil"
@@ -103,6 +104,10 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 			if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
 				this.backend.IsDown = true
 				this.backend.DownTime = time.Now()
+
+				// 下线通知
+				noticeutils.NotifyProxyBackendDownMessage(this.server.Id, this.backend, this.location, this.websocket)
+
 				this.websocket.SetupScheduling(false)
 			}
 			return err

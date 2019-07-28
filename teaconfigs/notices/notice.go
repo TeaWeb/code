@@ -23,6 +23,7 @@ type Notice struct {
 // Proxy条件
 type ProxyCond struct {
 	ServerId   string `bson:"serverId" json:"serverId"`
+	Websocket  bool   `bson:"websocket" json:"websocket"`
 	LocationId string `bson:"locationId" json:"serverId"`
 	RewriteId  string `bson:"rewriteId" json:"serverId"`
 	BackendId  string `bson:"backendId" json:"serverId"`

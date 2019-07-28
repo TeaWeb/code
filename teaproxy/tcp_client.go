@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo/logs"
 	"io"
 	"net"
@@ -281,6 +282,10 @@ func (this *TCPClient) error(server *teaconfigs.ServerConfig, err error) {
 	if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
 		this.backend.IsDown = true
 		this.backend.DownTime = time.Now()
+
+		// 下线通知
+		noticeutils.NotifyProxyBackendDownMessage(server.Id, this.backend, nil, nil)
+
 		server.SetupScheduling(false)
 	}
 }

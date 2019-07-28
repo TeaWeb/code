@@ -1,6 +1,7 @@
 package notices
 
 import (
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
@@ -60,9 +61,11 @@ func (this *IndexAction) Run(params struct {
 		this.Data["notices"] = lists.Map(ones, func(k int, v interface{}) interface{} {
 			notice := v.(*notices.Notice)
 			isAgent := len(notice.Agent.AgentId) > 0
+			isProxy := len(notice.Proxy.ServerId) > 0
 			m := maps.Map{
 				"id":       notice.Id,
 				"isAgent":  isAgent,
+				"isProxy":  isProxy,
 				"isRead":   notice.IsRead,
 				"message":  notice.Message,
 				"datetime": timeutil.Format("Y-m-d H:i:s", time.Unix(notice.Timestamp, 0)),
@@ -108,6 +111,54 @@ func (this *IndexAction) Run(params struct {
 								})
 							}
 						}
+					}
+				}
+
+				m["links"] = links
+			}
+
+			// Proxy
+			if isProxy {
+				m["level"] = notices.FindNoticeLevel(notice.Proxy.Level)
+
+				links := []maps.Map{}
+				server := teaconfigs.NewServerConfigFromId(notice.Proxy.ServerId)
+				if server != nil {
+					links = append(links, maps.Map{
+						"name": server.Description,
+						"url":  "/proxy/board?serverId=" + server.Id,
+					})
+				}
+
+				if len(notice.Proxy.BackendId) > 0 {
+					if len(notice.Proxy.LocationId) > 0 {
+						location := server.FindLocation(notice.Proxy.LocationId)
+						if location != nil {
+							links = append(links, maps.Map{
+								"name": location.Pattern,
+								"url":  "/proxy/locations/detail?serverId=" + server.Id + "&locationId=" + notice.Proxy.LocationId,
+							})
+							if notice.Proxy.Websocket {
+								links = append(links, maps.Map{
+									"name": "websocket",
+									"url":  "/proxy/locations/websocket?serverId=" + server.Id + "&locationId=" + notice.Proxy.LocationId,
+								})
+								links = append(links, maps.Map{
+									"name": "后端服务器",
+									"url":  "/proxy/locations/websocket?serverId=" + server.Id + "&locationId=" + notice.Proxy.LocationId,
+								})
+							} else {
+								links = append(links, maps.Map{
+									"name": "后端服务器",
+									"url":  "/proxy/locations/backends?serverId=" + server.Id + "&locationId=" + notice.Proxy.LocationId,
+								})
+							}
+						}
+					} else {
+						links = append(links, maps.Map{
+							"name": "后端服务器",
+							"url":  "/proxy/backend?serverId=" + server.Id,
+						})
 					}
 				}
 

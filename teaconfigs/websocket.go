@@ -190,3 +190,10 @@ func (this *WebsocketConfig) CloneState(oldWebsocket *WebsocketConfig) {
 		backend.CloneState(oldBackend)
 	}
 }
+
+// 卸载方法
+func (this *WebsocketConfig) OnDetach() {
+	for _, backend := range this.Backends {
+		backend.OnDetach()
+	}
+}

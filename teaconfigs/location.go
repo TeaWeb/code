@@ -586,6 +586,10 @@ func (this *LocationConfig) OnAttach() {
 
 // 卸载事件
 func (this *LocationConfig) OnDetach() {
+	if this.Websocket != nil {
+		this.Websocket.OnDetach()
+	}
+
 	// 停止WAF
 	if this.waf != nil {
 		this.waf.Stop()

@@ -45,10 +45,10 @@ func TestServerConfig_NextBackend(t *testing.T) {
 	}
 	s.Validate()
 	t.Log(s.schedulingObject.Summary())
-	t.Log(s.NextBackend(nil))
-	t.Log(s.NextBackend(nil))
-	t.Log(s.NextBackend(nil))
-	t.Log(s.NextBackend(nil))
+	t.Log(s.NextBackend(nil).Address)
+	t.Log(s.NextBackend(nil).Address)
+	t.Log(s.NextBackend(nil).Address)
+	t.Log(s.NextBackend(nil).Address)
 }
 
 func TestNewServerConfigFromId(t *testing.T) {
