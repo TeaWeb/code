@@ -13,6 +13,7 @@ func init() {
 			Helper(&helpers.UserMustAuth{
 				Grant: configs.AdminGrantAll,
 			}).
+			Helper(new(Helper)).
 			Get("", new(IndexAction)).
 			GetPost("/update", new(UpdateAction)).
 			Post("/connect", new(ConnectAction)).

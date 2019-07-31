@@ -2,6 +2,7 @@ package settings
 
 import (
 	"github.com/TeaWeb/code/teaweb/configs"
+	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 	"net/http"
@@ -23,57 +24,34 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 		action.Data["teaMenu"] = "settings"
 	}
 
-	// TabBar菜单
-	tabbar := []maps.Map{}
+	// 操作按钮
+	menuGroup := utils.NewMenuGroup()
+	{
+		menu := menuGroup.FindMenu("operations", "[操作]")
+		menu.AlwaysActive = true
+		menuGroup.AlwaysMenu = menu
+		menu.Index = 10000
 
-	user := configs.SharedAdminConfig().FindActiveUser(action.Session().GetString("username"))
-	if user.Granted(configs.AdminGrantAll) {
-		tabbar = append(tabbar, map[string]interface{}{
-			"name":    "管理界面",
-			"subName": "",
-			"url":     "/settings",
-			"active":  action.Spec.HasClassPrefix("settings.IndexAction", "server."),
-		})
+		user := configs.SharedAdminConfig().FindActiveUser(action.Session().GetString("username"))
+		if user.Granted(configs.AdminGrantAll) {
+			menu.Add("管理界面", "", "/settings", action.Spec.HasClassPrefix("settings.IndexAction", "server."))
+		}
+		menu.Add("个人资料", "", "/settings/profile", action.Spec.HasClassPrefix("profile."))
+		menu.Add("登录设置", "", "/settings/login", action.Spec.HasClassPrefix("login."))
+
+		if user.Granted(configs.AdminGrantAll) {
+			// mongodb管理
+			menu.Add("MongoDB", "", "/settings/mongo", action.Spec.HasClassPrefix("mongo."))
+
+			// 备份
+			menu.Add("备份", "", "/settings/backup", action.Spec.HasClassPrefix("backup."))
+		}
+
+		menu.Add("检查版本更新", "", "/settings/update", action.Spec.HasClassPrefix("update."))
 	}
 
-	tabbar = append(tabbar, map[string]interface{}{
-		"name":    "个人资料",
-		"subName": "",
-		"url":     "/settings/profile",
-		"active":  action.Spec.HasClassPrefix("profile."),
-	})
+	menuGroup.Sort()
+	utils.SetSubMenu(action, menuGroup)
 
-	tabbar = append(tabbar, map[string]interface{}{
-		"name":    "登录设置",
-		"subName": "",
-		"url":     "/settings/login",
-		"active":  action.Spec.HasClassPrefix("login."),
-	})
-
-	if user.Granted(configs.AdminGrantAll) {
-		// mongodb管理
-		tabbar = append(tabbar, map[string]interface{}{
-			"name":    "MongoDB",
-			"subName": "",
-			"url":     "/settings/mongo",
-			"active":  action.Spec.HasClassPrefix("mongo."),
-		})
-
-		// 备份
-		tabbar = append(tabbar, map[string]interface{}{
-			"name":    "备份",
-			"subName": "",
-			"url":     "/settings/backup",
-			"active":  action.Spec.HasClassPrefix("backup."),
-		})
-	}
-
-	tabbar = append(tabbar, map[string]interface{}{
-		"name":    "检查版本更新",
-		"subName": "",
-		"url":     "/settings/update",
-		"active":  action.Spec.HasClassPrefix("update."),
-	})
-
-	action.Data["teaTabbar"] = tabbar
+	action.Data["teaTabbar"] = []maps.Map{}
 }

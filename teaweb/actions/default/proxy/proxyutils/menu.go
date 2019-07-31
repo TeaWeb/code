@@ -17,49 +17,54 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 
 	// 子菜单
 	menuGroup := utils.NewMenuGroup()
-	menu := menuGroup.FindMenu("", "")
 
 	// 服务
 	var hasServer = false
 	var isTCP = false
+
+	isIndex := !action.HasPrefix("/proxy/add", "/cache", "/proxy/waf", "/proxy/log/policies")
 
 	serverId := action.ParamString("serverId")
 	serverList, err := teaconfigs.SharedServerList()
 	if err != nil {
 		logs.Error(err)
 	}
-	for _, server := range serverList.FindAllServers() {
-		urlPrefix := "/proxy/board"
-		if server.IsTCP() { // TCP
-			urlPrefix = "/proxy/detail"
-		} else { // HTTP
-			if action.HasPrefix("/proxy/stat") {
-				urlPrefix = "/proxy/stat"
-			} else if action.HasPrefix("/proxy/log") {
-				urlPrefix = "/proxy/log"
-			} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
+
+	if isIndex {
+		menu := menuGroup.FindMenu("", "")
+		for _, server := range serverList.FindAllServers() {
+			urlPrefix := "/proxy/board"
+			if server.IsTCP() { // TCP
 				urlPrefix = "/proxy/detail"
+			} else { // HTTP
+				if action.HasPrefix("/proxy/stat") {
+					urlPrefix = "/proxy/stat"
+				} else if action.HasPrefix("/proxy/log") {
+					urlPrefix = "/proxy/log"
+				} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
+					urlPrefix = "/proxy/detail"
+				}
 			}
+
+			item := menu.Add(server.Description, "", urlPrefix+"?serverId="+server.Id, serverId == server.Id)
+			item.IsSortable = true
+
+			if server.IsTCP() {
+				item.SupName = "tcp"
+			}
+
+			if server.Id == serverId {
+				isTCP = server.IsTCP()
+			}
+
+			hasServer = true
 		}
-
-		item := menu.Add(server.Description, "", urlPrefix+"?serverId="+server.Id, serverId == server.Id)
-		item.IsSortable = true
-
-		if server.IsTCP() {
-			item.SupName = "tcp"
-		}
-
-		if server.Id == serverId {
-			isTCP = server.IsTCP()
-		}
-
-		hasServer = true
-	}
-	if hasServer {
-		if action.Request.URL.Path == "/proxy/board" {
-			menu.Name = "代理服务"
-		} else {
-			menu.Name = "代理服务"
+		if hasServer {
+			if action.Request.URL.Path == "/proxy/board" {
+				menu.Name = "代理服务"
+			} else {
+				menu.Name = "代理服务"
+			}
 		}
 	}
 
@@ -68,10 +73,11 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 		menu := menuGroup.FindMenu("operations", "[操作]")
 		menu.AlwaysActive = true
 		menuGroup.AlwaysMenu = menu
-		menu.Add("[添加新代理]", "", "/proxy/add", action.Spec.ClassName == "proxy.AddAction", )
-		menu.Add("[缓存策略]", "", "/cache", action.HasPrefix("/cache"))
-		menu.Add("[WAF策略]", "", "/proxy/waf", action.HasPrefix("/proxy/waf"))
-		menu.Add("[日志策略]", "", "/proxy/log/policies", action.HasPrefix("/proxy/log/policies"))
+		menu.Add("代理服务", "", "/proxy", isIndex)
+		menu.Add("+添加新代理", "", "/proxy/add", action.Spec.ClassName == "proxy.AddAction", )
+		menu.Add("缓存策略", "", "/cache", action.HasPrefix("/cache"))
+		menu.Add("WAF策略", "", "/proxy/waf", action.HasPrefix("/proxy/waf"))
+		menu.Add("日志策略", "", "/proxy/log/policies", action.HasPrefix("/proxy/log/policies"))
 	}
 	utils.SetSubMenu(action, menuGroup)
 

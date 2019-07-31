@@ -1,4 +1,4 @@
-package log
+package dashboard
 
 import (
 	"github.com/TeaWeb/code/teaweb/utils"
@@ -16,7 +16,7 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 	}
 
 	action.Data["teaTabbar"] = []maps.Map{}
-	action.Data["teaMenu"] = "log.runtime"
+	action.Data["teaMenu"] = "dashboard"
 
 	// 操作按钮
 	menuGroup := utils.NewMenuGroup()
@@ -25,8 +25,7 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 		menu.AlwaysActive = true
 		menuGroup.AlwaysMenu = menu
 		menu.Index = 10000
-		menu.Add("系统日志", "", "/log/runtime", action.HasPrefix("/log/runtime"))
-		menu.Add("操作日志", "", "/log/audit", action.HasPrefix("/log/audit"))
+		menu.Add("仪表板", "", "/dashboard", action.HasPrefix("/dashboard"))
 	}
 
 	menuGroup.Sort()

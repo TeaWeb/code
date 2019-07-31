@@ -1,9 +1,8 @@
-package log
+package cluster
 
 import (
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/maps"
 	"net/http"
 )
 
@@ -15,9 +14,6 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 		return
 	}
 
-	action.Data["teaTabbar"] = []maps.Map{}
-	action.Data["teaMenu"] = "log.runtime"
-
 	// 操作按钮
 	menuGroup := utils.NewMenuGroup()
 	{
@@ -25,8 +21,7 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 		menu.AlwaysActive = true
 		menuGroup.AlwaysMenu = menu
 		menu.Index = 10000
-		menu.Add("系统日志", "", "/log/runtime", action.HasPrefix("/log/runtime"))
-		menu.Add("操作日志", "", "/log/audit", action.HasPrefix("/log/audit"))
+		menu.Add("集群", "", "/settings/cluster", true)
 	}
 
 	menuGroup.Sort()
