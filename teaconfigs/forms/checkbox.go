@@ -29,10 +29,13 @@ func (this *CheckBox) Compose() string {
 	attrs := map[string]string{
 		"name": this.Namespace + "_" + this.Code,
 	}
-	if this.IsChecked {
+
+	if this.IsChecked || types.Bool(this.Value) {
 		attrs["checked"] = "checked"
 	}
-	attrs["value"] = types.String(this.Value)
+
+	attrs["value"] = "1"
+
 	return `
 <div class="ui checkbox">
 <input type="checkbox"` + this.ComposeAttrs(attrs) + `/>
@@ -43,5 +46,5 @@ func (this *CheckBox) Compose() string {
 
 func (this *CheckBox) ApplyRequest(req *http.Request) (value interface{}, skip bool, err error) {
 	value = req.Form.Get(this.Namespace + "_" + this.Code)
-	return value, false, nil
+	return types.Bool(value), false, nil
 }

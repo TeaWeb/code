@@ -15,6 +15,8 @@ import (
 // 文件系统信息
 type DiskSource struct {
 	Source `yaml:",inline"`
+
+	ContainsAllMountPoints bool `yaml:"containsAllMountPoints" json:"containsAllMountPoints"`
 }
 
 // 获取新对象
@@ -50,10 +52,28 @@ func (this *DiskSource) Execute(params map[string]string) (value interface{}, er
 		return p1.Mountpoint > p2.Mountpoint
 	})
 
+	// 当前TeaWeb所在的fs
+	rootFS := ""
+	if lists.ContainsString([]string{"darwin", "linux", "freebsd"}, runtime.GOOS) {
+		for _, p := range partitions {
+			if p.Mountpoint == "/" {
+				rootFS = p.Fstype
+				break
+			}
+		}
+	}
+
 	result := []maps.Map{}
 	for _, partition := range partitions {
 		if runtime.GOOS != "windows" && !strings.Contains(partition.Device, "/") && !strings.Contains(partition.Device, "\\") {
 			continue
+		}
+
+		// 跳过不同fs的
+		if !this.ContainsAllMountPoints {
+			if len(rootFS) > 0 && rootFS != partition.Fstype {
+				continue
+			}
 		}
 
 		usage, err := disk.Usage(partition.Mountpoint)
@@ -70,6 +90,7 @@ func (this *DiskSource) Execute(params map[string]string) (value interface{}, er
 			"inodesFree":    usage.InodesFree,
 			"inodesTotal":   usage.InodesTotal,
 			"inodesPercent": usage.InodesUsedPercent,
+			"fstype":        usage.Fstype,
 		})
 	}
 
@@ -83,7 +104,34 @@ func (this *DiskSource) Execute(params map[string]string) (value interface{}, er
 // 表单信息
 func (this *DiskSource) Form() *forms.Form {
 	form := forms.NewForm(this.Code())
+	{
+		group := form.NewGroup()
+
+		{
+			field := forms.NewCheckBox("包含所有挂载点", "")
+			field.Value = "1"
+			field.Comment = "如果没有选中，则会自动去掉不同文件系统类型的一些挂载点"
+			field.Code = "containsAllMountPoints"
+
+			group.Add(field)
+		}
+	}
 	return form
+}
+
+// 显示信息
+func (this *DiskSource) Presentation() *forms.Presentation {
+	p := forms.NewPresentation()
+	p.HTML = `
+<tr>
+	<td>包含所有挂载点</td>
+	<td>
+		<span class="green" v-if="source.containsAllMountPoints">Y</span>
+		<span v-if="!source.containsAllMountPoints">N</span>
+	</td>
+</tr>
+`
+	return p
 }
 
 // 变量
@@ -128,6 +176,10 @@ func (this *DiskSource) Variables() []*SourceVariable {
 		{
 			Code:        "partitions.$.inodesPercent",
 			Description: "inodes使用百分比",
+		},
+		{
+			Code:        "partitions.$.fstype",
+			Description: "文件系统类型",
 		},
 	}
 }
