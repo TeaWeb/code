@@ -204,3 +204,12 @@ func (this *SSLCertConfig) ReadKey() ([]byte, error) {
 
 	return ioutil.ReadFile(Tea.ConfigFile(this.KeyFile))
 }
+
+// 匹配关键词
+func (this *SSLCertConfig) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	if teautils.MatchKeyword(this.Description, keyword) {
+		matched = true
+		name = this.Description
+	}
+	return
+}

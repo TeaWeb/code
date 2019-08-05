@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/utils/string"
 	"time"
 )
@@ -131,4 +132,16 @@ func (this *Item) RemoveChart(chartId string) {
 		result = append(result, c)
 	}
 	this.Charts = result
+}
+
+// 匹配关键词
+func (this *Item) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	if teautils.MatchKeyword(this.Name, keyword) || teautils.MatchKeyword(this.SourceCode, keyword) {
+		matched = true
+		name = this.Name
+		if len(this.SourceCode) > 0 {
+			tags = []string{"数据源：" + this.SourceCode}
+		}
+	}
+	return
 }

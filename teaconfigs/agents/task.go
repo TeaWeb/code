@@ -2,6 +2,7 @@ package agents
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/utils/string"
@@ -121,6 +122,15 @@ func (this *TaskConfig) GenerateAgain() (path string, err error) {
 	err = shFile.Chmod(0777)
 	if err != nil {
 		return
+	}
+	return
+}
+
+// 匹配关键词
+func (this *TaskConfig) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	if teautils.MatchKeyword(this.Name, keyword) {
+		matched = true
+		name = this.Name
 	}
 	return
 }

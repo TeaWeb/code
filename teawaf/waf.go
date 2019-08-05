@@ -3,6 +3,7 @@ package teawaf
 import (
 	"errors"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf/actions"
 	"github.com/TeaWeb/code/teawaf/checkpoints"
 	"github.com/TeaWeb/code/teawaf/requests"
@@ -424,6 +425,15 @@ func (this *WAF) MergeTemplate() (changedItems []string) {
 				continue
 			}
 		}
+	}
+	return
+}
+
+// match keyword
+func (this *WAF) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	if teautils.MatchKeyword(this.Name, keyword) {
+		matched = true
+		name = this.Name
 	}
 	return
 }

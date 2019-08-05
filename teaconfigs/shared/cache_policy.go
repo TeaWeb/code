@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
@@ -128,4 +129,16 @@ func (this *CachePolicy) Delete() error {
 // 是否包含某个Cache-Control值
 func (this *CachePolicy) ContainsCacheControl(value string) bool {
 	return lists.ContainsString(this.uppercaseSkipCacheControlValues, strings.ToUpper(value))
+}
+
+// 检查是否匹配关键词
+func (this *CachePolicy) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	if teautils.MatchKeyword(this.Name, keyword) || teautils.MatchKeyword(this.Type, keyword) {
+		matched = true
+		name = this.Name
+		if len(this.Type) > 0 {
+			tags = []string{"类型：" + this.Type}
+		}
+	}
+	return
 }

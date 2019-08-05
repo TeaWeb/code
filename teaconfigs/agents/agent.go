@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
@@ -53,6 +54,7 @@ func LocalAgentConfig() *AgentConfig {
 			Key:      stringutil.Rand(32),
 			AllowAll: false,
 			Allow:    []string{"127.0.0.1"},
+			Host:     "127.0.0.1",
 		}
 	}
 	return localAgentConfig
@@ -182,7 +184,7 @@ func (this *AgentConfig) ReplaceApp(app *AppConfig) {
 
 // 添加一组App
 func (this *AgentConfig) AddApps(apps []*AppConfig) {
-	this.Apps = append(this.Apps, apps ...)
+	this.Apps = append(this.Apps, apps...)
 }
 
 // 删除App
@@ -901,4 +903,17 @@ func (this *AgentConfig) GroupName() string {
 		return "默认分组"
 	}
 	return group.Name
+}
+
+// 判断是否匹配关键词
+func (this *AgentConfig) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	if teautils.MatchKeyword(this.Name, keyword) || teautils.MatchKeyword(this.Host, keyword) {
+		matched = true
+		name = this.Name
+		if len(this.Host) > 0 {
+			tags = []string{this.Host}
+		}
+		return
+	}
+	return
 }

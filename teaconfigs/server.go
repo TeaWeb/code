@@ -1030,3 +1030,29 @@ func (this *ServerConfig) FindCerts(certId string) (result []*SSLCertConfig) {
 	}
 	return
 }
+
+// 检查是否匹配关键词
+func (this *ServerConfig) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	// 描述
+	if teautils.MatchKeyword(this.Description, keyword) {
+		matched = true
+
+		name = this.Description
+		if len(this.Name) > 0 {
+			tags = this.Name
+		}
+		return
+	}
+
+	// 域名
+	for _, n := range this.Name {
+		if teautils.MatchKeyword(n, keyword) {
+			matched = true
+			name = this.Description
+			tags = this.Name
+			break
+		}
+	}
+
+	return
+}

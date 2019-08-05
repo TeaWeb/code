@@ -2,6 +2,7 @@ package agents
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 )
@@ -222,4 +223,15 @@ func (this *AppConfig) FindAllNoticeReceivers(level ...notices.NoticeLevel) []*n
 		}
 	}
 	return result
+}
+
+// 匹配关键词
+func (this *AppConfig) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	if teautils.MatchKeyword(this.Name, keyword) {
+		matched = true
+		name = this.Name
+		return
+	}
+
+	return
 }

@@ -2,6 +2,7 @@ package teaconfigs
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
@@ -63,4 +64,16 @@ func (this *AccessLogStoragePolicy) Save() error {
 func (this *AccessLogStoragePolicy) Delete() error {
 	filename := "accesslog.storage." + this.Id + ".conf"
 	return os.Remove(Tea.ConfigFile(filename))
+}
+
+// 匹配关键词
+func (this *AccessLogStoragePolicy) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	if teautils.MatchKeyword(this.Name, keyword) || teautils.MatchKeyword(this.Type, keyword) {
+		matched = true
+		name = this.Name
+		if len(this.Type) > 0 {
+			tags = []string{"类型：" + this.Type}
+		}
+	}
+	return
 }

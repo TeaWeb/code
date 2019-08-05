@@ -3,6 +3,7 @@ package teaconfigs
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf"
 	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
@@ -621,4 +622,17 @@ func (this *LocationConfig) CloneState(oldLocation *LocationConfig) {
 // 添加Page
 func (this *LocationConfig) AddPage(page *PageConfig) {
 	this.Pages = append(this.Pages, page)
+}
+
+// 匹配关键词
+func (this *LocationConfig) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	if teautils.MatchKeyword(this.Name, keyword) || teautils.MatchKeyword(this.Pattern, keyword) {
+		matched = true
+		name = this.Pattern
+		if len(this.Name) > 0 {
+			tags = []string{this.Name}
+		}
+		return
+	}
+	return
 }
