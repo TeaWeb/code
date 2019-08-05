@@ -277,6 +277,18 @@ func (this *Manager) FindServer(serverId string) *teaconfigs.ServerConfig {
 	return nil
 }
 
+// 查找所有的Server
+func (this *Manager) FindAllServers() []*teaconfigs.ServerConfig {
+	this.locker.RLock()
+	defer this.locker.RUnlock()
+
+	result := []*teaconfigs.ServerConfig{}
+	for _, server := range this.servers {
+		result = append(result, server)
+	}
+	return result
+}
+
 // 查找Server相关错误
 func (this *Manager) FindServerErrors(serverId string) []string {
 	this.locker.RLock()

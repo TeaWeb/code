@@ -437,7 +437,7 @@ func (this *ServerConfig) GzipMinBytes() int64 {
 
 // 添加域名
 func (this *ServerConfig) AddName(name ...string) {
-	this.Name = append(this.Name, name ...)
+	this.Name = append(this.Name, name...)
 }
 
 // 添加监听地址
@@ -1016,4 +1016,17 @@ func (this *ServerConfig) CloneState(oldServer *ServerConfig) {
 		}
 		location.CloneState(oldLocation)
 	}
+}
+
+// 查找证书
+func (this *ServerConfig) FindCerts(certId string) (result []*SSLCertConfig) {
+	if this.SSL == nil || len(this.SSL.Certs) == 0 {
+		return
+	}
+	for _, cert := range this.SSL.Certs {
+		if cert.Id == certId {
+			result = append(result, cert)
+		}
+	}
+	return
 }

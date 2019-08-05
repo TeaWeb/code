@@ -10,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -39,6 +40,7 @@ func (this *UpdateAction) Run(params struct {
 					"keyFile":     cert.KeyFile,
 					"description": cert.Description,
 					"isLocal":     cert.IsLocal,
+					"isShared":    cert.IsShared,
 				})
 			}
 			this.Data["certs"] = certs
@@ -72,6 +74,37 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["modernCipherSuites"] = teaconfigs.TLSModernCipherSuites
 	this.Data["intermediateCipherSuites"] = teaconfigs.TLSIntermediateCipherSuites
 
+	// 公共可以使用的证书
+	this.Data["sharedCerts"] = lists.Map(teaconfigs.SharedSSLCertList().Certs, func(k int, v interface{}) interface{} {
+		cert := v.(*teaconfigs.SSLCertConfig)
+		err := cert.Validate()
+
+		errorString := ""
+		if err != nil {
+			errorString = err.Error()
+		}
+
+		summary := cert.Description
+		dnsNames := cert.DNSNames()
+		if len(dnsNames) > 0 {
+			if len(dnsNames) > 2 {
+				summary += " (" + strings.Join(dnsNames[:2], ",") + "等"
+			} else {
+				summary += " (" + strings.Join(dnsNames, ",")
+			}
+			summary += " - " + timeutil.Format("Y-m-d H:i:s", cert.TimeAfter())
+			summary += ")"
+		}
+
+		return maps.Map{
+			"id":          cert.Id,
+			"error":       errorString,
+			"dnsNames":    cert.DNSNames(),
+			"description": cert.Description,
+			"summary":     summary,
+		}
+	})
+
 	this.Show()
 }
 
@@ -84,6 +117,7 @@ func (this *UpdateAction) RunPost(params struct {
 	CertDescriptions []string
 
 	CertIsLocal    []bool
+	CertIsShared   []bool
 	CertFilesPaths []string
 	KeyFilesPaths  []string
 
@@ -155,17 +189,36 @@ func (this *UpdateAction) RunPost(params struct {
 	// 证书
 	certs := []*teaconfigs.SSLCertConfig{}
 	for index, description := range params.CertDescriptions {
-		if index >= len(params.CertIds) || index >= len(params.CertIsLocal) || index >= len(params.CertFilesPaths) || index >= len(params.KeyFilesPaths) {
+		if index >= len(params.CertIds) ||
+			index >= len(params.CertIsLocal) ||
+			index >= len(params.CertFilesPaths) ||
+			index >= len(params.KeyFilesPaths) ||
+			index >= len(params.CertIsShared) {
 			continue
 		}
 
 		cert := teaconfigs.NewSSLCertConfig("", "")
 		cert.Description = description
 		cert.IsLocal = params.CertIsLocal[index]
+		cert.IsShared = params.CertIsShared[index]
 
-		if cert.IsLocal {
+		if cert.IsShared {
+			sharedCertId := this.ParamString("sharedCertIds" + fmt.Sprintf("%d", index))
+			if len(sharedCertId) == 0 {
+				this.Fail("请选择一个公用证书")
+			}
+			cert.Id = sharedCertId
+		} else if cert.IsLocal {
 			cert.CertFile = params.CertFilesPaths[index]
 			cert.KeyFile = params.KeyFilesPaths[index]
+
+			if len(cert.CertFile) == 0 {
+				this.Fail("请输入证书#" + fmt.Sprintf("%d", index+1) + "文件路径")
+			}
+
+			if len(cert.KeyFile) == 0 {
+				this.Fail("请输入证书#" + fmt.Sprintf("%d", index+1) + "私钥文件路径")
+			}
 
 			// 保留属性
 			oldCert := server.SSL.FindCert(params.CertIds[index])

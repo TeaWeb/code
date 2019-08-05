@@ -52,6 +52,14 @@ func (this *IndexAction) Run(params struct {
 		for index, certConfig := range server.SSL.Certs {
 			info := []maps.Map{}
 
+			// 共享的证书
+			if certConfig.IsShared {
+				certConfig = certConfig.FindShared()
+				if certConfig == nil {
+					continue
+				}
+			}
+
 			// 证书是否为空
 			if len(certConfig.FullCertPath()) == 0 {
 				if server.SSL.On {

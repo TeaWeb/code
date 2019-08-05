@@ -1,9 +1,8 @@
-package ssl
+package certs
 
 import (
 	"github.com/TeaWeb/code/teautils"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/ssl/sslutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/certs/certutils"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo"
@@ -11,21 +10,21 @@ import (
 )
 
 func init() {
-	// 路由定义
+	// 路由设置
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		server.
 			Helper(&helpers.UserMustAuth{
 				Grant: configs.AdminGrantProxy,
 			}).
-			Helper(new(proxy.Helper)).
-			Module("").
-			Prefix("/proxy/ssl").
+			Helper(new(Helper)).
+			Prefix("/proxy/certs").
 			Get("", new(IndexAction)).
+			GetPost("/upload", new(UploadAction)).
+			Post("/delete", new(DeleteAction)).
+			Get("/detail", new(DetailAction)).
 			GetPost("/update", new(UpdateAction)).
-			Post("/startHttps", new(StartHttpsAction)).
-			Post("/shutdownHttps", new(ShutdownHttpsAction)).
-			Get("/downloadFile", new(DownloadFileAction)).
-			Get("/generate", new(GenerateAction)).
+			Get("/download", new(DownloadAction)).
+			Get("/acme", new(AcmeAction)).
 			Get("/acmeCreateTask", new(AcmeCreateTaskAction)).
 			GetPost("/acmeCreateUser", new(AcmeCreateUserAction)).
 			Get("/acmeUsers", new(AcmeUsersAction)).
@@ -41,8 +40,8 @@ func init() {
 
 	// 检查ACME证书更新
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
-		teautils.Every(24*time.Hour, func(ticker *teautils.Ticker) {
-			sslutils.RenewACMECerts()
+		teautils.Every(24*time.Hour, func(ticker *teautils.Ticker) { // TODO
+			certutils.RenewACMECerts()
 		})
 	})
 }

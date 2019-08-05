@@ -29,3 +29,7 @@ func TestReloadACMECert(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestRenewACMECerts(t *testing.T) {
+	RenewACMECerts()
+}
