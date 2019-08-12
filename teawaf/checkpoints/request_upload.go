@@ -40,10 +40,14 @@ func (this *RequestUploadCheckpoint) RequestValue(req *requests.Request, param s
 			req.BodyData = data
 			defer req.RestoreBody(data)
 		}
-
+		oldBody := req.Body
 		req.Body = ioutil.NopCloser(bytes.NewBuffer(req.BodyData))
 
 		err := req.ParseMultipartForm(32 * 1024 * 1024)
+
+		// 还原
+		req.Body = oldBody
+
 		if err != nil {
 			userErr = err
 			return
