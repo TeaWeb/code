@@ -109,12 +109,8 @@ func (this *PushAction) selectProcessEventCollection(agentId string) *teamongo.C
 	agentCollectionLocker.Unlock()
 
 	if createdNew {
-		coll.CreateIndex(map[string]bool{
-			"agentId": true,
-		})
-		coll.CreateIndex(map[string]bool{
-			"taskId": true,
-		})
+		coll.CreateIndex(teamongo.NewIndexField("agentId", true))
+		coll.CreateIndex(teamongo.NewIndexField("taskId", true))
 	}
 
 	return coll
@@ -406,7 +402,7 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 
 	// 查找Agent的通知设置
 	if !isNotified {
-		receivers := agent.FindAllNoticeReceivers(receiverLevels ...)
+		receivers := agent.FindAllNoticeReceivers(receiverLevels...)
 		if len(receivers) > 0 {
 			isNotified = true
 			receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]"+subject, message, func(receiverId string, minutes int) int {

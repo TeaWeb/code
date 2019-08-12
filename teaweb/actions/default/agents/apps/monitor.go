@@ -61,7 +61,7 @@ func (this *MonitorAction) RunPost(params struct {
 			Agent(params.AgentId).
 			App(params.AppId).
 			Item(item.Id).
-			Desc("_id").
+			Desc("createdAt").
 			Find()
 		if err != nil {
 			logs.Error(err)

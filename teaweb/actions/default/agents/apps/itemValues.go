@@ -68,7 +68,7 @@ func (this *ItemValuesAction) RunPost(params struct {
 	query.Item(params.ItemId)
 	query.Offset(0)
 	query.Limit(100)
-	query.Desc("_id")
+	query.Desc("createdAt")
 	query.Action(teamongo.ValueQueryActionFindAll)
 
 	if params.Level > 0 {

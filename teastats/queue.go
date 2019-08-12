@@ -49,41 +49,41 @@ func (this *Queue) Start(serverId string) {
 	coll := insertQuery.Coll()
 
 	this.coll = coll
-	for _, indexMap := range []map[string]bool{
+	for _, fields := range [][]*teamongo.IndexField{
 		{
-			"item":      true,
-			"timestamp": true,
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timestamp", true),
 		},
 		{
-			"item":              true,
-			"timeFormat.second": true,
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.second", true),
 		},
 		{
-			"item":              true,
-			"timeFormat.minute": true,
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.minute", true),
 		},
 		{
-			"item":            true,
-			"timeFormat.hour": true,
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.hour", true),
 		},
 		{
-			"item":           true,
-			"timeFormat.day": true,
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.day", true),
 		},
 		{
-			"item":            true,
-			"timeFormat.week": true,
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.week", true),
 		},
 		{
-			"item":             true,
-			"timeFormat.month": true,
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.month", true),
 		},
 		{
-			"item":            true,
-			"timeFormat.year": true,
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.year", true),
 		},
 	} {
-		err := coll.CreateIndex(indexMap)
+		err := coll.CreateIndex(fields...)
 		if err != nil {
 			logs.Error(errors.New("mongo:" + err.Error()))
 		}
@@ -260,13 +260,11 @@ func (this *Queue) Index(index []string) {
 		}
 	}
 
-	indexMap := map[string]bool{
-		"item": true,
-	}
+	fields := []*teamongo.IndexField{teamongo.NewIndexField("item", true)}
 	for _, i := range index {
-		indexMap["params."+i] = true
+		fields = append(fields, teamongo.NewIndexField("params."+i, true))
 	}
-	err := this.coll.CreateIndex(indexMap)
+	err := this.coll.CreateIndex(fields...)
 	if err != nil {
 		logs.Error(err)
 	}

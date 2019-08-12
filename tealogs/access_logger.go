@@ -68,21 +68,19 @@ func (this *AccessLogger) collection() *teamongo.Collection {
 	// 构建索引
 	this.collectionCacheLocker.Lock()
 	coll = teamongo.FindCollection(collName)
-	coll.CreateIndex(map[string]bool{
-		"serverId": true,
-	})
-	coll.CreateIndex(map[string]bool{
-		"status":   true,
-		"serverId": true,
-	})
-	coll.CreateIndex(map[string]bool{
-		"remoteAddr": true,
-		"serverId":   true,
-	})
-	coll.CreateIndex(map[string]bool{
-		"hasErrors": true,
-		"serverId":  true,
-	})
+	coll.CreateIndex(teamongo.NewIndexField("serverId", true))
+	coll.CreateIndex(
+		teamongo.NewIndexField("status", true),
+		teamongo.NewIndexField("serverId", true),
+	)
+	coll.CreateIndex(
+		teamongo.NewIndexField("remoteAddr", true),
+		teamongo.NewIndexField("serverId", true),
+	)
+	coll.CreateIndex(
+		teamongo.NewIndexField("hasErrors", true),
+		teamongo.NewIndexField("serverId", true),
+	)
 
 	this.collectionCacheMap[collName] = coll
 	this.collectionCacheLocker.Unlock()

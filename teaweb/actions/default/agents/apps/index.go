@@ -36,7 +36,7 @@ func (this *IndexAction) Run(params struct {
 				Agent(agent.Id).
 				App(app.Id).
 				Item(item.Id).
-				Desc("_id").
+				Desc("createdAt").
 				Find()
 			if err == nil && value != nil {
 				if value.NoticeLevel == notices.NoticeLevelWarning || value.NoticeLevel == notices.NoticeLevelError && value.NoticeLevel > level {

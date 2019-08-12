@@ -198,7 +198,7 @@ func (this *AgentValueQuery) Execute() (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, ones ...)
+		result = append(result, ones...)
 		return result, nil
 	} else if this.action == ValueQueryActionFind {
 		result := []*agents.Value{}
@@ -206,7 +206,7 @@ func (this *AgentValueQuery) Execute() (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, ones ...)
+		result = append(result, ones...)
 		if len(result) == 0 {
 			return nil, nil
 		}
@@ -430,7 +430,7 @@ func (this *AgentValueQuery) findAll(collectionName string) (result []*agents.Va
 		}
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
-	cursor, err := coll.Find(ctx, this.buildFilter(), opts ...)
+	cursor, err := coll.Find(ctx, this.buildFilter(), opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -519,18 +519,17 @@ func (this *AgentValueQuery) selectColl(collectionName string) *Collection {
 	}
 
 	coll = FindCollection(collectionName)
-	coll.CreateIndex(map[string]bool{
-		"itemId": true,
-	})
-	coll.CreateIndex(map[string]bool{
-		"appId":  true,
-		"itemId": true,
-	})
-	coll.CreateIndex(map[string]bool{
-		"appId":  true,
-		"itemId": true,
-		"nodeId": true,
-	})
+	coll.CreateIndex(
+		NewIndexField("appId", true),
+		NewIndexField("itemId", true),
+		NewIndexField("createdAt", false),
+	)
+	coll.CreateIndex(
+		NewIndexField("appId", true),
+		NewIndexField("itemId", true),
+		NewIndexField("nodeId", true),
+		NewIndexField("createdAt", false),
+	)
 	agentValueCollectionsMap[collectionName] = coll
 	return coll
 }

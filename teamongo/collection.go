@@ -2,11 +2,10 @@ package teamongo
 
 import (
 	"context"
-	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 	"time"
 )
 
@@ -21,24 +20,16 @@ func FindCollection(collName string) *Collection {
 }
 
 // 创建索引
-func (this *Collection) CreateIndex(indexes map[string]bool) error {
+func (this *Collection) CreateIndex(fields ...*IndexField) error {
 	indexView := this.Indexes()
 
 	doc := map[string]interface{}{}
 
-	// 对key进行排序
-	keys := maps.NewMap(indexes).Keys()
-	lists.Sort(keys, func(i int, j int) bool {
-		return keys[i].(string) < keys[j].(string)
-	})
-
-	for _, key := range keys {
-		index := key.(string)
-		b := indexes[index]
-		if b {
-			doc[index] = 1
+	for _, field := range fields {
+		if field.Asc {
+			doc[field.Name] = 1
 		} else {
-			doc[index] = -1
+			doc[field.Name] = -1
 		}
 	}
 
@@ -68,9 +59,18 @@ func (this *Collection) CreateIndex(indexes map[string]bool) error {
 		}
 	}
 
+	bsonDoc := bsonx.Doc{}
+	for _, field := range fields {
+		if field.Asc {
+			bsonDoc = bsonDoc.Append(field.Name, bsonx.Int32(1))
+		} else {
+			bsonDoc = bsonDoc.Append(field.Name, bsonx.Int32(-1))
+		}
+	}
+
 	// 创建新的
 	_, err = indexView.CreateOne(ctx, mongo.IndexModel{
-		Keys:    doc,
+		Keys:    bsonDoc,
 		Options: options.Index().SetBackground(true),
 	})
 	return err
