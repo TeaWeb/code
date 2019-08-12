@@ -44,7 +44,7 @@ func (this *DNSSource) Execute(params map[string]string) (value interface{}, err
 		return nil, errors.New("'domain' should not be empty")
 	}
 	switch this.Type {
-	case "A":
+	case "A", "AAAA":
 		before := time.Now()
 		ipList, err := net.LookupIP(this.Domain)
 		if err != nil {
@@ -156,6 +156,7 @@ func (this *DNSSource) Form() *forms.Form {
 			field.Attr("style", "width:10em")
 			field.Code = "type"
 			field.AddOption("A", "A")
+			field.AddOption("AAAA", "AAAA")
 			field.AddOption("CHANGE", "CHANGE")
 			field.AddOption("MX", "MX")
 			field.AddOption("TXT", "TXT")

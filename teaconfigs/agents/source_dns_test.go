@@ -17,6 +17,18 @@ func TestDNSSource_Execute(t *testing.T) {
 	logs.PrintAsJSON(value, t)
 }
 
+func TestDNSSource_Execute_AAAA(t *testing.T) {
+	source := NewDNSSource()
+	source.Domain = "ipv6.teaos.cn"
+	source.Type = "AAAA"
+	value, err := source.Execute(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	logs.PrintAsJSON(value, t)
+}
+
 func TestDNSSource_Execute_CHANGE(t *testing.T) {
 	source := NewDNSSource()
 	source.Domain = "teaos.cn"
