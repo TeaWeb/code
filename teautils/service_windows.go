@@ -28,7 +28,7 @@ func (this *ServiceManager) Install(exePath string, args []string) error {
 		DisplayName: this.Name,
 		Description: this.Description,
 		StartType:   windows.SERVICE_AUTO_START,
-	}, args ...)
+	}, args...)
 	if err != nil {
 		return fmt.Errorf("creating: %s", err.Error())
 	}
@@ -68,6 +68,13 @@ func (this *ServiceManager) Uninstall() error {
 	if err != nil {
 		return fmt.Errorf("open service: %s", err.Error())
 	}
+
+	// shutdown service
+	_, err = s.Control(svc.Stop)
+	if err != nil {
+		fmt.Printf("shutdown service: %s\n", err.Error())
+	}
+
 	defer s.Close()
 	err = s.Delete()
 	if err != nil {
