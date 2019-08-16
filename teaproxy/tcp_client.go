@@ -218,16 +218,22 @@ func (this *TCPClient) connect() {
 
 	this.backend.DecreaseConn()
 
-	// 重新连接
-	if this.lActive && (len(this.excludingBackendIds) == 0 || server.TCP.FailReconnect) {
-		logs.Println("[proxy][tcp]reconnecting another backend for client '" + this.lConn.RemoteAddr().String() + "'")
-		this.backend = nil
-		this.rConn = nil
-		if !this.streamIsClosed {
+	if this.lActive {
+		// 重新连接
+		if len(this.excludingBackendIds) == 0 || server.TCP.FailReconnect {
+			logs.Println("[proxy][tcp]reconnecting another backend for client '" + this.lConn.RemoteAddr().String() + "'")
+			this.backend = nil
+			this.rConn = nil
+			if !this.streamIsClosed {
+				close(this.stream)
+				this.stream = make(chan []byte, TCPClientStreamSize)
+			}
+			this.connect()
+		} else { // 关闭
+			this.streamIsClosed = true
 			close(this.stream)
-			this.stream = make(chan []byte, TCPClientStreamSize)
+			this.lConn.Close()
 		}
-		this.connect()
 	}
 }
 
