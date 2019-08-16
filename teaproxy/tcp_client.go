@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	TCPClientMaxAttempts = 3    // 失败最多尝试次数
-	TCPClientBufferSize  = 1024 // 缓冲区尺寸（字节）
-	TCPClientStreamSize  = 128  // 读取客户端数据的队列长度
+	TCPClientMaxAttempts = 3   // 失败最多尝试次数
+	TCPClientStreamSize  = 128 // 读取客户端数据的队列长度
 )
 
 // TCP连接客户端
@@ -60,13 +59,29 @@ func (this *TCPClient) RConn() net.Conn {
 
 // 连接后端服务器
 func (this *TCPClient) Connect() {
+	if this.serverPool == nil {
+		logs.Error(errors.New("'serverPool' must not be nil"))
+		return
+	}
+
+	server := this.serverPool()
+	if server == nil {
+		logs.Error(errors.New("no available server for the connection"))
+		return
+	}
+
+	if server.TCP == nil {
+		logs.Error(errors.New("tcp not available for server '" + server.Description + "'"))
+		return
+	}
+
 	ticker := teautils.Every(1*time.Second, func(ticker *teautils.Ticker) {
 		atomic.StoreInt64(&this.readSpeed, 0)
 		atomic.StoreInt64(&this.writeSpeed, 0)
 	})
 
-	go this.connect()
-	this.read()
+	go this.connect(server)
+	this.read(server)
 
 	ticker.Stop()
 }
@@ -100,18 +115,7 @@ func (this *TCPClient) WriteSpeed() int64 {
 }
 
 // 连接后端服务器
-func (this *TCPClient) connect() {
-	if this.serverPool == nil {
-		logs.Error(errors.New("'serverPool' must not be nil"))
-		return
-	}
-
-	server := this.serverPool()
-	if server == nil {
-		logs.Error(errors.New("no available server for the connection"))
-		return
-	}
-
+func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
 	if !this.lActive {
 		return
 	}
@@ -199,7 +203,11 @@ func (this *TCPClient) connect() {
 	}()
 
 	// 读取
-	buf := make([]byte, TCPClientBufferSize)
+	bufferSize := server.TCP.WriteBufferSize // 对于lconn来说，是写
+	if bufferSize <= 0 {
+		bufferSize = 4096
+	}
+	buf := make([]byte, bufferSize)
 	for {
 		n, err := this.rConn.Read(buf)
 		if n > 0 {
@@ -228,7 +236,7 @@ func (this *TCPClient) connect() {
 				close(this.stream)
 				this.stream = make(chan []byte, TCPClientStreamSize)
 			}
-			this.connect()
+			this.connect(server)
 		} else { // 关闭
 			this.streamIsClosed = true
 			close(this.stream)
@@ -238,8 +246,12 @@ func (this *TCPClient) connect() {
 }
 
 // 读取客户端数据
-func (this *TCPClient) read() {
-	buf := make([]byte, TCPClientBufferSize)
+func (this *TCPClient) read(server *teaconfigs.ServerConfig) {
+	bufferSize := server.TCP.ReadBufferSize
+	if bufferSize <= 0 {
+		bufferSize = 4096
+	}
+	buf := make([]byte, bufferSize)
 	for {
 		n, err := this.lConn.Read(buf)
 		if n > 0 {

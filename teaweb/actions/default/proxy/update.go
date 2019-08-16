@@ -61,9 +61,11 @@ func (this *UpdateAction) RunPost(params struct {
 	RedirectToHttps bool
 
 	// TCP
-	TcpOn            bool
-	TcpFailReconnect bool
-	TcpFailResend    bool
+	TcpOn              bool
+	TcpFailReconnect   bool
+	TcpFailResend      bool
+	TcpReadBufferSize  int
+	TcpWriteBufferSize int
 
 	Must *actions.Must
 }) {
@@ -84,6 +86,12 @@ func (this *UpdateAction) RunPost(params struct {
 		server.TCP.TCPOn = params.TcpOn
 		server.TCP.FailReconnect = params.TcpFailReconnect
 		server.TCP.FailResend = params.TcpFailResend
+		if params.TcpReadBufferSize >= 0 {
+			server.TCP.ReadBufferSize = params.TcpReadBufferSize
+		}
+		if params.TcpWriteBufferSize >= 0 {
+			server.TCP.WriteBufferSize = params.TcpWriteBufferSize
+		}
 	} else { // HTTP
 		server.Http = params.HttpOn
 		server.Root = params.Root
