@@ -9,11 +9,11 @@ type NoticeLevel = uint8
 
 // 通知级别常量
 const (
-	NoticeLevelNone    = uint8(0)
-	NoticeLevelInfo    = uint8(1)
-	NoticeLevelWarning = uint8(2)
-	NoticeLevelError   = uint8(3)
-	NoticeLevelSuccess = uint8(4)
+	NoticeLevelNone    = NoticeLevel(0)
+	NoticeLevelInfo    = NoticeLevel(1)
+	NoticeLevelWarning = NoticeLevel(2)
+	NoticeLevelError   = NoticeLevel(3)
+	NoticeLevelSuccess = NoticeLevel(4)
 )
 
 // 所有的通知级别

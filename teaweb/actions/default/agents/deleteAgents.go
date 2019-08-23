@@ -1,15 +1,13 @@
 package agents
 
 import (
-	"context"
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
-	"time"
 )
 
 type DeleteAgentsAction actions.Action
@@ -35,8 +33,7 @@ func (this *DeleteAgentsAction) Run(params struct {
 		}
 
 		// 删除数值记录
-		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		err = teamongo.FindCollection("values.agent." + agent.Id).Drop(ctx)
+		err = teadb.SharedDB().ValueDAO().DropAgentTable(agent.Id)
 		if err != nil {
 			this.Fail("数值记录删除失败：" + err.Error())
 		}

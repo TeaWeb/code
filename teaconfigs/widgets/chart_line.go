@@ -20,7 +20,7 @@ func (this *LineChart) AsJavascript(options map[string]interface{}) (code string
 var chart = new charts.LineChart();
 chart.options = ` + stringutil.JSONEncode(options) + `;
 
-var query = new values.Query();
+var query = NewQuery();
 if (chart.options.limit <= 0) {
 	query.limit(10);
 } else {

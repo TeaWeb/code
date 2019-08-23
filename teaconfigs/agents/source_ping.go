@@ -8,6 +8,7 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/tatsushid/go-fastping"
 	"net"
+	"runtime"
 	"time"
 )
 
@@ -48,7 +49,17 @@ func (this *PingSource) Execute(params map[string]string) (value interface{}, er
 	}
 
 	p := fastping.NewPinger()
-	p.Network("udp")
+	if runtime.GOOS == "darwin" {
+		_, err = p.Network("udp")
+	} else {
+		_, err = p.Network("ip")
+	}
+	if err != nil {
+		return maps.Map{
+			"rtt": -1,
+		}, err
+	}
+
 	ra, err := net.ResolveIPAddr("ip4:icmp", this.Host)
 	if err != nil {
 		return maps.Map{
@@ -68,7 +79,12 @@ func (this *PingSource) Execute(params map[string]string) (value interface{}, er
 		}
 	}
 
-	p.Run()
+	runningErr := p.Run()
+	if runningErr != nil {
+		return maps.Map{
+			"rtt": -1,
+		}, runningErr
+	}
 
 	if err != nil {
 		return maps.Map{
@@ -138,30 +154,22 @@ func (this *PingSource) Charts() []*widgets.Chart {
 		chart.Name = "Ping"
 		chart.Columns = 2
 		chart.Type = "javascript"
+		chart.SupportsTimeRange = true
 		chart.Options = maps.Map{
-			"code": `
-var chart = new charts.LineChart();
+			"code": `var chart = new charts.LineChart();
 
-var query = new values.Query();
-query.limit(30)
-var ones = query.desc().cache(60).findAll();
-ones.reverse();
+var ones = NewQuery().past(60, time.MINUTE).avg("rtt");
 
 var line = new charts.Line();
-line.color = colors.ARRAY[0];
 line.isFilled = true;
-line.values = [];
 
 ones.$each(function (k, v) {
-	line.values.push(v.value.rtt);
-	
-	var minute = v.timeFormat.minute.substring(8);
-	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+	line.addValue(v.value.rtt);
+	chart.addLabel(v.label);
 });
 
 chart.addLine(line);
-chart.render();
-`,
+chart.render();`,
 		}
 
 		charts = append(charts, chart)

@@ -233,34 +233,25 @@ func (this *URLConnectivitySource) Charts() []*widgets.Chart {
 		chart.Name = "URL连通性（ms）"
 		chart.Columns = 2
 		chart.Type = "javascript"
+		chart.SupportsTimeRange = true
 		chart.Options = maps.Map{
-			"code": `
-var chart = new charts.LineChart();
+			"code": `var chart = new charts.LineChart();
 
-var query = new values.Query();
-query.limit(30)
-var ones = query.desc().cache(60).findAll();
-ones.reverse();
+var ones = NewQuery().past(60, time.MINUTE).avg("cost");
 
 var line = new charts.Line();
-line.color = colors.ARRAY[0];
 line.isFilled = true;
-line.values = [];
 
 ones.$each(function (k, v) {
 	if (v.value == "") {
 		return;
 	}
-	line.values.push(v.value.cost * 1000);
-	
-	var minute = v.timeFormat.minute.substring(8);
-	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+	line.addValue(v.value.cost * 1000);
+	chart.addLabel(v.label);
 });
 
 chart.addLine(line);
-chart.render();
-
-`,
+chart.render();`,
 		}
 
 		charts = append(charts, chart)

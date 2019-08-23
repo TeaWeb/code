@@ -73,11 +73,27 @@ func (this *ChartsAction) Run(params struct {
 
 	usingCharts := []maps.Map{}
 	if board != nil {
+		hasDeleted := false
 		for _, c := range board.Charts {
 			info, found := chartMapping[c.ChartId]
 			if found {
 				usingCharts = append(usingCharts, info)
+			} else {
+				hasDeleted = true
 			}
+		}
+
+		// 删除已删除的
+		if hasDeleted {
+			leftCharts := []*agents.BoardChart{}
+			for _, c := range board.Charts {
+				_, found := chartMapping[c.ChartId]
+				if found {
+					leftCharts = append(leftCharts, c)
+				}
+			}
+			board.Charts = leftCharts
+			board.Save()
 		}
 	}
 	this.Data["usingCharts"] = usingCharts

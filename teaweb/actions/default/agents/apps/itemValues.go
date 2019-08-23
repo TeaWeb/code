@@ -3,16 +3,14 @@ package apps
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
 )
 
@@ -62,33 +60,7 @@ func (this *ItemValuesAction) RunPost(params struct {
 		this.Fail("找不到Item")
 	}
 
-	query := teamongo.NewAgentValueQuery()
-	query.Agent(params.AgentId)
-	query.App(params.AppId)
-	query.Item(params.ItemId)
-	query.Offset(0)
-	query.Limit(100)
-	query.Desc("createdAt")
-	query.Action(teamongo.ValueQueryActionFindAll)
-
-	if params.Level > 0 {
-		if params.Level == notices.NoticeLevelInfo {
-			query.Attr("noticeLevel", []interface{}{notices.NoticeLevelInfo, notices.NoticeLevelNone})
-		} else {
-			query.Attr("noticeLevel", params.Level)
-		}
-	}
-
-	if len(params.LastId) > 0 {
-		lastObjectId, err := primitive.ObjectIDFromHex(params.LastId)
-		if err != nil {
-			logs.Error(err)
-		} else {
-			query.Gt("_id", lastObjectId)
-		}
-	}
-
-	ones, err := query.Execute()
+	ones, err := teadb.SharedDB().ValueDAO().ListItemValues(params.AgentId, params.AppId, params.ItemId, params.Level, params.LastId, 0, 100)
 	if err != nil {
 		this.Fail("查询失败：" + err.Error())
 	}

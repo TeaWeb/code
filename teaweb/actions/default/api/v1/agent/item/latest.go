@@ -2,7 +2,7 @@ package item
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/apiutils"
 	"github.com/iwind/TeaGo/actions"
 )
@@ -33,12 +33,7 @@ func (this *LatestAction) RunGet(params struct {
 		return
 	}
 
-	value, err := teamongo.NewAgentValueQuery().
-		Agent(params.AgentId).
-		App(params.AppId).
-		Item(item.Id).
-		Desc("_id").
-		Find()
+	value, err := teadb.SharedDB().ValueDAO().FindLatestItemValue(params.AgentId, params.AppId, item.Id)
 	if err != nil {
 		apiutils.Fail(this, "no value yet")
 		return

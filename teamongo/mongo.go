@@ -3,7 +3,7 @@ package teamongo
 import (
 	"context"
 	"errors"
-	"github.com/TeaWeb/code/teaweb/configs"
+	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -43,7 +43,7 @@ func SharedClient() *mongo.Client {
 	}
 
 	clientOptions := options.Client().ApplyURI(config.URI)
-	sharedConfig := configs.SharedMongoConfig()
+	sharedConfig := db.SharedMongoConfig()
 
 	if sharedConfig != nil && len(sharedConfig.AuthMechanism) > 0 {
 		clientOptions.SetAuth(options.Credential{
@@ -92,7 +92,7 @@ func NewClient() *mongo.Client {
 	}
 
 	clientOptions := options.Client().ApplyURI(config.URI)
-	sharedConfig := configs.SharedMongoConfig()
+	sharedConfig := db.SharedMongoConfig()
 
 	if sharedConfig != nil && len(sharedConfig.AuthMechanism) > 0 {
 		clientOptions.SetAuth(options.Credential{
@@ -137,7 +137,7 @@ func Test() error {
 	}
 
 	clientOptions := options.Client().ApplyURI(config.URI)
-	sharedConfig := configs.SharedMongoConfig()
+	sharedConfig := db.SharedMongoConfig()
 
 	if sharedConfig != nil && len(sharedConfig.AuthMechanism) > 0 {
 		clientOptions.SetAuth(options.Credential{

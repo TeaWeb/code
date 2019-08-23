@@ -1,7 +1,7 @@
 package mongo
 
 import (
-	"github.com/TeaWeb/code/teaweb/configs"
+	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/iwind/TeaGo/actions"
 )
 
@@ -9,7 +9,7 @@ type CleanUpdateAction actions.Action
 
 // 自动清理设置
 func (this *CleanUpdateAction) Run(params struct{}) {
-	config, _ := configs.LoadMongoConfig()
+	config, _ := db.LoadMongoConfig()
 	if config != nil {
 		this.Data["accessLog"] = config.AccessLog
 	} else {
@@ -32,11 +32,11 @@ func (this *CleanUpdateAction) RunPost(params struct {
 		Field("accessLogKeepDays", params.AccessLogKeepDays).
 		Gte(1, "请输入一个大于0的数字")
 
-	config, _ := configs.LoadMongoConfig()
+	config, _ := db.LoadMongoConfig()
 	if config == nil {
-		config = configs.NewMongoConfig()
+		config = db.NewMongoConfig()
 	}
-	config.AccessLog = &configs.MongoAccessLogConfig{
+	config.AccessLog = &db.MongoAccessLogConfig{
 		CleanHour: params.AccessLogCleanHour,
 		KeepDays:  params.AccessLogKeepDays,
 	}

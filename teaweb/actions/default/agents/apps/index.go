@@ -3,7 +3,7 @@ package apps
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -32,12 +32,7 @@ func (this *IndexAction) Run(params struct {
 			if !item.On {
 				continue
 			}
-			value, err := teamongo.NewAgentValueQuery().
-				Agent(agent.Id).
-				App(app.Id).
-				Item(item.Id).
-				Desc("createdAt").
-				Find()
+			value, err := teadb.SharedDB().ValueDAO().FindLatestItemValue(agent.Id, app.Id, item.Id)
 			if err == nil && value != nil {
 				if value.NoticeLevel == notices.NoticeLevelWarning || value.NoticeLevel == notices.NoticeLevelError && value.NoticeLevel > level {
 					level = value.NoticeLevel

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -57,12 +57,7 @@ func (this *MonitorAction) RunPost(params struct {
 		latestTime := ""
 		latestLevel := notices.NoticeLevelNone
 
-		value, err := teamongo.NewAgentValueQuery().
-			Agent(params.AgentId).
-			App(params.AppId).
-			Item(item.Id).
-			Desc("createdAt").
-			Find()
+		value, err := teadb.SharedDB().ValueDAO().FindLatestItemValue(params.AgentId, params.AppId, item.Id)
 		if err != nil {
 			logs.Error(err)
 		} else if value != nil {

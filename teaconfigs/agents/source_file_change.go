@@ -170,31 +170,22 @@ func (this *FileChangeSource) Charts() []*widgets.Chart {
 		chart.Name = "文件尺寸<em>（字节）</em>"
 		chart.Columns = 2
 		chart.Type = "javascript"
+		chart.SupportsTimeRange = true
 		chart.Options = maps.Map{
-			"code": `
-var chart = new charts.LineChart();
+			"code": `var chart = new charts.LineChart();
 
-var query = new values.Query();
-query.limit(30)
-var ones = query.desc().cache(60).findAll();
-ones.reverse();
+var ones = NewQuery().past(60, time.MINUTE).avg("size");
 
 var line = new charts.Line();
-line.color = colors.ARRAY[0];
 line.isFilled = true;
-line.values = [];
 
 ones.$each(function (k, v) {
-	line.values.push(v.value.size);
-	
-	var minute = v.timeFormat.minute.substring(8);
-	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+	line.addValue(v.value.size);
+	chart.addLabel(v.label);
 });
 
 chart.addLine(line);
-chart.render();
-
-`,
+chart.render();`,
 		}
 
 		charts = append(charts, chart)

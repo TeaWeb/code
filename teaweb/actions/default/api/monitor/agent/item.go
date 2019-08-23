@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/apiutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
@@ -17,11 +17,7 @@ func (this *ItemAction) Run(params struct {
 	apiutils.ValidateUser(this)
 
 	// 获取数据
-	query := teamongo.NewAgentValueQuery()
-	query.Agent(params.AgentId)
-	query.Item(params.ItemId)
-	query.Desc("_id")
-	v, err := query.Find()
+	v, err := teadb.SharedDB().ValueDAO().FindLatestItemValue(params.AgentId, "", params.ItemId)
 	if err != nil {
 		logs.Error(err)
 		apiutils.Fail(this, err.Error())

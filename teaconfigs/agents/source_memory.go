@@ -111,33 +111,27 @@ func (this *MemorySource) Charts() []*widgets.Chart {
 	// chart
 	{
 		chart := widgets.NewChart()
+		chart.Id = "memory.usage.chart1"
 		chart.Name = "内存使用量（%）"
 		chart.Columns = 2
 		chart.Type = "javascript"
+		chart.SupportsTimeRange = true
 		chart.Options = maps.Map{
-			"code": `
-var chart = new charts.LineChart();
+			"code": `var chart = new charts.LineChart();
 
-var query = new values.Query();
-query.limit(30)
-var ones = query.desc().cache(60).findAll();
-ones.reverse();
+var ones = NewQuery().past(60, time.MINUTE).avg("usage.virtualPercent");
 
 var lines = [];
 
 {
 	var line = new charts.Line();
-	line.color = colors.ARRAY[0];
 	line.isFilled = true;
-	line.values = [];
 	lines.push(line);
 }
 
 ones.$each(function (k, v) {
-	lines[0].values.push(v.value.usage.virtualPercent);
-
-	var minute = v.timeFormat.minute.substring(8);
-	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+	lines[0].addValue(v.value.usage.virtualPercent);
+	chart.addLabel(v.label);
 });
 
 chart.addLines(lines);
@@ -150,6 +144,7 @@ chart.render();
 
 	{
 		chart := widgets.NewChart()
+		chart.Id = "memory.usage.chart2"
 		chart.Name = "当前内存使用量"
 		chart.Columns = 1
 		chart.Type = "javascript"
@@ -157,7 +152,7 @@ chart.render();
 			"code": `
 var chart = new charts.StackBarChart();
 
-var latest = new values.Query().latest(1);
+var latest = NewQuery().latest(1);
 var hasWarning = false;
 if (latest.length > 0) {
 	hasWarning = (latest[0].value.usage.swapPercent > 50) || (latest[0].value.usage.virtualPercent > 80);

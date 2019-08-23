@@ -118,6 +118,7 @@ widget.run = function () {
 	err := engine.RunCode(widgetCode)
 	if err != nil {
 		logs.Error(err)
+		engine.AddOutput(err.Error())
 	}
 
 	this.Data["charts"] = teautils.ConvertJSONObjectSafely(engine.Charts())

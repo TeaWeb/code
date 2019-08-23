@@ -8,6 +8,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
@@ -185,13 +186,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 
 		// 检查最近N此数值是否都是同类错误
 		if threshold != nil && threshold.MaxFails > 1 {
-			query := teamongo.NewAgentValueQuery()
-			query.Agent(agent.Id)
-			query.App(app.Id)
-			query.Item(item.Id)
-			query.Desc("_id")
-			query.Limit(int64(threshold.MaxFails) - 1)
-			values, err := query.FindAll()
+			values, err := teadb.SharedDB().ValueDAO().ListItemValues(agent.Id, app.Id, item.Id, 0, "", 0, threshold.MaxFails-1)
 			if err != nil {
 				logs.Error(err)
 			} else {
@@ -290,7 +285,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	}
 	value.SetTime(t)
 
-	err = teamongo.NewAgentValueQuery().Insert(value)
+	err = teadb.SharedDB().ValueDAO().Insert(agent.Id, value)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -310,13 +305,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 			recoverSuccesses = 1
 		}
 
-		query := teamongo.NewAgentValueQuery()
-		query.Agent(agent.Id)
-		query.App(app.Id)
-		query.Item(item.Id)
-		query.Desc("_id")
-		query.Limit(int64(recoverSuccesses + 1))
-		values, err := query.FindAll()
+		values, err := teadb.SharedDB().ValueDAO().ListItemValues(agent.Id, app.Id, item.Id, 0, "", 0, recoverSuccesses+1)
 		if err != nil {
 			logs.Error(err)
 			return
@@ -456,13 +445,7 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 
 // 查找最近的一次数值记录
 func (this *PushAction) findLatestAgentValue(agentId string, appId string, itemId string) (interface{}, error) {
-	query := teamongo.NewAgentValueQuery()
-	query.Agent(agentId)
-	query.App(appId)
-	query.Item(itemId)
-	query.Attr("error", "")
-	query.Desc("_id")
-	v, err := query.Find()
+	v, err := teadb.SharedDB().ValueDAO().FindLatestItemValueNoError(agentId, appId, itemId)
 	if err != nil {
 		return nil, err
 	}

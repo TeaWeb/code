@@ -2,8 +2,8 @@ package teamongo
 
 import (
 	"context"
+	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/TeaWeb/code/teahooks"
-	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
@@ -35,7 +35,7 @@ func init() {
 func cleanAccessLogs() {
 	reg := regexp.MustCompile("^logs\\.\\d{8}$")
 	timers.Loop(1*time.Minute, func(looper *timers.Looper) {
-		config, _ := configs.LoadMongoConfig()
+		config, _ := db.LoadMongoConfig()
 		now := time.Now()
 		if config != nil && config.AccessLog != nil &&
 			config.AccessLog.CleanHour == now.Hour() &&
@@ -87,7 +87,7 @@ func startInstalledMongo() {
 		return
 	}
 
-	config := configs.SharedMongoConfig()
+	config := db.SharedMongoConfig()
 	if config.Host != "127.0.0.1" && config.Host != "localhost" {
 		return
 	}

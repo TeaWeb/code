@@ -137,34 +137,28 @@ func (this *CPUSource) Charts() []*widgets.Chart {
 	{
 		// chart
 		chart := widgets.NewChart()
+		chart.Id = "cpu.chart1"
 		chart.Name = "CPU使用量（%）"
 		chart.Columns = 2
 		chart.Type = "javascript"
+		chart.SupportsTimeRange = true
 		chart.Options = maps.Map{
-			"code": `
-var chart = new charts.LineChart();
+			"code": `var chart = new charts.LineChart();
 chart.max = 100;
 
-var query = new values.Query();
-query.limit(30)
-var ones = query.desc().cache(60).findAll();
-ones.reverse();
+var ones = NewQuery().past(60, time.MINUTE).avg("usage.avg");
 
 var lines = [];
 
 {
 	var line = new charts.Line();
-	line.color = colors.ARRAY[0];
 	line.isFilled = true;
-	line.values = [];
 	lines.push(line);
 }
 
 ones.$each(function (k, v) {
-	lines[0].values.push(v.value.usage.avg);
-	
-	var minute = v.timeFormat.minute.substring(8);
-	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+	lines[0].addValue(v.value.usage.avg);
+	chart.addLabel(v.label);
 });
 
 chart.addLines(lines);

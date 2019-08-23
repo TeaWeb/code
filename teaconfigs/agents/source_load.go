@@ -70,6 +70,15 @@ func (this *LoadSource) Thresholds() []*Threshold {
 		result = append(result, t)
 	}
 
+	{
+		t := NewThreshold()
+		t.Param = "${load5}"
+		t.Value = "20"
+		t.NoticeLevel = notices.NoticeLevelError
+		t.Operator = ThresholdOperatorGte
+		result = append(result, t)
+	}
+
 	return result
 }
 
@@ -80,17 +89,15 @@ func (this *LoadSource) Charts() []*widgets.Chart {
 	{
 		// chart
 		chart := widgets.NewChart()
+		chart.Id = "cpu.load.chart1"
 		chart.Name = "负载（Load）"
 		chart.Columns = 2
 		chart.Type = "javascript"
+		chart.SupportsTimeRange = true
 		chart.Options = maps.Map{
-			"code": `
-var chart = new charts.LineChart();
+			"code": `var chart = new charts.LineChart();
 
-var query = new values.Query();
-query.limit(30)
-var ones = query.desc().cache(60).findAll();
-ones.reverse();
+var ones = NewQuery().past(60, time.MINUTE).avg("load1", "load5", "load15");
 
 var lines = [];
 
@@ -99,7 +106,6 @@ var lines = [];
 	line.name = "1分钟";
 	line.color = colors.ARRAY[0];
 	line.isFilled = true;
-	line.values = [];
 	lines.push(line);
 }
 
@@ -108,7 +114,6 @@ var lines = [];
 	line.name = "5分钟";
 	line.color = colors.BROWN;
 	line.isFilled = false;
-	line.values = [];
 	lines.push(line);
 }
 
@@ -117,16 +122,15 @@ var lines = [];
 	line.name = "15分钟";
 	line.color = colors.RED;
 	line.isFilled = false;
-	line.values = [];
 	lines.push(line);
 }
 
 var maxValue = 1;
 
 ones.$each(function (k, v) {
-	lines[0].values.push(v.value.load1);
-	lines[1].values.push(v.value.load5);
-	lines[2].values.push(v.value.load15);
+	lines[0].addValue(v.value.load1);
+	lines[1].addValue(v.value.load5);
+	lines[2].addValue(v.value.load15);
 
 	if (v.value.load1 > maxValue) {
 		maxValue = Math.ceil(v.value.load1 / 2) * 2;
@@ -138,8 +142,7 @@ ones.$each(function (k, v) {
 		maxValue = Math.ceil(v.value.load15 / 2) * 2;
 	}
 	
-	var minute = v.timeFormat.minute.substring(8);
-	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+	chart.addLabel(v.label);
 });
 
 chart.addLines(lines);

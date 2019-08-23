@@ -2,7 +2,8 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 )
@@ -31,14 +32,7 @@ func (this *ClearItemValuesAction) Run(params struct {
 		this.Fail("找不到Item")
 	}
 
-	query := teamongo.NewAgentValueQuery()
-	query.Agent(agent.Id)
-	query.Attr("appId", params.AppId)
-	query.Attr("itemId", params.ItemId)
-	if params.Level > 0 {
-		query.Attr("noticeLevel", params.Level)
-	}
-	err := query.Delete()
+	err := teadb.SharedDB().ValueDAO().ClearItemValues(params.AgentId, params.AppId, params.ItemId, notices.NoticeLevel(params.Level))
 	if err != nil {
 		this.Fail("清除失败：" + err.Error())
 	}
@@ -46,14 +40,7 @@ func (this *ClearItemValuesAction) Run(params struct {
 	// 清除同组
 	if app.IsSharedWithGroup {
 		for _, agent1 := range agentutils.FindSharedAgents(agent.Id, agent.GroupIds, app) {
-			query := teamongo.NewAgentValueQuery()
-			query.Agent(agent1.Id)
-			query.Attr("appId", params.AppId)
-			query.Attr("itemId", params.ItemId)
-			if params.Level > 0 {
-				query.Attr("noticeLevel", params.Level)
-			}
-			err := query.Delete()
+			err := teadb.SharedDB().ValueDAO().ClearItemValues(agent1.Id, params.AppId, params.ItemId, notices.NoticeLevel(params.Level))
 			if err != nil {
 				this.Fail("清除失败：" + err.Error())
 			}

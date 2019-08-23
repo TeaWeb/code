@@ -3,22 +3,17 @@ package agents
 import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 )
 
-// 看板图表定义
-type BoardChart struct {
-	AppId   string `yaml:"appId" json:"appId"`
-	ItemId  string `yaml:"itemId" json:"itemId"`
-	ChartId string `yaml:"chartId" json:"chartId"`
-}
-
 // 看板
 type Board struct {
-	Filename string        `yaml:"filename" json:"filename"`
-	Charts   []*BoardChart `yaml:"charts" json:"charts"`
+	TeaVersion string        `yaml:"teaVersion" json:"teaVersion"`
+	Filename   string        `yaml:"filename" json:"filename"`
+	Charts     []*BoardChart `yaml:"charts" json:"charts"`
 }
 
 // 取得Agent看板
@@ -31,7 +26,9 @@ func NewAgentBoard(agentId string) *Board {
 			logs.Error(err)
 			return nil
 		}
-		defer reader.Close()
+		defer func() {
+			_ = reader.Close()
+		}()
 		board := &Board{}
 		err = reader.ReadYAML(board)
 		if err != nil {
@@ -108,6 +105,8 @@ func (this *Board) Save() error {
 	shared.Locker.Lock()
 	defer shared.Locker.WriteUnlockNotify()
 
+	this.TeaVersion = teaconst.TeaVersion
+
 	if len(this.Filename) == 0 {
 		return errors.New("filename should be specified")
 	}
@@ -115,11 +114,14 @@ func (this *Board) Save() error {
 	if err != nil {
 		return err
 	}
-	defer writer.Close()
+	defer func() {
+		_ = writer.Close()
+	}()
 	_, err = writer.WriteYAML(this)
 	return err
 }
 
+// 移动图表
 func (this *Board) MoveChart(fromIndex int, toIndex int) {
 	if fromIndex < 0 || fromIndex >= len(this.Charts) {
 		return
@@ -133,7 +135,7 @@ func (this *Board) MoveChart(fromIndex int, toIndex int) {
 
 	chart := this.Charts[fromIndex]
 	newList := []*BoardChart{}
-	for i := 0; i < len(this.Charts); i ++ {
+	for i := 0; i < len(this.Charts); i++ {
 		if i == fromIndex {
 			continue
 		}

@@ -74,6 +74,8 @@ func (this *UpdateItemChartAction) RunPost(params struct {
 
 	JavascriptCode string
 
+	SupportsTimeRange bool
+
 	Must *actions.Must
 }) {
 	agent := agents.NewAgentConfigFromId(params.AgentId)
@@ -104,6 +106,7 @@ func (this *UpdateItemChartAction) RunPost(params struct {
 	chart.On = params.On
 	chart.Columns = params.Columns
 	chart.Type = params.ChartType
+	chart.SupportsTimeRange = params.SupportsTimeRange
 
 	switch params.ChartType {
 	case "html":

@@ -220,31 +220,25 @@ func (this *DNSSource) Charts() []*widgets.Chart {
 		chart.Name = "DNS解析耗时（ms）"
 		chart.Columns = 2
 		chart.Type = "javascript"
+		chart.SupportsTimeRange = true
 		chart.Options = maps.Map{
-			"code": `
-var chart = new charts.LineChart();
+			"code": `var chart = new charts.LineChart();
 
-var query = new values.Query();
-query.limit(30)
-var ones = query.desc().cache(60).findAll();
-ones.reverse();
+var ones = NewQuery().past(60, time.MINUTE).avg("cost");
 
 var line = new charts.Line();
-line.color = colors.ARRAY[0];
 line.isFilled = true;
-line.values = [];
 
 var maxValue = 0;
 
 ones.$each(function (k, v) {
 	var ms = v.value.cost * 1000;
-	line.values.push(ms);
+	line.addValue(ms);
 	if (maxValue < ms) {
 		maxValue = ms;	
 	}
-	
-	var minute = v.timeFormat.minute.substring(8);
-	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+
+	chart.addLabel(v.label);
 });
 
 if (maxValue < 10) {
@@ -256,7 +250,6 @@ if (maxValue > 0) {
 
 chart.addLine(line);
 chart.render();
-
 `,
 		}
 

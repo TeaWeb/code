@@ -1,8 +1,8 @@
 package mongo
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/TeaWeb/code/teamongo"
-	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
@@ -15,7 +15,7 @@ type IndexAction actions.Action
 
 // MongoDB连接信息
 func (this *IndexAction) Run(params struct{}) {
-	config := configs.SharedMongoConfig()
+	config := db.SharedMongoConfig()
 
 	this.Data["config"] = maps.Map{
 		"scheme":                  config.Scheme,

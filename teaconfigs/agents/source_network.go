@@ -210,20 +210,17 @@ func (this *NetworkSource) Charts() []*widgets.Chart {
 		chart.Name = "出口带宽（M/s）"
 		chart.Columns = 2
 		chart.Type = "javascript"
+		chart.SupportsTimeRange = true
 		chart.Options = maps.Map{
-			"code": `
-var chart = new charts.LineChart();
+			"code": `var chart = new charts.LineChart();
 
 var line = new charts.Line();
 line.isFilled = true;
 
-var ones = new values.Query().cache(60).latest(60);
-ones.reverse();
+var ones = NewQuery().past(60, time.MINUTE).avg("stat.avgSentBytes");
 ones.$each(function (k, v) {
-	line.values.push(Math.round(v.value.stat.avgSentBytes / 1024 / 1024 * 100) / 100);
-	
-	var minute = v.timeFormat.minute.substring(8);
-	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+	line.addValue(Math.round(v.value.stat.avgSentBytes / 1024 / 1024 * 100) / 100);
+	chart.addLabel(v.label);
 });
 var maxValue = line.values.$max();
 if (maxValue < 1) {
@@ -235,8 +232,7 @@ if (maxValue < 1) {
 }
 
 chart.addLine(line);
-chart.render();
-`,
+chart.render();`,
 		}
 		charts = append(charts, chart)
 	}
@@ -247,20 +243,17 @@ chart.render();
 		chart.Name = "入口带宽（M/s）"
 		chart.Columns = 2
 		chart.Type = "javascript"
+		chart.SupportsTimeRange = true
 		chart.Options = maps.Map{
-			"code": `
-var chart = new charts.LineChart();
+			"code": `var chart = new charts.LineChart();
 
 var line = new charts.Line();
 line.isFilled = true;
 
-var ones = new values.Query().cache(60).latest(60);
-ones.reverse();
+var ones = NewQuery().past(60, time.MINUTE).avg("stat.avgReceivedBytes");
 ones.$each(function (k, v) {
-	line.values.push(Math.round(v.value.stat.avgReceivedBytes / 1024 / 1024 * 100) / 100);
-	
-	var minute = v.timeFormat.minute.substring(8);
-	chart.labels.push(minute.substr(0, 2) + ":" + minute.substr(2, 2));
+	line.addValue(Math.round(v.value.stat.avgReceivedBytes / 1024 / 1024 * 100) / 100);
+	chart.addLabel(v.label);
 });
 var maxValue = line.values.$max();
 if (maxValue < 1) {
@@ -272,8 +265,7 @@ if (maxValue < 1) {
 }
 
 chart.addLine(line);
-chart.render();
-`,
+chart.render();`,
 		}
 		charts = append(charts, chart)
 	}

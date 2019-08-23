@@ -2,6 +2,7 @@ package teamongo
 
 import (
 	"encoding/json"
+	"github.com/iwind/TeaGo/maps"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -42,6 +43,14 @@ func BSONDecode(value interface{}) (interface{}, error) {
 	case primitive.Timestamp:
 		return v.T, nil
 	case map[string]interface{}:
+		for itemKey, itemValue := range v {
+			r, err := BSONDecode(itemValue)
+			if err != nil {
+				return nil, err
+			}
+			v[itemKey] = r
+		}
+	case maps.Map:
 		for itemKey, itemValue := range v {
 			r, err := BSONDecode(itemValue)
 			if err != nil {

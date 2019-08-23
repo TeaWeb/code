@@ -2,9 +2,9 @@ package mongo
 
 import (
 	"context"
+	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teamongo"
-	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -23,9 +23,9 @@ func (this *TestAction) Run(params struct {
 	AuthMechanism           string
 	AuthMechanismProperties string
 }) {
-	oldConfig := configs.SharedMongoConfig()
+	oldConfig := db.SharedMongoConfig()
 
-	config := configs.MongoConnectionConfig{
+	config := db.MongoConnectionConfig{
 		Host:          params.Host,
 		Port:          params.Port,
 		Username:      params.Username,

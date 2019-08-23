@@ -1,12 +1,10 @@
 package agentutils
 
 import (
-	"context"
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo/maps"
-	"time"
 )
 
 func ActionDeleteAgent(agentId string, onFail func(message string)) (goNext bool) {
@@ -24,8 +22,7 @@ func ActionDeleteAgent(agentId string, onFail func(message string)) (goNext bool
 	}
 
 	// 删除数值记录
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	err = teamongo.FindCollection("values.agent." + agent.Id).Drop(ctx)
+	err = teadb.SharedDB().ValueDAO().DropAgentTable(agent.Id)
 	if err != nil {
 		onFail("数值记录删除失败：" + err.Error())
 		return

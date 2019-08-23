@@ -127,7 +127,7 @@ func (this *IndexAction) RunPost(params struct {
 	}
 
 	// agent
-	allAgents := []*agents.AgentConfig{agents.LocalAgentConfig()}
+	allAgents := []*agents.AgentConfig{agents.NewAgentConfigFromId("local")}
 
 	agentList, err := agents.SharedAgentList()
 	if err == nil {

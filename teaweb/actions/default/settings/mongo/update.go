@@ -1,9 +1,9 @@
 package mongo
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teamongo"
-	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 	"regexp"
@@ -14,7 +14,7 @@ type UpdateAction actions.Action
 
 // 修改连接
 func (this *UpdateAction) Run(params struct{}) {
-	config := configs.SharedMongoConfig()
+	config := db.SharedMongoConfig()
 	this.Data["config"] = maps.Map{
 		"scheme":                  config.Scheme,
 		"username":                config.Username,
@@ -47,7 +47,7 @@ func (this *UpdateAction) RunPost(params struct {
 		Require("请输入端口").
 		Gt(0, "请输入正确的端口")
 
-	config := configs.SharedMongoConfig()
+	config := db.SharedMongoConfig()
 	config.Host = params.Host
 	config.Port = params.Port
 	config.AuthMechanism = params.AuthMechanism

@@ -242,7 +242,7 @@ func (this *DockerSource) Charts() []*widgets.Chart {
 		chart.Type = "javascript"
 		chart.Options = maps.Map{
 			"code": `var chart = new charts.TableChart();
-var query = new values.Query();
+var query = NewQuery();
 query.desc();
 query.limit(1);
 var ones = query.findAll();

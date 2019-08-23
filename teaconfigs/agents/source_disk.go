@@ -217,7 +217,7 @@ var chart = new charts.StackBarChart();
 chart.values = [];
 chart.labels = [];
 
-var latest = new values.Query().cache(120).latest(1);
+var latest = NewQuery().cache(120).latest(1);
 if (latest.length > 0) {
 	var partitions = latest[0].value.partitions;
 	partitions.$each(function (k, v) {

@@ -52,7 +52,7 @@ func AllNoticeMediaTypes() []maps.Map {
 			"user":         "要At（@）的群成员的手机号，多个手机号用英文逗号隔开，也可以为空",
 		},
 		{
-			"name":         "企业微信",
+			"name":         "企业微信应用",
 			"code":         NoticeMediaTypeQyWeixin,
 			"supportsHTML": false,
 			"instance":     new(NoticeQyWeixinMedia),

@@ -104,9 +104,8 @@ func (this *DateSource) Charts() []*widgets.Chart {
 		chart.Columns = 1
 		chart.Type = "javascript"
 		chart.Options = maps.Map{
-			"code": `
-var chart = new charts.Clock();
-var latest = new values.Query().latest(1);
+			"code": `var chart = new charts.Clock();
+var latest = NewQuery().latest(1);
 if (latest.length > 0) {
 	chart.timestamp = parseInt(new Date().getTime() / 1000) - (latest[0].createdAt - latest[0].value.timestamp);
 }

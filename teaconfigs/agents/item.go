@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
 	"time"
 )
@@ -77,8 +78,8 @@ func (this *Item) IntervalDuration() time.Duration {
 }
 
 // 添加阈值
-func (this *Item) AddThreshold(t *Threshold) {
-	this.Thresholds = append(this.Thresholds, t)
+func (this *Item) AddThreshold(t ...*Threshold) {
+	this.Thresholds = append(this.Thresholds, t...)
 }
 
 // 数据源对象
@@ -110,6 +111,15 @@ func (this *Item) TestValue(value interface{}, oldValue interface{}) (threshold 
 // 添加图表
 func (this *Item) AddChart(chart *widgets.Chart) {
 	this.Charts = append(this.Charts, chart)
+}
+
+// 添加一组图表中的某几个
+func (this *Item) AddFilterCharts(charts []*widgets.Chart, chartId ...string) {
+	for _, c := range charts {
+		if lists.ContainsString(chartId, c.Id) {
+			this.AddChart(c)
+		}
+	}
 }
 
 // 查找图表

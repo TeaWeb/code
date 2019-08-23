@@ -13,14 +13,15 @@ type ChartInterface interface {
 
 // Chart定义
 type Chart struct {
-	Id           string                 `yaml:"id" json:"id"`
-	On           bool                   `yaml:"on" json:"on"`
-	Name         string                 `yaml:"name" json:"name"`
-	Description  string                 `yaml:"description" json:"description"`
-	Columns      uint8                  `yaml:"columns" json:"columns"`           // 列
-	Type         string                 `yaml:"type" json:"type"`                 // 类型
-	Options      map[string]interface{} `yaml:"options" json:"options"`           // 选项
-	Requirements []string               `yaml:"requirements" json:"requirements"` // 绘制chart需要的特征
+	Id                string                 `yaml:"id" json:"id"`
+	On                bool                   `yaml:"on" json:"on"`
+	Name              string                 `yaml:"name" json:"name"`
+	Description       string                 `yaml:"description" json:"description"`
+	Columns           uint8                  `yaml:"columns" json:"columns"`                     // 列
+	Type              string                 `yaml:"type" json:"type"`                           // 类型
+	Options           map[string]interface{} `yaml:"options" json:"options"`                     // 选项
+	Requirements      []string               `yaml:"requirements" json:"requirements"`           // 绘制chart需要的特征
+	SupportsTimeRange bool                   `yaml:"supportsTimeRange" json:"supportsTimeRange"` // 是否支持时间范围查询
 }
 
 // 获取新对象

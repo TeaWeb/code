@@ -20,6 +20,14 @@ func (this *IndexAction) Run(params struct {
 		params.AgentId = "local"
 	}
 
+	agent := agents.NewAgentConfigFromId(params.AgentId)
+	if agent == nil {
+		this.Fail("找不到Agent")
+	}
+
+	// 检查版本更新
+	this.checkUpgrade(agent)
+
 	this.Data["agentId"] = params.AgentId
 	this.Data["tabbar"] = "board"
 
@@ -77,13 +85,22 @@ func (this *IndexAction) RunPost(params struct {
 			continue
 		}
 
+		// 设置
+		if len(c.Name) > 0 {
+			chart.Name = c.Name
+		}
+
 		o, err := chart.AsObject()
 		if err != nil {
 			logs.Error(err)
 			continue
 		}
 
-		var chartName = chart.Name + "<span class=\"ops\"><a href=\"\" title=\"从看板移除\" onclick=\"return Tea.Vue.removeChart('" + c.AppId + "', '" + c.ItemId + "', '" + c.ChartId + "')\"><i class=\"icon remove small\"></i></a> &nbsp; <a href=\"/agents/apps/itemValues?agentId=" + agent.Id + "&appId=" + app.Id + "&itemId=" + item.Id + "\" title=\"查看数值记录\"><i class=\"icon external small\"></i></a></span>"
+		var chartName = chart.Name + "<span class=\"ops\">"
+		if chart.SupportsTimeRange {
+			chartName += "<a href=\"/agents/board/chart?agentId=" + agent.Id + "&appId=" + c.AppId + "&itemId=" + c.ItemId + "&chartId=" + c.ChartId + "\" title=\"更多时间选择\"><i class=\"icon clock small\"></i></a> &nbsp; "
+		}
+		chartName += "<a href=\"/agents/apps/itemValues?agentId=" + agent.Id + "&appId=" + app.Id + "&itemId=" + item.Id + "\" title=\"查看数值记录\"><i class=\"icon external small\"></i></a> &nbsp; <a href=\"\" title=\"从看板移除\" onclick=\"return Tea.Vue.removeChart('" + c.AppId + "', '" + c.ItemId + "', '" + c.ChartId + "')\"><i class=\"icon remove small\"></i></a></span>"
 		code, err := o.AsJavascript(maps.Map{
 			"name":    chartName,
 			"columns": chart.Columns,
@@ -93,11 +110,16 @@ func (this *IndexAction) RunPost(params struct {
 			continue
 		}
 
-		engine.SetContext(&scripts.Context{
-			Agent: agent,
-			App:   app,
-			Item:  item,
-		})
+		ctx := &scripts.Context{
+			Agent:    agent,
+			App:      app,
+			Item:     item,
+			TimeType: c.TimeType,
+			TimePast: c.TimePast,
+			DayFrom:  c.DayFrom,
+			DayTo:    c.DayTo,
+		}
+		engine.SetContext(ctx)
 
 		widgetCode := `var widget = new widgets.Widget({
 	"name": "看板",
@@ -121,4 +143,44 @@ widget.run = function () {
 	this.Data["charts" ] = engine.Charts()
 	this.Data["output"] = engine.Output()
 	this.Success()
+}
+
+// 检查版本更新
+func (this *IndexAction) checkUpgrade(agent *agents.AgentConfig) {
+	if len(agent.TeaVersion) == 0 { // 0.1.7之前
+		isChanged := false
+		for _, app := range agent.Apps {
+			for _, item := range app.Items {
+				err := item.Validate()
+				if err != nil {
+					logs.Error(err)
+					continue
+				}
+				source := item.Source()
+				if source == nil {
+					continue
+				}
+
+				for _, oldChart := range item.Charts {
+					for _, newChart := range source.Charts() {
+						if oldChart.Id == newChart.Id {
+							isChanged = true
+							oldChart.SupportsTimeRange = newChart.SupportsTimeRange
+							oldChart.Options = newChart.Options
+							break
+						}
+					}
+				}
+			}
+		}
+
+		if isChanged {
+			err := agent.Save()
+			if err != nil {
+				logs.Error(err)
+			}
+		}
+
+		return
+	}
 }

@@ -3,10 +3,11 @@ package scripts
 import (
 	"encoding/json"
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
+	"github.com/TeaWeb/code/teamemory"
 	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo/caches"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -15,12 +16,14 @@ import (
 	"github.com/iwind/TeaGo/utils/string"
 	"github.com/robertkrimen/otto"
 	"reflect"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
 )
 
-var engineCache = caches.NewFactory()
+var engineCache = teamemory.NewGrid(1)
+var dayReg = regexp.MustCompile(`^(\d+)-(\d+)-(\d+)$`)
 
 // 脚本引擎
 type Engine struct {
@@ -30,6 +33,8 @@ type Engine struct {
 	context      *Context
 	output       []string
 	mongoEnabled bool
+
+	cache bool
 }
 
 // 获取新引擎
@@ -37,6 +42,7 @@ func NewEngine() *Engine {
 	engine := &Engine{
 		chartOptions: []maps.Map{},
 		widgetCodes:  map[string]maps.Map{},
+		cache:        true,
 	}
 	engine.init()
 	return engine
@@ -122,6 +128,21 @@ func (this *Engine) SetContext(context *Context) {
 		}
 	}
 
+	// 时间相关
+	if context.TimeType == "past" {
+		context.TimeUnit = teaconfigs.TimePastUnit(context.TimePast)
+		_, err := this.vm.Run(`context.timeUnit = "` + context.TimeUnit + `";`)
+		if err != nil {
+			logs.Error(err)
+		}
+	} else if context.TimeType == "range" {
+		context.TimeUnit = teaconfigs.TimeUnitDay
+		_, err := this.vm.Run(`context.timeUnit = "` + context.TimeUnit + `";`)
+		if err != nil {
+			logs.Error(err)
+		}
+	}
+
 	// 可供使用的特性
 	features := []string{}
 	if this.mongoEnabled {
@@ -129,15 +150,29 @@ func (this *Engine) SetContext(context *Context) {
 	}
 	features = append(features, runtime.GOOS)
 	features = append(features, runtime.GOARCH)
-	this.vm.Run(`context.features=` + stringutil.JSONEncode(features) + `;`)
+	_, err := this.vm.Run(`context.features=` + stringutil.JSONEncode(features) + `;`)
+	if err != nil {
+		logs.Error(err)
+	}
+}
+
+// 设置是否开启缓存
+func (this *Engine) SetCache(cache bool) {
+	this.cache = cache
 }
 
 // 初始化
 func (this *Engine) init() {
 	this.vm = otto.New()
 
-	this.vm.Set("callConsoleLog", this.callConsoleLog)
-	this.vm.Run("console.log = callConsoleLog;")
+	err := this.vm.Set("callConsoleLog", this.callConsoleLog)
+	if err != nil {
+		logs.Error(err)
+	}
+	_, err = this.vm.Run("console.log = callConsoleLog;")
+	if err != nil {
+		logs.Error(err)
+	}
 
 	this.loadLib("libs/array.js")
 	this.loadLib("libs/times.js")
@@ -159,10 +194,22 @@ func (this *Engine) init() {
 	this.loadLib("libs/context.js")
 	this.loadLib("libs/agent.js")
 
-	this.vm.Set("callSetCache", this.callSetCache)
-	this.vm.Set("callGetCache", this.callGetCache)
-	this.vm.Set("callChartRender", this.callRenderChart)
-	this.vm.Set("callExecuteQuery", this.callExecuteQuery)
+	err = this.vm.Set("callSetCache", this.callSetCache)
+	if err != nil {
+		logs.Error(err)
+	}
+	err = this.vm.Set("callGetCache", this.callGetCache)
+	if err != nil {
+		logs.Error(err)
+	}
+	err = this.vm.Set("callChartRender", this.callRenderChart)
+	if err != nil {
+		logs.Error(err)
+	}
+	err = this.vm.Set("callExecuteQuery", this.callExecuteQuery)
+	if err != nil {
+		logs.Error(err)
+	}
 }
 
 // 运行Widget代码
@@ -177,6 +224,11 @@ func (this *Engine) RunCode(code string) error {
 // 获取Widget中的图表对象
 func (this *Engine) Charts() []maps.Map {
 	return this.chartOptions
+}
+
+// 添加Output
+func (this *Engine) AddOutput(output string) {
+	this.output = append(this.output, output)
 }
 
 // 获取控制台输出
@@ -198,7 +250,6 @@ func (this *Engine) callConsoleLog(call otto.FunctionCall) otto.Value {
 		}
 	}
 	s := strings.Join(values, ", ")
-	//logs.Println("[console]", s)
 
 	this.output = append(this.output, s)
 
@@ -250,13 +301,18 @@ func (this *Engine) callSetCache(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 	lifeSeconds := types.Int64(life)
-	engineCache.Set(key, value, time.Duration(lifeSeconds)*time.Second)
+	engineCache.WriteInterface([]byte(key), value, lifeSeconds)
 
 	return otto.UndefinedValue()
 }
 
 // 获取缓存
 func (this *Engine) callGetCache(call otto.FunctionCall) otto.Value {
+	// 未开启cache
+	if !this.cache {
+		return otto.UndefinedValue()
+	}
+
 	key, err := call.Argument(0).ToString()
 	if err != nil {
 		this.throw(err)
@@ -264,11 +320,11 @@ func (this *Engine) callGetCache(call otto.FunctionCall) otto.Value {
 	}
 	key = stringutil.Md5(key)
 
-	value, found := engineCache.Get(key)
-	if !found {
+	item := engineCache.Read([]byte(key))
+	if item == nil {
 		return otto.UndefinedValue()
 	}
-	v, err := this.vm.ToValue(value)
+	v, err := this.vm.ToValue(item.ValueInterface)
 	if err != nil {
 		this.throw(err)
 		return otto.UndefinedValue()
@@ -280,15 +336,18 @@ func (this *Engine) callGetCache(call otto.FunctionCall) otto.Value {
 func (this *Engine) loadLib(file string) {
 	path := Tea.Root + Tea.DS + "web" + Tea.DS + file
 	cacheKey := "libfile://" + path
-	code, found := engineCache.Get(cacheKey)
-	if !found {
+	item := engineCache.Read([]byte(cacheKey))
+	var code string
+	if item == nil || item.ValueInterface == nil {
 		var err error = nil
 		code, err = files.NewFile(path).ReadAllString()
 		if err != nil {
 			logs.Error(err)
 			return
 		}
-		engineCache.Set(cacheKey, code)
+		engineCache.WriteInterface([]byte(cacheKey), code, 3600)
+	} else {
+		code = item.ValueInterface.(string)
 	}
 
 	_, err := this.vm.Run(code)
@@ -312,39 +371,27 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 
-	query := teamongo.NewAgentValueQuery()
-	if this.context != nil {
-		if this.context.Agent != nil {
-			query.Agent(this.context.Agent.Id)
-		}
-		if this.context.App != nil {
-			query.App(this.context.App.Id)
-		}
-		if this.context.Item != nil {
-			query.Item(this.context.Item.Id)
-		}
+	if this.context == nil {
+		this.throw(errors.New("'context' should not be nil"))
+		return otto.UndefinedValue()
 	}
 
-	// for
-	forField := m.GetString("for")
-	query.For(forField)
+	if this.context.Agent == nil {
+		this.throw(errors.New("'context.agent' should not be nil"))
+		return otto.UndefinedValue()
+	}
 
-	// group
-	group := m.Get("group")
-	if group != nil {
-		groupKind := reflect.TypeOf(group).Kind()
-		if groupKind == reflect.String {
-			query.Group([]string{group.(string)})
-		} else if groupKind == reflect.Slice {
-			groupSlice, ok := group.([]interface{})
-			if ok {
-				groupFields := []string{}
-				for _, v := range groupSlice {
-					groupFields = append(groupFields, types.String(v))
-				}
-				query.Group(groupFields)
-			}
-		}
+	if len(this.context.Agent.Id) == 0 {
+		this.throw(errors.New("'context.agent.id' should not be empty"))
+		return otto.UndefinedValue()
+	}
+
+	query := teadb.NewQuery(teadb.SharedDB().ValueDAO().TableName(this.context.Agent.Id))
+	if this.context.App != nil {
+		query.Attr("appId", this.context.App.Id)
+	}
+	if this.context.Item != nil {
+		query.Attr("itemId", this.context.Item.Id)
 	}
 
 	// cond
@@ -363,9 +410,72 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 		}
 	}
 
+	// avgValues
+	aggregationFields := m.GetSlice("aggregationFields")
+	aggregationFieldStrings := []string{}
+	if aggregationFields != nil {
+		for _, f := range aggregationFields {
+			aggregationFieldStrings = append(aggregationFieldStrings, types.String(f))
+		}
+	}
+
 	// offset & size
-	query.Offset(m.GetInt64("offset"))
-	query.Limit(m.GetInt64("size"))
+	timeUnit := ""
+	if len(this.context.TimeType) == 0 || this.context.TimeType == "default" { // 默认
+		// timePast
+		timePast := m.GetMap("timePast")
+		if timePast != nil {
+			number := timePast.GetInt64("number")
+			unit := timePast.GetString("unit")
+			switch unit {
+			case "SECOND":
+				timeUnit = "second"
+			case "MINUTE":
+				timeUnit = "minute"
+			case "HOUR":
+				timeUnit = "hour"
+			case "DAY":
+				timeUnit = "day"
+			case "MONTH":
+				timeUnit = "month"
+			case "YEAR":
+				timeUnit = "year"
+			}
+			query.Gte("createdAt", teaconfigs.TimePastUnixTimeWithUnit(number, unit))
+		} else {
+			query.Offset(m.GetInt("offset"))
+			query.Limit(m.GetInt("size"))
+		}
+	} else if this.context.TimeType == "past" { // 过去N时间
+		timestamp := teaconfigs.TimePastUnixTime(this.context.TimePast)
+		query.Gte("createdAt", timestamp)
+		timeUnit = strings.ToLower(teaconfigs.TimePastUnit(this.context.TimePast))
+	} else if this.context.TimeType == "range" { // 日期范围
+		timeUnit = "day"
+		if len(this.context.DayFrom) > 0 && dayReg.MatchString(this.context.DayFrom) {
+			match := dayReg.FindStringSubmatch(this.context.DayFrom)
+			if len(match) == 4 {
+				year := types.Int(match[1])
+				month := types.Int(match[2])
+				day := types.Int(match[3])
+				t := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
+				query.Gte("createdAt", t.Unix())
+			}
+		} else {
+			now := time.Now()
+			query.Gte("createdAt", time.Date(now.Year(), now.Month(), now.Day()-14, 0, 0, 0, 0, time.Local).Unix())
+		}
+		if len(this.context.DayTo) > 0 {
+			match := dayReg.FindStringSubmatch(this.context.DayTo)
+			if len(match) == 4 {
+				year := types.Int(match[1])
+				month := types.Int(match[2])
+				day := types.Int(match[3])
+				t := time.Date(year, time.Month(month), day, 23, 59, 59, 0, time.Local)
+				query.Lte("createdAt", t.Unix())
+			}
+		}
+	}
 
 	// sort
 	sorts := m.Get("sorts")
@@ -374,6 +484,9 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 		if ok {
 			for _, m := range sortsMap {
 				for k, v := range m {
+					if len(k) == 0 {
+						k = "createdAt"
+					}
 					vInt := types.Int(v)
 					if vInt < 0 {
 						query.Desc(k)
@@ -386,14 +499,23 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 	}
 
 	// 开始执行
-	query.Action(action)
-	v, err := query.Execute()
+	var result interface{} = nil
+	if action == "findAll" {
+		result, err = teadb.SharedDB().ValueDAO().QueryValues(query)
+	} else if action == "avgValues" {
+		resultFields := map[string]teadb.Expr{}
+		for _, s := range aggregationFieldStrings {
+			resultFields[s] = teadb.NewAvgExpr("value." + s)
+		}
+		result, err = teadb.SharedDB().ValueDAO().GroupValuesByTime(query, timeUnit, resultFields)
+	}
+
 	if err != nil {
 		this.throw(err)
 		return otto.UndefinedValue()
 	}
 
-	jsValue, err := this.toValue(v)
+	jsValue, err := this.toValue(result)
 	if err != nil {
 		this.throw(err)
 		return otto.UndefinedValue()
