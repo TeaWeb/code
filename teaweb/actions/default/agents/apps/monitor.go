@@ -57,7 +57,7 @@ func (this *MonitorAction) RunPost(params struct {
 		latestTime := ""
 		latestLevel := notices.NoticeLevelNone
 
-		value, err := teadb.SharedDB().ValueDAO().FindLatestItemValue(params.AgentId, params.AppId, item.Id)
+		value, err := teadb.SharedDB().AgentValueDAO().FindLatestItemValue(params.AgentId, params.AppId, item.Id)
 		if err != nil {
 			logs.Error(err)
 		} else if value != nil {

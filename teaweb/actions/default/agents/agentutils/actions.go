@@ -22,7 +22,7 @@ func ActionDeleteAgent(agentId string, onFail func(message string)) (goNext bool
 	}
 
 	// 删除数值记录
-	err = teadb.SharedDB().ValueDAO().DropAgentTable(agent.Id)
+	err = teadb.SharedDB().AgentValueDAO().DropAgentTable(agent.Id)
 	if err != nil {
 		onFail("数值记录删除失败：" + err.Error())
 		return

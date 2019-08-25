@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-func TestValueDAO_Insert(t *testing.T) {
-	dao := SharedDB().ValueDAO()
+func TestAgentValueDAO_Insert(t *testing.T) {
+	dao := SharedDB().AgentValueDAO()
 
 	{
 		value := agents.NewValue()
@@ -26,7 +26,7 @@ func TestValueDAO_Insert(t *testing.T) {
 	}
 }
 
-func TestValueDAO_Insert2(t *testing.T) {
+func TestAgentValueDAO_Insert2(t *testing.T) {
 	jsonString := `
 {
     "code": 500,
@@ -50,15 +50,15 @@ func TestValueDAO_Insert2(t *testing.T) {
 	}
 	value.SetTime(time.Now())
 
-	err = SharedDB().ValueDAO().Insert("local", value)
+	err = SharedDB().AgentValueDAO().Insert("local", value)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("ok")
 }
 
-func TestValueDAO_ClearItemValues(t *testing.T) {
-	dao := SharedDB().ValueDAO()
+func TestAgentValueDAO_ClearItemValues(t *testing.T) {
+	dao := SharedDB().AgentValueDAO()
 	err := dao.ClearItemValues("local", "1", "1", 0)
 	if err != nil {
 		t.Fatal(err)
@@ -66,8 +66,8 @@ func TestValueDAO_ClearItemValues(t *testing.T) {
 	t.Log("ok")
 }
 
-func TestValuedAO_FindLatestItemValue(t *testing.T) {
-	dao := SharedDB().ValueDAO()
+func TestAgentValuedAO_FindLatestItemValue(t *testing.T) {
+	dao := SharedDB().AgentValueDAO()
 	v, err := dao.FindLatestItemValue("local", "system", "cpu.load")
 	if err != nil {
 		t.Fatal(err)
@@ -80,8 +80,8 @@ func TestValuedAO_FindLatestItemValue(t *testing.T) {
 	t.Log("createdTime:", timeutil.Format("Y-m-d H:i:s", time.Unix(v.CreatedAt, 0)))
 }
 
-func TestValuedAO_FindLatestItemValueNoError(t *testing.T) {
-	dao := SharedDB().ValueDAO()
+func TestAgentValuedAO_FindLatestItemValueNoError(t *testing.T) {
+	dao := SharedDB().AgentValueDAO()
 	v, err := dao.FindLatestItemValueNoError("local", "system", "cpu.load")
 	if err != nil {
 		t.Fatal(err)
@@ -94,8 +94,8 @@ func TestValuedAO_FindLatestItemValueNoError(t *testing.T) {
 	t.Log("createdTime:", timeutil.Format("Y-m-d H:i:s", time.Unix(v.CreatedAt, 0)))
 }
 
-func TestValueDAO_ListItemValues(t *testing.T) {
-	dao := SharedDB().ValueDAO()
+func TestAgentValueDAO_ListItemValues(t *testing.T) {
+	dao := SharedDB().AgentValueDAO()
 	values, err := dao.ListItemValues("local", "system", "cpu.load", 0, "", 0, 5)
 	if err != nil {
 		t.Fatal(err)
@@ -105,8 +105,8 @@ func TestValueDAO_ListItemValues(t *testing.T) {
 	}
 }
 
-func TestValueDAO_QueryValues(t *testing.T) {
-	dao := SharedDB().ValueDAO()
+func TestAgentValueDAO_QueryValues(t *testing.T) {
+	dao := SharedDB().AgentValueDAO()
 	q := NewQuery("values.agent.local")
 	q.Limit(10)
 	values, err := dao.QueryValues(q)
@@ -118,8 +118,8 @@ func TestValueDAO_QueryValues(t *testing.T) {
 	}
 }
 
-func TestValueDAO_DropAgentTable(t *testing.T) {
-	dao := SharedDB().ValueDAO()
+func TestAgentValueDAO_DropAgentTable(t *testing.T) {
+	dao := SharedDB().AgentValueDAO()
 	err := dao.DropAgentTable("test")
 	if err != nil {
 		t.Fatal(err)
@@ -127,8 +127,8 @@ func TestValueDAO_DropAgentTable(t *testing.T) {
 	t.Log("ok")
 }
 
-func TestValueDAO_GroupValues(t *testing.T) {
-	dao := SharedDB().ValueDAO()
+func TestAgentValueDAO_GroupValues(t *testing.T) {
+	dao := SharedDB().AgentValueDAO()
 
 	q := NewQuery("values.agent.local").
 		Attr("itemId", "cpu.load")

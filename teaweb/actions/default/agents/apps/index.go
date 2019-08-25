@@ -32,7 +32,7 @@ func (this *IndexAction) Run(params struct {
 			if !item.On {
 				continue
 			}
-			value, err := teadb.SharedDB().ValueDAO().FindLatestItemValue(agent.Id, app.Id, item.Id)
+			value, err := teadb.SharedDB().AgentValueDAO().FindLatestItemValue(agent.Id, app.Id, item.Id)
 			if err == nil && value != nil {
 				if value.NoticeLevel == notices.NoticeLevelWarning || value.NoticeLevel == notices.NoticeLevelError && value.NoticeLevel > level {
 					level = value.NoticeLevel

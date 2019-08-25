@@ -1,4 +1,4 @@
-package teastats
+package stats
 
 import (
 	"github.com/iwind/TeaGo/utils/time"
@@ -40,7 +40,9 @@ type Value struct {
 
 // 获取新对象
 func NewItemValue() *Value {
-	return &Value{}
+	return &Value{
+		Params: map[string]string{},
+	}
 }
 
 func (this *Value) SetTime(t time.Time) {

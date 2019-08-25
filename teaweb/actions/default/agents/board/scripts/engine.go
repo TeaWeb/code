@@ -386,7 +386,7 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 
-	query := teadb.NewQuery(teadb.SharedDB().ValueDAO().TableName(this.context.Agent.Id))
+	query := teadb.NewQuery(teadb.SharedDB().AgentValueDAO().TableName(this.context.Agent.Id))
 	if this.context.App != nil {
 		query.Attr("appId", this.context.App.Id)
 	}
@@ -501,13 +501,13 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 	// 开始执行
 	var result interface{} = nil
 	if action == "findAll" {
-		result, err = teadb.SharedDB().ValueDAO().QueryValues(query)
+		result, err = teadb.SharedDB().AgentValueDAO().QueryValues(query)
 	} else if action == "avgValues" {
 		resultFields := map[string]teadb.Expr{}
 		for _, s := range aggregationFieldStrings {
 			resultFields[s] = teadb.NewAvgExpr("value." + s)
 		}
-		result, err = teadb.SharedDB().ValueDAO().GroupValuesByTime(query, timeUnit, resultFields)
+		result, err = teadb.SharedDB().AgentValueDAO().GroupValuesByTime(query, timeUnit, resultFields)
 	}
 
 	if err != nil {

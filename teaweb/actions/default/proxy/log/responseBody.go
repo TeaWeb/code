@@ -5,10 +5,10 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"encoding/base64"
-	"github.com/TeaWeb/code/tealogs"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 	"io/ioutil"
 	"strings"
 )
@@ -20,15 +20,14 @@ func (this *ResponseBodyAction) Run(params struct {
 	LogId string
 	Day   string
 }) {
-	query := teamongo.NewQuery("logs."+params.Day, new(tealogs.AccessLog))
-	query.Id(params.LogId)
-	query.Result("sentHeader", "responseBodyData")
-	one, err := query.Find()
+	if len(params.Day) == 0 {
+		params.Day = timeutil.Format("Ymd")
+	}
+	accessLog, err := teadb.SharedDB().AccessLogDAO().FindResponseHeaderAndBody(params.Day, params.LogId)
 	if err != nil {
 		this.Fail(err.Error())
 	}
-	if one != nil {
-		accessLog := one.(*tealogs.AccessLog)
+	if accessLog != nil {
 		this.Data["headers"] = accessLog.SentHeader
 		this.Data["isImage"] = false
 		this.Data["isText"] = false
@@ -99,7 +98,10 @@ func (this *ResponseBodyAction) Run(params struct {
 								} else {
 									this.Data["body"] = string(data)
 								}
-								reader.Close()
+								err = reader.Close()
+								if err != nil {
+									logs.Error(err)
+								}
 							}
 						} else if encoding == "deflate" {
 							reader := flate.NewReader(bytes.NewReader(accessLog.ResponseBodyData))
@@ -108,7 +110,10 @@ func (this *ResponseBodyAction) Run(params struct {
 								logs.Error(err)
 							} else {
 								this.Data["body"] = string(data)
-								reader.Close()
+								err = reader.Close()
+								if err != nil {
+									logs.Error(err)
+								}
 							}
 						} else if encoding == "br" {
 							// 参考 https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding

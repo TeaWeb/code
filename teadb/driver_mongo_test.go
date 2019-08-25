@@ -15,7 +15,11 @@ func TestMongoDriver_buildFilter(t *testing.T) {
 	q.Op("count", OperandEq, 3)
 
 	driver := new(MongoDriver)
-	logs.PrintAsJSON(driver.buildFilter(q), t)
+	filter, err := driver.buildFilter(q)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logs.PrintAsJSON(filter, t)
 }
 
 func TestMongoDriver_setMapValue(t *testing.T) {

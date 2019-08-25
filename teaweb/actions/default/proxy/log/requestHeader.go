@@ -1,9 +1,9 @@
 package log
 
 import (
-	"github.com/TeaWeb/code/tealogs"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 )
 
 type RequestHeaderAction actions.Action
@@ -13,15 +13,14 @@ func (this *RequestHeaderAction) Run(params struct {
 	LogId string
 	Day   string
 }) {
-	query := teamongo.NewQuery("logs."+params.Day, new(tealogs.AccessLog))
-	query.Id(params.LogId)
-	query.Result("header", "requestData")
-	one, err := query.Find()
+	if len(params.Day) == 0 {
+		params.Day = timeutil.Format("Ymd")
+	}
+	accessLog, err := teadb.SharedDB().AccessLogDAO().FindRequestHeaderAndBody(params.Day, params.LogId)
 	if err != nil {
 		this.Fail(err.Error())
 	}
-	if one != nil {
-		accessLog := one.(*tealogs.AccessLog)
+	if accessLog != nil {
 		this.Data["headers"] = accessLog.Header
 		this.Data["body"] = string(accessLog.RequestData)
 	} else {

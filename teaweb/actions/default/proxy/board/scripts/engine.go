@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/stats"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/tealogs"
-	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaproxy"
-	"github.com/TeaWeb/code/teastats"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/caches"
 	"github.com/iwind/TeaGo/files"
@@ -16,6 +16,7 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 	"github.com/robertkrimen/otto"
 	"reflect"
 	"runtime"
@@ -86,7 +87,10 @@ func (this *Engine) SetContext(context *Context) {
 			}),
 			"locations": lists.Map(context.Server.Locations, func(k int, v interface{}) interface{} {
 				location := v.(*teaconfigs.LocationConfig)
-				location.Validate()
+				err := location.Validate()
+				if err != nil {
+					logs.Error(err)
+				}
 				locationOptions := map[string]interface{}{
 					"id":          location.Id,
 					"isOn":        location.On,
@@ -136,7 +140,10 @@ func (this *Engine) SetContext(context *Context) {
 			}
 		}
 
-		this.vm.Run(`context.server = new http.Server(` + stringutil.JSONEncode(options) + `);`)
+		_, err := this.vm.Run(`context.server = new http.Server(` + stringutil.JSONEncode(options) + `);`)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	// 可供使用的特性
@@ -146,14 +153,24 @@ func (this *Engine) SetContext(context *Context) {
 	}
 	features = append(features, runtime.GOOS)
 	features = append(features, runtime.GOARCH)
-	this.vm.Run(`context.features=` + stringutil.JSONEncode(features) + `;`)
+	_, err := this.vm.Run(`context.features=` + stringutil.JSONEncode(features) + `;`)
+	if err != nil {
+		logs.Error(err)
+	}
 }
 
 // 初始化
 func (this *Engine) init() {
 	this.vm = otto.New()
-	this.vm.Set("callConsoleLog", this.callConsoleLog)
-	this.vm.Run("console.log = callConsoleLog;")
+	err := this.vm.Set("callConsoleLog", this.callConsoleLog)
+	if err != nil {
+		logs.Error(err)
+	}
+
+	_, err = this.vm.Run("console.log = callConsoleLog;")
+	if err != nil {
+		logs.Error(err)
+	}
 
 	this.loadLib("libs/array.js")
 	this.loadLib("libs/times.js")
@@ -176,11 +193,30 @@ func (this *Engine) init() {
 	this.loadLib("libs/charts.table.js")
 	this.loadLib("libs/context.js")
 
-	this.vm.Set("callSetCache", this.callSetCache)
-	this.vm.Set("callGetCache", this.callGetCache)
-	this.vm.Set("callChartRender", this.callRenderChart)
-	this.vm.Set("callLogExecuteQuery", this.callLogExecuteQuery)
-	this.vm.Set("callStatExecuteQuery", this.callStatExecuteQuery)
+	err = this.vm.Set("callSetCache", this.callSetCache)
+	if err != nil {
+		logs.Error(err)
+	}
+
+	err = this.vm.Set("callGetCache", this.callGetCache)
+	if err != nil {
+		logs.Error(err)
+	}
+
+	err = this.vm.Set("callChartRender", this.callRenderChart)
+	if err != nil {
+		logs.Error(err)
+	}
+
+	err = this.vm.Set("callLogExecuteQuery", this.callLogExecuteQuery)
+	if err != nil {
+		logs.Error(err)
+	}
+
+	err = this.vm.Set("callStatExecuteQuery", this.callStatExecuteQuery)
+	if err != nil {
+		logs.Error(err)
+	}
 }
 
 // 运行Widget代码
@@ -261,6 +297,16 @@ func (this *Engine) callRenderChart(call otto.FunctionCall) otto.Value {
 }
 
 func (this *Engine) callLogExecuteQuery(call otto.FunctionCall) otto.Value {
+	if this.context == nil {
+		logs.Error(errors.New("'context' should not be nil"))
+		return otto.UndefinedValue()
+	}
+
+	if this.context.Server == nil {
+		logs.Error(errors.New("'context.server' should not be nil"))
+		return otto.UndefinedValue()
+	}
+
 	arg, err := call.Argument(0).Export()
 	if err != nil {
 		this.throw(err)
@@ -274,33 +320,15 @@ func (this *Engine) callLogExecuteQuery(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 
-	query := tealogs.NewQuery()
-
-	// for
-	forField := m.GetString("for")
-	query.For(forField)
+	day := timeutil.Format("Ymd")
+	query := teadb.NewQuery(teadb.SharedDB().AccessLogDAO().TableName(day))
 
 	// group
 	group := m.Get("group")
 	if group != nil {
-		groupKind := reflect.TypeOf(group).Kind()
-		if groupKind == reflect.String {
-			query.Group([]string{group.(string)})
-		} else if groupKind == reflect.Slice {
-			groupSlice, ok := group.([]interface{})
-			if ok {
-				groupFields := []string{}
-				for _, v := range groupSlice {
-					groupFields = append(groupFields, types.String(v))
-				}
-				query.Group(groupFields)
-			}
-		}
+		logs.Error(errors.New("unsupported method 'group()'"))
+		return otto.UndefinedValue()
 	}
-
-	// duration
-	duration := m.GetString("duration")
-	query.Duration(duration)
 
 	// cond
 	cond := m.Get("cond")
@@ -311,7 +339,7 @@ func (this *Engine) callLogExecuteQuery(call otto.FunctionCall) otto.Value {
 				opsMap, ok := ops.(map[string]interface{})
 				if ok {
 					for op, v := range opsMap {
-						query.Op(op, field, v)
+						query.Op(field, op, v)
 					}
 				}
 			}
@@ -329,18 +357,18 @@ func (this *Engine) callLogExecuteQuery(call otto.FunctionCall) otto.Value {
 	// timeFrom
 	timeFrom := m.GetInt64("timeFrom")
 	if timeFrom > 0 {
-		query.From(time.Unix(timeFrom, 0))
+		query.Gte("timestamp", timeFrom)
 	}
 
 	// timeTo
 	timeTo := m.GetInt64("timeTo")
 	if timeTo > 0 {
-		query.To(time.Unix(timeTo, 0))
+		query.Lte("timestamp", timeTo)
 	}
 
 	// offset & size
-	query.Offset(m.GetInt64("offset"))
-	query.Limit(m.GetInt64("size"))
+	query.Offset(m.GetInt("offset"))
+	query.Limit(m.GetInt("size"))
 
 	// sort
 	sorts := m.Get("sorts")
@@ -350,6 +378,9 @@ func (this *Engine) callLogExecuteQuery(call otto.FunctionCall) otto.Value {
 			for _, m := range sortsMap {
 				for k, v := range m {
 					vInt := types.Int(v)
+					if len(k) == 0 {
+						k = "_id"
+					}
 					if vInt < 0 {
 						query.Desc(k)
 					} else {
@@ -361,8 +392,14 @@ func (this *Engine) callLogExecuteQuery(call otto.FunctionCall) otto.Value {
 	}
 
 	// 开始执行
-	query.Action(action)
-	v, err := query.Execute()
+	var v interface{} = nil
+	switch action {
+	case "findAll":
+		v, err = teadb.SharedDB().AccessLogDAO().QueryAccessLogs(day, this.context.Server.Id, query)
+	default:
+		logs.Error(errors.New("unsupported action '" + action + "'"))
+		return otto.UndefinedValue()
+	}
 	if err != nil {
 		this.throw(err)
 		return otto.UndefinedValue()
@@ -400,7 +437,7 @@ func (this *Engine) callStatExecuteQuery(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 
-	query := teamongo.NewQuery("values.server."+this.context.Server.Id, new(teastats.Value))
+	query := teadb.NewQuery(teadb.SharedDB().ServerValueDAO().TableName(this.context.Server.Id))
 
 	// cond
 	cond := m.Get("cond")
@@ -411,7 +448,7 @@ func (this *Engine) callStatExecuteQuery(call otto.FunctionCall) otto.Value {
 				opsMap, ok := ops.(map[string]interface{})
 				if ok {
 					for op, v := range opsMap {
-						query.Op(op, field, v)
+						query.Op(field, op, v)
 					}
 				}
 			}
@@ -419,8 +456,8 @@ func (this *Engine) callStatExecuteQuery(call otto.FunctionCall) otto.Value {
 	}
 
 	// offset & size
-	query.Offset(m.GetInt64("offset"))
-	query.Limit(m.GetInt64("size"))
+	query.Offset(m.GetInt("offset"))
+	query.Limit(m.GetInt("size"))
 
 	// sort
 	sorts := m.Get("sorts")
@@ -429,6 +466,9 @@ func (this *Engine) callStatExecuteQuery(call otto.FunctionCall) otto.Value {
 		if ok {
 			for _, m := range sortsMap {
 				for k, v := range m {
+					if len(k) == 0 {
+						k = "_id"
+					}
 					vInt := types.Int(v)
 					if vInt < 0 {
 						query.Desc(k)
@@ -441,8 +481,16 @@ func (this *Engine) callStatExecuteQuery(call otto.FunctionCall) otto.Value {
 	}
 
 	// 开始执行
-	query.Action(action)
-	v, err := query.Execute()
+	var v interface{} = nil
+	switch action {
+	case "findAll":
+		v, err = teadb.SharedDB().
+			ServerValueDAO().
+			QueryValues(query)
+	default:
+		logs.Error(errors.New("unsupported action '" + action + "'"))
+		return otto.UndefinedValue()
+	}
 	if err != nil {
 		this.throw(err)
 		return otto.UndefinedValue()
@@ -562,7 +610,7 @@ func (this *Engine) toValue(data interface{}) (v otto.Value, err error) {
 	}
 
 	// *Value
-	if _, ok := data.(*teastats.Value); ok {
+	if _, ok := data.(*stats.Value); ok {
 		jsonData, err := json.Marshal(data)
 		if err != nil {
 			return this.vm.ToValue(data)
@@ -577,6 +625,21 @@ func (this *Engine) toValue(data interface{}) (v otto.Value, err error) {
 	}
 
 	if _, ok := data.([]interface{}); ok {
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			return this.vm.ToValue(data)
+		}
+		m := []map[string]interface{}{}
+		err = json.Unmarshal(jsonData, &m)
+		if err != nil {
+			logs.Error(err)
+			return this.vm.ToValue(data)
+		}
+
+		return this.vm.ToValue(m)
+	}
+
+	if _, ok := data.([]*stats.Value); ok {
 		jsonData, err := json.Marshal(data)
 		if err != nil {
 			return this.vm.ToValue(data)

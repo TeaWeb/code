@@ -1,6 +1,7 @@
 package teastats
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/stats"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"reflect"
@@ -25,19 +26,19 @@ func RegisterFilter(filters ...FilterInterface) {
 			dotIndex := strings.LastIndex(code, ".")
 			if dotIndex > 0 {
 				switch code[dotIndex+1:] {
-				case ValuePeriodSecond:
+				case stats.ValuePeriodSecond:
 					periodName = "秒"
-				case ValuePeriodMinute:
+				case stats.ValuePeriodMinute:
 					periodName = "分钟"
-				case ValuePeriodHour:
+				case stats.ValuePeriodHour:
 					periodName = "小时"
-				case ValuePeriodDay:
+				case stats.ValuePeriodDay:
 					periodName = "天"
-				case ValuePeriodWeek:
+				case stats.ValuePeriodWeek:
 					periodName = "周"
-				case ValuePeriodMonth:
+				case stats.ValuePeriodMonth:
 					periodName = "月"
-				case ValuePeriodYear:
+				case stats.ValuePeriodYear:
 					periodName = "年"
 				}
 			}

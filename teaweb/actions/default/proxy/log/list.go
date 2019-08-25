@@ -2,10 +2,8 @@ package log
 
 import (
 	"fmt"
-	"github.com/TeaWeb/code/tealogs"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/time"
@@ -23,7 +21,7 @@ var whitespaceSplitReg = regexp.MustCompile(`\s+`)
 func (this *ListAction) Run(params struct {
 	ServerId string
 	FromId   string
-	Size     int64 `default:"10"`
+	Size     int `default:"10"`
 
 	RemoteAddr string  // 终端地址
 	Domain     string  // 域名
@@ -53,30 +51,7 @@ func (this *ListAction) Run(params struct {
 	requestBodyFetching = params.BodyFetching
 	requestBodyTime = time.Now()
 
-	shouldReverse := true
-	query := teamongo.NewQuery("logs."+timeutil.Format("Ymd"), new(tealogs.AccessLog))
-	query.Attr("serverId", serverId)
-	if len(params.FromId) > 0 {
-		query.Gt("_id", params.FromId)
-		query.AscPk()
-	} else {
-		query.DescPk()
-		shouldReverse = false
-	}
-	if params.LogType == "errorLog" {
-		query.Or([]map[string]interface{}{
-			{
-				"hasErrors": true,
-			},
-			{
-				"status": map[string]interface{}{
-					"$gte": 400,
-				},
-			},
-		} ...)
-	}
-	query.Limit(params.Size)
-	ones, err := query.FindAll()
+	accessLogs, err := teadb.SharedDB().AccessLogDAO().ListLatestAccessLogs(timeutil.Format("Ymd"), serverId, params.FromId, params.LogType == "errorLog", params.Size)
 
 	this.Data["lastId"] = ""
 	if err != nil {
@@ -84,16 +59,10 @@ func (this *ListAction) Run(params struct {
 		this.Data["logs"] = []interface{}{}
 	} else {
 		result := []maps.Map{}
-		if len(ones) > 0 {
-			if shouldReverse {
-				this.Data["lastId"] = ones[len(ones)-1].(*tealogs.AccessLog).Id.Hex()
-			} else {
-				this.Data["lastId"] = ones[0].(*tealogs.AccessLog).Id.Hex()
-			}
+		if len(accessLogs) > 0 {
+			this.Data["lastId"] = accessLogs[0].Id.Hex()
 		}
-		for _, one := range ones {
-			accessLog := one.(*tealogs.AccessLog)
-
+		for _, accessLog := range accessLogs {
 			// filters
 			if len(params.RemoteAddr) > 0 && !this.match(accessLog.RemoteAddr, params.RemoteAddr) {
 				continue
@@ -179,9 +148,6 @@ func (this *ListAction) Run(params struct {
 			})
 		}
 
-		if shouldReverse {
-			lists.Reverse(result)
-		}
 		this.Data["logs"] = result
 	}
 

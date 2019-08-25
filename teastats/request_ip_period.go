@@ -2,6 +2,7 @@ package teastats
 
 import (
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs/stats"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
@@ -56,10 +57,10 @@ func (this *RequestIPPeriodFilter) Start(queue *Queue, code string) {
 	prefix := ""
 	duration := 10 * time.Second
 	switch this.period {
-	case ValuePeriodHour:
+	case stats.ValuePeriodHour:
 		prefix = timeutil.Format("YmdH")
 		duration = 10 * time.Minute
-	case ValuePeriodDay:
+	case stats.ValuePeriodDay:
 		prefix = timeutil.Format("Ymd")
 		duration = 30 * time.Minute
 	}
@@ -114,9 +115,9 @@ func (this *RequestIPPeriodFilter) commit() {
 	if this.db != nil {
 		prefix := ""
 		switch this.period {
-		case ValuePeriodDay:
+		case stats.ValuePeriodDay:
 			prefix = timeutil.Format("Ymd")
-		case ValuePeriodHour:
+		case stats.ValuePeriodHour:
 			prefix = timeutil.Format("YmdH")
 		}
 		prefix += this.queue.ServerId

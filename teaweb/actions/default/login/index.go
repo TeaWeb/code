@@ -3,11 +3,12 @@ package login
 import (
 	"github.com/TeaWeb/code/teaconfigs/audits"
 	"github.com/TeaWeb/code/teaconst"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/helpers"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"net/http"
 	"time"
 )
@@ -41,10 +42,15 @@ func (this *IndexAction) RunPost(params struct {
 	Must     *actions.Must
 	Auth     *helpers.UserShouldAuth
 }) {
-	// 记录
-	teamongo.NewAuditsQuery().Insert(audits.NewLog(params.Username, audits.ActionLogin, "登录", map[string]string{
-		"ip": this.RequestRemoteIP(),
-	}))
+	// 记录登录
+	go func() {
+		err := teadb.SharedDB().AuditLogDAO().InsertOne(audits.NewLog(params.Username, audits.ActionLogin, "登录", map[string]string{
+			"ip": this.RequestRemoteIP(),
+		}))
+		if err != nil {
+			logs.Error(err)
+		}
+	}()
 
 	// 检查IP限制
 	if !configs.SharedAdminConfig().AllowIP(this.RequestRemoteIP()) {
@@ -89,7 +95,10 @@ func (this *IndexAction) RunPost(params struct {
 
 		// 在开发环境下不保存登录IP，以便于不干扰git
 		if !Tea.IsTesting() {
-			adminConfig.Save()
+			err := adminConfig.Save()
+			if err != nil {
+				logs.Error(err)
+			}
 		}
 
 		this.Next("/", nil, "").Success()

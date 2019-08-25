@@ -18,18 +18,10 @@ type Driver interface {
 
 	Group(query *Query, field string, result map[string]Expr) ([]maps.Map, error)
 
-	/**
-	UpdateOne(one interface{}) error
-	UpdateOnes(ones interface{}) error
-	DeleteOne() error
-	Drop() error()
-	Create() error
-	Truncate() error
-	**/
-
 	AccessLogDAO() AccessLogDAO
 	AgentLogDAO() AgentLogDAO
 	AuditLogDAO() AuditLogDAO
 	NoticeDAO() NoticeDAO
-	ValueDAO() ValueDAO
+	AgentValueDAO() AgentValueDAO
+	ServerValueDAO() ServerValueDAO
 }

@@ -12,20 +12,20 @@ import (
 	"time"
 )
 
-type MongoValueDAO struct {
+type MongoAgentValueDAO struct {
 	collMap    map[string]*teamongo.Collection
 	collLocker sync.Mutex
 }
 
-func (this *MongoValueDAO) Init() {
+func (this *MongoAgentValueDAO) Init() {
 	this.collMap = map[string]*teamongo.Collection{}
 }
 
-func (this *MongoValueDAO) TableName(agentId string) string {
+func (this *MongoAgentValueDAO) TableName(agentId string) string {
 	return this.agentCollName(agentId)
 }
 
-func (this *MongoValueDAO) Insert(agentId string, value *agents.Value) error {
+func (this *MongoAgentValueDAO) Insert(agentId string, value *agents.Value) error {
 	if value == nil {
 		return errors.New("value should not be nil")
 	}
@@ -50,7 +50,7 @@ func (this *MongoValueDAO) Insert(agentId string, value *agents.Value) error {
 	return err
 }
 
-func (this *MongoValueDAO) ClearItemValues(agentId string, appId string, itemId string, level notices.NoticeLevel) error {
+func (this *MongoAgentValueDAO) ClearItemValues(agentId string, appId string, itemId string, level notices.NoticeLevel) error {
 	if len(agentId) == 0 {
 		return errors.New("agentId should not be empty")
 	}
@@ -63,7 +63,7 @@ func (this *MongoValueDAO) ClearItemValues(agentId string, appId string, itemId 
 	return query.Delete()
 }
 
-func (this *MongoValueDAO) FindLatestItemValue(agentId string, appId string, itemId string) (*agents.Value, error) {
+func (this *MongoAgentValueDAO) FindLatestItemValue(agentId string, appId string, itemId string) (*agents.Value, error) {
 	query := NewQuery(this.agentCollName(agentId)).
 		Attr("itemId", itemId).
 		Node().
@@ -81,7 +81,7 @@ func (this *MongoValueDAO) FindLatestItemValue(agentId string, appId string, ite
 	return this.processValue(v.(*agents.Value)), nil
 }
 
-func (this *MongoValueDAO) FindLatestItemValueNoError(agentId string, appId string, itemId string) (*agents.Value, error) {
+func (this *MongoAgentValueDAO) FindLatestItemValueNoError(agentId string, appId string, itemId string) (*agents.Value, error) {
 	query := NewQuery(this.agentCollName(agentId)).
 		Attr("itemId", itemId).
 		Attr("error", "").
@@ -100,7 +100,7 @@ func (this *MongoValueDAO) FindLatestItemValueNoError(agentId string, appId stri
 	return this.processValue(v.(*agents.Value)), nil
 }
 
-func (this *MongoValueDAO) ListItemValues(agentId string, appId string, itemId string, noticeLevel notices.NoticeLevel, lastId string, offset int, size int) ([]*agents.Value, error) {
+func (this *MongoAgentValueDAO) ListItemValues(agentId string, appId string, itemId string, noticeLevel notices.NoticeLevel, lastId string, offset int, size int) ([]*agents.Value, error) {
 	query := NewQuery(this.agentCollName(agentId))
 	query.Attr("appId", appId)
 	query.Attr("itemId", itemId)
@@ -136,7 +136,7 @@ func (this *MongoValueDAO) ListItemValues(agentId string, appId string, itemId s
 	return result, nil
 }
 
-func (this *MongoValueDAO) QueryValues(query *Query) ([]*agents.Value, error) {
+func (this *MongoAgentValueDAO) QueryValues(query *Query) ([]*agents.Value, error) {
 	ones, err := query.FindOnes(new(agents.Value))
 	if err != nil {
 		return nil, err
@@ -149,7 +149,7 @@ func (this *MongoValueDAO) QueryValues(query *Query) ([]*agents.Value, error) {
 	return result, nil
 }
 
-func (this *MongoValueDAO) GroupValuesByTime(query *Query, timeField string, result map[string]Expr) ([]*agents.Value, error) {
+func (this *MongoAgentValueDAO) GroupValuesByTime(query *Query, timeField string, result map[string]Expr) ([]*agents.Value, error) {
 	query.Asc("timeFormat." + timeField)
 	result["timeFormat"] = "timeFormat"
 	ones, err := query.Group("timeFormat."+timeField, result)
@@ -174,12 +174,12 @@ func (this *MongoValueDAO) GroupValuesByTime(query *Query, timeField string, res
 	return values, nil
 }
 
-func (this *MongoValueDAO) DropAgentTable(agentId string) error {
+func (this *MongoAgentValueDAO) DropAgentTable(agentId string) error {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	return this.selectColl(this.agentCollName(agentId)).Drop(ctx)
 }
 
-func (this *MongoValueDAO) selectColl(collName string) *teamongo.Collection {
+func (this *MongoAgentValueDAO) selectColl(collName string) *teamongo.Collection {
 	this.collLocker.Lock()
 	defer this.collLocker.Unlock()
 
@@ -210,11 +210,11 @@ func (this *MongoValueDAO) selectColl(collName string) *teamongo.Collection {
 	return coll
 }
 
-func (this *MongoValueDAO) agentCollName(agentId string) string {
+func (this *MongoAgentValueDAO) agentCollName(agentId string) string {
 	return "values.agent." + agentId
 }
 
-func (this *MongoValueDAO) processValue(ptr *agents.Value) *agents.Value {
+func (this *MongoAgentValueDAO) processValue(ptr *agents.Value) *agents.Value {
 	if ptr.Value == nil {
 		return ptr
 	}

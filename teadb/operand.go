@@ -11,6 +11,7 @@ const (
 	OperandIn    OperandCode = "in"
 	OperandNotIn OperandCode = "nin"
 	OperandNeq   OperandCode = "ne"
+	OperandOr    OperandCode = "or"
 )
 
 type Operand struct {

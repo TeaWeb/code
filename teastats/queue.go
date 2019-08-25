@@ -1,7 +1,8 @@
 package teastats
 
 import (
-	"errors"
+	"github.com/TeaWeb/code/teaconfigs/stats"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -17,8 +18,7 @@ import (
 // 入库队列
 type Queue struct {
 	ServerId    string
-	coll        *teamongo.Collection
-	c           chan *Value
+	c           chan *stats.Value
 	looper      *timers.Looper
 	indexes     [][]string // { { page }, { region, province, city }, ... }
 	indexLocker sync.Mutex
@@ -32,7 +32,7 @@ func NewQueue() *Queue {
 // 队列单例
 func (this *Queue) Start(serverId string) {
 	this.ServerId = serverId
-	this.c = make(chan *Value, 4096)
+	this.c = make(chan *stats.Value, 4096)
 
 	// 测试连接，如果有错误则重新连接
 	err := teamongo.Test()
@@ -41,52 +41,6 @@ func (this *Queue) Start(serverId string) {
 		time.Sleep(5 * time.Second)
 		this.Start(serverId)
 		return
-	}
-
-	insertQuery := teamongo.NewQuery("values.server."+serverId, new(Value))
-
-	// 创建索引
-	coll := insertQuery.Coll()
-
-	this.coll = coll
-	for _, fields := range [][]*teamongo.IndexField{
-		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timestamp", true),
-		},
-		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.second", true),
-		},
-		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.minute", true),
-		},
-		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.hour", true),
-		},
-		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.day", true),
-		},
-		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.week", true),
-		},
-		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.month", true),
-		},
-		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.year", true),
-		},
-	} {
-		err := coll.CreateIndex(fields...)
-		if err != nil {
-			logs.Error(errors.New("mongo:" + err.Error()))
-		}
 	}
 
 	// 导入数据
@@ -99,53 +53,23 @@ func (this *Queue) Start(serverId string) {
 			}
 
 			// 是否已存在
-			findQuery := teamongo.NewQuery("values.server."+serverId, new(Value)).
-				Attr("item", item.Item)
-			switch item.Period {
-			case ValuePeriodSecond:
-				findQuery.Attr("timestamp", item.Timestamp)
-			case ValuePeriodMinute:
-				findQuery.Attr("timeFormat.minute", item.TimeFormat.Minute)
-			case ValuePeriodHour:
-				findQuery.Attr("timeFormat.hour", item.TimeFormat.Hour)
-			case ValuePeriodDay:
-				findQuery.Attr("timeFormat.day", item.TimeFormat.Day)
-			case ValuePeriodWeek:
-				findQuery.Attr("timeFormat.week", item.TimeFormat.Week)
-			case ValuePeriodMonth:
-				findQuery.Attr("timeFormat.month", item.TimeFormat.Month)
-			case ValuePeriodYear:
-				findQuery.Attr("timeFormat.year", item.TimeFormat.Year)
-			}
-
-			// 参数
-			if len(item.Params) > 0 {
-				for k, v := range item.Params {
-					findQuery.Attr("params."+k, v)
-				}
-			} else {
-				findQuery.Attr("params", map[string]string{})
-			}
-
-			one, err := findQuery.Find()
+			oneValue, err := teadb.SharedDB().ServerValueDAO().FindSameItemValue(serverId, item)
 			if err != nil {
 				logs.Error(err)
 				continue
 			}
-			if one == nil {
+			if oneValue == nil {
 				// 是否有自定义运算函数
 				increaseFunc, found := item.Value["$increase"]
 				if found {
 					item.Value = increaseFunc.(func(value maps.Map, inc maps.Map) maps.Map)(nil, item.Value)
 					delete(item.Value, "$increase")
 				}
-				err := insertQuery.Insert(item)
+				err := teadb.SharedDB().ServerValueDAO().InsertOne(serverId, item)
 				if err != nil {
 					logs.Error(err)
 				}
 			} else {
-				oneValue := one.(*Value)
-
 				// 是否有自定义运算函数
 				increaseFunc, found := item.Value["$increase"]
 				if found {
@@ -155,14 +79,7 @@ func (this *Queue) Start(serverId string) {
 					// 简单的增长
 					item.Value = this.increase(oneValue.Value, item.Value)
 				}
-				err := teamongo.NewQuery("values.server."+serverId, new(Value)).
-					Attr("_id", oneValue.Id).
-					Update(map[string]interface{}{
-						"$set": maps.Map{
-							"value":     item.Value,
-							"timestamp": item.Timestamp,
-						},
-					})
+				err = teadb.SharedDB().ServerValueDAO().UpdateItemValueAndTimestamp(serverId, oneValue.Id.Hex(), item.Value, item.Timestamp)
 				if err != nil {
 					logs.Error(err)
 				}
@@ -174,28 +91,19 @@ func (this *Queue) Start(serverId string) {
 	go func() {
 		this.looper = timers.Loop(1*time.Hour, func(looper *timers.Looper) {
 			// 清除24小时之前的second
-			err := teamongo.NewQuery("values.server."+serverId, new(Value)).
-				Attr("period", "second").
-				Lt("timestamp", time.Now().Unix()-24*3600).
-				Delete()
+			err := teadb.SharedDB().ServerValueDAO().DeleteExpiredValues(serverId, "second", 24*3600)
 			if err != nil {
 				logs.Error(err)
 			}
 
 			// 清除24小时之前的minute
-			err = teamongo.NewQuery("values.server."+serverId, new(Value)).
-				Attr("period", "minute").
-				Lt("timestamp", time.Now().Unix()-24*3600).
-				Delete()
+			err = teadb.SharedDB().ServerValueDAO().DeleteExpiredValues(serverId, "minute", 24*3600)
 			if err != nil {
 				logs.Error(err)
 			}
 
 			// 清除48小时之前的hour
-			err = teamongo.NewQuery("values.server."+serverId, new(Value)).
-				Attr("period", "hour").
-				Lt("timestamp", time.Now().Unix()-48*3600).
-				Delete()
+			err = teadb.SharedDB().ServerValueDAO().DeleteExpiredValues(serverId, "hour", 48*3600)
 			if err != nil {
 				logs.Error(err)
 			}
@@ -204,14 +112,14 @@ func (this *Queue) Start(serverId string) {
 }
 
 // 添加指标值
-func (this *Queue) Add(itemCode string, t time.Time, period ValuePeriod, params map[string]string, value maps.Map) {
+func (this *Queue) Add(itemCode string, t time.Time, period stats.ValuePeriod, params map[string]string, value maps.Map) {
 	if params == nil {
 		params = map[string]string{}
 	}
 	if value == nil {
 		value = maps.Map{}
 	}
-	item := NewItemValue()
+	item := stats.NewItemValue()
 	item.Id = primitive.NewObjectID()
 	item.Item = itemCode
 	item.Period = period
@@ -249,10 +157,6 @@ func (this *Queue) Index(index []string) {
 	this.indexLocker.Lock()
 	defer this.indexLocker.Unlock()
 
-	if this.coll == nil {
-		return
-	}
-
 	// 是否已存在
 	for _, i := range this.indexes {
 		if this.equalStrings(index, i) {
@@ -260,11 +164,11 @@ func (this *Queue) Index(index []string) {
 		}
 	}
 
-	fields := []*teamongo.IndexField{teamongo.NewIndexField("item", true)}
+	fields := []*teadb.IndexField{teadb.NewIndexField("item", true)}
 	for _, i := range index {
-		fields = append(fields, teamongo.NewIndexField("params."+i, true))
+		fields = append(fields, teadb.NewIndexField("params."+i, true))
 	}
-	err := this.coll.CreateIndex(fields...)
+	err := teadb.SharedDB().ServerValueDAO().CreateIndex(this.ServerId, fields)
 	if err != nil {
 		logs.Error(err)
 	}

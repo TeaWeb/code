@@ -1,0 +1,29 @@
+package teadb
+
+import "github.com/TeaWeb/code/teaconfigs/stats"
+
+type ServerValueDAO interface {
+	Init()
+	TableName(serverId string) string
+
+	// 插入新数据
+	InsertOne(serverId string, value *stats.Value) error
+
+	// 删除过期的数据
+	DeleteExpiredValues(serverId string, period stats.ValuePeriod, life int) error
+
+	// 查询相同的数值记录
+	FindSameItemValue(serverId string, item *stats.Value) (*stats.Value, error)
+
+	// 修改值和时间戳
+	UpdateItemValueAndTimestamp(serverId string, valueId string, value map[string]interface{}, timestamp int64) error
+
+	// 创建索引
+	CreateIndex(serverId string, fields []*IndexField) error
+
+	// 查询数据
+	QueryValues(query *Query) ([]*stats.Value, error)
+
+	// 根据item查找一条数据
+	FindOneWithItem(serverId string, item string) (*stats.Value, error)
+}

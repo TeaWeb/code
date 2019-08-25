@@ -2,6 +2,7 @@ package teastats
 
 import (
 	"fmt"
+	"github.com/TeaWeb/code/teaconfigs/stats"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
@@ -20,7 +21,7 @@ type CounterFilter struct {
 	looper     *timers.Looper
 	queue      *Queue
 	code       string
-	Period     ValuePeriod
+	Period     stats.ValuePeriod
 	valuesSize int
 	values     map[string]*CounterValue // param_time => value
 	locker     sync.Mutex
@@ -29,7 +30,7 @@ type CounterFilter struct {
 }
 
 // 启动筛选器
-func (this *CounterFilter) StartFilter(code string, period ValuePeriod) {
+func (this *CounterFilter) StartFilter(code string, period stats.ValuePeriod) {
 	this.code = code
 	this.Period = period
 	this.values = map[string]*CounterValue{}
@@ -38,19 +39,19 @@ func (this *CounterFilter) StartFilter(code string, period ValuePeriod) {
 	// 自动导入
 	duration := 1 * time.Second
 	switch this.Period {
-	case ValuePeriodSecond:
+	case stats.ValuePeriodSecond:
 		duration = 1 * time.Second
-	case ValuePeriodMinute:
+	case stats.ValuePeriodMinute:
 		duration = 30 * time.Second
-	case ValuePeriodHour:
+	case stats.ValuePeriodHour:
 		duration = 5 * time.Minute
-	case ValuePeriodDay:
+	case stats.ValuePeriodDay:
 		duration = 10 * time.Minute
-	case ValuePeriodWeek:
+	case stats.ValuePeriodWeek:
 		duration = 15 * time.Minute
-	case ValuePeriodMonth:
+	case stats.ValuePeriodMonth:
 		duration = 20 * time.Minute
-	case ValuePeriodYear:
+	case stats.ValuePeriodYear:
 		duration = 30 * time.Minute
 	}
 	this.looper = timers.Loop(duration, func(looper *timers.Looper) {
@@ -67,23 +68,23 @@ func (this *CounterFilter) ApplyFilter(accessLog *tealogs.AccessLog, params map[
 	key.WriteString("@")
 
 	switch this.Period {
-	case ValuePeriodSecond:
+	case stats.ValuePeriodSecond:
 		key.WriteString(fmt.Sprintf("%d", accessLog.Timestamp))
-	case ValuePeriodMinute:
+	case stats.ValuePeriodMinute:
 		key.WriteString(fmt.Sprintf("%d", accessLog.Timestamp/60))
-	case ValuePeriodHour:
+	case stats.ValuePeriodHour:
 		key.WriteString(fmt.Sprintf("%d", accessLog.Timestamp/3600))
-	case ValuePeriodDay:
+	case stats.ValuePeriodDay:
 		t := accessLog.Time()
 		key.WriteString(fmt.Sprintf("%d_%d_%d", t.Year(), t.Month(), t.Day()))
-	case ValuePeriodWeek:
+	case stats.ValuePeriodWeek:
 		t := accessLog.Time()
 		year, week := t.ISOWeek()
 		key.WriteString(fmt.Sprintf("%d_%d", year, week))
-	case ValuePeriodMonth:
+	case stats.ValuePeriodMonth:
 		t := accessLog.Time()
 		key.WriteString(fmt.Sprintf("%d_%d", t.Year(), t.Month()))
-	case ValuePeriodYear:
+	case stats.ValuePeriodYear:
 		t := accessLog.Time()
 		key.WriteString(fmt.Sprintf("%d", t.Year()))
 	}
@@ -166,24 +167,24 @@ func (this *CounterFilter) CheckNewUV(accessLog *tealogs.AccessLog, attachKey st
 	key := ""
 	life := time.Second
 	switch this.Period {
-	case ValuePeriodSecond:
+	case stats.ValuePeriodSecond:
 		key = this.code + "_" + this.queue.ServerId + "_" + uid + "_" + timeutil.Format("YmdHis", accessLog.Time())
-	case ValuePeriodMinute:
+	case stats.ValuePeriodMinute:
 		key = this.code + "_" + this.queue.ServerId + "_" + uid + "_" + timeutil.Format("YmdHi", accessLog.Time())
 		life = 2 * time.Minute
-	case ValuePeriodHour:
+	case stats.ValuePeriodHour:
 		key = this.code + "_" + this.queue.ServerId + "_" + uid + "_" + timeutil.Format("YmdH", accessLog.Time())
 		life = 2 * time.Hour
-	case ValuePeriodDay:
+	case stats.ValuePeriodDay:
 		key = this.code + "_" + this.queue.ServerId + "_" + uid + "_" + timeutil.Format("Ymd", accessLog.Time())
 		life = 2 * 24 * time.Hour
-	case ValuePeriodWeek:
+	case stats.ValuePeriodWeek:
 		key = this.code + "_" + this.queue.ServerId + "_" + uid + "_" + timeutil.Format("YW", accessLog.Time())
 		life = 8 * 24 * time.Hour
-	case ValuePeriodMonth:
+	case stats.ValuePeriodMonth:
 		key = this.code + "_" + this.queue.ServerId + "_" + uid + "_" + timeutil.Format("Ym", accessLog.Time())
 		life = 32 * 24 * time.Hour
-	case ValuePeriodYear:
+	case stats.ValuePeriodYear:
 		key = this.code + "_" + this.queue.ServerId + "_" + uid + "_" + timeutil.Format("Y", accessLog.Time())
 		life = 370 * 24 * time.Hour
 	}
@@ -222,24 +223,24 @@ func (this *CounterFilter) CheckNewIP(accessLog *tealogs.AccessLog, attachKey st
 	key := ""
 	life := time.Second
 	switch this.Period {
-	case ValuePeriodSecond:
+	case stats.ValuePeriodSecond:
 		key = this.code + "_" + this.queue.ServerId + "_" + ip + "_" + timeutil.Format("YmdHis", accessLog.Time())
-	case ValuePeriodMinute:
+	case stats.ValuePeriodMinute:
 		key = this.code + "_" + this.queue.ServerId + "_" + ip + "_" + timeutil.Format("YmdHi", accessLog.Time())
 		life = 2 * time.Minute
-	case ValuePeriodHour:
+	case stats.ValuePeriodHour:
 		key = this.code + "_" + this.queue.ServerId + "_" + ip + "_" + timeutil.Format("YmdH", accessLog.Time())
 		life = 2 * time.Hour
-	case ValuePeriodDay:
+	case stats.ValuePeriodDay:
 		key = this.code + "_" + this.queue.ServerId + "_" + ip + "_" + timeutil.Format("Ymd", accessLog.Time())
 		life = 2 * 24 * time.Hour
-	case ValuePeriodWeek:
+	case stats.ValuePeriodWeek:
 		key = this.code + "_" + this.queue.ServerId + "_" + ip + "_" + timeutil.Format("YW", accessLog.Time())
 		life = 8 * 24 * time.Hour
-	case ValuePeriodMonth:
+	case stats.ValuePeriodMonth:
 		key = this.code + "_" + this.queue.ServerId + "_" + ip + "_" + timeutil.Format("Ym", accessLog.Time())
 		life = 32 * 24 * time.Hour
-	case ValuePeriodYear:
+	case stats.ValuePeriodYear:
 		key = this.code + "_" + this.queue.ServerId + "_" + ip + "_" + timeutil.Format("Y", accessLog.Time())
 		life = 370 * 24 * time.Hour
 	}

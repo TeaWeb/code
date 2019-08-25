@@ -1,0 +1,234 @@
+package teadb
+
+import (
+	"errors"
+	"github.com/TeaWeb/code/teaconfigs/stats"
+	"github.com/TeaWeb/code/teamongo"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/types"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
+	"golang.org/x/net/context"
+	"strings"
+	"sync"
+	"time"
+)
+
+type MongoServerValueDAO struct {
+	collMap    map[string]*teamongo.Collection
+	collLocker sync.Mutex
+}
+
+func (this *MongoServerValueDAO) Init() {
+	this.collMap = map[string]*teamongo.Collection{}
+}
+
+func (this *MongoServerValueDAO) TableName(serverId string) string {
+	return "values.server." + serverId
+}
+
+func (this *MongoServerValueDAO) InsertOne(serverId string, value *stats.Value) error {
+	if value.Id.IsZero() {
+		value.Id = primitive.NewObjectID()
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	_, err := this.selectColl(this.TableName(serverId)).InsertOne(ctx, value)
+	return err
+}
+
+func (this *MongoServerValueDAO) DeleteExpiredValues(serverId string, period stats.ValuePeriod, life int) error {
+	return NewQuery(this.TableName(serverId)).
+		Attr("period", period).
+		Lt("timestamp", time.Now().Unix()-int64(life)).
+		Delete()
+}
+
+// 根据参数查询已有的数据
+func (this *MongoServerValueDAO) FindSameItemValue(serverId string, item *stats.Value) (*stats.Value, error) {
+	query := NewQuery(this.TableName(serverId))
+	query.Attr("item", item.Item)
+	query.Attr("period", item.Period)
+
+	switch item.Period {
+	case stats.ValuePeriodSecond:
+		query.Attr("timestamp", item.Timestamp)
+	case stats.ValuePeriodMinute:
+		query.Attr("timeFormat.minute", item.TimeFormat.Minute)
+	case stats.ValuePeriodHour:
+		query.Attr("timeFormat.hour", item.TimeFormat.Hour)
+	case stats.ValuePeriodDay:
+		query.Attr("timeFormat.day", item.TimeFormat.Day)
+	case stats.ValuePeriodWeek:
+		query.Attr("timeFormat.week", item.TimeFormat.Week)
+	case stats.ValuePeriodMonth:
+		query.Attr("timeFormat.month", item.TimeFormat.Month)
+	case stats.ValuePeriodYear:
+		query.Attr("timeFormat.year", item.TimeFormat.Year)
+	}
+
+	// 参数
+	if len(item.Params) > 0 {
+		for k, v := range item.Params {
+			query.Attr("params."+k, v)
+		}
+	} else {
+		query.Attr("params", map[string]string{})
+	}
+
+	one, err := query.FindOne(new(stats.Value))
+	if err != nil {
+		return nil, err
+	}
+	if one == nil {
+		return nil, nil
+	}
+	return one.(*stats.Value), nil
+}
+
+func (this *MongoServerValueDAO) UpdateItemValueAndTimestamp(serverId string, valueId string, value map[string]interface{}, timestamp int64) error {
+	objectId, err := primitive.ObjectIDFromHex(valueId)
+	if err != nil {
+		return err
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	_, err = this.selectColl(this.TableName(serverId)).UpdateOne(ctx, map[string]interface{}{
+		"_id": objectId,
+	}, map[string]interface{}{
+		"$set": map[string]interface{}{
+			"value":     value,
+			"timestamp": timestamp,
+		},
+	})
+	return err
+}
+
+func (this *MongoServerValueDAO) CreateIndex(serverId string, fields []*IndexField) error {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	coll := this.selectColl(this.TableName(serverId))
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	// 创建新的
+	bsonDoc := bsonx.Doc{}
+	for _, field := range fields {
+		if field.Asc {
+			bsonDoc = bsonDoc.Append(field.Name, bsonx.Int32(1))
+		} else {
+			bsonDoc = bsonDoc.Append(field.Name, bsonx.Int32(-1))
+		}
+	}
+
+	_, err := coll.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bsonDoc,
+		Options: options.Index().SetBackground(true),
+	})
+
+	// 忽略可能产生的冲突错误
+	if err != nil && strings.Contains(err.Error(), "existing") {
+		err = nil
+	}
+
+	return err
+}
+
+func (this *MongoServerValueDAO) QueryValues(query *Query) ([]*stats.Value, error) {
+	ones, err := query.FindOnes(new(stats.Value))
+	if err != nil {
+		return nil, err
+	}
+	result := []*stats.Value{}
+	for _, one := range ones {
+		result = append(result, one.(*stats.Value))
+	}
+	return result, err
+}
+
+func (this *MongoServerValueDAO) FindOneWithItem(serverId string, item string) (*stats.Value, error) {
+	one, err := NewQuery(this.TableName(serverId)).
+		Attr("item", item).
+		FindOne(new(stats.Value))
+	if err != nil {
+		return nil, err
+	}
+	if one == nil {
+		return nil, err
+	}
+	return one.(*stats.Value), nil
+}
+
+func (this *MongoServerValueDAO) selectColl(collName string) *teamongo.Collection {
+	this.collLocker.Lock()
+	defer this.collLocker.Unlock()
+
+	coll, found := this.collMap[collName]
+	if found {
+		return coll
+	}
+
+	coll = teamongo.FindCollection(collName)
+
+	for _, fields := range [][]*teamongo.IndexField{
+		{
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timestamp", true),
+		},
+		{
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.second", true),
+		},
+		{
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.minute", true),
+		},
+		{
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.hour", true),
+		},
+		{
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.day", true),
+		},
+		{
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.week", true),
+		},
+		{
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.month", true),
+		},
+		{
+			teamongo.NewIndexField("item", true),
+			teamongo.NewIndexField("timeFormat.year", true),
+		},
+	} {
+		err := coll.CreateIndex(fields...)
+		if err != nil {
+			logs.Error(errors.New("create index: " + err.Error()))
+		}
+	}
+
+	this.collMap[collName] = coll
+	return coll
+}
+
+func (this *MongoServerValueDAO) checkIndexEqual(index1 map[string]interface{}, index2 map[string]interface{}) bool {
+	if len(index1) != len(index2) {
+		return false
+	}
+	for k, v := range index1 {
+		v2, ok := index2[k]
+		if !ok {
+			return false
+		}
+		if types.Int(v) != types.Int(v2) {
+			return false
+		}
+	}
+	return true
+}

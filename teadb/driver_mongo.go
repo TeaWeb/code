@@ -15,16 +15,26 @@ import (
 )
 
 type MongoDriver struct {
-	accessLogDAO AccessLogDAO
-	agentLogDAO  AgentLogDAO
-	auditLogDAO  AuditLogDAO
-	noticeDAO    NoticeDAO
-	valueDAO     ValueDAO
+	accessLogDAO   AccessLogDAO
+	agentLogDAO    AgentLogDAO
+	auditLogDAO    AuditLogDAO
+	noticeDAO      NoticeDAO
+	agentValueDAO  AgentValueDAO
+	serverValueDAO ServerValueDAO
 }
 
 func (this *MongoDriver) Init() {
-	this.valueDAO = new(MongoValueDAO)
-	this.valueDAO.Init()
+	this.agentValueDAO = new(MongoAgentValueDAO)
+	this.agentValueDAO.Init()
+
+	this.serverValueDAO = new(MongoServerValueDAO)
+	this.serverValueDAO.Init()
+
+	this.auditLogDAO = new(MongoAuditLogDAO)
+	this.auditLogDAO.Init()
+
+	this.accessLogDAO = new(MongoAccessLogDAO)
+	this.accessLogDAO.Init()
 }
 
 func (this *MongoDriver) FindOne(query *Query, modelPtr interface{}) (interface{}, error) {
@@ -37,11 +47,19 @@ func (this *MongoDriver) FindOne(query *Query, modelPtr interface{}) (interface{
 		return nil, errors.New("can not select db")
 	}
 
-	opts := options.Find()
+	opt := options.Find()
 	if query.offset > -1 {
-		opts.SetSkip(int64(query.offset))
+		opt.SetSkip(int64(query.offset))
 	}
-	opts.SetLimit(1)
+	opt.SetLimit(1)
+
+	if len(query.resultFields) > 0 {
+		projection := map[string]interface{}{}
+		for _, field := range query.resultFields {
+			projection[field] = 1
+		}
+		opt.SetProjection(projection)
+	}
 
 	if len(query.sortFields) > 0 {
 		s := map[string]int{}
@@ -52,10 +70,19 @@ func (this *MongoDriver) FindOne(query *Query, modelPtr interface{}) (interface{
 				s[f.Name] = -1
 			}
 		}
-		opts.SetSort(s)
+		opt.SetSort(s)
 	}
 
-	cursor, err := db.Collection(query.table).Find(this.timeoutContext(5*time.Second), this.buildFilter(query), opts)
+	filter, err := this.buildFilter(query)
+	if err != nil {
+		return nil, err
+	}
+	if query.debug {
+		logs.Println("===filter===")
+		logs.PrintAsJSON(filter)
+	}
+
+	cursor, err := db.Collection(query.table).Find(this.timeoutContext(5*time.Second), filter, opt)
 	if err != nil {
 		if this.isNotFoundError(err) {
 			return nil, nil
@@ -92,12 +119,20 @@ func (this *MongoDriver) FindOnes(query *Query, modelPtr interface{}) ([]interfa
 	}
 
 	// 查询选项
-	opts := options.Find()
+	opt := options.Find()
 	if query.offset > -1 {
-		opts.SetSkip(int64(query.offset))
+		opt.SetSkip(int64(query.offset))
 	}
 	if query.size > -1 {
-		opts.SetLimit(int64(query.size))
+		opt.SetLimit(int64(query.size))
+	}
+
+	if len(query.resultFields) > 0 {
+		projection := map[string]interface{}{}
+		for _, field := range query.resultFields {
+			projection[field] = 1
+		}
+		opt.SetProjection(projection)
 	}
 
 	if len(query.sortFields) > 0 {
@@ -109,10 +144,19 @@ func (this *MongoDriver) FindOnes(query *Query, modelPtr interface{}) ([]interfa
 				s[f.Name] = -1
 			}
 		}
-		opts.SetSort(s)
+		opt.SetSort(s)
 	}
 
-	cursor, err := db.Collection(query.table).Find(this.timeoutContext(5*time.Second), this.buildFilter(query), opts)
+	filter, err := this.buildFilter(query)
+	if err != nil {
+		return nil, err
+	}
+	if query.debug {
+		logs.Println("===filter===")
+		logs.PrintAsJSON(filter)
+	}
+
+	cursor, err := db.Collection(query.table).Find(this.timeoutContext(5*time.Second), filter, opt)
 	if err != nil {
 		if this.isNotFoundError(err) {
 			return nil, nil
@@ -145,7 +189,12 @@ func (this *MongoDriver) DeleteOnes(query *Query) error {
 		return errors.New("'table' should not be empty")
 	}
 
-	_, err := this.db().Collection(query.table).DeleteMany(this.timeoutContext(5*time.Second), this.buildFilter(query))
+	filter, err := this.buildFilter(query)
+	if err != nil {
+		return err
+	}
+
+	_, err = this.db().Collection(query.table).DeleteMany(this.timeoutContext(5*time.Second), filter)
 	return err
 }
 
@@ -204,7 +253,13 @@ func (this *MongoDriver) Count(query *Query) (int64, error) {
 	if query.size > -1 {
 		opts.SetLimit(int64(query.size))
 	}
-	return this.db().Collection(query.table).CountDocuments(this.timeoutContext(10*time.Second), this.buildFilter(query), opts)
+
+	filter, err := this.buildFilter(query)
+	if err != nil {
+		return 0, err
+	}
+
+	return this.db().Collection(query.table).CountDocuments(this.timeoutContext(10*time.Second), filter, opts)
 }
 
 func (this *MongoDriver) Sum(query *Query, field string) (float64, error) {
@@ -267,9 +322,13 @@ func (this *MongoDriver) Group(query *Query, field string, result map[string]Exp
 		}
 	}
 
+	filter, err := this.buildFilter(query)
+	if err != nil {
+		return nil, err
+	}
 	pipelines := []interface{}{
 		map[string]interface{}{
-			"$match": this.buildFilter(query),
+			"$match": filter,
 		},
 		map[string]interface{}{
 			"$group": group,
@@ -326,36 +385,63 @@ func (this *MongoDriver) db() *mongo.Database {
 	return client.Database(teamongo.DatabaseName)
 }
 
-func (this *MongoDriver) buildFilter(query *Query) (filter map[string]interface{}) {
-	filter = map[string]interface{}{}
+func (this *MongoDriver) buildFilter(query *Query) (filter map[string]interface{}, err error) {
 	if len(query.operandMap) > 0 {
-		for field, operands := range query.operandMap {
-			fieldQuery := map[string]interface{}{}
-			for _, op := range operands {
-				switch op.Code {
-				case OperandEq:
-					fieldQuery["$eq"] = op.Value
-				case OperandLt:
-					fieldQuery["$lt"] = op.Value
-				case OperandLte:
-					fieldQuery["$lte"] = op.Value
-				case OperandGt:
-					fieldQuery["$gt"] = op.Value
-				case OperandGte:
-					fieldQuery["$gte"] = op.Value
-				case OperandIn:
-					fieldQuery["$in"] = op.Value
-				case OperandNotIn:
-					fieldQuery["$nin"] = op.Value
-				case OperandNeq:
-					fieldQuery["$ne"] = op.Value
+		return this.buildOperandMap(query.operandMap)
+	}
+	return map[string]interface{}{}, nil
+}
+
+func (this *MongoDriver) buildOperandMap(operandMap OperandMap) (filter map[string]interface{}, err error) {
+	filter = map[string]interface{}{}
+	for field, operands := range operandMap {
+		fieldQuery := map[string]interface{}{}
+		for _, op := range operands {
+			switch op.Code {
+			case OperandEq:
+				fieldQuery["$eq"] = op.Value
+			case OperandLt:
+				fieldQuery["$lt"] = op.Value
+			case OperandLte:
+				fieldQuery["$lte"] = op.Value
+			case OperandGt:
+				fieldQuery["$gt"] = op.Value
+			case OperandGte:
+				fieldQuery["$gte"] = op.Value
+			case OperandIn:
+				fieldQuery["$in"] = op.Value
+			case OperandNotIn:
+				fieldQuery["$nin"] = op.Value
+			case OperandNeq:
+				fieldQuery["$ne"] = op.Value
+			case OperandOr:
+				if op.Value != nil {
+					operandMaps, ok := op.Value.([]OperandMap)
+					if ok {
+						result := []map[string]interface{}{}
+						for _, operandMap := range operandMaps {
+							f, err := this.buildOperandMap(operandMap)
+							if err != nil {
+								return filter, err
+							}
+							result = append(result, f)
+						}
+						filter["$or"] = result
+					} else {
+						err = errors.New("or: should be a valid []OperandMap")
+						return
+					}
+				} else {
+					err = errors.New("or: should be a valid []OperandMap")
+					return
 				}
 			}
-			if len(fieldQuery) > 0 {
-				filter[field] = fieldQuery
-			}
+		}
+		if len(fieldQuery) > 0 {
+			filter[field] = fieldQuery
 		}
 	}
+
 	return
 }
 
@@ -375,8 +461,12 @@ func (this *MongoDriver) NoticeDAO() NoticeDAO {
 	return this.noticeDAO
 }
 
-func (this *MongoDriver) ValueDAO() ValueDAO {
-	return this.valueDAO
+func (this *MongoDriver) AgentValueDAO() AgentValueDAO {
+	return this.agentValueDAO
+}
+
+func (this *MongoDriver) ServerValueDAO() ServerValueDAO {
+	return this.serverValueDAO
 }
 
 func (this *MongoDriver) isNotFoundError(err error) bool {
@@ -389,7 +479,10 @@ func (this *MongoDriver) timeoutContext(timeout time.Duration) context.Context {
 }
 
 func (this *MongoDriver) aggregate(funcName string, query *Query, field string) (float64, error) {
-	filter := this.buildFilter(query)
+	filter, err := this.buildFilter(query)
+	if err != nil {
+		return 0, err
+	}
 
 	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
 	{

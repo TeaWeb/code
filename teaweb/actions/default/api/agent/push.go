@@ -186,7 +186,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 
 		// 检查最近N此数值是否都是同类错误
 		if threshold != nil && threshold.MaxFails > 1 {
-			values, err := teadb.SharedDB().ValueDAO().ListItemValues(agent.Id, app.Id, item.Id, 0, "", 0, threshold.MaxFails-1)
+			values, err := teadb.SharedDB().AgentValueDAO().ListItemValues(agent.Id, app.Id, item.Id, 0, "", 0, threshold.MaxFails-1)
 			if err != nil {
 				logs.Error(err)
 			} else {
@@ -285,7 +285,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	}
 	value.SetTime(t)
 
-	err = teadb.SharedDB().ValueDAO().Insert(agent.Id, value)
+	err = teadb.SharedDB().AgentValueDAO().Insert(agent.Id, value)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -305,7 +305,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 			recoverSuccesses = 1
 		}
 
-		values, err := teadb.SharedDB().ValueDAO().ListItemValues(agent.Id, app.Id, item.Id, 0, "", 0, recoverSuccesses+1)
+		values, err := teadb.SharedDB().AgentValueDAO().ListItemValues(agent.Id, app.Id, item.Id, 0, "", 0, recoverSuccesses+1)
 		if err != nil {
 			logs.Error(err)
 			return
@@ -445,7 +445,7 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 
 // 查找最近的一次数值记录
 func (this *PushAction) findLatestAgentValue(agentId string, appId string, itemId string) (interface{}, error) {
-	v, err := teadb.SharedDB().ValueDAO().FindLatestItemValueNoError(agentId, appId, itemId)
+	v, err := teadb.SharedDB().AgentValueDAO().FindLatestItemValueNoError(agentId, appId, itemId)
 	if err != nil {
 		return nil, err
 	}

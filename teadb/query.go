@@ -8,13 +8,14 @@ import (
 )
 
 type Query struct {
-	table      string
-	offset     int
-	size       int
-	operandMap map[string][]*Operand // field => operands
-	sortFields []*SortField
-	debug      bool
-	timeout    time.Duration
+	table        string
+	offset       int
+	size         int
+	operandMap   OperandMap // field => operands
+	sortFields   []*SortField
+	debug        bool
+	timeout      time.Duration
+	resultFields []string
 }
 
 func NewQuery(table string) *Query {
@@ -28,7 +29,7 @@ func NewQuery(table string) *Query {
 func (this *Query) Init() *Query {
 	this.offset = -1
 	this.size = -1
-	this.operandMap = map[string][]*Operand{}
+	this.operandMap = OperandMap{}
 	return this
 }
 
@@ -47,13 +48,17 @@ func (this *Query) Timeout(timeout time.Duration) *Query {
 	return this
 }
 
+func (this *Query) Result(field ...string) *Query {
+	this.resultFields = append(this.resultFields, field...)
+	return this
+}
+
 func (this *Query) Attr(field string, value interface{}) *Query {
 	if types.IsSlice(value) {
-		this.Op(field, OperandIn, value)
+		return this.Op(field, OperandIn, value)
 	} else {
-		this.Op(field, OperandEq, value)
+		return this.Op(field, OperandEq, value)
 	}
-	return this
 }
 
 func (this *Query) Op(field string, operandCode OperandCode, value interface{}) *Query {
@@ -66,33 +71,32 @@ func (this *Query) Op(field string, operandCode OperandCode, value interface{}) 
 	return this
 }
 
+func (this *Query) Or(fieldValues []OperandMap) *Query {
+	return this.Op("", OperandOr, fieldValues)
+}
+
 func (this *Query) Not(field string, value interface{}) *Query {
 	if types.IsSlice(value) {
-		this.Op(field, OperandNotIn, value)
+		return this.Op(field, OperandNotIn, value)
 	} else {
-		this.Op(field, OperandEq, value)
+		return this.Op(field, OperandEq, value)
 	}
-	return this
 }
 
 func (this *Query) Lt(field string, value interface{}) *Query {
-	this.Op(field, OperandLt, value)
-	return this
+	return this.Op(field, OperandLt, value)
 }
 
 func (this *Query) Lte(field string, value interface{}) *Query {
-	this.Op(field, OperandLte, value)
-	return this
+	return this.Op(field, OperandLte, value)
 }
 
 func (this *Query) Gt(field string, value interface{}) *Query {
-	this.Op(field, OperandGt, value)
-	return this
+	return this.Op(field, OperandGt, value)
 }
 
 func (this *Query) Gte(field string, value interface{}) *Query {
-	this.Op(field, OperandGte, value)
-	return this
+	return this.Op(field, OperandGte, value)
 }
 
 func (this *Query) Asc(field string) *Query {

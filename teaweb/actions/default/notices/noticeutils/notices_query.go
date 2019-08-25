@@ -181,7 +181,7 @@ func (this *NoticeQuery) Execute() (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, ones ...)
+		result = append(result, ones...)
 		return result, nil
 	} else if this.action == NoticeQueryActionFind {
 		result := []*notices.Notice{}
@@ -189,7 +189,7 @@ func (this *NoticeQuery) Execute() (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, ones ...)
+		result = append(result, ones...)
 		if len(result) == 0 {
 			return nil, nil
 		}
@@ -419,7 +419,7 @@ func (this *NoticeQuery) findAll(collectionName string) (result []*notices.Notic
 		}
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
-	cursor, err := coll.Find(ctx, this.buildFilter(), opts ...)
+	cursor, err := coll.Find(ctx, this.buildFilter(), opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -509,12 +509,4 @@ func (this *NoticeQuery) jsonEncode(i interface{}) (string, error) {
 		return "", err
 	}
 	return string(data), nil
-}
-
-func (this *NoticeQuery) jsonEncodeString(i interface{}) string {
-	data, err := json.Marshal(i)
-	if err != nil {
-		return ""
-	}
-	return string(data)
 }

@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
@@ -25,7 +26,7 @@ func (this *DayAction) Run(params struct {
 	LogType  string
 	FromId   string
 	Page     int
-	Size     int64
+	Size     int
 	SearchIP string
 }) {
 	serverId := params.ServerId
@@ -82,34 +83,12 @@ func (this *DayAction) Run(params struct {
 			realDay = timeutil.Format("Ymd")
 		}
 
-		query := teamongo.NewQuery("logs."+realDay, new(tealogs.AccessLog))
-		query.Attr("serverId", serverId)
-		if len(params.FromId) > 0 {
-			query.Lte("_id", params.FromId)
-		}
-		if params.LogType == "errorLog" {
-			query.Or([]map[string]interface{}{
-				{
-					"hasErrors": true,
-				},
-				{
-					"status": map[string]interface{}{
-						"$gte": 400,
-					},
-				},
-			} ...)
-		}
-		if len(params.SearchIP) > 0 {
-			query.Attr("remoteAddr", params.SearchIP)
-		}
-		query.Offset(params.Size * int64(params.Page-1))
-		query.Limit(params.Size)
-		query.DescPk()
-		ones, err := query.FindAll()
+		accessLogs, err := teadb.SharedDB().AccessLogDAO().ListAccessLogs(realDay, serverId, params.FromId, params.LogType == "errorLog", params.SearchIP, params.Size*(params.Page-1), params.Size)
+
 		if err != nil {
 			this.Data["mongoError"] = "MongoDB查询错误：" + err.Error()
 		} else {
-			result := lists.Map(ones, func(k int, v interface{}) interface{} {
+			result := lists.Map(accessLogs, func(k int, v interface{}) interface{} {
 				accessLog := v.(*tealogs.AccessLog)
 				return map[string]interface{}{
 					"id":             accessLog.Id.Hex(),
@@ -144,36 +123,17 @@ func (this *DayAction) Run(params struct {
 
 			if len(result) > 0 {
 				if len(params.FromId) == 0 {
-					fromId := ones[0].(*tealogs.AccessLog).Id.Hex()
+					fromId := accessLogs[0].Id.Hex()
 					this.Data["fromId"] = fromId
 				}
 
 				{
-					nextId := ones[len(ones)-1].(*tealogs.AccessLog).Id.Hex()
-
-					query := teamongo.NewQuery("logs."+realDay, new(tealogs.AccessLog))
-					query.Attr("serverId", serverId)
-					query.Lt("_id", nextId)
-					if params.LogType == "errorLog" {
-						query.Or([]map[string]interface{}{
-							{
-								"hasErrors": true,
-							},
-							{
-								"status": map[string]interface{}{
-									"$gte": 400,
-								},
-							},
-						} ...)
-					}
-					if len(params.SearchIP) > 0 {
-						query.Attr("remoteAddr", params.SearchIP)
-					}
-					v, err := query.Find()
+					nextId := accessLogs[len(accessLogs)-1].Id.Hex()
+					b, err := teadb.SharedDB().AccessLogDAO().HasNextAccessLog(realDay, serverId, nextId, params.LogType == "errorLog", params.SearchIP)
 					if err != nil {
 						logs.Error(err)
-					} else if v != nil {
-						this.Data["hasNext"] = true
+					} else {
+						this.Data["hasNext"] = b
 					}
 				}
 			}

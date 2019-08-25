@@ -2,8 +2,8 @@ package log
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/audits"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teageo"
-	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -29,7 +29,7 @@ func (this *AuditAction) Run(params struct {
 	pageSize := 10
 	this.Data["page"] = params.Page
 
-	count, err := teamongo.NewAuditsQuery().Count()
+	count, err := teadb.SharedDB().AuditLogDAO().CountAllAuditLogs()
 	if err != nil {
 		logs.Error(err)
 	}
@@ -41,11 +41,7 @@ func (this *AuditAction) Run(params struct {
 	}
 
 	// 读取列表数据
-	ones, err := teamongo.NewAuditsQuery().
-		DescPk().
-		Offset(int64(pageSize * (params.Page - 1))).
-		Limit(int64(pageSize)).
-		FindAll()
+	ones, err := teadb.SharedDB().AuditLogDAO().ListAuditLogs(pageSize*(params.Page-1), pageSize)
 	if err != nil {
 		this.Data["logs"] = []interface{}{}
 	} else {
@@ -55,7 +51,7 @@ func (this *AuditAction) Run(params struct {
 			ip, ok := log.Options["ip"]
 			location := ""
 			if ok && len(ip) > 0 {
-				if ip == "127.0.0.1" || strings.HasPrefix(ip, "192.168.")  {
+				if ip == "127.0.0.1" || strings.HasPrefix(ip, "192.168.") {
 					location = ""
 				} else {
 					ipObj := net.ParseIP(ip)

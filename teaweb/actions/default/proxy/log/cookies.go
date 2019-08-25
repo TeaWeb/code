@@ -1,20 +1,22 @@
 package log
 
 import (
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
-	"time"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 )
 
 type CookiesAction actions.Action
 
 func (this *CookiesAction) Run(params struct {
 	LogId string
+	Day   string
 }) {
-	query := tealogs.NewQuery()
-	query.From(time.Now())
-	query.Id(params.LogId)
-	accessLog, err := query.Find()
+	if len(params.Day) == 0 {
+		params.Day = timeutil.Format("Ymd")
+	}
+
+	accessLog, err := teadb.SharedDB().AccessLogDAO().FindAccessLogCookie(params.Day, params.LogId)
 	if err != nil {
 		this.Fail(err.Error())
 	}

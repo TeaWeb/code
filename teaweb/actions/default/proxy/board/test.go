@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teastats"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/board/scripts"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 )
 
 type TestAction actions.Action
@@ -45,18 +46,12 @@ func (this *TestAction) Run(params struct {
 				}
 
 				// 是否有数据
-				statQuery := teamongo.NewQuery("values.server."+server.Id, new(teastats.Value))
-				statQuery.Attr("item", item)
-				v, err := statQuery.Find()
+				v, err := teadb.SharedDB().ServerValueDAO().FindOneWithItem(server.Id, item)
 				if err != nil {
 					logs.Error(err)
 				} else if v == nil {
 					// 读取日志
-					logQuery := tealogs.NewQuery()
-					logQuery.Attr("serverId", params.ServerId)
-					logQuery.Limit(1000)
-					logQuery.Desc("_id")
-					ones, err := logQuery.FindAll()
+					ones, err := teadb.SharedDB().AccessLogDAO().ListLatestAccessLogs(timeutil.Format("Ymd"), server.Id, "", false, 1000)
 					if err != nil {
 						logs.Error(err)
 					} else {
