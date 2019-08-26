@@ -46,12 +46,12 @@ func (this *TestAction) Run(params struct {
 				}
 
 				// 是否有数据
-				v, err := teadb.SharedDB().ServerValueDAO().FindOneWithItem(server.Id, item)
+				v, err := teadb.ServerValueDAO().FindOneWithItem(server.Id, item)
 				if err != nil {
 					logs.Error(err)
 				} else if v == nil {
 					// 读取日志
-					ones, err := teadb.SharedDB().AccessLogDAO().ListLatestAccessLogs(timeutil.Format("Ymd"), server.Id, "", false, 1000)
+					ones, err := teadb.AccessLogDAO().ListLatestAccessLogs(timeutil.Format("Ymd"), server.Id, "", false, 1000)
 					if err != nil {
 						logs.Error(err)
 					} else {

@@ -3,6 +3,7 @@ package tealogs
 import (
 	"errors"
 	"fmt"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/pquerna/ffjson/ffjson"
@@ -40,7 +41,7 @@ func (this *ESStorage) Start() error {
 }
 
 // 写入日志
-func (this *ESStorage) Write(accessLogs []*AccessLog) error {
+func (this *ESStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 	if len(accessLogs) == 0 {
 		return nil
 	}

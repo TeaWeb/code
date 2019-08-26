@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teadb"
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
@@ -83,13 +83,13 @@ func (this *DayAction) Run(params struct {
 			realDay = timeutil.Format("Ymd")
 		}
 
-		accessLogs, err := teadb.SharedDB().AccessLogDAO().ListAccessLogs(realDay, serverId, params.FromId, params.LogType == "errorLog", params.SearchIP, params.Size*(params.Page-1), params.Size)
+		accessLogList, err := teadb.AccessLogDAO().ListAccessLogs(realDay, serverId, params.FromId, params.LogType == "errorLog", params.SearchIP, params.Size*(params.Page-1), params.Size)
 
 		if err != nil {
 			this.Data["mongoError"] = "MongoDB查询错误：" + err.Error()
 		} else {
-			result := lists.Map(accessLogs, func(k int, v interface{}) interface{} {
-				accessLog := v.(*tealogs.AccessLog)
+			result := lists.Map(accessLogList, func(k int, v interface{}) interface{} {
+				accessLog := v.(*accesslogs.AccessLog)
 				return map[string]interface{}{
 					"id":             accessLog.Id.Hex(),
 					"requestTime":    accessLog.RequestTime,
@@ -123,13 +123,13 @@ func (this *DayAction) Run(params struct {
 
 			if len(result) > 0 {
 				if len(params.FromId) == 0 {
-					fromId := accessLogs[0].Id.Hex()
+					fromId := accessLogList[0].Id.Hex()
 					this.Data["fromId"] = fromId
 				}
 
 				{
-					nextId := accessLogs[len(accessLogs)-1].Id.Hex()
-					b, err := teadb.SharedDB().AccessLogDAO().HasNextAccessLog(realDay, serverId, nextId, params.LogType == "errorLog", params.SearchIP)
+					nextId := accessLogList[len(accessLogList)-1].Id.Hex()
+					b, err := teadb.AccessLogDAO().HasNextAccessLog(realDay, serverId, nextId, params.LogType == "errorLog", params.SearchIP)
 					if err != nil {
 						logs.Error(err)
 					} else {

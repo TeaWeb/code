@@ -2,14 +2,14 @@ package teadb
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/audits"
+	"github.com/TeaWeb/code/teadb/shared"
 	timeutil "github.com/iwind/TeaGo/utils/time"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 	"time"
 )
 
 func TestAuditLogDAO_CountAllAuditLogs(t *testing.T) {
-	dao := SharedDB().AuditLogDAO()
+	dao := AuditLogDAO()
 	count, err := dao.CountAllAuditLogs()
 	if err != nil {
 		t.Fatal(err)
@@ -18,7 +18,7 @@ func TestAuditLogDAO_CountAllAuditLogs(t *testing.T) {
 }
 
 func TestAuditLogDAO_ListAuditLogs(t *testing.T) {
-	dao := SharedDB().AuditLogDAO()
+	dao := AuditLogDAO()
 	result, err := dao.ListAuditLogs(0, 5)
 	if err != nil {
 		t.Fatal(err)
@@ -30,9 +30,9 @@ func TestAuditLogDAO_ListAuditLogs(t *testing.T) {
 }
 
 func TestAuditLogDAO_InsertOne(t *testing.T) {
-	dao := SharedDB().AuditLogDAO()
+	dao := AuditLogDAO()
 	err := dao.InsertOne(&audits.Log{
-		Id:          primitive.NewObjectID(),
+		Id:          shared.NewObjectId(),
 		Username:    "test",
 		Action:      "test",
 		Description: "test",
@@ -47,9 +47,9 @@ func TestAuditLogDAO_InsertOne(t *testing.T) {
 }
 
 func TestAuditLogDAO_InsertOne2(t *testing.T) {
-	dao := SharedDB().AuditLogDAO()
+	dao := AuditLogDAO()
 	err := dao.InsertOne(&audits.Log{
-		Id:          primitive.NewObjectID(),
+		Id:          shared.NewObjectId(),
 		Username:    "test",
 		Action:      "test",
 		Description: "test",

@@ -32,7 +32,7 @@ func (this *ClearItemValuesAction) Run(params struct {
 		this.Fail("找不到Item")
 	}
 
-	err := teadb.SharedDB().AgentValueDAO().ClearItemValues(params.AgentId, params.AppId, params.ItemId, notices.NoticeLevel(params.Level))
+	err := teadb.AgentValueDAO().ClearItemValues(params.AgentId, params.AppId, params.ItemId, notices.NoticeLevel(params.Level))
 	if err != nil {
 		this.Fail("清除失败：" + err.Error())
 	}
@@ -40,7 +40,7 @@ func (this *ClearItemValuesAction) Run(params struct {
 	// 清除同组
 	if app.IsSharedWithGroup {
 		for _, agent1 := range agentutils.FindSharedAgents(agent.Id, agent.GroupIds, app) {
-			err := teadb.SharedDB().AgentValueDAO().ClearItemValues(agent1.Id, params.AppId, params.ItemId, notices.NoticeLevel(params.Level))
+			err := teadb.AgentValueDAO().ClearItemValues(agent1.Id, params.AppId, params.ItemId, notices.NoticeLevel(params.Level))
 			if err != nil {
 				this.Fail("清除失败：" + err.Error())
 			}

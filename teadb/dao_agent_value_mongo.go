@@ -4,21 +4,17 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/net/context"
-	"sync"
 	"time"
 )
 
 type MongoAgentValueDAO struct {
-	collMap    map[string]*teamongo.Collection
-	collLocker sync.Mutex
 }
 
 func (this *MongoAgentValueDAO) Init() {
-	this.collMap = map[string]*teamongo.Collection{}
 }
 
 func (this *MongoAgentValueDAO) TableName(agentId string) string {
@@ -42,7 +38,7 @@ func (this *MongoAgentValueDAO) Insert(agentId string, value *agents.Value) erro
 	}
 
 	if value.Id.IsZero() {
-		value.Id = primitive.NewObjectID()
+		value.Id = shared.NewObjectId()
 	}
 
 	coll := this.selectColl(this.agentCollName(agentId))
@@ -118,7 +114,7 @@ func (this *MongoAgentValueDAO) ListItemValues(agentId string, appId string, ite
 	}
 
 	if len(lastId) > 0 {
-		lastObjectId, err := primitive.ObjectIDFromHex(lastId)
+		lastObjectId, err := shared.ObjectIdFromHex(lastId)
 		if err != nil {
 			return nil, err
 		}
@@ -180,33 +176,28 @@ func (this *MongoAgentValueDAO) DropAgentTable(agentId string) error {
 }
 
 func (this *MongoAgentValueDAO) selectColl(collName string) *teamongo.Collection {
-	this.collLocker.Lock()
-	defer this.collLocker.Unlock()
+	coll := teamongo.SharedCollection(collName)
 
-	coll, found := this.collMap[collName]
-	if found {
+	if isInitializedTable(collName) {
 		return coll
 	}
-
-	coll = teamongo.FindCollection(collName)
 	err := coll.CreateIndex(
-		teamongo.NewIndexField("appId", true),
-		teamongo.NewIndexField("itemId", true),
-		teamongo.NewIndexField("createdAt", false),
+		shared.NewIndexField("appId", true),
+		shared.NewIndexField("itemId", true),
+		shared.NewIndexField("createdAt", false),
 	)
 	if err != nil {
 		logs.Error(err)
 	}
 	err = coll.CreateIndex(
-		teamongo.NewIndexField("appId", true),
-		teamongo.NewIndexField("itemId", true),
-		teamongo.NewIndexField("nodeId", true),
-		teamongo.NewIndexField("createdAt", false),
+		shared.NewIndexField("appId", true),
+		shared.NewIndexField("itemId", true),
+		shared.NewIndexField("nodeId", true),
+		shared.NewIndexField("createdAt", false),
 	)
 	if err != nil {
 		logs.Error(err)
 	}
-	this.collMap[collName] = coll
 	return coll
 }
 

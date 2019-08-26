@@ -1,7 +1,7 @@
 package teastats
 
 import (
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 )
 
 // 服务队列配置
@@ -35,7 +35,7 @@ func (this *ServerQueue) StartFilter(code string) {
 	instance.Start(this.Queue, code)
 }
 
-func (this *ServerQueue) Filter(accessLog *tealogs.AccessLog) {
+func (this *ServerQueue) Filter(accessLog *accesslogs.AccessLog) {
 	for _, f := range this.Filters {
 		f.Filter(accessLog)
 	}

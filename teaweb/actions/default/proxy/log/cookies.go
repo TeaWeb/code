@@ -16,7 +16,7 @@ func (this *CookiesAction) Run(params struct {
 		params.Day = timeutil.Format("Ymd")
 	}
 
-	accessLog, err := teadb.SharedDB().AccessLogDAO().FindAccessLogCookie(params.Day, params.LogId)
+	accessLog, err := teadb.AccessLogDAO().FindAccessLogCookie(params.Day, params.LogId)
 	if err != nil {
 		this.Fail(err.Error())
 	}

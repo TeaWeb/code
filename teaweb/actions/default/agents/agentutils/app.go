@@ -1,14 +1,13 @@
 package agentutils
 
 import (
-	"context"
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/time"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -45,22 +44,14 @@ func InitAppData(actionWrapper actions.ActionWrapper, agentId string, appId stri
 // 格式化任务信息
 func FormatTask(task *agents.TaskConfig, agentId string) maps.Map {
 	// 最近执行
-	ctx, _ := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	cursor, err := teamongo.FindCollection("logs.agent."+agentId).Find(ctx, map[string]interface{}{
-		"taskId": task.Id,
-	}, options.Find().SetSort(map[string]interface{}{
-		"_id": -1,
-	}), options.Find().SetLimit(1))
+	processLog, err := teadb.AgentLogDAO().FindLatestTaskLog(agentId, task.Id)
 	runTime := ""
-	if err == nil {
-		if cursor.Next(context.Background()) {
-			log := &ProcessLog{}
-			err = cursor.Decode(log)
-			if err == nil {
-				runTime = timeutil.Format("Y-m-d H:i:s", time.Unix(log.Timestamp, 0))
-			}
+	if err != nil {
+		logs.Error(err)
+	} else {
+		if processLog != nil {
+			runTime = timeutil.Format("Y-m-d H:i:s", time.Unix(processLog.Timestamp, 0))
 		}
-		cursor.Close(context.Background())
 	}
 
 	return maps.Map{

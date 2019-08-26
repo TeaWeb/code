@@ -1,8 +1,11 @@
 package teadb
 
-import "github.com/TeaWeb/code/teaconfigs/stats"
+import (
+	"github.com/TeaWeb/code/teaconfigs/stats"
+	"github.com/TeaWeb/code/teadb/shared"
+)
 
-type ServerValueDAO interface {
+type ServerValueDAOInterface interface {
 	Init()
 	TableName(serverId string) string
 
@@ -19,11 +22,14 @@ type ServerValueDAO interface {
 	UpdateItemValueAndTimestamp(serverId string, valueId string, value map[string]interface{}, timestamp int64) error
 
 	// 创建索引
-	CreateIndex(serverId string, fields []*IndexField) error
+	CreateIndex(serverId string, fields []*shared.IndexField) error
 
 	// 查询数据
 	QueryValues(query *Query) ([]*stats.Value, error)
 
 	// 根据item查找一条数据
 	FindOneWithItem(serverId string, item string) (*stats.Value, error)
+
+	// 删除代理服务相关表
+	DropServerTable(serverId string) error
 }

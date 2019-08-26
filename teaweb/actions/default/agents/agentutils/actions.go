@@ -3,7 +3,6 @@ package agentutils
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teadb"
-	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -15,14 +14,14 @@ func ActionDeleteAgent(agentId string, onFail func(message string)) (goNext bool
 	}
 
 	// 删除通知
-	err := noticeutils.DeleteNoticesForAgent(agent.Id)
+	err := teadb.NoticeDAO().DeleteNoticesForAgent(agent.Id)
 	if err != nil {
 		onFail("通知删除失败：" + err.Error())
 		return
 	}
 
 	// 删除数值记录
-	err = teadb.SharedDB().AgentValueDAO().DropAgentTable(agent.Id)
+	err = teadb.AgentValueDAO().DropAgentTable(agent.Id)
 	if err != nil {
 		onFail("数值记录删除失败：" + err.Error())
 		return

@@ -44,7 +44,7 @@ func (this *IndexAction) RunPost(params struct {
 }) {
 	// 记录登录
 	go func() {
-		err := teadb.SharedDB().AuditLogDAO().InsertOne(audits.NewLog(params.Username, audits.ActionLogin, "登录", map[string]string{
+		err := teadb.AuditLogDAO().InsertOne(audits.NewLog(params.Username, audits.ActionLogin, "登录", map[string]string{
 			"ip": this.RequestRemoteIP(),
 		}))
 		if err != nil {

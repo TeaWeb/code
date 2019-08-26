@@ -17,7 +17,7 @@ func (this *ItemAction) Run(params struct {
 	apiutils.ValidateUser(this)
 
 	// 获取数据
-	v, err := teadb.SharedDB().AgentValueDAO().FindLatestItemValue(params.AgentId, "", params.ItemId)
+	v, err := teadb.AgentValueDAO().FindLatestItemValue(params.AgentId, "", params.ItemId)
 	if err != nil {
 		logs.Error(err)
 		apiutils.Fail(this, err.Error())

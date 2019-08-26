@@ -2,6 +2,7 @@ package teastats
 
 import (
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo"
 )
 
@@ -42,7 +43,7 @@ func init() {
 
 	// 注册AccessLogHook
 	tealogs.AddAccessLogHook(&tealogs.AccessLogHook{
-		Process: func(accessLog *tealogs.AccessLog) (goNext bool) {
+		Process: func(accessLog *accesslogs.AccessLog) (goNext bool) {
 			if !accessLog.ShouldStat() {
 				return true
 			}

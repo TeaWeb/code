@@ -6,7 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/stats"
 	"github.com/TeaWeb/code/teadb"
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/caches"
@@ -321,7 +321,7 @@ func (this *Engine) callLogExecuteQuery(call otto.FunctionCall) otto.Value {
 	}
 
 	day := timeutil.Format("Ymd")
-	query := teadb.NewQuery(teadb.SharedDB().AccessLogDAO().TableName(day))
+	query := teadb.NewQuery(teadb.AccessLogDAO().TableName(day))
 
 	// group
 	group := m.Get("group")
@@ -395,7 +395,7 @@ func (this *Engine) callLogExecuteQuery(call otto.FunctionCall) otto.Value {
 	var v interface{} = nil
 	switch action {
 	case "findAll":
-		v, err = teadb.SharedDB().AccessLogDAO().QueryAccessLogs(day, this.context.Server.Id, query)
+		v, err = teadb.AccessLogDAO().QueryAccessLogs(day, this.context.Server.Id, query)
 	default:
 		logs.Error(errors.New("unsupported action '" + action + "'"))
 		return otto.UndefinedValue()
@@ -437,7 +437,7 @@ func (this *Engine) callStatExecuteQuery(call otto.FunctionCall) otto.Value {
 		return otto.UndefinedValue()
 	}
 
-	query := teadb.NewQuery(teadb.SharedDB().ServerValueDAO().TableName(this.context.Server.Id))
+	query := teadb.NewQuery(teadb.ServerValueDAO().TableName(this.context.Server.Id))
 
 	// cond
 	cond := m.Get("cond")
@@ -484,7 +484,7 @@ func (this *Engine) callStatExecuteQuery(call otto.FunctionCall) otto.Value {
 	var v interface{} = nil
 	switch action {
 	case "findAll":
-		v, err = teadb.SharedDB().
+		v, err = teadb.
 			ServerValueDAO().
 			QueryValues(query)
 	default:
@@ -580,7 +580,7 @@ func (this *Engine) toValue(data interface{}) (v otto.Value, err error) {
 	}
 
 	// *AccessLog
-	if _, ok := data.(*tealogs.AccessLog); ok {
+	if _, ok := data.(*accesslogs.AccessLog); ok {
 		jsonData, err := json.Marshal(data)
 		if err != nil {
 			return this.vm.ToValue(data)
@@ -595,7 +595,7 @@ func (this *Engine) toValue(data interface{}) (v otto.Value, err error) {
 	}
 
 	// []*AccessLog
-	if _, ok := data.([]*tealogs.AccessLog); ok {
+	if _, ok := data.([]*accesslogs.AccessLog); ok {
 		jsonData, err := json.Marshal(data)
 		if err != nil {
 			return this.vm.ToValue(data)

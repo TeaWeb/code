@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/logs"
 	"strconv"
@@ -47,7 +48,7 @@ func (this *MySQLStorage) Start() error {
 }
 
 // 写入日志
-func (this *MySQLStorage) Write(accessLogs []*AccessLog) error {
+func (this *MySQLStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 	if len(accessLogs) == 0 {
 		return nil
 	}

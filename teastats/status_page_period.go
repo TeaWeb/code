@@ -2,7 +2,7 @@ package teastats
 
 import (
 	"fmt"
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"strings"
@@ -46,7 +46,7 @@ func (this *StatusPagePeriodFilter) Start(queue *Queue, code string) {
 }
 
 // 筛选
-func (this *StatusPagePeriodFilter) Filter(accessLog *tealogs.AccessLog) {
+func (this *StatusPagePeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 	this.ApplyFilter(accessLog, map[string]string{
 		"status": fmt.Sprintf("%d", accessLog.Status),
 		"page":   accessLog.RequestPath,

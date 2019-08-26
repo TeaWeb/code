@@ -156,16 +156,25 @@ func (this *Rank) Save(db *leveldb.DB, prefix string) {
 	this.locker.Unlock()
 
 	for k, v := range keysCopy {
-		tx.Put([]byte(prefix+"@item@"+k), []byte(fmt.Sprintf("%d", v)), nil)
+		err1 := tx.Put([]byte(prefix+"@item@"+k), []byte(fmt.Sprintf("%d", v)), nil)
+		if err1 != nil {
+			logs.Error(err1)
+		}
 	}
 
 	if err != nil {
 		logs.Error(err)
 	} else {
-		tx.Put([]byte(prefix+"@top"), topData, nil)
+		err1 := tx.Put([]byte(prefix+"@top"), topData, nil)
+		if err1 != nil {
+			logs.Error(err1)
+		}
 	}
 
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		logs.Error(err)
+	}
 }
 
 // 从LevelDB中加载
@@ -206,7 +215,7 @@ func (this *Rank) Load(db *leveldb.DB, prefix string) {
 
 		v := types.Int(string(it.Value()))
 		this.buffer[k] = v
-		i ++
+		i++
 	}
 	it.Release()
 	this.isLoading = false

@@ -23,7 +23,7 @@ func (this *ResponseBodyAction) Run(params struct {
 	if len(params.Day) == 0 {
 		params.Day = timeutil.Format("Ymd")
 	}
-	accessLog, err := teadb.SharedDB().AccessLogDAO().FindResponseHeaderAndBody(params.Day, params.LogId)
+	accessLog, err := teadb.AccessLogDAO().FindResponseHeaderAndBody(params.Day, params.LogId)
 	if err != nil {
 		this.Fail(err.Error())
 	}

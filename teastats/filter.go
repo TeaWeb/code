@@ -1,6 +1,8 @@
 package teastats
 
-import "github.com/TeaWeb/code/tealogs"
+import (
+	"github.com/TeaWeb/code/tealogs/accesslogs"
+)
 
 // 筛选器接口
 type FilterInterface interface {
@@ -17,7 +19,7 @@ type FilterInterface interface {
 	Start(queue *Queue, code string)
 
 	// 筛选某个访问日志
-	Filter(accessLog *tealogs.AccessLog)
+	Filter(accessLog *accesslogs.AccessLog)
 
 	// 停止
 	Stop()

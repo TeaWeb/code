@@ -2,25 +2,47 @@ package teamongo
 
 import (
 	"context"
+	"github.com/TeaWeb/code/teadb/shared"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
+	"sync"
 	"time"
 )
 
+var collMap = map[string]*Collection{}
+var collLocker = sync.RWMutex{}
+
+// 集合定义
 type Collection struct {
 	*mongo.Collection
 }
 
-func FindCollection(collName string) *Collection {
-	return &Collection{
+// 取得共享的集合
+func SharedCollection(collName string) *Collection {
+	collLocker.RLock()
+	coll, ok := collMap[collName]
+	if ok {
+		collLocker.RUnlock()
+		return coll
+	}
+	collLocker.RUnlock()
+
+	coll = &Collection{
 		SharedClient().Database(DatabaseName).Collection(collName),
 	}
+
+	collLocker.Lock()
+	collMap[collName] = coll
+	collLocker.Unlock()
+
+	return coll
 }
 
 // 创建索引
-func (this *Collection) CreateIndex(fields ...*IndexField) error {
+func (this *Collection) CreateIndex(fields ...*shared.IndexField) error {
 	indexView := this.Indexes()
 
 	doc := map[string]interface{}{}
@@ -39,7 +61,12 @@ func (this *Collection) CreateIndex(fields ...*IndexField) error {
 	if err != nil {
 		return err
 	}
-	defer cursor.Close(ctx)
+	defer func() {
+		err := cursor.Close(ctx)
+		if err != nil {
+			logs.Error(err)
+		}
+	}()
 	for cursor.Next(ctx) {
 		m := map[string]interface{}{}
 		err = cursor.Decode(&m)
@@ -73,6 +100,18 @@ func (this *Collection) CreateIndex(fields ...*IndexField) error {
 		Keys:    bsonDoc,
 		Options: options.Index().SetBackground(true),
 	})
+	return err
+}
+
+// 创建一组索引
+func (this *Collection) CreateIndexes(fields ...[]*shared.IndexField) error {
+	var err error = nil
+	for _, f := range fields {
+		err1 := this.CreateIndex(f...)
+		if err1 != nil {
+			err = err1
+		}
+	}
 	return err
 }
 

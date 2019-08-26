@@ -1,9 +1,10 @@
 package notices
 
 import (
-	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"net/http"
 )
 
@@ -16,7 +17,11 @@ func (this *Helper) BeforeAction(actionPtr actions.ActionWrapper) {
 
 	if action.Request.Method == http.MethodGet {
 		if !action.HasPrefix("/notices/badge") {
-			action.Data["countUnread"] = noticeutils.CountUnreadNotices()
+			count, err := teadb.NoticeDAO().CountAllUnreadNotices()
+			if err != nil {
+				logs.Error(err)
+			}
+			action.Data["countUnread"] = count
 		}
 	}
 

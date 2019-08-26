@@ -1,15 +1,13 @@
-package tealogs
+package accesslogs
 
 import (
-	"context"
 	"encoding/json"
+	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/teageo"
-	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/uaparser"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
 	"github.com/pquerna/ffjson/ffjson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"runtime"
 	"strconv"
@@ -217,14 +215,8 @@ func BenchmarkAccessLog_ParseUserAgent(b *testing.B) {
 }
 
 func TestAccessLogger_DB(t *testing.T) {
-	client := teamongo.SharedClient()
-	if client == nil {
-		t.Fatal("client=nil")
-	}
-
-	objectId, _ := primitive.ObjectIDFromHex("abc")
-	accessLog := AccessLog{
-		Id:   objectId,
+	accessLog := &AccessLog{
+		Id:   shared.NewObjectId(),
 		Args: "a=b",
 		Arg: map[string][]string{
 			"name": {"liu", "lu"},
@@ -240,16 +232,11 @@ func TestAccessLogger_DB(t *testing.T) {
 		BodyBytesSent: 1048,
 		Request:       "GET / HTTP/1.1",
 	}
-
-	r, err := client.
-		Database(teamongo.DatabaseName).
-		Collection("accessLogs").
-		InsertOne(context.Background(), accessLog)
+	data, err := ffjson.Marshal(accessLog)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	t.Log(r)
+	t.Log(string(data))
 }
 
 func TestAccessLog_Format(t *testing.T) {

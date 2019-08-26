@@ -3,10 +3,11 @@ package agentutils
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
 	"net/http"
 )
 
@@ -140,7 +141,10 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 				tabbar.Add("Apps", fmt.Sprintf("%d", len(agent.Apps)), "/agents/apps?agentId="+agentId, "gem outline", action.HasPrefix("/agents/apps"))
 
 				// 通知
-				countUnreadNotices := noticeutils.CountUnreadNoticesForAgent(agentId)
+				countUnreadNotices, err := teadb.NoticeDAO().CountUnreadNoticesForAgent(agentId)
+				if err != nil {
+					logs.Error(err)
+				}
 				if countUnreadNotices > 0 {
 					tabbar.Add("通知", fmt.Sprintf("%d", countUnreadNotices), "/agents/notices?agentId="+agentId, "bell blink orange", action.HasPrefix("/agents/notices"))
 				} else {

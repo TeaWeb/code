@@ -3,13 +3,12 @@ package teastats
 import (
 	"github.com/TeaWeb/code/teaconfigs/stats"
 	"github.com/TeaWeb/code/teadb"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
 	"sync"
 	"time"
@@ -35,9 +34,9 @@ func (this *Queue) Start(serverId string) {
 	this.c = make(chan *stats.Value, 4096)
 
 	// 测试连接，如果有错误则重新连接
-	err := teamongo.Test()
+	err := teadb.SharedDB().Test()
 	if err != nil {
-		logs.Println("[stat]queue start failed: can not connect to mongodb, will reconnect to mongodb")
+		logs.Println("[stat]queue start failed: can not connect to database, will reconnect to database")
 		time.Sleep(5 * time.Second)
 		this.Start(serverId)
 		return
@@ -53,7 +52,7 @@ func (this *Queue) Start(serverId string) {
 			}
 
 			// 是否已存在
-			oneValue, err := teadb.SharedDB().ServerValueDAO().FindSameItemValue(serverId, item)
+			oneValue, err := teadb.ServerValueDAO().FindSameItemValue(serverId, item)
 			if err != nil {
 				logs.Error(err)
 				continue
@@ -65,7 +64,7 @@ func (this *Queue) Start(serverId string) {
 					item.Value = increaseFunc.(func(value maps.Map, inc maps.Map) maps.Map)(nil, item.Value)
 					delete(item.Value, "$increase")
 				}
-				err := teadb.SharedDB().ServerValueDAO().InsertOne(serverId, item)
+				err := teadb.ServerValueDAO().InsertOne(serverId, item)
 				if err != nil {
 					logs.Error(err)
 				}
@@ -79,7 +78,7 @@ func (this *Queue) Start(serverId string) {
 					// 简单的增长
 					item.Value = this.increase(oneValue.Value, item.Value)
 				}
-				err = teadb.SharedDB().ServerValueDAO().UpdateItemValueAndTimestamp(serverId, oneValue.Id.Hex(), item.Value, item.Timestamp)
+				err = teadb.ServerValueDAO().UpdateItemValueAndTimestamp(serverId, oneValue.Id.Hex(), item.Value, item.Timestamp)
 				if err != nil {
 					logs.Error(err)
 				}
@@ -91,19 +90,19 @@ func (this *Queue) Start(serverId string) {
 	go func() {
 		this.looper = timers.Loop(1*time.Hour, func(looper *timers.Looper) {
 			// 清除24小时之前的second
-			err := teadb.SharedDB().ServerValueDAO().DeleteExpiredValues(serverId, "second", 24*3600)
+			err := teadb.ServerValueDAO().DeleteExpiredValues(serverId, "second", 24*3600)
 			if err != nil {
 				logs.Error(err)
 			}
 
 			// 清除24小时之前的minute
-			err = teadb.SharedDB().ServerValueDAO().DeleteExpiredValues(serverId, "minute", 24*3600)
+			err = teadb.ServerValueDAO().DeleteExpiredValues(serverId, "minute", 24*3600)
 			if err != nil {
 				logs.Error(err)
 			}
 
 			// 清除48小时之前的hour
-			err = teadb.SharedDB().ServerValueDAO().DeleteExpiredValues(serverId, "hour", 48*3600)
+			err = teadb.ServerValueDAO().DeleteExpiredValues(serverId, "hour", 48*3600)
 			if err != nil {
 				logs.Error(err)
 			}
@@ -120,7 +119,7 @@ func (this *Queue) Add(itemCode string, t time.Time, period stats.ValuePeriod, p
 		value = maps.Map{}
 	}
 	item := stats.NewItemValue()
-	item.Id = primitive.NewObjectID()
+	item.Id = shared.NewObjectId()
 	item.Item = itemCode
 	item.Period = period
 	item.Value = value
@@ -164,11 +163,11 @@ func (this *Queue) Index(index []string) {
 		}
 	}
 
-	fields := []*teadb.IndexField{teadb.NewIndexField("item", true)}
+	fields := []*shared.IndexField{shared.NewIndexField("item", true)}
 	for _, i := range index {
-		fields = append(fields, teadb.NewIndexField("params."+i, true))
+		fields = append(fields, shared.NewIndexField("params."+i, true))
 	}
-	err := teadb.SharedDB().ServerValueDAO().CreateIndex(this.ServerId, fields)
+	err := teadb.ServerValueDAO().CreateIndex(this.ServerId, fields)
 	if err != nil {
 		logs.Error(err)
 	}

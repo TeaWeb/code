@@ -3,7 +3,7 @@ package teastats
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/stats"
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/timers"
@@ -63,7 +63,7 @@ func (this *CounterFilter) StartFilter(code string, period stats.ValuePeriod) {
 }
 
 // 应用筛选器
-func (this *CounterFilter) ApplyFilter(accessLog *tealogs.AccessLog, params map[string]string, incrValue map[string]interface{}) {
+func (this *CounterFilter) ApplyFilter(accessLog *accesslogs.AccessLog, params map[string]string, incrValue map[string]interface{}) {
 	key := this.encodeParams(params)
 	key.WriteString("@")
 
@@ -142,7 +142,7 @@ func (this *CounterFilter) StopFilter() {
 }
 
 // 检查新UV
-func (this *CounterFilter) CheckNewUV(accessLog *tealogs.AccessLog, attachKey string) bool {
+func (this *CounterFilter) CheckNewUV(accessLog *accesslogs.AccessLog, attachKey string) bool {
 	// 从cookie中检查UV是否存在
 	uid, ok := accessLog.Cookie["TeaUID"]
 	if !ok || len(uid) == 0 {
@@ -210,7 +210,7 @@ func (this *CounterFilter) CheckNewUV(accessLog *tealogs.AccessLog, attachKey st
 }
 
 // 检查新IP
-func (this *CounterFilter) CheckNewIP(accessLog *tealogs.AccessLog, attachKey string) bool {
+func (this *CounterFilter) CheckNewIP(accessLog *accesslogs.AccessLog, attachKey string) bool {
 	// IP是否存在
 	ip := accessLog.RemoteAddr
 	if len(ip) == 0 {

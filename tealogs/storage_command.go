@@ -3,6 +3,7 @@ package tealogs
 import (
 	"bytes"
 	"errors"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
 	"os/exec"
 	"sync"
@@ -28,7 +29,7 @@ func (this *CommandStorage) Start() error {
 }
 
 // 写入日志
-func (this *CommandStorage) Write(accessLogs []*AccessLog) error {
+func (this *CommandStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 	if len(accessLogs) == 0 {
 		return nil
 	}

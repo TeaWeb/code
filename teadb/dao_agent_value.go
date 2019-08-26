@@ -5,7 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 )
 
-type AgentValueDAO interface {
+type AgentValueDAOInterface interface {
 	Init()
 	TableName(agentId string) string
 	Insert(agentId string, value *agents.Value) error

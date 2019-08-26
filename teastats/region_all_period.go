@@ -1,7 +1,7 @@
 package teastats
 
 import (
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"strings"
@@ -42,7 +42,7 @@ func (this *RegionAllPeriodFilter) Start(queue *Queue, code string) {
 	this.StartFilter(code, code[strings.LastIndex(code, ".")+1:])
 }
 
-func (this *RegionAllPeriodFilter) Filter(accessLog *tealogs.AccessLog) {
+func (this *RegionAllPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 	if len(accessLog.Extend.Geo.Region) == 0 {
 		return
 	}
@@ -61,7 +61,7 @@ func (this *RegionAllPeriodFilter) Filter(accessLog *tealogs.AccessLog) {
 	countIP := 0
 
 	if strings.HasPrefix(accessLog.SentContentType(), "text/html") {
-		countPV ++
+		countPV++
 	}
 
 	if this.CheckNewUV(accessLog, accessLog.Extend.Geo.Region) {

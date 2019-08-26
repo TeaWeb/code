@@ -8,6 +8,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf"
 	"github.com/iwind/TeaGo/Tea"
@@ -253,11 +254,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 	}
 
 	if server.HasResponseHeaders() {
-		this.responseHeaders = append(this.responseHeaders, server.Headers ...)
+		this.responseHeaders = append(this.responseHeaders, server.Headers...)
 	}
 
 	if server.HasIgnoreHeaders() {
-		this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, server.UppercaseIgnoreHeaders() ...)
+		this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, server.UppercaseIgnoreHeaders()...)
 	}
 
 	// cache
@@ -299,7 +300,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		this.enableStat = false
 	}
 	if len(server.Pages) > 0 {
-		this.pages = append(this.pages, server.Pages ...)
+		this.pages = append(this.pages, server.Pages...)
 	}
 	if server.ShutdownPageOn {
 		this.shutdownPageOn = true
@@ -348,7 +349,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				this.gzipMinLength = location.GzipMinBytes()
 			}
 			if len(location.Pages) > 0 {
-				this.pages = append(this.pages, location.Pages ...)
+				this.pages = append(this.pages, location.Pages...)
 			}
 			if location.ShutdownPageOn {
 				this.shutdownPageOn = true
@@ -382,11 +383,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}
 
 			if location.HasResponseHeaders() {
-				this.responseHeaders = append(this.responseHeaders, location.Headers ...)
+				this.responseHeaders = append(this.responseHeaders, location.Headers...)
 			}
 
 			if location.HasIgnoreHeaders() {
-				this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, location.UppercaseIgnoreHeaders() ...)
+				this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, location.UppercaseIgnoreHeaders()...)
 			}
 
 			if location.AccessPolicy != nil {
@@ -411,7 +412,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 						}
 
 						if rule.HasIgnoreHeaders() {
-							this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, rule.UppercaseIgnoreHeaders() ...)
+							this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, rule.UppercaseIgnoreHeaders()...)
 						}
 
 						// 外部URL
@@ -474,11 +475,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				locationConfigured = true
 
 				if fastcgi.HasResponseHeaders() {
-					this.responseHeaders = append(this.responseHeaders, fastcgi.Headers ...)
+					this.responseHeaders = append(this.responseHeaders, fastcgi.Headers...)
 				}
 
 				if fastcgi.HasIgnoreHeaders() {
-					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, fastcgi.UppercaseIgnoreHeaders() ...)
+					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, fastcgi.UppercaseIgnoreHeaders()...)
 				}
 
 				continue
@@ -513,11 +514,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				}
 
 				if backend.HasResponseHeaders() {
-					this.responseHeaders = append(this.responseHeaders, backend.Headers ...)
+					this.responseHeaders = append(this.responseHeaders, backend.Headers...)
 				}
 
 				if backend.HasIgnoreHeaders() {
-					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, backend.UppercaseIgnoreHeaders() ...)
+					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, backend.UppercaseIgnoreHeaders()...)
 				}
 
 				continue
@@ -554,11 +555,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 				}
 
 				if rule.HasResponseHeaders() {
-					this.responseHeaders = append(this.responseHeaders, rule.Headers ...)
+					this.responseHeaders = append(this.responseHeaders, rule.Headers...)
 				}
 
 				if rule.HasIgnoreHeaders() {
-					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, rule.UppercaseIgnoreHeaders() ...)
+					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, rule.UppercaseIgnoreHeaders()...)
 				}
 
 				// 外部URL
@@ -623,11 +624,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		}
 
 		if fastcgi.HasResponseHeaders() {
-			this.responseHeaders = append(this.responseHeaders, fastcgi.Headers ...)
+			this.responseHeaders = append(this.responseHeaders, fastcgi.Headers...)
 		}
 
 		if fastcgi.HasIgnoreHeaders() {
-			this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, fastcgi.UppercaseIgnoreHeaders() ...)
+			this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, fastcgi.UppercaseIgnoreHeaders()...)
 		}
 
 		return nil
@@ -665,11 +666,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		}
 
 		if backend.HasResponseHeaders() {
-			this.responseHeaders = append(this.responseHeaders, backend.Headers ...)
+			this.responseHeaders = append(this.responseHeaders, backend.Headers...)
 		}
 
 		if backend.HasIgnoreHeaders() {
-			this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, backend.UppercaseIgnoreHeaders() ...)
+			this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, backend.UppercaseIgnoreHeaders()...)
 		}
 	}
 
@@ -746,7 +747,7 @@ func (this *Request) call(writer *ResponseWriter) error {
 		writer.SetBodyCopying(true)
 	} else {
 		max := 512 * 1024 // 512K
-		if this.accessLog != nil && lists.ContainsInt(this.accessLog.Fields, tealogs.AccessLogFieldRequestBody) {
+		if this.accessLog != nil && lists.ContainsInt(this.accessLog.Fields, accesslogs.AccessLogFieldRequestBody) {
 			body, err := ioutil.ReadAll(this.raw.Body)
 			if err == nil {
 				if len(body) > max {
@@ -757,7 +758,7 @@ func (this *Request) call(writer *ResponseWriter) error {
 			}
 			this.raw.Body = ioutil.NopCloser(bytes.NewReader(body))
 		}
-		if this.accessLog != nil && lists.ContainsInt(this.accessLog.Fields, tealogs.AccessLogFieldResponseBody) {
+		if this.accessLog != nil && lists.ContainsInt(this.accessLog.Fields, accesslogs.AccessLogFieldResponseBody) {
 			writer.SetBodyCopying(true)
 		}
 	}
@@ -1262,7 +1263,7 @@ func (this *Request) log() {
 		cookies[cookie.Name] = cookie.Value
 	}
 
-	accessLog := &tealogs.AccessLog{
+	accessLog := &accesslogs.AccessLog{
 		TeaVersion:      teaconst.TeaVersion,
 		RemoteAddr:      this.requestRemoteAddr(),
 		RemotePort:      this.requestRemotePort(),
@@ -1297,7 +1298,7 @@ func (this *Request) log() {
 		ServerProtocol:  this.requestProto(),
 		Errors:          this.errors,
 		HasErrors:       len(this.errors) > 0,
-		Extend:          &tealogs.AccessLogExtend{},
+		Extend:          &accesslogs.AccessLogExtend{},
 		Attrs:           this.attrs,
 	}
 

@@ -1,7 +1,7 @@
 package teastats
 
 import (
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"strings"
@@ -68,7 +68,7 @@ func (this *CostPagePeriodFilter) Start(queue *Queue, code string) {
 	this.StartFilter(code, code[strings.LastIndex(code, ".")+1:])
 }
 
-func (this *CostPagePeriodFilter) Filter(accessLog *tealogs.AccessLog) {
+func (this *CostPagePeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 	this.ApplyFilter(accessLog, map[string]string{
 		"page": accessLog.RequestPath,
 	}, maps.Map{

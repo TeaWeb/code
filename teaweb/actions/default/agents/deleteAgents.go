@@ -4,7 +4,6 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
-	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
@@ -27,13 +26,13 @@ func (this *DeleteAgentsAction) Run(params struct {
 		}
 
 		// 删除通知
-		err := noticeutils.DeleteNoticesForAgent(agent.Id)
+		err := teadb.NoticeDAO().DeleteNoticesForAgent(agent.Id)
 		if err != nil {
 			this.Fail("通知删除失败：" + err.Error())
 		}
 
 		// 删除数值记录
-		err = teadb.SharedDB().AgentValueDAO().DropAgentTable(agent.Id)
+		err = teadb.AgentValueDAO().DropAgentTable(agent.Id)
 		if err != nil {
 			this.Fail("数值记录删除失败：" + err.Error())
 		}
@@ -58,7 +57,7 @@ func (this *DeleteAgentsAction) Run(params struct {
 		}
 
 		// 删除通知
-		err = noticeutils.DeleteNoticesForAgent(agent.Id)
+		err = teadb.NoticeDAO().DeleteNoticesForAgent(agent.Id)
 		if err != nil {
 			logs.Error(err)
 		}

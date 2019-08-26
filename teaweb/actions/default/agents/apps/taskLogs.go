@@ -1,17 +1,13 @@
 package apps
 
 import (
-	"context"
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
 )
 
 type TaskLogsAction actions.Action
@@ -68,42 +64,10 @@ func (this *TaskLogsAction) RunPost(params struct {
 	TaskId  string
 	LastId  string
 }) {
-	filter := map[string]interface{}{
-		"taskId": params.TaskId,
-	}
-	if len(params.LastId) > 0 {
-		lastObjectId, err := primitive.ObjectIDFromHex(params.LastId)
-		if err != nil {
-			logs.Error(err)
-		} else {
-			filter["_id"] = map[string]interface{}{
-				"$gt": lastObjectId,
-			}
-		}
-	}
-
-	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
-	cursor, err := teamongo.FindCollection("logs.agent." + params.AgentId).Find(ctx, filter, options.Find().SetSort(map[string]interface{}{
-		"_id": -1,
-	}), options.Find().SetLimit(100))
-	if err != nil {
-		this.Fail("查询数据库出错：" + err.Error())
-	}
-	taskLogs := []*agentutils.ProcessLog{}
-	for cursor.Next(context.Background()) {
-		m := &agentutils.ProcessLog{}
-		err = cursor.Decode(&m)
-		if err != nil {
-			logs.Error(err)
-		} else {
-			taskLogs = append(taskLogs, m)
-		}
-	}
-	err = cursor.Close(context.Background())
+	taskLogs, err := teadb.AgentLogDAO().ListTaskLogs(params.AgentId, params.TaskId, params.LastId, 100)
 	if err != nil {
 		logs.Error(err)
 	}
-
 	this.Data["logs"] = taskLogs
 	this.Success()
 }

@@ -1,7 +1,7 @@
 package teastats
 
 import (
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"strings"
@@ -42,7 +42,7 @@ func (this *UVAllPeriodFilter) Start(queue *Queue, code string) {
 	this.StartFilter(code, code[strings.LastIndex(code, ".")+1:])
 }
 
-func (this *UVAllPeriodFilter) Filter(accessLog *tealogs.AccessLog) {
+func (this *UVAllPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 	if !this.CheckNewUV(accessLog, "") {
 		return
 	}

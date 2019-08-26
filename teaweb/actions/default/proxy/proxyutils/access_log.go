@@ -2,7 +2,7 @@ package proxyutils
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -27,12 +27,12 @@ func FormatAccessLog(accessLogs []*teaconfigs.AccessLogConfig) []maps.Map {
 
 		// fields
 		fields := []maps.Map{}
-		for _, field := range tealogs.AccessLogFields {
+		for _, field := range accesslogs.AccessLogFields {
 			code := types.Int(field["code"])
 			name := field["name"]
 			isChecked := false
 			if len(accessLog.Fields) == 0 {
-				isChecked = lists.ContainsInt(tealogs.AccessLogDefaultFieldsCodes, code)
+				isChecked = lists.ContainsInt(accesslogs.AccessLogDefaultFieldsCodes, code)
 			} else {
 				isChecked = lists.ContainsInt(accessLog.Fields, code)
 			}

@@ -2,8 +2,8 @@ package notices
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
-	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -25,11 +25,17 @@ func (this *IndexAction) Run(params struct {
 	this.Data["isRead"] = params.Read > 0
 
 	count := 0
-	countUnread := noticeutils.CountUnreadNoticesForAgent(params.AgentId)
+	countUnread, err := teadb.NoticeDAO().CountUnreadNoticesForAgent(params.AgentId)
+	if err != nil {
+		logs.Error(err)
+	}
 	if params.Read == 0 {
 		count = countUnread
 	} else {
-		count = noticeutils.CountReadNoticesForAgent(params.AgentId)
+		count, err = teadb.NoticeDAO().CountReadNoticesForAgent(params.AgentId)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	this.Data["countUnread"] = countUnread
@@ -48,15 +54,7 @@ func (this *IndexAction) Run(params struct {
 	}
 
 	// 读取数据
-	ones, err := noticeutils.NewNoticeQuery().
-		Agent(&notices.AgentCond{
-			AgentId: params.AgentId,
-		}).
-		Attr("isRead", params.Read == 1).
-		Offset(int64((params.Page - 1) * pageSize)).
-		Limit(int64(pageSize)).
-		Desc("_id").
-		FindAll()
+	ones, err := teadb.NoticeDAO().ListAgentNotices(params.AgentId, params.Read == 1, (params.Page - 1) * pageSize, pageSize)
 	if err != nil {
 		logs.Error(err)
 		this.Data["notices"] = []maps.Map{}

@@ -2,8 +2,8 @@ package teadb
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/iwind/TeaGo/logs"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 	"time"
 )
@@ -74,7 +74,7 @@ func TestQuery_InsertOne(t *testing.T) {
 	q.Table("abc")
 
 	v := new(agents.Value)
-	v.Id = primitive.NewObjectID()
+	v.Id = shared.NewObjectId()
 	v.Value = map[string]interface{}{
 		"load1":  1,
 		"load5":  5,
@@ -99,7 +99,7 @@ func TestQuery_InsertOnes(t *testing.T) {
 	s := []interface{}{}
 	for i := 0; i < 10; i++ {
 		v := new(agents.Value)
-		v.Id = primitive.NewObjectID()
+		v.Id = shared.NewObjectId()
 		v.Value = map[string]interface{}{
 			"load1":  i,
 			"load5":  5,

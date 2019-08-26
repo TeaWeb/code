@@ -2,14 +2,12 @@ package proxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
-	"golang.org/x/net/context"
-	"time"
 )
 
 type DeleteAction actions.Action
@@ -49,8 +47,7 @@ func (this *DeleteAction) RunPost(params struct {
 	}
 
 	// 删除统计数据
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	err = teamongo.FindCollection("values.server." + server.Id).Drop(ctx)
+	err = teadb.ServerValueDAO().DropServerTable(server.Id)
 	if err != nil {
 		this.Fail("删除统计数据失败：" + err.Error())
 	}

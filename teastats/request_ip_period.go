@@ -3,7 +3,7 @@ package teastats
 import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/stats"
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
@@ -16,7 +16,7 @@ import (
 
 var ipTopRankDb *leveldb.DB = nil
 
-// 请求数统计
+// 请求IP数统计
 type RequestIPPeriodFilter struct {
 	code   string
 	period string
@@ -85,7 +85,7 @@ func (this *RequestIPPeriodFilter) Start(queue *Queue, code string) {
 	})
 }
 
-func (this *RequestIPPeriodFilter) Filter(accessLog *tealogs.AccessLog) {
+func (this *RequestIPPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 	remoteAddr := accessLog.RemoteAddr
 	if len(remoteAddr) == 0 {
 		return

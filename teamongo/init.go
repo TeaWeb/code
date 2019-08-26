@@ -18,6 +18,11 @@ import (
 )
 
 func init() {
+	// 判断当前是否使用了MongoDB数据库
+	if db.SharedDBConfig().Type != db.DBTypeMongo {
+		return
+	}
+
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		cleanAccessLogs()
 	})

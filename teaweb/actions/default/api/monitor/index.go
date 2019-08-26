@@ -2,7 +2,7 @@ package monitor
 
 import (
 	"github.com/TeaWeb/code/teaconst"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/apiutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -26,7 +26,7 @@ func (this *IndexAction) Run(params struct{}) {
 	runtime.ReadMemStats(&stat)
 	result["heap"] = stat.HeapAlloc
 	result["memory"] = stat.Sys
-	result["mongo"] = teamongo.Test() == nil
+	result["mongo"] = teadb.SharedDB().Test() == nil
 
 	apiutils.Success(this, result)
 }

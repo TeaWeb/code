@@ -2,7 +2,7 @@ package teastats
 
 import (
 	"fmt"
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"strings"
@@ -43,7 +43,7 @@ func (this *StatusAllPeriodFilter) Start(queue *Queue, code string) {
 	this.StartFilter(code, code[strings.LastIndex(code, ".")+1:])
 }
 
-func (this *StatusAllPeriodFilter) Filter(accessLog *tealogs.AccessLog) {
+func (this *StatusAllPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 	this.ApplyFilter(accessLog, map[string]string{
 		"status": fmt.Sprintf("%d", accessLog.Status),
 	}, maps.Map{

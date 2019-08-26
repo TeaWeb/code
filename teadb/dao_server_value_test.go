@@ -2,6 +2,7 @@ package teadb
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/stats"
+	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/iwind/TeaGo/assert"
 	"github.com/iwind/TeaGo/logs"
 	stringutil "github.com/iwind/TeaGo/utils/string"
@@ -20,7 +21,7 @@ func TestServerValueDAO_InsertOne(t *testing.T) {
 			"name": "lu",
 			"age":  20,
 		}
-		err := SharedDB().ServerValueDAO().InsertOne("test", v)
+		err := ServerValueDAO().InsertOne("test", v)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -37,7 +38,7 @@ func TestServerValueDAO_InsertOne(t *testing.T) {
 			"name": "lu",
 			"age":  20,
 		}
-		err := SharedDB().ServerValueDAO().InsertOne("test", v)
+		err := ServerValueDAO().InsertOne("test", v)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -59,7 +60,7 @@ func TestServerValueDAO_InsertOne(t *testing.T) {
 			"age":  20,
 		}
 		v.SetTime(time.Unix(1566651441, 0))
-		err := SharedDB().ServerValueDAO().InsertOne("test", v)
+		err := ServerValueDAO().InsertOne("test", v)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -68,7 +69,7 @@ func TestServerValueDAO_InsertOne(t *testing.T) {
 }
 
 func TestServerValueDAO_DeleteExpiredValues(t *testing.T) {
-	dao := SharedDB().ServerValueDAO()
+	dao := ServerValueDAO()
 	err := dao.DeleteExpiredValues("test", stats.ValuePeriodSecond, 10)
 	if err != nil {
 		t.Fatal(err)
@@ -79,7 +80,7 @@ func TestServerValueDAO_DeleteExpiredValues(t *testing.T) {
 func TestServerValueDAO_FindSameItemValue(t *testing.T) {
 	a := assert.NewAssertion(t)
 
-	dao := SharedDB().ServerValueDAO()
+	dao := ServerValueDAO()
 
 	oldItem := &stats.Value{
 		Period: stats.ValuePeriodMinute,
@@ -105,7 +106,7 @@ func TestServerValueDAO_FindSameItemValue(t *testing.T) {
 func TestServerValueDAO_FindSameItemValue2(t *testing.T) {
 	a := assert.NewAssertion(t)
 
-	dao := SharedDB().ServerValueDAO()
+	dao := ServerValueDAO()
 
 	oldItem := &stats.Value{
 		Period: stats.ValuePeriodMinute,
@@ -132,7 +133,7 @@ func TestServerValueDAO_FindSameItemValue2(t *testing.T) {
 }
 
 func TestServerValueDAO_UpdateItemValueAndTimestamp(t *testing.T) {
-	dao := SharedDB().ServerValueDAO()
+	dao := ServerValueDAO()
 	err := dao.UpdateItemValueAndTimestamp("test", "5d613431b1be37e820bc8409", map[string]interface{}{
 		"name": "xia",
 		"age":  "21",
@@ -144,11 +145,11 @@ func TestServerValueDAO_UpdateItemValueAndTimestamp(t *testing.T) {
 }
 
 func TestServerValueDAO_CreateIndex(t *testing.T) {
-	dao := SharedDB().ServerValueDAO()
+	dao := ServerValueDAO()
 
-	fields := []*IndexField{
-		NewIndexField("param1", true),
-		NewIndexField("param2", false),
+	fields := []*shared.IndexField{
+		shared.NewIndexField("param1", true),
+		shared.NewIndexField("param2", false),
 	}
 	err := dao.CreateIndex("test", fields)
 	if err != nil {
@@ -158,7 +159,7 @@ func TestServerValueDAO_CreateIndex(t *testing.T) {
 }
 
 func TestServerValueDAO_QueryValues(t *testing.T) {
-	dao := SharedDB().ServerValueDAO()
+	dao := ServerValueDAO()
 
 	q := NewQuery(dao.TableName("test"))
 	values, err := dao.QueryValues(q)
@@ -171,8 +172,8 @@ func TestServerValueDAO_QueryValues(t *testing.T) {
 	}
 }
 
-func TestMongoServerValueDAO_FindOneWithItem(t *testing.T) {
-	dao := SharedDB().ServerValueDAO()
+func TestServerValueDAO_FindOneWithItem(t *testing.T) {
+	dao := ServerValueDAO()
 
 	{
 		v, err := dao.FindOneWithItem("test", "a.b.c")
@@ -189,4 +190,12 @@ func TestMongoServerValueDAO_FindOneWithItem(t *testing.T) {
 		}
 		t.Log(stringutil.JSONEncodePretty(v))
 	}
+}
+
+func TestServerValueDAO_DropServerTable(t *testing.T) {
+	err := ServerValueDAO().DropServerTable("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("ok")
 }

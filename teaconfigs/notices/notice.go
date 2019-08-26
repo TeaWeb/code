@@ -2,22 +2,22 @@ package notices
 
 import (
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/TeaWeb/code/teadb/shared"
 	"hash/crc32"
 	"time"
 )
 
 // 通知
 type Notice struct {
-	Id          primitive.ObjectID `bson:"_id" json:"id"`                  // 数据库存储的ID
-	Proxy       ProxyCond          `bson:"proxy" json:"proxy"`             // 代理相关参数
-	Agent       AgentCond          `bson:"agent" json:"agent"`             // 主机相关参数
-	Timestamp   int64              `bson:"timestamp" json:"timestamp"`     // 时间戳
-	Message     string             `bson:"message" json:"message"`         // 消息内容
-	MessageHash string             `bson:"messageHash" json:"messageHash"` // 消息内容Hash：crc32(message)
-	IsRead      bool               `bson:"isRead" json:"isRead"`           // 已读
-	IsNotified  bool               `bson:"isNotified" json:"isNotified"`   // 是否发送通知
-	Receivers   []string           `bson:"receivers" json:"receivers"`     // 接收人ID列表
+	Id          shared.ObjectId `bson:"_id" json:"id"`                  // 数据库存储的ID
+	Proxy       ProxyCond       `bson:"proxy" json:"proxy"`             // 代理相关参数
+	Agent       AgentCond       `bson:"agent" json:"agent"`             // 主机相关参数
+	Timestamp   int64           `bson:"timestamp" json:"timestamp"`     // 时间戳
+	Message     string          `bson:"message" json:"message"`         // 消息内容
+	MessageHash string          `bson:"messageHash" json:"messageHash"` // 消息内容Hash：crc32(message)
+	IsRead      bool            `bson:"isRead" json:"isRead"`           // 已读
+	IsNotified  bool            `bson:"isNotified" json:"isNotified"`   // 是否发送通知
+	Receivers   []string        `bson:"receivers" json:"receivers"`     // 接收人ID列表
 }
 
 // Proxy条件
@@ -43,7 +43,9 @@ type AgentCond struct {
 
 // 获取通知对象
 func NewNotice() *Notice {
-	return &Notice{}
+	return &Notice{
+		Id: shared.NewObjectId(),
+	}
 }
 
 // 设置时间

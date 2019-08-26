@@ -9,19 +9,16 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teadb"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
-	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io/ioutil"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -55,8 +52,8 @@ func (this *PushAction) Run(params struct{}) {
 	eventDomain := m.GetString("event")
 
 	if eventDomain == "ProcessEvent" { // 进程事件
-		event := agentutils.ProcessLog{
-			Id:         primitive.NewObjectID(),
+		event := &agents.ProcessLog{
+			Id:         shared.NewObjectId(),
 			AgentId:    agent.Id,
 			TaskId:     m.GetString("taskId"),
 			ProcessId:  m.GetString("uniqueId"),
@@ -81,8 +78,7 @@ func (this *PushAction) Run(params struct{}) {
 			},
 		}
 
-		coll := this.selectProcessEventCollection(agent.Id)
-		_, err = coll.InsertOne(context.Background(), event)
+		err = teadb.AgentLogDAO().InsertOne(agent.Id, event)
 		if err != nil {
 			logs.Error(err)
 		}
@@ -91,30 +87,6 @@ func (this *PushAction) Run(params struct{}) {
 	}
 
 	this.Success()
-}
-
-var agentCollectionMap = map[string]*teamongo.Collection{} // agentId => collection
-var agentCollectionLocker = sync.Mutex{}
-
-func (this *PushAction) selectProcessEventCollection(agentId string) *teamongo.Collection {
-	createdNew := false
-
-	agentCollectionLocker.Lock()
-	coll, found := agentCollectionMap[agentId]
-	if !found {
-		createdNew = true
-
-		coll = teamongo.FindCollection("logs.agent." + agentId)
-		agentCollectionMap[agentId] = coll
-	}
-	agentCollectionLocker.Unlock()
-
-	if createdNew {
-		coll.CreateIndex(teamongo.NewIndexField("agentId", true))
-		coll.CreateIndex(teamongo.NewIndexField("taskId", true))
-	}
-
-	return coll
 }
 
 // 处理监控项事件
@@ -186,7 +158,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 
 		// 检查最近N此数值是否都是同类错误
 		if threshold != nil && threshold.MaxFails > 1 {
-			values, err := teadb.SharedDB().AgentValueDAO().ListItemValues(agent.Id, app.Id, item.Id, 0, "", 0, threshold.MaxFails-1)
+			values, err := teadb.AgentValueDAO().ListItemValues(agent.Id, app.Id, item.Id, 0, "", 0, threshold.MaxFails-1)
 			if err != nil {
 				logs.Error(err)
 			} else {
@@ -228,17 +200,21 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 
 			if notices.IsFailureLevel(level) {
 				// 同样的消息短时间内只发送一条
-				if noticeutils.ExistNoticesWithHash(notice.MessageHash, map[string]interface{}{
+				b, err := teadb.NoticeDAO().ExistNoticesWithHash(notice.MessageHash, map[string]interface{}{
 					"agent.agentId": agent.Id,
 					"agent.appId":   appId,
 					"agent.itemId":  itemId,
-				}, 1*time.Hour) {
+				}, 1*time.Hour)
+				if err != nil {
+					logs.Error(err)
+				}
+				if b {
 					shouldNotify = false
 				}
 			}
 
 			if shouldNotify {
-				err := noticeutils.NewNoticeQuery().Insert(notice)
+				err := teadb.NoticeDAO().InsertOne(notice)
 				if err != nil {
 					logs.Error(err)
 				}
@@ -255,7 +231,10 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 
 				receiverIds := this.notifyMessage(agent, appId, itemId, setting, level, "有新的通知", fullMessage, false)
 				if len(receiverIds) > 0 {
-					noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
+					err = teadb.NoticeDAO().UpdateNoticeReceivers(notice.Id.Hex(), receiverIds)
+					if err != nil {
+						logs.Error(err)
+					}
 				}
 			}
 		}
@@ -268,7 +247,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 		nodeId = node.Id
 	}
 	value := &agents.Value{
-		Id:          primitive.NewObjectID(),
+		Id:          shared.NewObjectId(),
 		NodeId:      nodeId,
 		AppId:       appId,
 		AgentId:     agent.Id,
@@ -285,7 +264,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	}
 	value.SetTime(t)
 
-	err = teadb.SharedDB().AgentValueDAO().Insert(agent.Id, value)
+	err = teadb.AgentValueDAO().Insert(agent.Id, value)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -305,7 +284,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 			recoverSuccesses = 1
 		}
 
-		values, err := teadb.SharedDB().AgentValueDAO().ListItemValues(agent.Id, app.Id, item.Id, 0, "", 0, recoverSuccesses+1)
+		values, err := teadb.AgentValueDAO().ListItemValues(agent.Id, app.Id, item.Id, 0, "", 0, recoverSuccesses+1)
 		if err != nil {
 			logs.Error(err)
 			return
@@ -352,7 +331,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 				notice.Message += " \n位置：" + strings.Join(linkNames, "/")
 			}
 			notice.Hash()
-			err := noticeutils.NewNoticeQuery().Insert(notice)
+			err := teadb.NoticeDAO().InsertOne(notice)
 			if err != nil {
 				logs.Error(err)
 			}
@@ -380,11 +359,15 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 		if len(receivers) > 0 {
 			isNotified = true
 			receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]"+subject, message, func(receiverId string, minutes int) int {
-				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+				count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
 					"agent.agentId": agent.Id,
 					"agent.appId":   appId,
 					"agent.itemId":  itemId,
 				}, minutes)
+				if err != nil {
+					logs.Error(err)
+				}
+				return count
 			})
 		}
 	}
@@ -395,11 +378,15 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 		if len(receivers) > 0 {
 			isNotified = true
 			receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]"+subject, message, func(receiverId string, minutes int) int {
-				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+				count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
 					"agent.agentId": agent.Id,
 					"agent.appId":   appId,
 					"agent.itemId":  itemId,
 				}, minutes)
+				if err != nil {
+					logs.Error(err)
+				}
+				return count
 			})
 		}
 	}
@@ -416,11 +403,15 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 			if len(receivers) > 0 {
 				isNotified = true
 				receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]"+subject, message, func(receiverId string, minutes int) int {
-					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+					count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
 						"agent.agentId": agent.Id,
 						"agent.appId":   appId,
 						"agent.itemId":  itemId,
 					}, minutes)
+					if err != nil {
+						logs.Error(err)
+					}
+					return count
 				})
 			}
 		}
@@ -431,11 +422,15 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 		receivers := setting.FindAllNoticeReceivers(receiverLevels...)
 		if len(receivers) > 0 {
 			receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]"+subject, message, func(receiverId string, minutes int) int {
-				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+				count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
 					"agent.agentId": agent.Id,
 					"agent.appId":   appId,
 					"agent.itemId":  itemId,
 				}, minutes)
+				if err != nil {
+					logs.Error(err)
+				}
+				return count
 			})
 		}
 	}
@@ -445,7 +440,7 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 
 // 查找最近的一次数值记录
 func (this *PushAction) findLatestAgentValue(agentId string, appId string, itemId string) (interface{}, error) {
-	v, err := teadb.SharedDB().AgentValueDAO().FindLatestItemValueNoError(agentId, appId, itemId)
+	v, err := teadb.AgentValueDAO().FindLatestItemValueNoError(agentId, appId, itemId)
 	if err != nil {
 		return nil, err
 	}

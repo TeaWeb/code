@@ -33,9 +33,14 @@ func SharedClient() *mongo.Client {
 		logs.Fatal(err)
 		return nil
 	}
-	defer reader.Close()
+	defer func() {
+		err := reader.Close()
+		if err != nil {
+			logs.Error(err)
+		}
+	}()
 
-	config := &Config{}
+	config := &db.MongoConfig{}
 	err = reader.ReadYAML(config)
 	if err != nil {
 		logs.Fatal(err)
@@ -82,9 +87,14 @@ func NewClient() *mongo.Client {
 		logs.Fatal(err)
 		return nil
 	}
-	defer reader.Close()
+	defer func() {
+		err = reader.Close()
+		if err != nil {
+			logs.Error(err)
+		}
+	}()
 
-	config := &Config{}
+	config := &db.MongoConfig{}
 	err = reader.ReadYAML(config)
 	if err != nil {
 		logs.Fatal(err)
@@ -128,9 +138,14 @@ func Test() error {
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer func() {
+		err = reader.Close()
+		if err != nil {
+			logs.Error(err)
+		}
+	}()
 
-	config := &Config{}
+	config := &db.MongoConfig{}
 	err = reader.ReadYAML(config)
 	if err != nil {
 		return err
@@ -163,7 +178,10 @@ func Test() error {
 	_, err = client.Database(DatabaseName).Collection("logs").Find(ctx, map[string]interface{}{}, options.Find().SetLimit(1))
 
 	if err == nil {
-		client.Disconnect(context.Background())
+		err1 := client.Disconnect(context.Background())
+		if err1 != nil {
+			logs.Error(err1)
+		}
 	}
 
 	if err == context.DeadlineExceeded {

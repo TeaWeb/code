@@ -1,4 +1,4 @@
-package teadb
+package shared
 
 // 索引字段定义
 type IndexField struct {

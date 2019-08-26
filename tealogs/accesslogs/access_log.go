@@ -1,7 +1,8 @@
-package tealogs
+package accesslogs
 
 import (
 	"fmt"
+	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/teageo"
 	"github.com/TeaWeb/code/teamemory"
 	"github.com/TeaWeb/code/teautils"
@@ -9,7 +10,6 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/pquerna/ffjson/ffjson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -22,7 +22,7 @@ var charsetReg = regexp.MustCompile("(?i)charset\\s*=\\s*([\\w-]+)")
 var headerReg = regexp.MustCompile("([A-Z])")
 
 type AccessLog struct {
-	Id primitive.ObjectID `var:"id" bson:"_id" json:"id"` // 数据库存储的ID
+	Id shared.ObjectId `var:"id" bson:"_id" json:"id"` // 数据库存储的ID
 
 	ServerId   string `var:"serverId" bson:"serverId" json:"serverId"`       // 服务ID
 	BackendId  string `var:"backendId" bson:"backendId" json:"backendId"`    // 后端服务ID

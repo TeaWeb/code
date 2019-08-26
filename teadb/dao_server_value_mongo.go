@@ -3,26 +3,22 @@ package teadb
 import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/stats"
+	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
 	"golang.org/x/net/context"
 	"strings"
-	"sync"
 	"time"
 )
 
 type MongoServerValueDAO struct {
-	collMap    map[string]*teamongo.Collection
-	collLocker sync.Mutex
 }
 
 func (this *MongoServerValueDAO) Init() {
-	this.collMap = map[string]*teamongo.Collection{}
 }
 
 func (this *MongoServerValueDAO) TableName(serverId string) string {
@@ -31,7 +27,7 @@ func (this *MongoServerValueDAO) TableName(serverId string) string {
 
 func (this *MongoServerValueDAO) InsertOne(serverId string, value *stats.Value) error {
 	if value.Id.IsZero() {
-		value.Id = primitive.NewObjectID()
+		value.Id = shared.NewObjectId()
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
@@ -89,7 +85,7 @@ func (this *MongoServerValueDAO) FindSameItemValue(serverId string, item *stats.
 }
 
 func (this *MongoServerValueDAO) UpdateItemValueAndTimestamp(serverId string, valueId string, value map[string]interface{}, timestamp int64) error {
-	objectId, err := primitive.ObjectIDFromHex(valueId)
+	objectId, err := shared.ObjectIdFromHex(valueId)
 	if err != nil {
 		return err
 	}
@@ -105,7 +101,7 @@ func (this *MongoServerValueDAO) UpdateItemValueAndTimestamp(serverId string, va
 	return err
 }
 
-func (this *MongoServerValueDAO) CreateIndex(serverId string, fields []*IndexField) error {
+func (this *MongoServerValueDAO) CreateIndex(serverId string, fields []*shared.IndexField) error {
 	if len(fields) == 0 {
 		return nil
 	}
@@ -162,49 +158,51 @@ func (this *MongoServerValueDAO) FindOneWithItem(serverId string, item string) (
 	return one.(*stats.Value), nil
 }
 
-func (this *MongoServerValueDAO) selectColl(collName string) *teamongo.Collection {
-	this.collLocker.Lock()
-	defer this.collLocker.Unlock()
+// 删除代理服务相关表
+func (this *MongoServerValueDAO) DropServerTable(serverId string) error {
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	return this.selectColl(this.TableName(serverId)).Drop(ctx)
+}
 
-	coll, found := this.collMap[collName]
-	if found {
+func (this *MongoServerValueDAO) selectColl(collName string) *teamongo.Collection {
+	coll := teamongo.SharedCollection(collName)
+
+	if isInitializedTable(collName) {
 		return coll
 	}
 
-	coll = teamongo.FindCollection(collName)
-
-	for _, fields := range [][]*teamongo.IndexField{
+	for _, fields := range [][]*shared.IndexField{
 		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timestamp", true),
+			shared.NewIndexField("item", true),
+			shared.NewIndexField("timestamp", true),
 		},
 		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.second", true),
+			shared.NewIndexField("item", true),
+			shared.NewIndexField("timeFormat.second", true),
 		},
 		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.minute", true),
+			shared.NewIndexField("item", true),
+			shared.NewIndexField("timeFormat.minute", true),
 		},
 		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.hour", true),
+			shared.NewIndexField("item", true),
+			shared.NewIndexField("timeFormat.hour", true),
 		},
 		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.day", true),
+			shared.NewIndexField("item", true),
+			shared.NewIndexField("timeFormat.day", true),
 		},
 		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.week", true),
+			shared.NewIndexField("item", true),
+			shared.NewIndexField("timeFormat.week", true),
 		},
 		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.month", true),
+			shared.NewIndexField("item", true),
+			shared.NewIndexField("timeFormat.month", true),
 		},
 		{
-			teamongo.NewIndexField("item", true),
-			teamongo.NewIndexField("timeFormat.year", true),
+			shared.NewIndexField("item", true),
+			shared.NewIndexField("timeFormat.year", true),
 		},
 	} {
 		err := coll.CreateIndex(fields...)
@@ -213,7 +211,6 @@ func (this *MongoServerValueDAO) selectColl(collName string) *teamongo.Collectio
 		}
 	}
 
-	this.collMap[collName] = coll
 	return coll
 }
 

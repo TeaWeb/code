@@ -15,26 +15,26 @@ import (
 )
 
 type MongoDriver struct {
-	accessLogDAO   AccessLogDAO
-	agentLogDAO    AgentLogDAO
-	auditLogDAO    AuditLogDAO
-	noticeDAO      NoticeDAO
-	agentValueDAO  AgentValueDAO
-	serverValueDAO ServerValueDAO
 }
 
 func (this *MongoDriver) Init() {
-	this.agentValueDAO = new(MongoAgentValueDAO)
-	this.agentValueDAO.Init()
+	agentValueDAO = new(MongoAgentValueDAO)
+	agentValueDAO.Init()
 
-	this.serverValueDAO = new(MongoServerValueDAO)
-	this.serverValueDAO.Init()
+	agentLogDAO = new(MongoAgentLogDAO)
+	agentLogDAO.Init()
 
-	this.auditLogDAO = new(MongoAuditLogDAO)
-	this.auditLogDAO.Init()
+	serverValueDAO = new(MongoServerValueDAO)
+	serverValueDAO.Init()
 
-	this.accessLogDAO = new(MongoAccessLogDAO)
-	this.accessLogDAO.Init()
+	auditLogDAO = new(MongoAuditLogDAO)
+	auditLogDAO.Init()
+
+	accessLogDAO = new(MongoAccessLogDAO)
+	accessLogDAO.Init()
+
+	noticeDAO = new(MongoNoticeDAO)
+	noticeDAO.Init()
 }
 
 func (this *MongoDriver) FindOne(query *Query, modelPtr interface{}) (interface{}, error) {
@@ -377,6 +377,11 @@ func (this *MongoDriver) Group(query *Query, field string, result map[string]Exp
 	return ones, nil
 }
 
+// 测试数据库连接
+func (this *MongoDriver) Test() error {
+	return teamongo.Test()
+}
+
 func (this *MongoDriver) db() *mongo.Database {
 	client := teamongo.SharedClient()
 	if client == nil {
@@ -443,30 +448,6 @@ func (this *MongoDriver) buildOperandMap(operandMap OperandMap) (filter map[stri
 	}
 
 	return
-}
-
-func (this *MongoDriver) AccessLogDAO() AccessLogDAO {
-	return this.accessLogDAO
-}
-
-func (this *MongoDriver) AgentLogDAO() AgentLogDAO {
-	return this.agentLogDAO
-}
-
-func (this *MongoDriver) AuditLogDAO() AuditLogDAO {
-	return this.auditLogDAO
-}
-
-func (this *MongoDriver) NoticeDAO() NoticeDAO {
-	return this.noticeDAO
-}
-
-func (this *MongoDriver) AgentValueDAO() AgentValueDAO {
-	return this.agentValueDAO
-}
-
-func (this *MongoDriver) ServerValueDAO() ServerValueDAO {
-	return this.serverValueDAO
 }
 
 func (this *MongoDriver) isNotFoundError(err error) bool {

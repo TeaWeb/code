@@ -1,18 +1,14 @@
 package tealogs
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/utils/time"
 	"github.com/syndtr/goleveldb/leveldb"
-	"go.mongodb.org/mongo-driver/mongo"
 	"runtime"
-	"sync"
 )
 
 var (
@@ -21,17 +17,13 @@ var (
 
 // 访问日志记录器
 type AccessLogger struct {
-	queue chan *AccessLog
-
-	collectionCacheMap    map[string]*teamongo.Collection
-	collectionCacheLocker sync.RWMutex
+	queue chan *accesslogs.AccessLog
 }
 
 // 获取新日志对象
 func NewAccessLogger() *AccessLogger {
 	logger := &AccessLogger{
-		queue:              make(chan *AccessLog, 10*10000),
-		collectionCacheMap: map[string]*teamongo.Collection{},
+		queue: make(chan *accesslogs.AccessLog, 10*10000),
 	}
 
 	go logger.wait()
@@ -44,47 +36,8 @@ func SharedLogger() *AccessLogger {
 }
 
 // 推送日志
-func (this *AccessLogger) Push(log *AccessLog) {
+func (this *AccessLogger) Push(log *accesslogs.AccessLog) {
 	this.queue <- log
-}
-
-// 获取MongoDB客户端
-func (this *AccessLogger) client() *mongo.Client {
-	return teamongo.SharedClient()
-}
-
-// 获取当天的collection
-func (this *AccessLogger) collection() *teamongo.Collection {
-	this.collectionCacheLocker.RLock()
-
-	collName := "logs." + timeutil.Format("Ymd")
-	coll, found := this.collectionCacheMap[collName]
-	if found {
-		this.collectionCacheLocker.RUnlock()
-		return coll
-	}
-	this.collectionCacheLocker.RUnlock()
-
-	// 构建索引
-	this.collectionCacheLocker.Lock()
-	coll = teamongo.FindCollection(collName)
-	coll.CreateIndex(teamongo.NewIndexField("serverId", true))
-	coll.CreateIndex(
-		teamongo.NewIndexField("status", true),
-		teamongo.NewIndexField("serverId", true),
-	)
-	coll.CreateIndex(
-		teamongo.NewIndexField("remoteAddr", true),
-		teamongo.NewIndexField("serverId", true),
-	)
-	coll.CreateIndex(
-		teamongo.NewIndexField("hasErrors", true),
-		teamongo.NewIndexField("serverId", true),
-	)
-
-	this.collectionCacheMap[collName] = coll
-	this.collectionCacheLocker.Unlock()
-	return coll
 }
 
 // 等待日志到来
@@ -125,14 +78,7 @@ func (this *AccessLogger) wait() {
 		func(index int, db *leveldb.DB) {
 			queue := NewAccessLogQueue(db, index)
 			go queue.Receive(this.queue)
-			go queue.Dump(this.collection)
+			go queue.Dump()
 		}(index, db)
-	}
-}
-
-// 关闭MongoDB客户端连接
-func (this *AccessLogger) Close() {
-	if this.client() != nil {
-		this.client().Disconnect(context.Background())
 	}
 }

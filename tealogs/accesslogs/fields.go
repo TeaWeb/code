@@ -1,4 +1,4 @@
-package tealogs
+package accesslogs
 
 import "github.com/iwind/TeaGo/maps"
 

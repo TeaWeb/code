@@ -1,7 +1,7 @@
 package teastats
 
 import (
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"strings"
@@ -42,7 +42,7 @@ func (this *PVAllPeriodFilter) Start(queue *Queue, code string) {
 	this.StartFilter(code, code[strings.LastIndex(code, ".")+1:])
 }
 
-func (this *PVAllPeriodFilter) Filter(accessLog *tealogs.AccessLog) {
+func (this *PVAllPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 	contentType := accessLog.SentContentType()
 	if !strings.HasPrefix(contentType, "text/html") {
 		return

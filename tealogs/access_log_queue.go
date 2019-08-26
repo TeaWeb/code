@@ -1,21 +1,21 @@
 package tealogs
 
 import (
-	"context"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
+	"github.com/TeaWeb/code/teadb/shared"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/syndtr/goleveldb/leveldb"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strconv"
 	"sync"
 	"time"
 )
 
-// 导入的步长
+// 导入数据库的访问日志的步长
 const (
-	MongoLogSize = 256
+	DBBatchLogSize = 256
 )
 
 // 访问日志队列
@@ -35,7 +35,7 @@ func NewAccessLogQueue(db *leveldb.DB, index int) *AccessLogQueue {
 }
 
 // 从队列中接收日志
-func (this *AccessLogQueue) Receive(ch chan *AccessLog) {
+func (this *AccessLogQueue) Receive(ch chan *accesslogs.AccessLog) {
 	ticker := teautils.NewTicker(1 * time.Second)
 	batch := new(leveldb.Batch)
 	logIds := []string{}
@@ -98,15 +98,15 @@ func (this *AccessLogQueue) Receive(ch chan *AccessLog) {
 }
 
 // 导出日志到别的媒介
-func (this *AccessLogQueue) Dump(mongoCollFunc func() *teamongo.Collection) {
+func (this *AccessLogQueue) Dump() {
 	ticker := teautils.NewTicker(1 * time.Second)
 	for range ticker.C {
-		this.dumpInterval(mongoCollFunc)
+		this.dumpInterval()
 	}
 }
 
 // 导出日志定时内容
-func (this *AccessLogQueue) dumpInterval(mongoCollFunc func() *teamongo.Collection) {
+func (this *AccessLogQueue) dumpInterval() {
 	size := 4096
 	var logIds = []string{}
 	this.locker.Lock()
@@ -127,32 +127,38 @@ func (this *AccessLogQueue) dumpInterval(mongoCollFunc func() *teamongo.Collecti
 		return
 	}
 
-	accessLogs := []interface{}{}
+	accessLogsList := []interface{}{}
 	batch := new(leveldb.Batch)
 
-	storageLogs := map[string][]*AccessLog{} // policyId => accessLogs
+	storageLogs := map[string][]*accesslogs.AccessLog{} // policyId => accessLogs
 	for _, logId := range logIds {
 		key := []byte("accesslog_" + logId)
 		value, err := this.db.Get(key, nil)
 		if err != nil {
 			if err != leveldb.ErrNotFound {
 				logs.Error(err)
-				this.db.Delete(key, nil)
+				err = this.db.Delete(key, nil)
+				if err != nil {
+					logs.Error(err)
+				}
 			}
 			continue
 		}
-		accessLog := new(AccessLog)
+		accessLog := new(accesslogs.AccessLog)
 		err = ffjson.Unmarshal(value, accessLog)
 		if err != nil {
 			logs.Error(err)
-			this.db.Delete(key, nil)
+			err = this.db.Delete(key, nil)
+			if err != nil {
+				logs.Error(err)
+			}
 			continue
 		}
 
-		// 如果非storageOnly则可以存储到MongoDB中
+		// 如果非storageOnly则可以存储到数据库中
 		if !accessLog.StorageOnly {
-			accessLog.Id = primitive.NewObjectID()
-			accessLogs = append(accessLogs, accessLog)
+			accessLog.Id = shared.NewObjectId()
+			accessLogsList = append(accessLogsList, accessLog)
 		}
 
 		// 日志存储策略
@@ -160,7 +166,7 @@ func (this *AccessLogQueue) dumpInterval(mongoCollFunc func() *teamongo.Collecti
 			for _, policyId := range accessLog.StoragePolicyIds {
 				_, ok := storageLogs[policyId]
 				if !ok {
-					storageLogs[policyId] = []*AccessLog{}
+					storageLogs[policyId] = []*accesslogs.AccessLog{}
 				}
 				storageLogs[policyId] = append(storageLogs[policyId], accessLog)
 			}
@@ -183,29 +189,31 @@ func (this *AccessLogQueue) dumpInterval(mongoCollFunc func() *teamongo.Collecti
 	}
 
 	if batch.Len() > 0 {
-		this.db.Write(batch, nil)
+		err := this.db.Write(batch, nil)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
-	// 导入MongoDB
-	if len(accessLogs) > 0 {
-		count := len(accessLogs)
+	// 导入数据库
+	if len(accessLogsList) > 0 {
+		count := len(accessLogsList)
 		offset := 0
-		to := offset + MongoLogSize
+		to := offset + DBBatchLogSize
 		for {
 			if to > count {
 				to = count
 			}
-			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-			_, err := mongoCollFunc().InsertMany(ctx, accessLogs[offset:to])
+			err := teadb.AccessLogDAO().InsertAccessLogs(accessLogsList[offset:to])
 			if err != nil {
-				logs.Println("[mongo]insert access logs:", err.Error())
+				logs.Println("[logger]insert access logs:", err.Error())
 			}
 
-			offset += MongoLogSize
+			offset += DBBatchLogSize
 			if offset >= count {
 				break
 			}
-			to = offset + MongoLogSize
+			to = offset + DBBatchLogSize
 		}
 	}
 }

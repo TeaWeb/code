@@ -29,7 +29,7 @@ func (this *AuditAction) Run(params struct {
 	pageSize := 10
 	this.Data["page"] = params.Page
 
-	count, err := teadb.SharedDB().AuditLogDAO().CountAllAuditLogs()
+	count, err := teadb.AuditLogDAO().CountAllAuditLogs()
 	if err != nil {
 		logs.Error(err)
 	}
@@ -41,7 +41,7 @@ func (this *AuditAction) Run(params struct {
 	}
 
 	// 读取列表数据
-	ones, err := teadb.SharedDB().AuditLogDAO().ListAuditLogs(pageSize*(params.Page-1), pageSize)
+	ones, err := teadb.AuditLogDAO().ListAuditLogs(pageSize*(params.Page-1), pageSize)
 	if err != nil {
 		this.Data["logs"] = []interface{}{}
 	} else {

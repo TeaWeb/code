@@ -51,7 +51,7 @@ func (this *ListAction) Run(params struct {
 	requestBodyFetching = params.BodyFetching
 	requestBodyTime = time.Now()
 
-	accessLogs, err := teadb.SharedDB().AccessLogDAO().ListLatestAccessLogs(timeutil.Format("Ymd"), serverId, params.FromId, params.LogType == "errorLog", params.Size)
+	accessLogs, err := teadb.AccessLogDAO().ListLatestAccessLogs(timeutil.Format("Ymd"), serverId, params.FromId, params.LogType == "errorLog", params.Size)
 
 	this.Data["lastId"] = ""
 	if err != nil {

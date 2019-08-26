@@ -4,13 +4,13 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconst"
-	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
+	"github.com/TeaWeb/code/teadb"
+	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
 	"time"
 )
@@ -41,7 +41,7 @@ func checkConnecting() {
 			// 监控连通性
 			_, isWaiting := CheckAgentIsWaiting(agent.Id)
 			if !isWaiting {
-				runtimeAgent.CountDisconnections ++
+				runtimeAgent.CountDisconnections++
 
 				if runtimeAgent.CountDisconnections > 0 && runtimeAgent.CountDisconnections%maxDisconnections == 0 { // 失去连接 N 次则提醒
 					sendDisconnectNotice(agent)
@@ -69,7 +69,7 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 	t := time.Now()
 
 	notice := notices.NewNotice()
-	notice.Id = primitive.NewObjectID()
+	notice.Id = shared.NewObjectId()
 	notice.Agent.AgentId = agent.Id
 	notice.Agent.Level = level
 	notice.Message = message
@@ -77,15 +77,19 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 	notice.Hash()
 
 	// 同样的消息短时间内只发送一条
-	if noticeutils.ExistNoticesWithHash(notice.MessageHash, map[string]interface{}{
+	b, err := teadb.NoticeDAO().ExistNoticesWithHash(notice.MessageHash, map[string]interface{}{
 		"agent.agentId": agent.Id,
 		"agent.appId":   "",
 		"agent.itemId":  "",
-	}, duration) {
+	}, duration)
+	if err != nil {
+		logs.Error(err)
+	}
+	if b {
 		return
 	}
 
-	err := noticeutils.NewNoticeQuery().Insert(notice)
+	err = teadb.NoticeDAO().InsertOne(notice)
 	if err != nil {
 		logs.Error(err)
 	} else {
@@ -110,10 +114,14 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 			if found && len(receivers) > 0 {
 				isNotified = true
 				receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]失去连接", fullMessage, func(receiverId string, minutes int) int {
-					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+					count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
 						"agent.agentId": agent.Id,
 						"agent.appId":   "",
 					}, minutes)
+					if err != nil {
+						logs.Error(err)
+					}
+					return count
 				})
 			}
 		}
@@ -130,10 +138,14 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 				if found && len(receivers) > 0 {
 					isNotified = true
 					receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]失去连接", fullMessage, func(receiverId string, minutes int) int {
-						return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+						count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
 							"agent.agentId": agent.Id,
 							"agent.appId":   "",
 						}, minutes)
+						if err != nil {
+							logs.Error(err)
+						}
+						return count
 					})
 				}
 			}
@@ -142,15 +154,22 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 		// 默认通知媒介
 		if !isNotified {
 			receiverIds = setting.Notify(level, "["+agent.GroupName()+"]["+agent.Name+"]失去连接", fullMessage, func(receiverId string, minutes int) int {
-				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+				count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
 					"agent.agentId": agent.Id,
 					"agent.appId":   "",
 				}, minutes)
+				if err != nil {
+					logs.Error(err)
+				}
+				return count
 			})
 		}
 
 		if len(receiverIds) > 0 {
-			noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
+			err := teadb.NoticeDAO().UpdateNoticeReceivers(notice.Id.Hex(), receiverIds)
+			if err != nil {
+				logs.Error(err)
+			}
 		}
 	}
 }
@@ -163,13 +182,13 @@ func sendConnectNotice(agent *agents.AgentConfig) {
 	t := time.Now()
 
 	notice := notices.NewNotice()
-	notice.Id = primitive.NewObjectID()
+	notice.Id = shared.NewObjectId()
 	notice.Agent.AgentId = agent.Id
 	notice.Agent.Level = level
 	notice.Message = message
 	notice.SetTime(t)
 	notice.Hash()
-	err := noticeutils.NewNoticeQuery().Insert(notice)
+	err := teadb.NoticeDAO().InsertOne(notice)
 	if err != nil {
 		logs.Error(err)
 	} else {
@@ -194,10 +213,14 @@ func sendConnectNotice(agent *agents.AgentConfig) {
 			if found && len(receivers) > 0 {
 				isNotified = true
 				receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]恢复连接", fullMessage, func(receiverId string, minutes int) int {
-					return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+					count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
 						"agent.agentId": agent.Id,
 						"agent.appId":   "",
 					}, minutes)
+					if err != nil {
+						logs.Error(err)
+					}
+					return count
 				})
 			}
 		}
@@ -214,10 +237,14 @@ func sendConnectNotice(agent *agents.AgentConfig) {
 				if found && len(receivers) > 0 {
 					isNotified = true
 					receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]恢复连接", fullMessage, func(receiverId string, minutes int) int {
-						return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+						count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
 							"agent.agentId": agent.Id,
 							"agent.appId":   "",
 						}, minutes)
+						if err != nil {
+							logs.Error(err)
+						}
+						return count
 					})
 				}
 			}
@@ -226,15 +253,22 @@ func sendConnectNotice(agent *agents.AgentConfig) {
 		// 默认通知媒介
 		if !isNotified {
 			receiverIds = setting.Notify(level, "["+agent.GroupName()+"]["+agent.Name+"]恢复连接", fullMessage, func(receiverId string, minutes int) int {
-				return noticeutils.CountReceivedNotices(receiverId, map[string]interface{}{
+				count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
 					"agent.agentId": agent.Id,
 					"agent.appId":   "",
 				}, minutes)
+				if err != nil {
+					logs.Error(err)
+				}
+				return count
 			})
 		}
 
 		if len(receiverIds) > 0 {
-			noticeutils.UpdateNoticeReceivers(notice.Id, receiverIds)
+			err := teadb.NoticeDAO().UpdateNoticeReceivers(notice.Id.Hex(), receiverIds)
+			if err != nil {
+				logs.Error(err)
+			}
 		}
 	}
 }

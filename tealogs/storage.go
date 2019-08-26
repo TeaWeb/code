@@ -2,6 +2,7 @@ package tealogs
 
 import (
 	"fmt"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/pquerna/ffjson/ffjson"
 	"strconv"
@@ -14,7 +15,7 @@ type StorageInterface interface {
 	Start() error
 
 	// 写入日志
-	Write(accessLogs []*AccessLog) error
+	Write(accessLogs []*accesslogs.AccessLog) error
 
 	// 关闭
 	Close() error
@@ -27,7 +28,7 @@ type Storage struct {
 }
 
 // 格式化访问日志成字节
-func (this *Storage) FormatAccessLogBytes(accessLog *AccessLog) ([]byte, error) {
+func (this *Storage) FormatAccessLogBytes(accessLog *accesslogs.AccessLog) ([]byte, error) {
 	if this.Format == StorageFormatTemplate {
 		return []byte(accessLog.Format(this.Template)), nil
 	} else if this.Format == StorageFormatJSON {
@@ -38,7 +39,7 @@ func (this *Storage) FormatAccessLogBytes(accessLog *AccessLog) ([]byte, error) 
 }
 
 // 格式化访问日志成字符串
-func (this *Storage) FormatAccessLogString(accessLog *AccessLog) (string, error) {
+func (this *Storage) FormatAccessLogString(accessLog *accesslogs.AccessLog) (string, error) {
 	if this.Format == StorageFormatTemplate {
 		return accessLog.Format(this.Template), nil
 	} else if this.Format == StorageFormatJSON {

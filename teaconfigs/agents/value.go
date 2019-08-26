@@ -2,14 +2,14 @@ package agents
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/iwind/TeaGo/utils/time"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
 // 应用指标值定义
 type Value struct {
-	Id          primitive.ObjectID  `bson:"_id" json:"id"`                  // 数据库存储的ID
+	Id          shared.ObjectId     `bson:"_id" json:"id"`                  // 数据库存储的ID
 	NodeId      string              `bson:"nodeId" json:"nodeId"`           // 节点ID
 	AgentId     string              `bson:"agentId" json:"agentId"`         // Agent ID
 	AppId       string              `bson:"appId" json:"appId"`             // App ID
@@ -35,7 +35,7 @@ type Value struct {
 // 获取新对象
 func NewValue() *Value {
 	return &Value{
-		Id: primitive.NewObjectID(),
+		Id: shared.NewObjectId(),
 	}
 }
 

@@ -2,7 +2,7 @@ package v1
 
 import (
 	"github.com/TeaWeb/code/teaconst"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/apiutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -28,7 +28,8 @@ func (this *StatusAction) RunGet(params struct{}) {
 	result["heap"] = stat.HeapAlloc
 	result["memory"] = stat.Sys
 	result["objects"] = stat.HeapObjects
-	result["mongo"] = teamongo.Test() == nil
+
+	result["database"] = teadb.SharedDB().Test() == nil
 
 	apiutils.Success(this, result)
 }

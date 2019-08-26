@@ -1,7 +1,7 @@
 package teastats
 
 import (
-	"github.com/TeaWeb/code/tealogs"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"strings"
@@ -42,7 +42,7 @@ func (this *RewriteAllPeriodFilter) Start(queue *Queue, code string) {
 	this.StartFilter(code, code[strings.LastIndex(code, ".")+1:])
 }
 
-func (this *RewriteAllPeriodFilter) Filter(accessLog *tealogs.AccessLog) {
+func (this *RewriteAllPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 	if len(accessLog.RewriteId) == 0 {
 		return
 	}

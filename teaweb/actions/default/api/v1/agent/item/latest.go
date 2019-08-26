@@ -33,7 +33,7 @@ func (this *LatestAction) RunGet(params struct {
 		return
 	}
 
-	value, err := teadb.SharedDB().AgentValueDAO().FindLatestItemValue(params.AgentId, params.AppId, item.Id)
+	value, err := teadb.AgentValueDAO().FindLatestItemValue(params.AgentId, params.AppId, item.Id)
 	if err != nil {
 		apiutils.Fail(this, "no value yet")
 		return
