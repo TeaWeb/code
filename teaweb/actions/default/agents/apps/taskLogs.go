@@ -64,7 +64,7 @@ func (this *TaskLogsAction) RunPost(params struct {
 	TaskId  string
 	LastId  string
 }) {
-	taskLogs, err := teadb.AgentLogDAO().ListTaskLogs(params.AgentId, params.TaskId, params.LastId, 100)
+	taskLogs, err := teadb.AgentLogDAO().FindLatestTaskLogs(params.AgentId, params.TaskId, params.LastId, 100)
 	if err != nil {
 		logs.Error(err)
 	}

@@ -29,7 +29,7 @@ func (this *MongoAgentLogDAO) InsertOne(agentId string, log *agents.ProcessLog) 
 }
 
 // 获取任务的日志
-func (this *MongoAgentLogDAO) ListTaskLogs(agentId string, taskId string, fromId string, size int) ([]*agents.ProcessLog, error) {
+func (this *MongoAgentLogDAO) FindLatestTaskLogs(agentId string, taskId string, fromId string, size int) ([]*agents.ProcessLog, error) {
 	result := []*agents.ProcessLog{}
 
 	query := NewQuery(this.TableName(agentId))
@@ -42,7 +42,7 @@ func (this *MongoAgentLogDAO) ListTaskLogs(agentId string, taskId string, fromId
 		if err != nil {
 			return result, err
 		}
-		query.Lt("_id", lastObjectId)
+		query.Gt("_id", lastObjectId)
 	}
 
 	ones, err := query.FindOnes(new(agents.ProcessLog))
