@@ -193,6 +193,16 @@ func (this *IndexAction) RunPost(params struct {
 		}
 	}
 
+	// 通知
+	if teautils.MatchKeyword("通知", params.Keyword) {
+		results = append(results, maps.Map{
+			"type": "通知",
+			"name": "通知",
+			"tags": []string{},
+			"link": "/notices",
+		})
+	}
+
 	// 设置
 	if teautils.MatchKeyword("个人资料设置", params.Keyword) {
 		results = append(results, maps.Map{

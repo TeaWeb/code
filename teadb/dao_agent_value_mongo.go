@@ -96,6 +96,42 @@ func (this *MongoAgentValueDAO) FindLatestItemValueNoError(agentId string, appId
 	return this.processValue(v.(*agents.Value)), nil
 }
 
+// 取得最近的数值记录
+func (this *MongoAgentValueDAO) FindLatestItemValues(agentId string, appId string, itemId string, noticeLevel notices.NoticeLevel, lastId string, size int) ([]*agents.Value, error) {
+	query := NewQuery(this.agentCollName(agentId))
+	query.Attr("appId", appId)
+	query.Attr("itemId", itemId)
+	query.Node()
+	query.Limit(size)
+	query.Desc("createdAt")
+
+	if noticeLevel > 0 {
+		if noticeLevel == notices.NoticeLevelInfo {
+			query.Attr("noticeLevel", []interface{}{notices.NoticeLevelInfo, notices.NoticeLevelNone})
+		} else {
+			query.Attr("noticeLevel", noticeLevel)
+		}
+	}
+
+	if len(lastId) > 0 {
+		lastObjectId, err := shared.ObjectIdFromHex(lastId)
+		if err != nil {
+			return nil, err
+		}
+		query.Gt("_id", lastObjectId)
+	}
+
+	ones, err := query.FindOnes(new(agents.Value))
+	if err != nil {
+		return nil, err
+	}
+	result := []*agents.Value{}
+	for _, one := range ones {
+		result = append(result, this.processValue(one.(*agents.Value)))
+	}
+	return result, nil
+}
+
 func (this *MongoAgentValueDAO) ListItemValues(agentId string, appId string, itemId string, noticeLevel notices.NoticeLevel, lastId string, offset int, size int) ([]*agents.Value, error) {
 	query := NewQuery(this.agentCollName(agentId))
 	query.Attr("appId", appId)
@@ -118,7 +154,7 @@ func (this *MongoAgentValueDAO) ListItemValues(agentId string, appId string, ite
 		if err != nil {
 			return nil, err
 		}
-		query.Lt("_id", lastObjectId) // TODO 因为不是按照_id倒排序的，所以需要修改成其他标识
+		query.Lt("_id", lastObjectId)
 	}
 
 	ones, err := query.FindOnes(new(agents.Value))

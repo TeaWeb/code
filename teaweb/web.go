@@ -89,7 +89,10 @@ func Start() {
 		time.Sleep(1 * time.Second)
 
 		// 启动代理
-		teaproxy.SharedManager.Start()
+		err := teaproxy.SharedManager.Start()
+		if err != nil {
+			logs.Error(err)
+		}
 		teaproxy.SharedManager.Wait()
 	}()
 
@@ -137,10 +140,18 @@ func compressResource(writer http.ResponseWriter, path string, mimeType string) 
 
 	gzipWriter, err := gzip.NewWriterLevel(writer, gzip.BestSpeed)
 	if err != nil {
-		writer.Write(data)
+		_, err := writer.Write(data)
+		if err != nil {
+			logs.Error(err)
+		}
 		return
 	}
-	defer gzipWriter.Close()
+	defer func() {
+		err = gzipWriter.Close()
+		if err != nil {
+			logs.Error(err)
+		}
+	}()
 
 	header := writer.Header()
 	header.Set("Content-Encoding", "gzip")
@@ -150,5 +161,8 @@ func compressResource(writer http.ResponseWriter, path string, mimeType string) 
 	header.Set("Content-Type", mimeType)
 	header.Set("Last-Modified", "Sat, 02 Mar 2015 09:31:16 GMT")
 
-	gzipWriter.Write(data)
+	_, err = gzipWriter.Write(data)
+	if err != nil {
+		logs.Error(err)
+	}
 }

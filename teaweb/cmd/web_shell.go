@@ -55,8 +55,11 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 	}
 
 	// 当前PID
-	files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").
+	err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").
 		WriteString(fmt.Sprintf("%d", os.Getpid()))
+	if err != nil {
+		logs.Error(err)
+	}
 
 	// 信号
 	signalsChannel := make(chan os.Signal, 1024)
@@ -83,7 +86,13 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 				}
 
 				// 删除PID
-				files.NewFile(Tea.Root + "/bin/pid").Delete()
+				pidFile := files.NewFile(Tea.Root + "/bin/pid")
+				if pidFile.Exists() {
+					err = pidFile.Delete()
+					if err != nil {
+						logs.Error(err)
+					}
+				}
 				os.Exit(0)
 			}
 		}
@@ -399,7 +408,7 @@ func (this *WebShell) checkPid() *os.Process {
 
 // 写入string到writer
 func (this *WebShell) write(writer io.Writer, args ...interface{}) {
-	fmt.Fprintln(writer, args ...)
+	fmt.Fprintln(writer, args...)
 }
 
 // 判断命令

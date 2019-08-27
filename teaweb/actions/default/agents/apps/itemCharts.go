@@ -108,7 +108,7 @@ widget.run = function () {
 `
 
 	engine := scripts.NewEngine()
-	engine.SetMongo(teadb.SharedDB().Test() == nil)
+	engine.SetDBEnabled(teadb.SharedDB().Test() == nil)
 	engine.SetContext(&scripts.Context{
 		Agent: agent,
 		App:   app,

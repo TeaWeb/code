@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	timeutil "github.com/iwind/TeaGo/utils/time"
 )
@@ -93,6 +94,8 @@ func (this *ChartAction) RunPost(params struct {
 	DayFrom  string
 	DayTo    string
 
+	Export string
+
 	Must *actions.Must
 }) {
 	agent := agents.NewAgentConfigFromId(params.AgentId)
@@ -138,10 +141,14 @@ func (this *ChartAction) RunPost(params struct {
 		this.Fail("数据错误：" + err.Error())
 	}
 
-	mongoEnabled := teadb.SharedDB().Test() == nil
+	dbEnabled := teadb.SharedDB().Test() == nil
 	engine := scripts.NewEngine()
-	engine.SetMongo(mongoEnabled)
+	engine.SetDBEnabled(dbEnabled)
 	engine.SetCache(false)
+
+	if lists.ContainsString([]string{"data", "csv"}, params.Export) {
+		engine.Exporting()
+	}
 
 	engine.SetContext(&scripts.Context{
 		Agent:    agent,
@@ -155,7 +162,7 @@ func (this *ChartAction) RunPost(params struct {
 
 	widgetCode := `var widget = new widgets.Widget({
 	"name": "看板",
-	"requirements": ["mongo"]
+	"requirements": ["db"]
 });
 
 widget.run = function () {
@@ -170,7 +177,16 @@ widget.run = function () {
 		this.Fail("发生错误：" + err.Error())
 	}
 
-	this.Data["charts" ] = engine.Charts()
 	this.Data["output"] = engine.Output()
+
+	if params.Export == "data" { // 导出数据
+		this.Data["result"] = engine.Result()
+		this.Data["timeUnit"] = engine.Context().TimeUnit
+	} else if params.Export == "csv" { // 导出CSV
+		// do nothing
+	} else { // 导出图表
+		this.Data["charts" ] = engine.Charts()
+	}
+
 	this.Success()
 }

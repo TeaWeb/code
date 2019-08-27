@@ -32,9 +32,13 @@ type Engine struct {
 	widgetCodes  map[string]maps.Map // "code" => { name, ..., definition:FUNCTION CODE }
 	context      *Context
 	output       []string
-	mongoEnabled bool
+	dbEnabled    bool
 
 	cache bool
+
+	// 导出
+	isExporting bool
+	result      interface{}
 }
 
 // 获取新引擎
@@ -48,9 +52,19 @@ func NewEngine() *Engine {
 	return engine
 }
 
-// 设置MongoDB是否可用
-func (this *Engine) SetMongo(b bool) {
-	this.mongoEnabled = b
+// 设置数据库是否可用
+func (this *Engine) SetDBEnabled(b bool) {
+	this.dbEnabled = b
+}
+
+// 设置是否导出数值
+func (this *Engine) Exporting() {
+	this.isExporting = true
+}
+
+// 获取导出的的内容
+func (this *Engine) Result() interface{} {
+	return this.result
 }
 
 // 设置上下文信息
@@ -145,8 +159,8 @@ func (this *Engine) SetContext(context *Context) {
 
 	// 可供使用的特性
 	features := []string{}
-	if this.mongoEnabled {
-		features = append(features, "mongo")
+	if this.dbEnabled {
+		features = append(features, "db")
 	}
 	features = append(features, runtime.GOOS)
 	features = append(features, runtime.GOARCH)
@@ -154,6 +168,11 @@ func (this *Engine) SetContext(context *Context) {
 	if err != nil {
 		logs.Error(err)
 	}
+}
+
+// 获取Context
+func (this *Engine) Context() *Context {
+	return this.context
 }
 
 // 设置是否开启缓存
@@ -357,6 +376,7 @@ func (this *Engine) loadLib(file string) {
 	}
 }
 
+// 执行查询
 func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 	arg, err := call.Argument(0).Export()
 	if err != nil {
@@ -508,6 +528,10 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 			resultFields[s] = teadb.NewAvgExpr("value." + s)
 		}
 		result, err = teadb.AgentValueDAO().GroupValuesByTime(query, timeUnit, resultFields)
+	}
+
+	if this.isExporting {
+		this.result = result
 	}
 
 	if err != nil {

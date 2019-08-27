@@ -8,6 +8,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -112,28 +113,40 @@ func (this *UpdateItemChartAction) RunPost(params struct {
 	case "html":
 		options := &widgets.HTMLChart{}
 		options.HTML = params.HTMLCode
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "url":
 		options := &widgets.URLChart{}
 		options.URL = params.URL
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "pie":
 		options := &widgets.PieChart{}
 		options.Param = params.PieParam
 		options.Limit = params.PieLimit
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "line":
 		options := &widgets.LineChart{}
 		options.Params = params.LineParams
 		options.Limit = params.LineLimit
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "javascript":
 		options := &widgets.JavascriptChart{}
 		options.Code = params.JavascriptCode
 
 		// 测试
 		engine := scripts.NewEngine()
-		engine.SetMongo(teadb.SharedDB().Test() == nil)
+		engine.SetDBEnabled(teadb.SharedDB().Test() == nil)
 		engine.SetContext(&scripts.Context{
 			Agent: agent,
 			App:   app,
@@ -155,7 +168,10 @@ widget.run = function () {
 			this.Fail("代码中应该包含至少一个图表")
 		}
 
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err = teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	err := agent.Save()
@@ -165,7 +181,10 @@ widget.run = function () {
 
 	// 同步
 	if app.IsSharedWithGroup {
-		agentutils.SyncApp(agent.Id, agent.GroupIds, app, nil, nil)
+		err = agentutils.SyncApp(agent.Id, agent.GroupIds, app, nil, nil)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	this.Success()

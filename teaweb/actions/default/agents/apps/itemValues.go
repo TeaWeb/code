@@ -60,7 +60,7 @@ func (this *ItemValuesAction) RunPost(params struct {
 		this.Fail("找不到Item")
 	}
 
-	ones, err := teadb.AgentValueDAO().ListItemValues(params.AgentId, params.AppId, params.ItemId, params.Level, params.LastId, 0, 100)
+	ones, err := teadb.AgentValueDAO().FindLatestItemValues(params.AgentId, params.AppId, params.ItemId, params.Level, params.LastId, 60)
 	if err != nil {
 		this.Fail("查询失败：" + err.Error())
 	}

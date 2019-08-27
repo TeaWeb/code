@@ -61,11 +61,11 @@ func (this *IndexAction) RunPost(params struct {
 		this.Fail("无法读取Board配置")
 	}
 
-	mongoEnabled := teadb.SharedDB().Test() == nil
+	dbEnabled := teadb.SharedDB().Test() == nil
 	engine := scripts.NewEngine()
-	engine.SetMongo(mongoEnabled)
+	engine.SetDBEnabled(dbEnabled)
 
-	if !mongoEnabled {
+	if !dbEnabled {
 		this.Data["charts" ] = []interface{}{}
 		this.Data["output"] = []string{}
 		this.Data["error"] = "当前数据库不可用，无法展示图表"
@@ -126,7 +126,7 @@ func (this *IndexAction) RunPost(params struct {
 
 		widgetCode := `var widget = new widgets.Widget({
 	"name": "看板",
-	"requirements": ["mongo"]
+	"requirements": ["db"]
 });
 
 widget.run = function () {

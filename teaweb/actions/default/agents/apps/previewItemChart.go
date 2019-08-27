@@ -91,9 +91,9 @@ func (this *PreviewItemChartAction) RunPost(params struct {
 		"columns": params.Columns,
 	})
 
-	mongoEnabled := teadb.SharedDB().Test() == nil
+	dbEnabled := teadb.SharedDB().Test() == nil
 	engine := scripts.NewEngine()
-	engine.SetMongo(mongoEnabled)
+	engine.SetDBEnabled(dbEnabled)
 	engine.SetCache(false)
 
 	engine.SetContext(&scripts.Context{
@@ -104,7 +104,7 @@ func (this *PreviewItemChartAction) RunPost(params struct {
 
 	widgetCode := `var widget = new widgets.Widget({
 	"name": "看板",
-	"requirements": ["mongo"]
+	"requirements": ["db"]
 });
 
 widget.run = function () {

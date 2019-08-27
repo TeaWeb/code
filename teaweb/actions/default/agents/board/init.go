@@ -21,6 +21,7 @@ func init() {
 			Post("/moveChart", new(MoveChartAction)).
 			Post("/initDefaultApp", new(InitDefaultAppAction)).
 			GetPost("/chart", new(ChartAction)).
+			Get("/exportChartData", new(ExportChartDataAction)).
 			Post("/updateChart", new(UpdateChartAction)).
 			EndAll()
 	})

@@ -134,7 +134,7 @@ func (this *AddItemChartAction) RunPost(params struct {
 
 		// 测试
 		engine := scripts.NewEngine()
-		engine.SetMongo(teadb.SharedDB().Test() == nil)
+		engine.SetDBEnabled(teadb.SharedDB().Test() == nil)
 		engine.SetContext(&scripts.Context{
 			Agent: agent,
 			App:   app,
