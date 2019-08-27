@@ -4,6 +4,7 @@ import (
 	"sync"
 )
 
+// Agent事件
 type AgentEvent struct {
 	Name string      `json:"name"`
 	Data interface{} `json:"data"`
@@ -27,19 +28,34 @@ func WaitAgentQueue(agentId string, agentVersion string, osName string, speed fl
 	_, found := eventQueueMap[agentId]
 	if found {
 		eventQueueMap[agentId][c] = &AgentState{
-			Version: agentVersion,
-			OsName:  osName,
-			Speed:   speed,
-			IP:      ip,
+			Version:     agentVersion,
+			OsName:      osName,
+			Speed:       speed,
+			IP:          ip,
+			IsAvailable: true,
 		}
 	} else {
 		eventQueueMap[agentId] = map[chan *AgentEvent]*AgentState{
 			c: {
-				Version: agentVersion,
-				OsName:  osName,
-				Speed:   speed,
-				IP:      ip,
+				Version:     agentVersion,
+				OsName:      osName,
+				Speed:       speed,
+				IP:          ip,
+				IsAvailable: true,
 			},
+		}
+	}
+}
+
+// 禁用Channel
+func DisableAgentQueue(agentId string, c chan *AgentEvent) {
+	eventQueueLocker.Lock()
+	defer eventQueueLocker.Unlock()
+	m, found := eventQueueMap[agentId]
+	if found {
+		state, ok := m[c]
+		if ok {
+			state.IsAvailable = false
 		}
 	}
 }
@@ -64,8 +80,10 @@ func PostAgentEvent(agentId string, event *AgentEvent) {
 	defer eventQueueLocker.Unlock()
 	m, found := eventQueueMap[agentId]
 	if found {
-		for c, _ := range m {
-			c <- event
+		for c, state := range m {
+			if state.IsAvailable {
+				c <- event
+			}
 		}
 	}
 }

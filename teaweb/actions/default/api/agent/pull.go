@@ -37,17 +37,27 @@ func (this *PullAction) Run(params struct{}) {
 	c := make(chan *agentutils.AgentEvent)
 	agentutils.WaitAgentQueue(agentId, agentVersion, osName, speed, this.RequestRemoteIP(), c)
 
+	events := []*agentutils.AgentEvent{}
+
 	// 监控是否中断请求
 	go func() {
 		<-this.Request.Context().Done()
-		agentutils.RemoveAgentQueue(agentId, c)
+
+		if len(events) > 0 {
+			agentutils.DisableAgentQueue(agentId, c)
+			go func() {
+				time.Sleep(1 * time.Second)
+				agentutils.RemoveAgentQueue(agentId, c)
+			}()
+		} else {
+			agentutils.RemoveAgentQueue(agentId, c)
+		}
 
 		// 关闭channel
 		c <- nil
 		close(c)
 	}()
 
-	events := []*agentutils.AgentEvent{}
 	for {
 		event := <-c
 		if event != nil {
@@ -56,9 +66,6 @@ func (this *PullAction) Run(params struct{}) {
 
 		break
 	}
-
-	// 移除
-	agentutils.RemoveAgentQueue(agentId, c)
 
 	this.Data["events"] = events
 
