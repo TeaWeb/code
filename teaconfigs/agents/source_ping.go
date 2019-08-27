@@ -1,13 +1,18 @@
 package agents
 
 import (
+	"bytes"
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"github.com/tatsushid/go-fastping"
 	"net"
+	"os/exec"
+	"regexp"
 	"runtime"
 	"time"
 )
@@ -41,11 +46,33 @@ func (this *PingSource) Description() string {
 
 // 执行
 func (this *PingSource) Execute(params map[string]string) (value interface{}, err error) {
-	if len(this.Host) == 0 {
+	host := this.Host
+
+	// 去除http|https|ftp
+	host = regexp.MustCompile(`^(?i)(http|https|ftp)://`).ReplaceAllLiteralString(host, "")
+
+	if len(host) == 0 {
 		err = errors.New("'host' should not be empty")
 		return maps.Map{
 			"rtt": -1,
 		}, err
+	}
+
+	if runtime.GOOS == "linux" { // Linux
+		value, err = this.pingLinux(host)
+		if err == nil {
+			return
+		}
+	} else if runtime.GOOS == "freebsd" {
+		value, err = this.pingFreebsd(host)
+		if err == nil {
+			return
+		}
+	} else if runtime.GOOS == "windows" { // windows
+		value, err = this.pingWindows(host)
+		if err == nil {
+			return
+		}
 	}
 
 	p := fastping.NewPinger()
@@ -60,7 +87,7 @@ func (this *PingSource) Execute(params map[string]string) (value interface{}, er
 		}, err
 	}
 
-	ra, err := net.ResolveIPAddr("ip4:icmp", this.Host)
+	ra, err := net.ResolveIPAddr("ip4:icmp", host)
 	if err != nil {
 		return maps.Map{
 			"rtt": -1,
@@ -188,4 +215,125 @@ func (this *PingSource) Presentation() *forms.Presentation {
 </tr>
 `
 	return p
+}
+
+func (this *PingSource) pingLinux(host string) (value interface{}, err error) {
+	value = maps.Map{
+		"rtt": -1,
+	}
+
+	pingExe, err := exec.LookPath("ping")
+	if err != nil {
+		return
+	}
+	stdout := bytes.NewBuffer([]byte{})
+	cmd := exec.Command(pingExe, "-c", "3", "-W", "3", host)
+	cmd.Stdout = stdout
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return
+	}
+
+	// 匹配 time=x ms
+	results := regexp.MustCompile(`time=([0-9.]+)\s+ms`).FindAllStringSubmatch(string(stdout.Bytes()), -1)
+	if len(results) == 0 {
+		value = -1
+		err = errors.New("timeout")
+		return
+	}
+
+	total := float32(0)
+	for _, result := range results {
+		total += types.Float32(result[1])
+	}
+	value = maps.Map{
+		"rtt": total / float32(len(results)),
+	}
+
+	return
+}
+
+func (this *PingSource) pingFreebsd(host string) (value interface{}, err error) {
+	value = maps.Map{
+		"rtt": -1,
+	}
+
+	pingExe, err := exec.LookPath("ping")
+	if err != nil {
+		return
+	}
+	stdout := bytes.NewBuffer([]byte{})
+	cmd := exec.Command(pingExe, "-c", "3", "-W", "3000", host) // -W 单位是ms
+	cmd.Stdout = stdout
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return
+	}
+
+	// 匹配 time=x ms
+	results := regexp.MustCompile(`time=([0-9.]+)\s+ms`).FindAllStringSubmatch(string(stdout.Bytes()), -1)
+	if len(results) == 0 {
+		value = -1
+		err = errors.New("timeout")
+		return
+	}
+
+	total := float32(0)
+	for _, result := range results {
+		total += types.Float32(result[1])
+	}
+	value = maps.Map{
+		"rtt": total / float32(len(results)),
+	}
+
+	return
+}
+
+func (this *PingSource) pingWindows(host string) (value interface{}, err error) {
+	logs.Println("ping:", host)
+	value = maps.Map{
+		"rtt": -1,
+	}
+
+	pingExe, err := exec.LookPath("ping")
+	if err != nil {
+		return
+	}
+	stdout := bytes.NewBuffer([]byte{})
+	cmd := exec.Command(pingExe, "-n", "3", host)
+	cmd.Stdout = stdout
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return
+	}
+
+	// 匹配 time=[x]ms
+	results := regexp.MustCompile(`[=<]([0-9.]+)ms\s+TTL=`).FindAllStringSubmatch(string(stdout.Bytes()), -1)
+	if len(results) == 0 {
+		value = -1
+		err = errors.New("timeout")
+		return
+	}
+
+	total := float32(0)
+	for _, result := range results {
+		total += types.Float32(result[1])
+	}
+	value = maps.Map{
+		"rtt": total / float32(len(results)),
+	}
+
+	return
 }
