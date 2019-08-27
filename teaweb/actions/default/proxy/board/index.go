@@ -3,7 +3,7 @@ package board
 import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/board/scripts"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
@@ -115,7 +115,7 @@ func (this *IndexAction) RunPost(params struct {
 	}
 
 	engine := scripts.NewEngine()
-	engine.SetMongo(teamongo.Test() == nil)
+	engine.SetMongo(teadb.SharedDB().Test() == nil)
 	engine.SetContext(&scripts.Context{
 		Server: server,
 	})

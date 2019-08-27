@@ -59,7 +59,9 @@ func (this *MonitorAction) RunPost(params struct {
 
 		value, err := teadb.AgentValueDAO().FindLatestItemValue(params.AgentId, params.AppId, item.Id)
 		if err != nil {
-			logs.Error(err)
+			if err != teadb.ErrorDBUnavailable {
+				logs.Error(err)
+			}
 		} else if value != nil {
 			data, err := json.MarshalIndent(value.Value, "", "  ")
 			if err != nil {

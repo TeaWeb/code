@@ -2,11 +2,14 @@ package teadb
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/db"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/timers"
 	"sync"
+	"time"
 )
 
 var (
-	sharedDriver   Driver                  = nil
+	sharedDriver   DriverInterface         = nil
 	accessLogDAO   AccessLogDAOInterface   = nil
 	agentLogDAO    AgentLogDAOInterface    = nil
 	auditLogDAO    AuditLogDAOInterface    = nil
@@ -32,10 +35,20 @@ func SetupDB() {
 	// initialize
 	if sharedDriver != nil {
 		sharedDriver.Init()
+		sharedDriver.SetIsAvailable(true)
+
+		// 测试数据库
+		timers.Loop(10*time.Second, func(looper *timers.Looper) {
+			err := sharedDriver.Test()
+			if err != nil {
+				logs.Println("[db]database connection unavailable: " + err.Error())
+			}
+			sharedDriver.SetIsAvailable(err == nil)
+		})
 	}
 }
 
-func SharedDB() Driver {
+func SharedDB() DriverInterface {
 	return sharedDriver
 }
 

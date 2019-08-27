@@ -3,11 +3,12 @@ package apps
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -100,28 +101,40 @@ func (this *AddItemChartAction) RunPost(params struct {
 	case "html":
 		options := &widgets.HTMLChart{}
 		options.HTML = params.HTMLCode
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "url":
 		options := &widgets.URLChart{}
 		options.URL = params.URL
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "pie":
 		options := &widgets.PieChart{}
 		options.Param = params.PieParam
 		options.Limit = params.PieLimit
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "line":
 		options := &widgets.LineChart{}
 		options.Params = params.LineParams
 		options.Limit = params.LineLimit
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "javascript":
 		options := &widgets.JavascriptChart{}
 		options.Code = params.JavascriptCode
 
 		// 测试
 		engine := scripts.NewEngine()
-		engine.SetMongo(teamongo.Test() == nil)
+		engine.SetMongo(teadb.SharedDB().Test() == nil)
 		engine.SetContext(&scripts.Context{
 			Agent: agent,
 			App:   app,

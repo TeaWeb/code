@@ -26,6 +26,10 @@ type PushAction actions.Action
 
 // 接收推送的数据
 func (this *PushAction) Run(params struct{}) {
+	if !teadb.SharedDB().IsAvailable() {
+		this.Success()
+	}
+
 	agent := this.Context.Get("agent").(*agents.AgentConfig)
 
 	// 是否未启用

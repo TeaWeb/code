@@ -16,7 +16,7 @@ type LogsAction actions.Action
 func (this *LogsAction) Run(params struct{}) {
 	ones, err := teadb.AccessLogDAO().ListTopAccessLogs(timeutil.Format("Ymd"), 10)
 	if err != nil {
-		if err != topology.ErrServerSelectionTimeout {
+		if err != topology.ErrServerSelectionTimeout && err != teadb.ErrorDBUnavailable {
 			logs.Error(err)
 		}
 		this.Data["logs"] = []*accesslogs.AccessLog{}

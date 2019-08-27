@@ -2,9 +2,15 @@ package teadb
 
 import "github.com/iwind/TeaGo/maps"
 
-type Driver interface {
+type DriverInterface interface {
 	// 初始化
 	Init()
+
+	// 设置是否可用
+	SetIsAvailable(b bool)
+
+	// 取得是否可用
+	IsAvailable() bool
 
 	// 查找单条记录
 	FindOne(query *Query, modelPtr interface{}) (interface{}, error)

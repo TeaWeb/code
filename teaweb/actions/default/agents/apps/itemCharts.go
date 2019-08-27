@@ -2,7 +2,7 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
@@ -108,7 +108,7 @@ widget.run = function () {
 `
 
 	engine := scripts.NewEngine()
-	engine.SetMongo(teamongo.Test() == nil)
+	engine.SetMongo(teadb.SharedDB().Test() == nil)
 	engine.SetContext(&scripts.Context{
 		Agent: agent,
 		App:   app,
@@ -117,7 +117,9 @@ widget.run = function () {
 
 	err := engine.RunCode(widgetCode)
 	if err != nil {
-		logs.Error(err)
+		if err != teadb.ErrorDBUnavailable {
+			logs.Error(err)
+		}
 		engine.AddOutput(err.Error())
 	}
 

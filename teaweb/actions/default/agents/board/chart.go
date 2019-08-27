@@ -3,7 +3,7 @@ package apps
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -138,7 +138,7 @@ func (this *ChartAction) RunPost(params struct {
 		this.Fail("数据错误：" + err.Error())
 	}
 
-	mongoEnabled := teamongo.Test() == nil
+	mongoEnabled := teadb.SharedDB().Test() == nil
 	engine := scripts.NewEngine()
 	engine.SetMongo(mongoEnabled)
 	engine.SetCache(false)

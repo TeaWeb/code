@@ -2,7 +2,7 @@ package apps
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
@@ -38,6 +38,8 @@ func (this *IndexAction) Run(params struct {
 func (this *IndexAction) RunPost(params struct {
 	AgentId string
 }) {
+	this.Data["error"] = ""
+
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {
 		this.Fail("找不到Agent")
@@ -59,14 +61,15 @@ func (this *IndexAction) RunPost(params struct {
 		this.Fail("无法读取Board配置")
 	}
 
-	mongoEnabled := teamongo.Test() == nil
+	mongoEnabled := teadb.SharedDB().Test() == nil
 	engine := scripts.NewEngine()
 	engine.SetMongo(mongoEnabled)
 
 	if !mongoEnabled {
 		this.Data["charts" ] = []interface{}{}
 		this.Data["output"] = []string{}
-		return
+		this.Data["error"] = "当前数据库不可用，无法展示图表"
+		this.Success()
 	}
 
 	for _, c := range board.Charts {
@@ -135,7 +138,9 @@ widget.run = function () {
 
 		err = engine.RunCode(widgetCode)
 		if err != nil {
-			logs.Error(err)
+			if err != teadb.ErrorDBUnavailable {
+				logs.Error(err)
+			}
 			continue
 		}
 	}

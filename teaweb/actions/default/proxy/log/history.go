@@ -3,7 +3,6 @@ package log
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teadb"
-	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
@@ -31,10 +30,10 @@ func (this *HistoryAction) Run(params struct {
 
 	// 检查MongoDB连接
 	this.Data["mongoError"] = ""
-	err := teamongo.Test()
+	err := teadb.SharedDB().Test()
 	mongoAvailable := true
 	if err != nil {
-		this.Data["mongoError"] = "此功能需要连接MongoDB"
+		this.Data["mongoError"] = "此功能需要连接数据库"
 		mongoAvailable = false
 	}
 

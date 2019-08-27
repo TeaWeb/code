@@ -2,7 +2,7 @@ package log
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
@@ -21,9 +21,9 @@ func (this *IndexAction) Run(params struct {
 
 	// 检查MongoDB连接
 	this.Data["mongoError"] = ""
-	err := teamongo.Test()
+	err := teadb.SharedDB().Test()
 	if err != nil {
-		this.Data["mongoError"] = "此功能需要连接MongoDB"
+		this.Data["mongoError"] = "此功能需要连接数据库"
 	}
 
 	this.Data["server"] = server

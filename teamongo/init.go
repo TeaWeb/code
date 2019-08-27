@@ -49,14 +49,20 @@ func cleanAccessLogs() {
 			compareDay := "logs." + timeutil.Format("Ymd", time.Now().Add(-time.Duration(config.AccessLog.KeepDays * 24)*time.Hour))
 			logs.Println("[mongo]clean access logs before '" + compareDay + "'")
 
-			db := SharedClient().Database(DatabaseName)
+			currentDB := SharedClient().Database(DatabaseName)
 			ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-			cursor, err := db.ListCollections(ctx, maps.Map{})
+			cursor, err := currentDB.ListCollections(ctx, maps.Map{})
 			if err != nil {
 				logs.Error(err)
 				return
 			}
-			defer cursor.Close(context.Background())
+
+			defer func() {
+				err = cursor.Close(context.Background())
+				if err != nil {
+					logs.Error(err)
+				}
+			}()
 
 			for cursor.Next(context.Background()) {
 				m := maps.Map{}
@@ -76,7 +82,7 @@ func cleanAccessLogs() {
 				if name < compareDay {
 					logs.Println("[mongo]clean collection '" + name + "'")
 					ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-					err := db.Collection(name).Drop(ctx)
+					err := currentDB.Collection(name).Drop(ctx)
 					if err != nil {
 						logs.Error(err)
 					}

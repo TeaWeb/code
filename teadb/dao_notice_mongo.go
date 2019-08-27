@@ -271,7 +271,10 @@ func (this *MongoNoticeDAO) UpdateAllAgentNoticesRead(agentId string) error {
 
 // 初始化索引
 func (this *MongoNoticeDAO) initIndexes() {
-	coll := teamongo.SharedCollection("notices")
+	if isInitializedTable(this.TableName()) {
+		return
+	}
+	coll := teamongo.SharedCollection(this.TableName())
 	_ = coll.CreateIndex(shared.NewIndexField("proxy.serverId", true))
 	_ = coll.CreateIndex(shared.NewIndexField("agent.agentId", true))
 	_ = coll.CreateIndex(

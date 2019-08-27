@@ -142,7 +142,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 
 				// 通知
 				countUnreadNotices, err := teadb.NoticeDAO().CountUnreadNoticesForAgent(agentId)
-				if err != nil {
+				if err != nil && err != teadb.ErrorDBUnavailable {
 					logs.Error(err)
 				}
 				if countUnreadNotices > 0 {

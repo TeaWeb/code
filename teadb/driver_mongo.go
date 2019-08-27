@@ -15,6 +15,7 @@ import (
 )
 
 type MongoDriver struct {
+	BaseDriver
 }
 
 func (this *MongoDriver) Init() {
@@ -38,6 +39,10 @@ func (this *MongoDriver) Init() {
 }
 
 func (this *MongoDriver) FindOne(query *Query, modelPtr interface{}) (interface{}, error) {
+	if !this.IsAvailable() {
+		return nil, ErrorDBUnavailable
+	}
+
 	if len(query.table) == 0 {
 		return nil, errors.New("'table' should not be empty")
 	}
@@ -109,6 +114,10 @@ func (this *MongoDriver) FindOne(query *Query, modelPtr interface{}) (interface{
 }
 
 func (this *MongoDriver) FindOnes(query *Query, modelPtr interface{}) ([]interface{}, error) {
+	if !this.IsAvailable() {
+		return nil, ErrorDBUnavailable
+	}
+
 	if len(query.table) == 0 {
 		return nil, errors.New("'table' should not be empty")
 	}
@@ -185,6 +194,10 @@ func (this *MongoDriver) FindOnes(query *Query, modelPtr interface{}) ([]interfa
 }
 
 func (this *MongoDriver) DeleteOnes(query *Query) error {
+	if !this.IsAvailable() {
+		return ErrorDBUnavailable
+	}
+
 	if len(query.table) == 0 {
 		return errors.New("'table' should not be empty")
 	}
@@ -199,6 +212,9 @@ func (this *MongoDriver) DeleteOnes(query *Query) error {
 }
 
 func (this *MongoDriver) InsertOne(table string, modelPtr interface{}) error {
+	if !this.IsAvailable() {
+		return ErrorDBUnavailable
+	}
 	if len(table) == 0 {
 		return errors.New("'table' should not be empty")
 	}
@@ -210,6 +226,9 @@ func (this *MongoDriver) InsertOne(table string, modelPtr interface{}) error {
 }
 
 func (this *MongoDriver) InsertOnes(table string, modelPtrSlice interface{}) error {
+	if !this.IsAvailable() {
+		return ErrorDBUnavailable
+	}
 	if len(table) == 0 {
 		return errors.New("'table' should not be empty")
 	}
@@ -236,6 +255,9 @@ func (this *MongoDriver) InsertOnes(table string, modelPtrSlice interface{}) err
 }
 
 func (this *MongoDriver) Count(query *Query) (int64, error) {
+	if !this.IsAvailable() {
+		return 0, ErrorDBUnavailable
+	}
 	if len(query.table) == 0 {
 		return 0, errors.New("'table' should not be empty")
 	}
@@ -279,6 +301,10 @@ func (this *MongoDriver) Max(query *Query, field string) (float64, error) {
 }
 
 func (this *MongoDriver) Group(query *Query, field string, result map[string]Expr) ([]maps.Map, error) {
+	if !this.IsAvailable() {
+		return nil, ErrorDBUnavailable
+	}
+
 	group := map[string]interface{}{
 		"_id": "$" + field,
 	}
@@ -460,6 +486,10 @@ func (this *MongoDriver) timeoutContext(timeout time.Duration) context.Context {
 }
 
 func (this *MongoDriver) aggregate(funcName string, query *Query, field string) (float64, error) {
+	if !this.IsAvailable() {
+		return 0, ErrorDBUnavailable
+	}
+
 	filter, err := this.buildFilter(query)
 	if err != nil {
 		return 0, err

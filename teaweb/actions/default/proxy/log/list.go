@@ -55,7 +55,9 @@ func (this *ListAction) Run(params struct {
 
 	this.Data["lastId"] = ""
 	if err != nil {
-		logs.Error(err)
+		if err != teadb.ErrorDBUnavailable {
+			logs.Error(err)
+		}
 		this.Data["logs"] = []interface{}{}
 	} else {
 		result := []maps.Map{}

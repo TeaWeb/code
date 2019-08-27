@@ -5,7 +5,6 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/TeaWeb/code/teadb"
-	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teastats"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/board/scripts"
 	"github.com/iwind/TeaGo/actions"
@@ -104,7 +103,7 @@ func (this *TestAction) Run(params struct {
 	}
 
 	engine := scripts.NewEngine()
-	engine.SetMongo(teamongo.Test() == nil)
+	engine.SetMongo(teadb.SharedDB().Test() == nil)
 	engine.SetContext(&scripts.Context{
 		Server: server,
 	})

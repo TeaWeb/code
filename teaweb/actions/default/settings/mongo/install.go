@@ -5,7 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
@@ -34,7 +34,7 @@ type InstallAction actions.Action
 func (this *InstallAction) Run(params struct{}) {
 	this.Data["isInstalling"] = isInstalling
 
-	err := teamongo.Test()
+	err := teadb.SharedDB().Test()
 	if err == nil {
 		this.Data["isConnected"] = true
 	} else {
@@ -281,7 +281,7 @@ func (this *InstallAction) check() {
 	installStatus = "check"
 	installPercent = 10
 
-	err := teamongo.Test()
+	err := teadb.SharedDB().Test()
 	if err != nil {
 		this.Fail("仍然无法连接到MongoDb，请尝试手动安装")
 	}

@@ -2,7 +2,7 @@ package mongo
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/db"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
@@ -30,7 +30,7 @@ func (this *IndexAction) Run(params struct{}) {
 	this.Data["uri"] = config.URIMask()
 
 	// 连接状态
-	err := teamongo.Test()
+	err := teadb.SharedDB().Test()
 	if err != nil {
 		this.Data["error"] = err.Error()
 	} else {

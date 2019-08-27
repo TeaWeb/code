@@ -3,7 +3,7 @@ package apps
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
@@ -91,7 +91,7 @@ func (this *PreviewItemChartAction) RunPost(params struct {
 		"columns": params.Columns,
 	})
 
-	mongoEnabled := teamongo.Test() == nil
+	mongoEnabled := teadb.SharedDB().Test() == nil
 	engine := scripts.NewEngine()
 	engine.SetMongo(mongoEnabled)
 	engine.SetCache(false)

@@ -5,7 +5,6 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
-	"github.com/TeaWeb/code/teamongo"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -49,12 +48,12 @@ func (this *DayAction) Run(params struct {
 
 	proxyutils.AddServerMenu(this)
 
-	// 检查MongoDB连接
+	// 检查数据库连接
 	this.Data["mongoError"] = ""
-	err := teamongo.Test()
+	err := teadb.SharedDB().Test()
 	mongoAvailable := true
 	if err != nil {
-		this.Data["mongoError"] = "此功能需要连接MongoDB"
+		this.Data["mongoError"] = "此功能需要连接数据库"
 		mongoAvailable = false
 	}
 
@@ -86,7 +85,7 @@ func (this *DayAction) Run(params struct {
 		accessLogList, err := teadb.AccessLogDAO().ListAccessLogs(realDay, serverId, params.FromId, params.LogType == "errorLog", params.SearchIP, params.Size*(params.Page-1), params.Size)
 
 		if err != nil {
-			this.Data["mongoError"] = "MongoDB查询错误：" + err.Error()
+			this.Data["mongoError"] = "数据库查询错误：" + err.Error()
 		} else {
 			result := lists.Map(accessLogList, func(k int, v interface{}) interface{} {
 				accessLog := v.(*accesslogs.AccessLog)

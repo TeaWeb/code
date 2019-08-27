@@ -3,7 +3,7 @@ package apps
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
@@ -133,7 +133,7 @@ func (this *UpdateItemChartAction) RunPost(params struct {
 
 		// 测试
 		engine := scripts.NewEngine()
-		engine.SetMongo(teamongo.Test() == nil)
+		engine.SetMongo(teadb.SharedDB().Test() == nil)
 		engine.SetContext(&scripts.Context{
 			Agent: agent,
 			App:   app,

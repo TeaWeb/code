@@ -34,9 +34,17 @@ func (this *Queue) Start(serverId string) {
 	this.c = make(chan *stats.Value, 4096)
 
 	// 测试连接，如果有错误则重新连接
-	err := teadb.SharedDB().Test()
-	if err != nil {
-		logs.Println("[stat]queue start failed: can not connect to database, will reconnect to database")
+	if teadb.SharedDB().IsAvailable() {
+		err := teadb.SharedDB().Test()
+		if err != nil {
+			if teadb.SharedDB().IsAvailable() {
+				logs.Println("[stat]queue start failed: can not connect to database, will reconnect to database")
+			}
+			time.Sleep(5 * time.Second)
+			this.Start(serverId)
+			return
+		}
+	} else {
 		time.Sleep(5 * time.Second)
 		this.Start(serverId)
 		return

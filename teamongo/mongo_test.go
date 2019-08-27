@@ -41,7 +41,7 @@ func TestUnmarshalJSON(t *testing.T) {
 }
 
 func TestFindCollection(t *testing.T) {
-	coll := FindCollection("logs.20190302")
+	coll := SharedCollection("logs.20190302")
 	//opts := options.FindOne().SetHint(map[string]interface{}{
 	//	"serverId": 1,
 	//})
@@ -97,5 +97,16 @@ func TestCollectionStat(t *testing.T) {
 			"size":  fmt.Sprintf("%.2fM", float64(m1.GetInt("size"))/1024/1024),
 			"ok":    m1.GetInt("ok"),
 		}, t)
+	}
+}
+
+func TestMongoTest(t *testing.T) {
+	b := time.Now()
+	err := Test()
+	cost := time.Since(b).Seconds()
+	if err != nil {
+		t.Log("error:", err.Error(), cost, "seconds")
+	} else {
+		t.Log("ok", cost, "seconds")
 	}
 }

@@ -3,6 +3,7 @@ package mongo
 import (
 	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -78,6 +79,7 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 
 	// 重新连接
+	teadb.SharedDB().SetIsAvailable(true)
 	teamongo.RestartClient()
 
 	this.Next("/settings/mongo", nil).Success("保存成功")
