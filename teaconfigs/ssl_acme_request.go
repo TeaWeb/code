@@ -92,10 +92,13 @@ func (this *ACMERequest) Client() (client *lego.Client, err error) {
 		return
 	}
 
-	client.Challenge.SetDNS01Provider(NewACMEDNSProvider("teaweb"), dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (b bool, e error) {
+	err = client.Challenge.SetDNS01Provider(NewACMEDNSProvider("teaweb"), dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (b bool, e error) {
 		b = true
 		return
 	}))
+	if err != nil {
+		return
+	}
 
 	if len(this.User.URI) == 0 {
 		reg, err := client.Registration.Register(registration.RegisterOptions{

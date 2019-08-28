@@ -211,7 +211,10 @@ func (this *Listener) Shutdown() error {
 			// 关闭现有连接
 			this.connectingTCPLocker.Lock()
 			for _, client := range this.connectingTCPMap {
-				client.Close()
+				err1 := client.Close()
+				if err1 != nil {
+					logs.Error(err)
+				}
 			}
 			this.connectingTCPMap = map[net.Conn]*TCPClient{}
 			this.connectingTCPLocker.Unlock()
@@ -313,7 +316,10 @@ func (this *Listener) startHTTPServer() error {
 		this.httpServer.TLSConfig = this.buildTLSConfig()
 
 		// support http/2
-		http2.ConfigureServer(this.httpServer, nil)
+		err = http2.ConfigureServer(this.httpServer, nil)
+		if err != nil {
+			logs.Error(err)
+		}
 
 		err = this.httpServer.ListenAndServeTLS("", "")
 		if err != nil && err != http.ErrServerClosed {
@@ -433,7 +439,10 @@ func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Re
 	}
 
 	// 处理请求
-	req.call(req.responseWriter)
+	err = req.call(req.responseWriter)
+	if err != nil {
+		// 已经在call()方法里处理过了这里不再重复
+	}
 
 	// 返还request
 	requestPool.Put(req)
@@ -605,6 +614,7 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 					}
 					return cert, nil
 				},
+
 				NextProtos: []string{http2.NextProtoTLS},
 			}, nil
 		},

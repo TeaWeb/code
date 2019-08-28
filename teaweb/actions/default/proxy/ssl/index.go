@@ -42,6 +42,7 @@ func (this *IndexAction) Run(params struct {
 	certs := []maps.Map{}
 
 	notMatchedDomains := []string{}
+	globalDNSNames := []string{}
 
 	if server.SSL != nil {
 		err := server.SSL.Validate()
@@ -97,7 +98,7 @@ func (this *IndexAction) Run(params struct {
 				continue
 			}
 
-			allDnsNames := []string{}
+			allDNSNames := []string{}
 			for _, data := range cert.Certificate {
 				c, err := x509.ParseCertificate(data)
 				if err != nil {
@@ -111,7 +112,7 @@ func (this *IndexAction) Run(params struct {
 				dnsNames := ""
 				if len(c.DNSNames) > 0 {
 					dnsNames = "[" + strings.Join(c.DNSNames, ", ") + "]"
-					allDnsNames = append(allDnsNames, c.DNSNames...)
+					allDNSNames = append(allDNSNames, c.DNSNames...)
 				}
 				info = append(info, maps.Map{
 					"subject":  c.Subject.CommonName + " " + dnsNames,
@@ -128,22 +129,32 @@ func (this *IndexAction) Run(params struct {
 				"info":   info,
 			})
 
-			// 检查域名是否设置
-			if len(allDnsNames) > 0 {
-				// 检查domain
-				for _, domain := range allDnsNames {
-					if !teautils.MatchDomains(server.Name, domain) {
-						if !lists.ContainsString(notMatchedDomains, domain) {
-							notMatchedDomains = append(notMatchedDomains, fmt.Sprintf("证书#%d：", index+1)+domain)
-						}
-					}
-				}
+			if len(allDNSNames) > 0 {
+				globalDNSNames = append(globalDNSNames, allDNSNames...)
 			}
 		}
 	}
 
-	if len(notMatchedDomains) > 0 {
-		warningMessages = append(warningMessages, "当前代理服务的已设置域名和证书中的域名不匹配：<br/><div class=\"ui segment\" style=\"margin:0.6em 0;line-height: 1.8;padding-top:0;padding-bottom:0\">"+strings.Join(notMatchedDomains, "<br/>")+"</div>请在代理服务的<a href=\"/proxy/update?serverId="+server.Id+"\">基本信息</a>中添加这些域名。")
+	if len(server.Name) == 0 {
+		warningMessages = append(warningMessages, "当前代理服务没有设置域名，可能会导致用户访问时的域名无法和证书正确匹配。<a href=\"/proxy/update?serverId="+server.Id+"\">设置域名 &raquo;</a>")
+	} else {
+		// 检查domain
+		for _, domain := range server.Name {
+			if !teautils.MatchDomains(globalDNSNames, domain) {
+				if !lists.ContainsString(notMatchedDomains, domain) {
+					notMatchedDomains = append(notMatchedDomains, domain)
+				}
+			}
+		}
+
+		if len(notMatchedDomains) > 0 {
+			message := "当前代理服务的已设置的部分域名和证书不匹配，访问以下这些域名时将不会使用证书："
+			for _, domain := range notMatchedDomains {
+				message += `<span class="ui label tiny">` + domain + `</span>`
+			}
+			message += "。<a href=\"/proxy/update?serverId=" + server.Id + "\">设置域名 &raquo;</a>"
+			warningMessages = append(warningMessages, message)
+		}
 	}
 
 	this.Data["errorMessages"] = errorMessages
