@@ -41,10 +41,14 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		return nil
 	}
 
-	this.raw.URL.Host = this.host
-
 	if this.backend.HasHost() {
 		this.raw.Host = this.Format(this.backend.Host)
+	}
+
+	if len(this.raw.Host) > 0 {
+		this.raw.URL.Host = this.raw.Host
+	} else {
+		this.raw.URL.Host = this.host
 	}
 
 	if len(this.backend.Scheme) > 0 && this.backend.Scheme != "http" {
@@ -121,7 +125,10 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 					this.backend.DownTime = time.Now()
 
 					// 下线通知
-					noticeutils.NotifyProxyBackendDownMessage(this.server.Id, this.backend, this.location, this.websocket)
+					err = noticeutils.NotifyProxyBackendDownMessage(this.server.Id, this.backend, this.location, this.websocket)
+					if err != nil {
+						logs.Error(err)
+					}
 
 					if this.websocket != nil {
 						this.websocket.SetupScheduling(false)
@@ -145,7 +152,10 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	// waf
 	if this.waf != nil {
 		if this.callWAFResponse(resp, writer) {
-			resp.Body.Close()
+			err = resp.Body.Close()
+			if err != nil {
+				logs.Error(err)
+			}
 			return nil
 		}
 	}
@@ -159,7 +169,10 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 	// 特殊页面
 	if len(this.pages) > 0 && this.callPage(writer, resp.StatusCode) {
-		resp.Body.Close()
+		err = resp.Body.Close()
+		if err != nil {
+			logs.Error(err)
+		}
 		return nil
 	}
 
@@ -209,7 +222,10 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	_, err = io.CopyBuffer(writer, resp.Body, buf)
 	pool.Put(buf)
 
-	resp.Body.Close()
+	err1 := resp.Body.Close()
+	if err1 != nil {
+		logs.Error(err1)
+	}
 
 	if err != nil {
 		logs.Error(err)

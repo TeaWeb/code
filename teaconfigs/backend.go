@@ -55,6 +55,8 @@ type BackendConfig struct {
 	CheckInterval int    `yaml:"checkInterval" json:"checkInterval"`
 	CheckTimeout  string `yaml:"checkTimeout" json:"checkTimeout"` // 超时时间
 
+	Cert *SSLCertConfig `yaml:"cert" json:"cert"` // 请求源服务器用的证书
+
 	failTimeoutDuration time.Duration
 	readTimeoutDuration time.Duration
 	idleTimeoutDuration time.Duration
@@ -90,6 +92,14 @@ func NewBackendConfig() *BackendConfig {
 // 校验
 func (this *BackendConfig) Validate() error {
 	this.Compatible()
+
+	// 证书
+	if this.Cert != nil {
+		err := this.Cert.Validate()
+		if err != nil {
+			return err
+		}
+	}
 
 	// unique key
 	this.uniqueKey = this.Id + "@" + fmt.Sprintf("%d", this.Version)
@@ -277,7 +287,12 @@ func (this *BackendConfig) CheckHealth() bool {
 		if err != nil {
 			return false
 		}
-		defer resp.Body.Close()
+		defer func() {
+			err = resp.Body.Close()
+			if err != nil {
+				logs.Error(err)
+			}
+		}()
 		return resp.StatusCode >= 200 && resp.StatusCode < 400
 	}
 
@@ -288,7 +303,10 @@ func (this *BackendConfig) CheckHealth() bool {
 			if err != nil {
 				return false
 			}
-			conn.Close()
+			err = conn.Close()
+			if err != nil {
+				logs.Error(err)
+			}
 			return true
 		} else if this.Scheme == "tcp+tls" {
 			conn, err := tls.DialWithDialer(&net.Dialer{
@@ -299,7 +317,10 @@ func (this *BackendConfig) CheckHealth() bool {
 			if err != nil {
 				return false
 			}
-			conn.Close()
+			err = conn.Close()
+			if err != nil {
+				logs.Error(err)
+			}
 		}
 	}
 

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/certs/certutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"regexp"
@@ -50,7 +52,10 @@ func (this *UpdateAction) Run(params struct {
 		this.Fail("找不到要修改的后端服务器")
 	}
 
-	backend.Validate()
+	err = backend.Validate()
+	if err != nil {
+		logs.Error(err)
+	}
 
 	if len(backend.RequestGroupIds) == 0 {
 		backend.AddRequestGroupId("default")
@@ -84,19 +89,28 @@ func (this *UpdateAction) Run(params struct {
 		"requestHeaders":  backend.RequestHeaders,
 		"responseHeaders": backend.ResponseHeaders,
 		"host":            backend.Host,
+		"cert":            backend.Cert,
 	}
+
+	// 公共可以使用的证书
+	this.Data["sharedCerts"] = certutils.ListAllCertsMap()
 
 	this.Show()
 }
 
 // 提交
 func (this *UpdateAction) RunPost(params struct {
-	ServerId        string
-	LocationId      string
-	Websocket       bool
-	BackendId       string
-	Address         string
-	Scheme          string
+	ServerId   string
+	LocationId string
+	Websocket  bool
+	BackendId  string
+	Address    string
+	Scheme     string
+
+	UseCert        bool
+	CertId         string
+	CertServerName string
+
 	Weight          uint
 	On              bool
 	Code            string
@@ -147,6 +161,18 @@ func (this *UpdateAction) RunPost(params struct {
 		}
 	}
 
+	// 证书
+	if params.UseCert {
+		if len(params.CertId) == 0 {
+			this.Fail("在请求后端服务器时使用SSL证书时，需要选择一个证书")
+		}
+
+		cert := teaconfigs.SharedSSLCertList().FindCert(params.CertId)
+		if cert == nil {
+			this.Fail("选择的SSL证书不存在")
+		}
+	}
+
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
 	if err != nil {
 		this.Fail(err.Error())
@@ -160,6 +186,17 @@ func (this *UpdateAction) RunPost(params struct {
 
 	backend.Address = params.Address
 	backend.Scheme = params.Scheme
+
+	// 证书
+	if params.UseCert {
+		backend.Cert = teaconfigs.NewSSLCertConfig("", "")
+		backend.Cert.IsShared = true
+		backend.Cert.Id = params.CertId
+		backend.Cert.ServerName = params.CertServerName
+	} else {
+		backend.Cert = nil
+	}
+
 	backend.Weight = params.Weight
 	backend.On = params.On
 	backend.IsDown = false

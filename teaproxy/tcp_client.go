@@ -92,7 +92,10 @@ func (this *TCPClient) Close() error {
 	lCloseError := this.lConn.Close()
 
 	if this.rConn != nil {
-		this.rConn.Close()
+		err := this.rConn.Close()
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	// 关闭stream
@@ -131,7 +134,10 @@ func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
 		}
 		if this.backend == nil {
 			logs.Println("[proxy][tcp]no available backends for server '" + server.Description)
-			this.Close()
+			err := this.Close()
+			if err != nil {
+				logs.Error(err)
+			}
 			break
 		}
 
@@ -154,11 +160,20 @@ func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
 			}
 			this.rConn = conn
 		case "tcp+tls":
+			tlsConfig := &tls.Config{
+				InsecureSkipVerify: true,
+			}
+			if this.backend.Cert != nil {
+				obj := this.backend.Cert.CertObject()
+				if obj != nil {
+					tlsConfig.ServerName = this.backend.Cert.ServerName
+					tlsConfig.InsecureSkipVerify = false
+					tlsConfig.Certificates = []tls.Certificate{*obj}
+				}
+			}
 			conn, err := tls.DialWithDialer(&net.Dialer{
 				Timeout: this.backend.FailTimeoutDuration(),
-			}, "tcp", this.backend.Address, &tls.Config{
-				InsecureSkipVerify: true,
-			})
+			}, "tcp", this.backend.Address, tlsConfig)
 			if err != nil {
 				this.error(server, err)
 				this.backend.DecreaseConn()
@@ -175,7 +190,10 @@ func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
 
 	// 没连接到后端就中断
 	if this.rConn == nil {
-		this.Close()
+		err := this.Close()
+		if err != nil {
+			//logs.Error(err)
+		}
 		return
 	}
 
@@ -212,7 +230,10 @@ func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
 		n, err := this.rConn.Read(buf)
 		if n > 0 {
 			if this.lActive {
-				this.lConn.Write(buf[:n])
+				_, err = this.lConn.Write(buf[:n])
+				if err != nil {
+					logs.Error(err)
+				}
 				atomic.AddInt64(&this.readSpeed, int64(n))
 			}
 		}
@@ -240,7 +261,10 @@ func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
 		} else { // 关闭
 			this.streamIsClosed = true
 			close(this.stream)
-			this.lConn.Close()
+			err := this.lConn.Close()
+			if err != nil {
+				logs.Error(err)
+			}
 		}
 	}
 }
@@ -261,7 +285,10 @@ func (this *TCPClient) read(server *teaconfigs.ServerConfig) {
 		}
 		if err != nil {
 			this.lActive = false
-			this.Close()
+			err = this.Close()
+			if err != nil {
+				//logs.Error(err)
+			}
 			break
 		}
 	}
@@ -302,7 +329,10 @@ func (this *TCPClient) error(server *teaconfigs.ServerConfig, err error) {
 		this.backend.DownTime = time.Now()
 
 		// 下线通知
-		noticeutils.NotifyProxyBackendDownMessage(server.Id, this.backend, nil, nil)
+		err = noticeutils.NotifyProxyBackendDownMessage(server.Id, this.backend, nil, nil)
+		if err != nil {
+			logs.Error(err)
+		}
 
 		server.SetupScheduling(false)
 	}

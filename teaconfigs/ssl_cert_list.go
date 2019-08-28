@@ -13,6 +13,7 @@ const (
 )
 
 // 获取证书列表实例
+// 一定会返回不为nil的值
 func SharedSSLCertList() *SSLCertList {
 	data, err := ioutil.ReadFile(Tea.ConfigFile(sslCertListFilename))
 	if err != nil {

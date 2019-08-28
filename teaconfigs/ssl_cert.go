@@ -22,9 +22,10 @@ type SSLCertConfig struct {
 	Description string `yaml:"description" json:"description"` // 说明
 	CertFile    string `yaml:"certFile" json:"certFile"`
 	KeyFile     string `yaml:"keyFile" json:"keyFile"`
-	IsLocal     bool   `yaml:"isLocal" json:"isLocal"`   // if is local file
-	TaskId      string `yaml:"taskId" json:"taskId"`     // 生成证书任务ID
-	IsShared    bool   `yaml:"isShared" json:"isShared"` // 是否为公用组件
+	IsLocal     bool   `yaml:"isLocal" json:"isLocal"`       // 是否为本地文件
+	TaskId      string `yaml:"taskId" json:"taskId"`         // 生成证书任务ID
+	IsShared    bool   `yaml:"isShared" json:"isShared"`     // 是否为公用组件
+	ServerName  string `yaml:"serverName" json:"serverName"` // 证书使用的主机名
 
 	dnsNames   []string
 	cert       *tls.Certificate
@@ -51,8 +52,12 @@ func (this *SSLCertConfig) Validate() error {
 			return errors.New("the shared cert has been deleted")
 		}
 
+		// 拷贝之前需要保留的
+		serverName := this.ServerName
+
 		// copy
 		teautils.CopyStructObject(this, shared)
+		this.ServerName = serverName
 	}
 
 	this.dnsNames = []string{}

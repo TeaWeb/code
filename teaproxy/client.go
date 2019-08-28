@@ -70,6 +70,21 @@ func (this *ClientPool) client(backend *teaconfigs.BackendConfig) *http.Client {
 		idleConns = numberCPU
 	}
 
+	// TLS通讯
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+	if backend.Cert != nil {
+		obj := backend.Cert.CertObject()
+		if obj != nil {
+			tlsConfig.InsecureSkipVerify = false
+			tlsConfig.Certificates = []tls.Certificate{*obj}
+			if len(backend.Cert.ServerName) > 0 {
+				tlsConfig.ServerName = backend.Cert.ServerName
+			}
+		}
+	}
+
 	transport := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			// 握手配置
@@ -84,10 +99,8 @@ func (this *ClientPool) client(backend *teaconfigs.BackendConfig) *http.Client {
 		IdleConnTimeout:       idleTimeout,
 		ExpectContinueTimeout: 1 * time.Second,
 		TLSHandshakeTimeout:   0, // 不限
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-		Proxy: nil,
+		TLSClientConfig:       tlsConfig,
+		Proxy:                 nil,
 	}
 
 	client = &http.Client{

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/certs/certutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/types"
@@ -40,19 +41,28 @@ func (this *AddAction) Run(params struct {
 	this.Data["websocket"] = types.Int(params.Websocket)
 	this.Data["isBackup"] = params.Backup
 
+	// 公共可以使用的证书
+	this.Data["sharedCerts"] = certutils.ListAllCertsMap()
+
 	this.Show()
 }
 
 // 提交
 func (this *AddAction) RunPost(params struct {
-	ServerId        string
-	LocationId      string // 路径
-	Websocket       bool   // 是否是Websocket设置
-	Address         string
-	Scheme          string
-	Weight          uint
-	On              bool
-	Code            string
+	ServerId   string
+	LocationId string // 路径
+	Websocket  bool   // 是否是Websocket设置
+	Address    string
+	Scheme     string
+
+	UseCert        bool
+	CertId         string
+	CertServerName string
+
+	Weight uint
+	On     bool
+	Code   string
+
 	FailTimeout     uint
 	ReadTimeout     uint
 	IdleTimeout     string
@@ -87,6 +97,18 @@ func (this *AddAction) RunPost(params struct {
 		Field("address", params.Address).
 		Require("请输入后端服务器地址")
 
+	// 证书
+	if params.UseCert {
+		if len(params.CertId) == 0 {
+			this.Fail("在请求后端服务器时使用SSL证书时，需要选择一个证书")
+		}
+
+		cert := teaconfigs.SharedSSLCertList().FindCert(params.CertId)
+		if cert == nil {
+			this.Fail("选择的SSL证书不存在")
+		}
+	}
+
 	// 健康检查
 	if params.CheckOn {
 		if server.IsHTTP() {
@@ -103,6 +125,15 @@ func (this *AddAction) RunPost(params struct {
 	backend := teaconfigs.NewBackendConfig()
 	backend.Address = params.Address
 	backend.Scheme = params.Scheme
+
+	// 证书
+	if params.UseCert {
+		backend.Cert = teaconfigs.NewSSLCertConfig("", "")
+		backend.Cert.IsShared = true
+		backend.Cert.Id = params.CertId
+		backend.Cert.ServerName = params.CertServerName
+	}
+
 	backend.Weight = params.Weight
 	backend.RequestGroupIds = params.RequestGroupIds
 	backend.On = params.On

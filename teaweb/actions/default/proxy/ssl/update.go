@@ -3,14 +3,15 @@ package ssl
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/certs/certutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
-	timeutil "github.com/iwind/TeaGo/utils/time"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -29,7 +30,10 @@ func (this *UpdateAction) Run(params struct {
 
 	this.Data["certs"] = []maps.Map{}
 	if server.SSL != nil {
-		server.SSL.Validate()
+		err := server.SSL.Validate()
+		if err != nil {
+			logs.Error(err)
+		}
 		if len(server.SSL.Certs) > 0 {
 			certs := []maps.Map{}
 			for _, cert := range server.SSL.Certs {
@@ -75,35 +79,7 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["intermediateCipherSuites"] = teaconfigs.TLSIntermediateCipherSuites
 
 	// 公共可以使用的证书
-	this.Data["sharedCerts"] = lists.Map(teaconfigs.SharedSSLCertList().Certs, func(k int, v interface{}) interface{} {
-		cert := v.(*teaconfigs.SSLCertConfig)
-		err := cert.Validate()
-
-		errorString := ""
-		if err != nil {
-			errorString = err.Error()
-		}
-
-		summary := cert.Description
-		dnsNames := cert.DNSNames()
-		if len(dnsNames) > 0 {
-			if len(dnsNames) > 2 {
-				summary += " (" + strings.Join(dnsNames[:2], ",") + "等"
-			} else {
-				summary += " (" + strings.Join(dnsNames, ",")
-			}
-			summary += " - " + timeutil.Format("Y-m-d H:i:s", cert.TimeAfter())
-			summary += ")"
-		}
-
-		return maps.Map{
-			"id":          cert.Id,
-			"error":       errorString,
-			"dnsNames":    cert.DNSNames(),
-			"description": cert.Description,
-			"summary":     summary,
-		}
-	})
+	this.Data["sharedCerts"] = certutils.ListAllCertsMap()
 
 	this.Show()
 }
