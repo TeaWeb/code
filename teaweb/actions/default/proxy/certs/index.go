@@ -2,6 +2,7 @@ package certs
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/certs/certutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -13,8 +14,6 @@ type IndexAction actions.Action
 
 // 证书列表
 func (this *IndexAction) RunGet(params struct{}) {
-	serverList, _ := teaconfigs.SharedServerList()
-
 	certs := lists.Map(teaconfigs.SharedSSLCertList().Certs, func(k int, v interface{}) interface{} {
 		cert := v.(*teaconfigs.SSLCertConfig)
 		errorString := ""
@@ -51,20 +50,7 @@ func (this *IndexAction) RunGet(params struct{}) {
 			}
 		}
 
-		countRef := 0
-		if serverList != nil {
-			for _, server := range serverList.FindAllServers() {
-				if server.SSL == nil {
-					continue
-				}
-				for _, c := range server.SSL.Certs {
-					if c.Id == cert.Id {
-						countRef++
-						break
-					}
-				}
-			}
-		}
+		countRef := len(certutils.FindAllServersUsingCert(cert.Id))
 
 		return maps.Map{
 			"id":               cert.Id,

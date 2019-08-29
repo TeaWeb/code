@@ -2,6 +2,7 @@ package certutils
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	timeutil "github.com/iwind/TeaGo/utils/time"
 	"strings"
@@ -19,11 +20,18 @@ func FindAllServersUsingCert(certId string) []*teaconfigs.ServerConfig {
 			if server.SSL == nil {
 				continue
 			}
+			found := false
 			for _, c := range server.SSL.Certs {
 				if c.Id == certId {
+					found = true
 					result = append(result, server)
 					break
 				}
+			}
+
+			if !found && lists.ContainsString(server.SSL.ClientCACertIds, certId) {
+				result = append(result, server)
+				break
 			}
 		}
 	}
