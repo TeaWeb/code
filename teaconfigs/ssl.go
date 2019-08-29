@@ -2,9 +2,11 @@ package teaconfigs
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"io/ioutil"
 	"net"
 	"strings"
 )
@@ -22,8 +24,10 @@ type SSLConfig struct {
 	Certificate    string `yaml:"certificate" json:"certificate"`       // 证书文件, deprecated in v0.1.4
 	CertificateKey string `yaml:"certificateKey" json:"certificateKey"` // 密钥, deprecated in v0.1.4
 
-	Certs     []*SSLCertConfig `yaml:"certs" json:"certs"`
-	CertTasks []*SSLCertTask   `yaml:"certTasks" json:"certTasks"`
+	Certs           []*SSLCertConfig  `yaml:"certs" json:"certs"`
+	CertTasks       []*SSLCertTask    `yaml:"certTasks" json:"certTasks"`
+	ClientAuthType  SSLClientAuthType `yaml:"clientAuthType" json:"clientAuthType"`   // 客户端认证类型
+	ClientCACertIds []string          `yaml:"clientCACertIds" json:"clientCACertIds"` // 客户端认证CA
 
 	Listen       []string         `yaml:"listen" json:"listen"`             // 网络地址
 	MinVersion   TLSVersion       `yaml:"minVersion" json:"minVersion"`     // 支持的最小版本
@@ -35,6 +39,8 @@ type SSLConfig struct {
 
 	minVersion   uint16
 	cipherSuites []uint16
+
+	clientCAPool *x509.CertPool
 }
 
 // 获取新对象
@@ -89,6 +95,26 @@ func (this *SSLConfig) Validate() error {
 		err := this.HSTS.Validate()
 		if err != nil {
 			return err
+		}
+	}
+
+	// CA证书
+	if len(this.ClientCACertIds) > 0 && this.ClientAuthType != SSLClientAuthTypeNoClientCert {
+		this.clientCAPool = x509.NewCertPool()
+		list := SharedSSLCertList()
+		for _, certId := range this.ClientCACertIds {
+			cert := list.FindCert(certId)
+			if cert == nil {
+				continue
+			}
+			if !cert.On {
+				continue
+			}
+			data, err := ioutil.ReadFile(cert.FullCertPath())
+			if err != nil {
+				return err
+			}
+			this.clientCAPool.AppendCertsFromPEM(data)
 		}
 	}
 
@@ -201,4 +227,9 @@ func (this *SSLConfig) FindCertTask(certTaskId string) *SSLCertTask {
 		}
 	}
 	return nil
+}
+
+// CA证书Pool，用于TLS对客户端进行认证
+func (this *SSLConfig) CAPool() *x509.CertPool {
+	return this.clientCAPool
 }

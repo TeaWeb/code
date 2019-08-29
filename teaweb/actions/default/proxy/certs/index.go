@@ -81,6 +81,7 @@ func (this *IndexAction) RunGet(params struct{}) {
 			"isExpiring30Days": isExpiring30Days,
 			"commonName":       commonName,
 			"isACME":           len(cert.TaskId) > 0,
+			"isCA":             cert.IsCA,
 		}
 	})
 	this.Data["certs"] = certs

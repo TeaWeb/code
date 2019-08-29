@@ -135,7 +135,7 @@ func (this *IndexAction) Run(params struct {
 		}
 	}
 
-	if len(server.Name) == 0 {
+	if len(server.Name) == 0 && server.SSL != nil && server.SSL.On {
 		warningMessages = append(warningMessages, "当前代理服务没有设置域名，可能会导致用户访问时的域名无法和证书正确匹配。<a href=\"/proxy/update?serverId="+server.Id+"\">设置域名 &raquo;</a>")
 	} else {
 		// 检查domain
@@ -160,6 +160,28 @@ func (this *IndexAction) Run(params struct {
 	this.Data["errorMessages"] = errorMessages
 	this.Data["warningMessages"] = warningMessages
 	this.Data["certs"] = certs
+
+	// CA证书
+	if server.SSL != nil {
+		this.Data["clientAuthTypeName"] = teaconfigs.FindSSLClientAuthTypeName(server.SSL.ClientAuthType)
+
+		certList := teaconfigs.SharedSSLCertList()
+		caCerts := []maps.Map{}
+		for _, certId := range server.SSL.ClientCACertIds {
+			cert := certList.FindCert(certId)
+			if cert == nil {
+				continue
+			}
+			caCerts = append(caCerts, maps.Map{
+				"description": cert.Description,
+				"id":          cert.Id,
+			})
+		}
+		this.Data["clientCACerts"] = caCerts
+	} else {
+		this.Data["clientAuthTypeName"] = teaconfigs.FindSSLClientAuthTypeName(teaconfigs.SSLClientAuthTypeNoClientCert)
+		this.Data["clientCACerts"] = []maps.Map{}
+	}
 
 	this.Show()
 }

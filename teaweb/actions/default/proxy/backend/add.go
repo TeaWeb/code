@@ -42,7 +42,7 @@ func (this *AddAction) Run(params struct {
 	this.Data["isBackup"] = params.Backup
 
 	// 公共可以使用的证书
-	this.Data["sharedCerts"] = certutils.ListAllCertsMap()
+	this.Data["sharedCerts"] = certutils.ListPairCertsMap()
 
 	this.Show()
 }

@@ -600,6 +600,7 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 			if len(cipherSuites) == 0 {
 				cipherSuites = nil
 			}
+
 			return &tls.Config{
 				Certificates: nil,
 				MinVersion:   ssl.TLSMinVersion(),
@@ -614,6 +615,8 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 					}
 					return cert, nil
 				},
+				ClientAuth: teaconfigs.GoSSLClientAuthType(ssl.ClientAuthType),
+				ClientCAs:  ssl.CAPool(),
 
 				NextProtos: []string{http2.NextProtoTLS},
 			}, nil

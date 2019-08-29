@@ -93,7 +93,7 @@ func (this *UpdateAction) Run(params struct {
 	}
 
 	// 公共可以使用的证书
-	this.Data["sharedCerts"] = certutils.ListAllCertsMap()
+	this.Data["sharedCerts"] = certutils.ListPairCertsMap()
 
 	this.Show()
 }

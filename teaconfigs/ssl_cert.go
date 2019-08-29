@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
@@ -25,7 +26,8 @@ type SSLCertConfig struct {
 	IsLocal     bool   `yaml:"isLocal" json:"isLocal"`       // 是否为本地文件
 	TaskId      string `yaml:"taskId" json:"taskId"`         // 生成证书任务ID
 	IsShared    bool   `yaml:"isShared" json:"isShared"`     // 是否为公用组件
-	ServerName  string `yaml:"serverName" json:"serverName"` // 证书使用的主机名
+	ServerName  string `yaml:"serverName" json:"serverName"` // 证书使用的主机名，在请求TLS服务器时需要
+	IsCA        bool   `yaml:"isCA" json:"isCA"`             // 是否为CA证书
 
 	dnsNames   []string
 	cert       *tls.Certificate
@@ -65,36 +67,85 @@ func (this *SSLCertConfig) Validate() error {
 	if len(this.CertFile) == 0 {
 		return errors.New("cert file should not be empty")
 	}
-	if len(this.KeyFile) == 0 {
-		return errors.New("key file should not be empty")
-	}
-	cert, err := tls.LoadX509KeyPair(this.FullCertPath(), this.FullKeyPath())
-	if err != nil {
-		return errors.New("load certificate '" + this.CertFile + "', '" + this.KeyFile + "' failed:" + err.Error())
-	}
 
-	for index, data := range cert.Certificate {
-		c, err := x509.ParseCertificate(data)
+	// 分析证书
+	if this.IsCA { // CA证书
+		data, err := ioutil.ReadFile(this.FullCertPath())
 		if err != nil {
-			continue
+			return err
 		}
-		dnsNames := c.DNSNames
-		if len(dnsNames) > 0 {
-			for _, dnsName := range dnsNames {
-				if !lists.ContainsString(this.dnsNames, dnsName) {
-					this.dnsNames = append(this.dnsNames, dnsName)
+
+		index := -1
+		this.cert = &tls.Certificate{
+			Certificate: [][]byte{},
+		}
+		for {
+			index++
+
+			block, rest := pem.Decode(data)
+			if block == nil {
+				break
+			}
+			if len(rest) == 0 {
+				break
+			}
+			this.cert.Certificate = append(this.cert.Certificate, block.Bytes)
+			data = rest
+			c, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				return err
+			}
+			if c == nil {
+				return errors.New("no available certificates in file")
+			}
+
+			dnsNames := c.DNSNames
+			if len(dnsNames) > 0 {
+				for _, dnsName := range dnsNames {
+					if !lists.ContainsString(this.dnsNames, dnsName) {
+						this.dnsNames = append(this.dnsNames, dnsName)
+					}
 				}
+			}
+
+			if index == 0 {
+				this.timeBefore = c.NotBefore
+				this.timeAfter = c.NotAfter
+				this.issuer = c.Issuer
+			}
+		}
+	} else { // 证书+私钥
+		if len(this.KeyFile) == 0 {
+			return errors.New("key file should not be empty")
+		}
+		cert, err := tls.LoadX509KeyPair(this.FullCertPath(), this.FullKeyPath())
+		if err != nil {
+			return errors.New("load certificate '" + this.CertFile + "', '" + this.KeyFile + "' failed:" + err.Error())
+		}
+
+		for index, data := range cert.Certificate {
+			c, err := x509.ParseCertificate(data)
+			if err != nil {
+				continue
+			}
+			dnsNames := c.DNSNames
+			if len(dnsNames) > 0 {
+				for _, dnsName := range dnsNames {
+					if !lists.ContainsString(this.dnsNames, dnsName) {
+						this.dnsNames = append(this.dnsNames, dnsName)
+					}
+				}
+			}
+
+			if index == 0 {
+				this.timeBefore = c.NotBefore
+				this.timeAfter = c.NotAfter
+				this.issuer = c.Issuer
 			}
 		}
 
-		if index == 0 {
-			this.timeBefore = c.NotBefore
-			this.timeAfter = c.NotAfter
-			this.issuer = c.Issuer
-		}
+		this.cert = &cert
 	}
-
-	this.cert = &cert
 	return nil
 }
 

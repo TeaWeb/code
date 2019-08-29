@@ -96,6 +96,8 @@ func (this *DetailAction) RunGet(params struct {
 		"isLocal":          cert.IsLocal,
 		"certFile":         cert.CertFile,
 		"keyFile":          cert.KeyFile,
+		"isCA":             cert.IsCA,
+		"isACME":           len(cert.TaskId) > 0,
 	}
 
 	this.Show()

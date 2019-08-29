@@ -79,7 +79,21 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["intermediateCipherSuites"] = teaconfigs.TLSIntermediateCipherSuites
 
 	// 公共可以使用的证书
-	this.Data["sharedCerts"] = certutils.ListAllCertsMap()
+	this.Data["sharedCerts"] = certutils.ListPairCertsMap()
+	this.Data["caCerts"] = certutils.ListCACertsMap()
+
+	// 客户端认证
+	this.Data["clientAuthTypes"] = teaconfigs.AllSSLClientAuthTypes()
+	if server.SSL != nil {
+		this.Data["clientAuthType"] = server.SSL.ClientAuthType
+		if len(server.SSL.ClientCACertIds) == 0 {
+			server.SSL.ClientCACertIds = []string{}
+		}
+		this.Data["clientCACertIds"] = server.SSL.ClientCACertIds
+	} else {
+		this.Data["clientAuthType"] = 0
+		this.Data["clientCACertIds"] = []string{}
+	}
 
 	this.Show()
 }
@@ -106,6 +120,9 @@ func (this *UpdateAction) RunPost(params struct {
 	HstsIncludeSubDomains bool
 	HstsPreload           bool
 	HstsDomains           []string
+
+	ClientAuthType int
+	CACertIds      []string `alias:"caCertIds"`
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -150,12 +167,12 @@ func (this *UpdateAction) RunPost(params struct {
 				}
 				data, err := ioutil.ReadAll(fp)
 				if err != nil {
-					fp.Close()
+					_ = fp.Close()
 					continue
 				}
 				fileBytes[field] = data
 				fileExts[field] = strings.ToLower(filepath.Ext(header.Filename))
-				fp.Close()
+				_ = fp.Close()
 
 				break
 			}
@@ -252,6 +269,14 @@ func (this *UpdateAction) RunPost(params struct {
 	// 清除以前的版本（v0.1.4）
 	server.SSL.Certificate = ""
 	server.SSL.CertificateKey = ""
+
+	// 客户端认证
+	server.SSL.ClientAuthType = params.ClientAuthType
+	server.SSL.ClientCACertIds = params.CACertIds
+
+	if server.SSL.ClientAuthType != teaconfigs.SSLClientAuthTypeNoClientCert && len(server.SSL.ClientCACertIds) == 0 {
+		this.Fail("已选择的客户端认证方式需要上传CA证书")
+	}
 
 	err := server.Save()
 	if err != nil {
