@@ -213,7 +213,7 @@ func (this *Listener) Shutdown() error {
 			for _, client := range this.connectingTCPMap {
 				err1 := client.Close()
 				if err1 != nil {
-					logs.Error(err)
+					logs.Error(err1)
 				}
 			}
 			this.connectingTCPMap = map[net.Conn]*TCPClient{}
