@@ -36,6 +36,7 @@ func init() {
 			Post("/acmeRenewTask", new(AcmeRenewTaskAction)).
 			Get("/acmeTask", new(AcmeTaskAction)).
 			Get("/acmeDownload", new(AcmeDownloadAction)).
+			Post("/makeShared", new(MakeSharedAction)).
 			EndAll()
 	})
 

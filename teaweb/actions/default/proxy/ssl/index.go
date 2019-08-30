@@ -49,7 +49,6 @@ func (this *IndexAction) Run(params struct {
 		if err != nil {
 			errorMessages = append(errorMessages, err.Error())
 		}
-
 		for index, certConfig := range server.SSL.Certs {
 			info := []maps.Map{}
 
@@ -135,25 +134,27 @@ func (this *IndexAction) Run(params struct {
 		}
 	}
 
-	if len(server.Name) == 0 && server.SSL != nil && server.SSL.On {
-		warningMessages = append(warningMessages, "当前代理服务没有设置域名，可能会导致用户访问时的域名无法和证书正确匹配。<a href=\"/proxy/update?serverId="+server.Id+"\">设置域名 &raquo;</a>")
-	} else {
-		// 检查domain
-		for _, domain := range server.Name {
-			if !teautils.MatchDomains(globalDNSNames, domain) {
-				if !lists.ContainsString(notMatchedDomains, domain) {
-					notMatchedDomains = append(notMatchedDomains, domain)
+	if server.SSL != nil && server.SSL.On {
+		if len(server.Name) == 0 {
+			warningMessages = append(warningMessages, "当前代理服务没有设置域名，可能会导致用户访问时的域名无法和证书正确匹配。<a href=\"/proxy/update?serverId="+server.Id+"\">设置域名 &raquo;</a>")
+		} else {
+			// 检查domain
+			for _, domain := range server.Name {
+				if !teautils.MatchDomains(globalDNSNames, domain) {
+					if !lists.ContainsString(notMatchedDomains, domain) {
+						notMatchedDomains = append(notMatchedDomains, domain)
+					}
 				}
 			}
-		}
 
-		if len(notMatchedDomains) > 0 {
-			message := "当前代理服务的已设置的部分域名和证书不匹配，访问以下这些域名时将不会使用证书："
-			for _, domain := range notMatchedDomains {
-				message += `<span class="ui label tiny">` + domain + `</span>`
+			if len(notMatchedDomains) > 0 {
+				message := "当前代理服务的已设置的部分域名和证书不匹配，访问以下这些域名时将不会使用证书："
+				for _, domain := range notMatchedDomains {
+					message += `<span class="ui label tiny">` + domain + `</span>`
+				}
+				message += "。<a href=\"/proxy/update?serverId=" + server.Id + "\">设置域名 &raquo;</a>"
+				warningMessages = append(warningMessages, message)
 			}
-			message += "。<a href=\"/proxy/update?serverId=" + server.Id + "\">设置域名 &raquo;</a>"
-			warningMessages = append(warningMessages, message)
 		}
 	}
 
