@@ -1,8 +1,11 @@
 package certs
 
 import (
+	"archive/zip"
+	"bytes"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"path/filepath"
 )
 
@@ -16,6 +19,61 @@ func (this *DownloadAction) RunGet(params struct {
 	cert := teaconfigs.SharedSSLCertList().FindCert(params.CertId)
 	if cert == nil {
 		this.WriteString("找不到要查看的证书")
+		return
+	}
+
+	// 下载zip
+	if params.Type == "zip" {
+		certData, err := cert.ReadCert()
+		if err != nil {
+			this.Fail("读取证书失败：" + err.Error())
+		}
+
+		keyData := []byte{}
+		if len(cert.KeyFile) > 0 {
+			keyData, err = cert.ReadKey()
+			if err != nil {
+				this.Fail("读取私钥失败：" + err.Error())
+			}
+		}
+
+		buffer := bytes.NewBuffer([]byte{})
+		z := zip.NewWriter(buffer)
+
+		{
+			w, err := z.Create(filepath.Base(cert.FullCertPath()))
+			if err != nil {
+				this.Fail("创建ZIP失败：" + err.Error())
+			}
+			_, err = w.Write(certData)
+			if err != nil {
+				this.Fail("写入证书失败：" + err.Error())
+			}
+		}
+
+		if len(keyData) > 0 {
+			w, err := z.Create(filepath.Base(cert.FullKeyPath()))
+			if err != nil {
+				this.Fail("创建ZIP失败：" + err.Error())
+			}
+			_, err = w.Write(keyData)
+			if err != nil {
+				this.Fail("写入私钥失败：" + err.Error())
+			}
+		}
+
+		err = z.Flush()
+		if err != nil {
+			this.Fail("创建ZIP失败：" + err.Error())
+		}
+
+		err = z.Close()
+		if err != nil {
+			logs.Error(err)
+		}
+
+		this.AddHeader("Content-Disposition", "attachment; filename=\"certificate.zip\";")
+		this.Write(buffer.Bytes())
 		return
 	}
 

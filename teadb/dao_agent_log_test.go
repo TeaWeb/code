@@ -53,7 +53,7 @@ func TestAgentLogDAO_ListTaskLogs(t *testing.T) {
 	a := assert.NewAssertion(t)
 
 	taskId := "abc"
-	taskLogs, err := AgentLogDAO().ListTaskLogs("test", taskId, "", 2)
+	taskLogs, err := AgentLogDAO().FindLatestTaskLogs("test", taskId, "", 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func TestAgentLogDAO_ListTaskLogs(t *testing.T) {
 
 	if len(taskLogs) > 0 {
 		t.Log("=======")
-		taskLogs, err := AgentLogDAO().ListTaskLogs("test", taskId, taskLogs[len(taskLogs)-1].Id.Hex(), 2)
+		taskLogs, err := AgentLogDAO().FindLatestTaskLogs("test", taskId, taskLogs[len(taskLogs)-1].Id.Hex(), 2)
 		if err != nil {
 			t.Fatal(err)
 		}
