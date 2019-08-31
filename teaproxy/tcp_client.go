@@ -25,7 +25,6 @@ type TCPClient struct {
 	lConn          net.Conn
 	stream         chan []byte
 	streamIsClosed bool
-	initData       []byte
 
 	lActive bool
 
@@ -199,22 +198,12 @@ func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
 
 	// 写入
 	go func() {
-		if len(this.initData) > 0 {
-			_, err := this.rConn.Write(this.initData)
-			if err == nil {
-				this.initData = nil
-			}
-		}
-
 		for data := range this.stream {
 			if data == nil {
 				break
 			}
 			_, err := this.rConn.Write(data)
 			if err != nil {
-				if server.TCP.FailResend {
-					this.initData = data
-				}
 				break
 			}
 		}
@@ -248,23 +237,11 @@ func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
 	this.backend.DecreaseConn()
 
 	if this.lActive {
-		// 重新连接
-		if len(this.excludingBackendIds) == 0 || server.TCP.FailReconnect {
-			logs.Println("[proxy][tcp]reconnecting another backend for client '" + this.lConn.RemoteAddr().String() + "'")
-			this.backend = nil
-			this.rConn = nil
-			if !this.streamIsClosed {
-				close(this.stream)
-				this.stream = make(chan []byte, TCPClientStreamSize)
-			}
-			this.connect(server)
-		} else { // 关闭
-			this.streamIsClosed = true
-			close(this.stream)
-			err := this.lConn.Close()
-			if err != nil {
-				logs.Error(err)
-			}
+		this.streamIsClosed = true
+		close(this.stream)
+		err := this.lConn.Close()
+		if err != nil {
+			logs.Error(err)
 		}
 	}
 }
@@ -301,7 +278,7 @@ func (this *TCPClient) fail(server *teaconfigs.ServerConfig, err error) {
 	}
 
 	if err == io.EOF || err == io.ErrUnexpectedEOF {
-		logs.Println("[proxy][tcp]lost connection to backend '" + this.backend.Address + "'" + " for server '" + server.Description + "'")
+		return
 	} else {
 		logs.Println("[proxy][tcp]failed to connect backend '" + this.backend.Address + "'" + " for server '" + server.Description + "': " + err.Error())
 	}
@@ -316,7 +293,7 @@ func (this *TCPClient) error(server *teaconfigs.ServerConfig, err error) {
 	}
 
 	if err == io.EOF || err == io.ErrUnexpectedEOF {
-		logs.Println("[proxy][tcp]lost connection to backend '" + this.backend.Address + "'" + " for server '" + server.Description + "'")
+		return
 	} else {
 		logs.Println("[proxy][tcp]failed to connect backend '" + this.backend.Address + "'" + " for server '" + server.Description + "': " + err.Error())
 	}

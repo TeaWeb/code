@@ -62,8 +62,6 @@ func (this *UpdateAction) RunPost(params struct {
 
 	// TCP
 	TcpOn              bool
-	TcpFailReconnect   bool
-	TcpFailResend      bool
 	TcpReadBufferSize  int
 	TcpWriteBufferSize int
 
@@ -84,8 +82,6 @@ func (this *UpdateAction) RunPost(params struct {
 
 	if server.TCP != nil { // TCP
 		server.TCP.TCPOn = params.TcpOn
-		server.TCP.FailReconnect = params.TcpFailReconnect
-		server.TCP.FailResend = params.TcpFailResend
 		if params.TcpReadBufferSize >= 0 {
 			server.TCP.ReadBufferSize = params.TcpReadBufferSize
 		}
