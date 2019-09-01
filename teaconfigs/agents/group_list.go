@@ -141,7 +141,7 @@ func (this *GroupList) Save() error {
 	return err
 }
 
-// 查找分组
+// 根据ID查找分组
 func (this *GroupList) FindGroup(groupId string) *Group {
 	if groupId == "" {
 		groupId = "default"
@@ -158,6 +158,19 @@ func (this *GroupList) FindGroup(groupId string) *Group {
 // 查找默认的分组
 func (this *GroupList) FindDefaultGroup() *Group {
 	return this.FindGroup("default")
+}
+
+// 根据密钥查找分组
+func (this *GroupList) FindGroupWithKey(key string) *Group {
+	if len(key) == 0 {
+		return nil
+	}
+	for _, g := range this.Groups {
+		if g.Key == key {
+			return g
+		}
+	}
+	return nil
 }
 
 // 移动位置

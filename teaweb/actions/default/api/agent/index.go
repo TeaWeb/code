@@ -7,7 +7,7 @@ import (
 
 type IndexAction actions.Action
 
-// Agent配置
+// 读取Agent配置
 func (this *IndexAction) Run(params struct{}) {
 	agent := this.Context.Get("agent")
 	if agent == nil {
