@@ -11,7 +11,10 @@ func TestThreshold_Test(t *testing.T) {
 	threshold.Param = "${0}"
 	threshold.Operator = ThresholdOperatorGt
 	threshold.Value = "12"
-	threshold.Validate()
+	err := threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log(threshold.Test("123", nil))
 
 	// v0.1.1之前的Bug，内容中不能含有\n
@@ -34,19 +37,28 @@ func TestThreshold_Test(t *testing.T) {
 		threshold.Param = `${0}`
 		threshold.Operator = ThresholdOperatorContains
 		threshold.Value = `qy-api\n5409`
-		threshold.Validate()
+		err = threshold.Validate()
+		if err != nil {
+			t.Fatal(err)
+		}
 		t.Log(threshold.Test(`"31399 qy-api\n5409"`, nil))
 	}
 
 	threshold.Param = "${1}"
 	threshold.Operator = ThresholdOperatorGt
-	threshold.Validate()
+	err = threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log(threshold.Test([]interface{}{1, 200, 3}, nil))
 
 	threshold.Param = "${host}"
 	threshold.Operator = ThresholdOperatorPrefix
 	threshold.Value = "127."
-	threshold.Validate()
+	err = threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log(threshold.Test(map[string]interface{}{
 		"host": "127.0.0.1",
 	}, nil))
@@ -54,7 +66,10 @@ func TestThreshold_Test(t *testing.T) {
 	threshold.Param = "${data.version}"
 	threshold.Operator = ThresholdOperatorEq
 	threshold.Value = "1.0.25"
-	threshold.Validate()
+	err = threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log(threshold.Test(map[string]interface{}{
 		"data": maps.Map{
 			"version": "1.0.25",
@@ -64,7 +79,10 @@ func TestThreshold_Test(t *testing.T) {
 	threshold.Param = "${data.version1}"
 	threshold.Operator = ThresholdOperatorNumberEq
 	threshold.Value = "0"
-	threshold.Validate()
+	err = threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log(threshold.Test(map[string]interface{}{
 		"data": maps.Map{
 			"version": "1.25",
@@ -104,7 +122,10 @@ func TestThreshold_Eval(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${data.hello.world.0} * 100 / ${data.hello.world.1}"
 	threshold.Operator = ThresholdOperatorEq
-	threshold.Validate()
+	err := threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log(threshold.Eval(map[string]interface{}{
 		"data": maps.Map{
 			"version": "1.0.25",
@@ -133,7 +154,10 @@ func TestThreshold_Eval_Date(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "new Date().getTime() / 1000 - ${timestamp}"
 	threshold.Operator = ThresholdOperatorGt
-	threshold.Validate()
+	err := threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log(threshold.Eval(map[string]interface{}{
 		"timestamp": time.Now().Unix() - 10,
 	}, nil))
@@ -152,7 +176,10 @@ func TestThreshold_Eval_Dollar(t *testing.T) {
 	threshold.Param = "${a.$.percent}"
 	threshold.Operator = ThresholdOperatorGt
 	threshold.Value = "81"
-	threshold.Validate()
+	err := threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
 	t.Log(threshold.TestRow(maps.Map{
 		"a": []maps.Map{
@@ -183,7 +210,10 @@ func TestThreshold_Eval_Dollar2(t *testing.T) {
 	threshold.Param = "${$.percent}"
 	threshold.Operator = ThresholdOperatorGt
 	threshold.Value = "81"
-	threshold.Validate()
+	err := threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
 	t.Log(threshold.Test([]maps.Map{
 		{
@@ -206,7 +236,10 @@ func TestThreshold_Eval_Dollar3(t *testing.T) {
 	threshold.Param = "${$}"
 	threshold.Operator = ThresholdOperatorGt
 	threshold.Value = "3"
-	threshold.Validate()
+	err := threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
 	t.Log(threshold.Test([]int{1, 2, 3, 4}, nil))
 }
@@ -216,7 +249,10 @@ func TestThreshold_Eval_Nil(t *testing.T) {
 	threshold.Param = "${0}"
 	threshold.Operator = ThresholdOperatorGte
 	threshold.Value = "0"
-	threshold.Validate()
+	err := threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
 	t.Log(threshold.Test(nil, nil))
 }
@@ -225,7 +261,10 @@ func TestThreshold_Old(t *testing.T) {
 	threshold := NewThreshold()
 	threshold.Param = "${rows} - ${OLD.rows234}"
 	threshold.Operator = ThresholdOperatorEq
-	threshold.Validate()
+	err := threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log(threshold.Eval(map[string]interface{}{
 		"rows": 1,
 	}, map[string]interface{}{
@@ -238,7 +277,10 @@ func TestThreshold_Old2(t *testing.T) {
 	threshold.Param = "Math.abs(${0} - ${OLD})"
 	threshold.Operator = ThresholdOperatorEq
 	threshold.Value = "333"
-	threshold.Validate()
+	err := threshold.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Log(threshold.Test(123, 456, ))
 }
 

@@ -3,7 +3,6 @@ package agents
 import (
 	"errors"
 	"fmt"
-	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -17,7 +16,7 @@ func EvalParam(param string, value interface{}, old interface{}, varMapping maps
 		old = value
 	}
 	var resultErr error = nil
-	paramValue := teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(param, func(s string) string {
+	paramValue := thresholdRegexpParamNamedVariable.ReplaceAllStringFunc(param, func(s string) string {
 		varName := s[2 : len(s)-1]
 
 		// 从varMapping中查找
@@ -27,8 +26,13 @@ func EvalParam(param string, value interface{}, old interface{}, varMapping maps
 			if index > 0 {
 				firstKey = varName[:index]
 			}
+			firstKey = strings.TrimSpace(firstKey)
 			if varMapping.Has(firstKey) {
-				result := teautils.Get(varMapping, strings.Split(varName, "."))
+				keys := strings.Split(varName, ".")
+				for index, key := range keys {
+					keys[index] = strings.TrimSpace(key)
+				}
+				result := teautils.Get(varMapping, keys)
 				if result == nil {
 					return ""
 				}
@@ -81,7 +85,11 @@ func EvalParam(param string, value interface{}, old interface{}, varMapping maps
 			return "0"
 		default:
 			if types.IsSlice(value) || types.IsMap(value) {
-				result := teautils.Get(v, strings.Split(varName, "."))
+				keys := strings.Split(varName, ".")
+				for index, key := range keys {
+					keys[index] = strings.TrimSpace(key)
+				}
+				result := teautils.Get(v, keys)
 				if result == nil {
 					return ""
 				}

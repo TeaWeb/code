@@ -14,7 +14,7 @@ import (
 )
 
 // 参数值正则
-var thresholdRegexpParamNamedVariable = regexp.MustCompile("\\${[$\\w.-]+}")
+var thresholdRegexpParamNamedVariable = regexp.MustCompile("\\${[$\\w. \t-]+}")
 
 // 阈值定义
 type Threshold struct {
