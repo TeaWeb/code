@@ -73,7 +73,7 @@ func FindSharedAgents(currentAgentId string, groupIds []string, app *agents.AppC
 	result := []*agents.AgentConfig{}
 	if app.IsSharedWithGroup {
 		for _, agent := range agents.AllSharedAgents() {
-			if agent.Id == currentAgentId || !agent.InGroups(groupIds) {
+			if agent.Id == currentAgentId || !agent.BelongsToGroups(groupIds) {
 				continue
 			}
 			if !agent.HasApp(app.Id) {
@@ -91,7 +91,7 @@ func FindSharedAgents(currentAgentId string, groupIds []string, app *agents.AppC
 func SyncApp(currentAgentId string, groupIds []string, app *agents.AppConfig, event *AgentEvent, op func(agent *agents.AgentConfig) error) error {
 	if app.IsSharedWithGroup { // 添加共享
 		for _, agent := range agents.AllSharedAgents() {
-			if agent.Id == currentAgentId || !agent.InGroups(groupIds) {
+			if agent.Id == currentAgentId || !agent.BelongsToGroups(groupIds) {
 				continue
 			}
 			agent.ReplaceApp(app)
@@ -155,7 +155,7 @@ func SyncApp(currentAgentId string, groupIds []string, app *agents.AppConfig, ev
 func SyncAppEvent(currentAgentId string, groupIds []string, app *agents.AppConfig, event *AgentEvent) error {
 	if app.IsSharedWithGroup {
 		for _, agent := range agents.AllSharedAgents() {
-			if agent.Id == currentAgentId || !agent.InGroups(groupIds) {
+			if agent.Id == currentAgentId || !agent.BelongsToGroups(groupIds) {
 				continue
 			}
 			if !agent.HasApp(app.Id) {
@@ -172,7 +172,7 @@ func SyncAppEvent(currentAgentId string, groupIds []string, app *agents.AppConfi
 func SyncRemoveChart(currentAgentId string, groupIds []string, app *agents.AppConfig, chartId string) error {
 	if app.IsSharedWithGroup {
 		for _, agent := range agents.AllSharedAgents() {
-			if agent.Id == currentAgentId || !agent.InGroups(groupIds) {
+			if agent.Id == currentAgentId || !agent.BelongsToGroups(groupIds) {
 				continue
 			}
 			if !agent.HasApp(app.Id) {
@@ -193,7 +193,7 @@ func SyncRemoveChart(currentAgentId string, groupIds []string, app *agents.AppCo
 func SyncAddChart(currentAgentId string, groupIds []string, app *agents.AppConfig, itemId string, chartId string) error {
 	if app.IsSharedWithGroup {
 		for _, agent := range agents.AllSharedAgents() {
-			if agent.Id == currentAgentId || !agent.InGroups(groupIds) {
+			if agent.Id == currentAgentId || !agent.BelongsToGroups(groupIds) {
 				continue
 			}
 			if !agent.HasApp(app.Id) {

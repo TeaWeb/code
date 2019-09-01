@@ -151,6 +151,7 @@ widget.run = function () {
 }
 
 // 检查版本更新
+// deprecated in v0.1.8
 func (this *IndexAction) checkUpgrade(agent *agents.AgentConfig) {
 	if len(agent.TeaVersion) == 0 { // 0.1.7之前
 		isChanged := false

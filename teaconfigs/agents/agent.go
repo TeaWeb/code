@@ -316,9 +316,12 @@ func (this *AgentConfig) RemoveGroup(groupId string) {
 }
 
 // 判断是否有某些分组
-func (this *AgentConfig) InGroups(groupIds []string) bool {
-	if len(this.GroupIds) == 0 && len(groupIds) == 0 {
-		return true
+func (this *AgentConfig) BelongsToGroups(groupIds []string) bool {
+	if len(this.GroupIds) == 0 {
+		this.GroupIds = []string{"default"}
+	}
+	if len(groupIds) == 0 {
+		groupIds = []string{"default"}
 	}
 	for _, groupId := range groupIds {
 		b := lists.ContainsString(this.GroupIds, groupId)
@@ -327,6 +330,17 @@ func (this *AgentConfig) InGroups(groupIds []string) bool {
 		}
 	}
 	return false
+}
+
+// 判断是否有某个分组
+func (this *AgentConfig) BelongsToGroup(groupId string) bool {
+	if len(this.GroupIds) == 0 {
+		this.GroupIds = []string{"default"}
+	}
+	if len(groupId) == 0 {
+		groupId = "default"
+	}
+	return lists.ContainsString(this.GroupIds, groupId)
 }
 
 // 添加内置的App
@@ -599,7 +613,7 @@ func (this *AgentConfig) GroupName() string {
 		return "默认分组"
 	}
 
-	group := SharedGroupConfig().FindGroup(groupId)
+	group := SharedGroupList().FindGroup(groupId)
 	if group == nil {
 		return "默认分组"
 	}

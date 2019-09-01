@@ -14,18 +14,9 @@ func (this *AddNoticeReceiversAction) Run(params struct {
 	GroupId string
 	Level   notices.NoticeLevel
 }) {
-	var group *agents.Group = nil
-	if len(params.GroupId) == 0 || params.GroupId == "default" {
-		group = &agents.Group{
-			Id:   "",
-			Name: agents.LoadDefaultGroup().Name,
-			On:   true,
-		}
-	} else {
-		group = agents.SharedGroupConfig().FindGroup(params.GroupId)
-		if group == nil {
-			this.Fail("Group不存在")
-		}
+	group := agents.SharedGroupList().FindGroup(params.GroupId)
+	if group == nil {
+		this.Fail("Group不存在")
 	}
 
 	level := notices.FindNoticeLevel(params.Level)
@@ -98,19 +89,10 @@ func (this *AddNoticeReceiversAction) RunPost(params struct {
 	receiver.MediaId = params.MediaId
 	receiver.User = params.User
 
-	config := agents.SharedGroupConfig()
+	config := agents.SharedGroupList()
 	group := config.FindGroup(params.GroupId)
 	if group == nil {
-		if len(params.GroupId) == 0 {
-			group = &agents.Group{
-				Id:   "",
-				Name: agents.LoadDefaultGroup().Name,
-				On:   true,
-			}
-			config.AddGroup(group)
-		} else {
-			this.Fail("找不到Group")
-		}
+		this.Fail("找不到Group")
 	}
 
 	group.AddNoticeReceiver(params.Level, receiver)

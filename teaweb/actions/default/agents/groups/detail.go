@@ -4,7 +4,6 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
@@ -15,15 +14,11 @@ type DetailAction actions.Action
 func (this *DetailAction) Run(params struct {
 	GroupId string
 }) {
-	if len(params.GroupId) == 0 || params.GroupId == "default" {
-		this.Data["group"] = agents.LoadDefaultGroup()
-	} else {
-		group := agents.SharedGroupConfig().FindGroup(params.GroupId)
-		if group == nil {
-			this.Fail("找不到Group")
-		}
-		this.Data["group"] = group
+	group := agents.SharedGroupList().FindGroup(params.GroupId)
+	if group == nil {
+		this.Fail("找不到Group")
 	}
+	this.Data["group"] = group
 
 	// Agents列表
 	groupAgents := []maps.Map{}
@@ -32,7 +27,7 @@ func (this *DetailAction) Run(params struct {
 		logs.Error(err)
 	} else {
 		for _, a := range agentList.FindAllAgents() {
-			if (len(a.GroupIds) == 0 && len(params.GroupId) == 0) || lists.ContainsString(a.GroupIds, params.GroupId) {
+			if a.BelongsToGroup(params.GroupId) {
 				_, isWaiting := agentutils.CheckAgentIsWaiting(a.Id)
 				groupAgents = append(groupAgents, maps.Map{
 					"on":        a.On,

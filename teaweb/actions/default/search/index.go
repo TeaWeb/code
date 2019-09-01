@@ -194,7 +194,7 @@ func (this *IndexAction) RunPost(params struct {
 	}
 
 	// agent分组
-	for _, group := range agents.SharedGroupConfig().FindAllGroups() {
+	for _, group := range agents.SharedGroupList().FindAllGroups() {
 		if matched, name, tags := group.MatchKeyword(params.Keyword); matched {
 			results = append(results, maps.Map{
 				"type": "主机分组",

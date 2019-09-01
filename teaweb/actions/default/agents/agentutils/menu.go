@@ -41,13 +41,14 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 			actionCode = "notices"
 		}
 
-		state, isWaiting := CheckAgentIsWaiting("local")
 		topSubName := ""
 		if lists.ContainsAny([]string{"/agents/board", "/agents/menu"}, action.Request.URL.Path) {
 			topSubName = ""
 		}
-		defaultGroup := agents.LoadDefaultGroup()
-		menu := menuGroup.FindMenu("", defaultGroup.Name+topSubName)
+		defaultGroup := agents.SharedGroupList().FindGroup("default")
+
+		state, isWaiting := CheckAgentIsWaiting("local")
+		menu := menuGroup.FindMenu("default", defaultGroup.Name+topSubName)
 		if isWaiting {
 			subName := "已连接"
 			if state != nil && len(state.OsName) > 0 {
@@ -62,6 +63,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 
 		// agent列表
 		allAgents := agents.SharedAgents()
+
 		counterMapping := map[string]int{} // groupId => count
 		maxCount := 50
 		for _, agent := range allAgents {
@@ -69,9 +71,9 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 
 			var menu *utils.Menu = nil
 			if len(agent.GroupIds) > 0 {
-				group := agents.SharedGroupConfig().FindGroup(agent.GroupIds[0])
+				group := agents.SharedGroupList().FindGroup(agent.GroupIds[0])
 				if group == nil {
-					menu = menuGroup.FindMenu("", defaultGroup.Name+topSubName)
+					menu = menuGroup.FindMenu("default", defaultGroup.Name+topSubName)
 				} else {
 					menu = menuGroup.FindMenu(group.Id, group.Name)
 					menu.Index = group.Index
@@ -91,7 +93,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 					}
 				}
 			} else {
-				menu = menuGroup.FindMenu("", defaultGroup.Name+topSubName)
+				menu = menuGroup.FindMenu("default", defaultGroup.Name+topSubName)
 
 				// 计算数量
 				groupId := ""

@@ -128,11 +128,11 @@ func sendDisconnectNotice(agent *agents.AgentConfig) {
 
 		// 查找group设置
 		if !isNotified {
-			groupId := ""
+			groupId := "default"
 			if len(agent.GroupIds) > 0 {
 				groupId = agent.GroupIds[0]
 			}
-			group := agents.SharedGroupConfig().FindGroup(groupId)
+			group := agents.SharedGroupList().FindGroup(groupId)
 			if group != nil {
 				receivers, found := group.NoticeSetting[level]
 				if found && len(receivers) > 0 {
@@ -227,11 +227,11 @@ func sendConnectNotice(agent *agents.AgentConfig) {
 
 		// 查找group设置
 		if !isNotified {
-			groupId := ""
+			groupId := "default"
 			if len(agent.GroupIds) > 0 {
 				groupId = agent.GroupIds[0]
 			}
-			group := agents.SharedGroupConfig().FindGroup(groupId)
+			group := agents.SharedGroupList().FindGroup(groupId)
 			if group != nil {
 				receivers, found := group.NoticeSetting[level]
 				if found && len(receivers) > 0 {

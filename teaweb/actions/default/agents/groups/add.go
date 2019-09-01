@@ -26,7 +26,7 @@ func (this *AddAction) RunPost(params struct {
 		Require("请输入分组名称")
 
 	group := agents.NewGroup(params.Name)
-	config := agents.SharedGroupConfig()
+	config := agents.SharedGroupList()
 	config.AddGroup(group)
 	err := config.Save()
 	if err != nil {

@@ -3,9 +3,9 @@ package agents
 import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"io/ioutil"
@@ -14,10 +14,12 @@ import (
 // Agent分组
 type Group struct {
 	Id            string                                            `yaml:"id" json:"id"`
+	IsDefault     bool                                              `yaml:"isDefault" json:"isDefault"`
 	On            bool                                              `yaml:"on" json:"on"`
 	Name          string                                            `yaml:"name" json:"name"`
 	Index         int                                               `yaml:"index" json:"index"`
 	NoticeSetting map[notices.NoticeLevel][]*notices.NoticeReceiver `yaml:"noticeSetting" json:"noticeSetting"`
+	Key           string                                            `yaml:"key" json:"key"` // 密钥
 }
 
 // 获取新分组
@@ -30,33 +32,20 @@ func NewGroup(name string) *Group {
 }
 
 // 默认的分组
-// 一定会有返回值
-func LoadDefaultGroup() *Group {
-	data, err := ioutil.ReadFile(DefaultGroupFile())
+// deprecated in v0.1.8
+func loadOldDefaultGroup() *Group {
+	data, err := ioutil.ReadFile(Tea.ConfigFile("agents/group.default.conf"))
 	if err != nil {
-		return &Group{
-			Id:   "default",
-			On:   true,
-			Name: "默认分组",
-		}
+		return nil
 	}
 	group := new(Group)
 	err = yaml.Unmarshal(data, group)
 	if err != nil {
-		logs.Error(err)
-		return &Group{
-			Id:   "default",
-			On:   true,
-			Name: "默认分组",
-		}
+		return nil
 	}
 
+	group.IsDefault = true
 	return group
-}
-
-// 默认的分组文件名
-func DefaultGroupFile() string {
-	return Tea.ConfigFile("agents/group.default.conf")
 }
 
 // 添加通知接收者
@@ -145,4 +134,17 @@ func (this *Group) WriteToFile(path string) error {
 		return err
 	}
 	return ioutil.WriteFile(path, data, 0666)
+}
+
+// 生成密钥
+func (this *Group) GenerateKey() string {
+	return stringutil.Rand(32)
+}
+
+// 匹配关键词
+func (this *Group) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
+	if teautils.MatchKeyword(this.Name, keyword) {
+		return true, this.Name, nil
+	}
+	return
 }

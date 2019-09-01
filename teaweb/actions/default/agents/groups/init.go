@@ -24,6 +24,7 @@ func init() {
 			Get("/noticeReceivers", new(NoticeReceiversAction)).
 			GetPost("/addNoticeReceivers", new(AddNoticeReceiversAction)).
 			Post("/deleteNoticeReceivers", new(DeleteNoticeReceiversAction)).
+			Post("/generateKey", new(GenerateKeyAction)).
 			EndAll()
 	})
 }

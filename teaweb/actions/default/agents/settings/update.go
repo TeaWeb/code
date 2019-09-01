@@ -14,7 +14,6 @@ func (this *UpdateAction) Run(params struct {
 	AgentId string
 }) {
 	this.Data["selectedTab"] = "detail"
-	this.Data["defaultGroupName"] = agents.LoadDefaultGroup().Name
 
 	agent := agents.NewAgentConfigFromId(params.AgentId)
 	if agent == nil {
@@ -22,11 +21,11 @@ func (this *UpdateAction) Run(params struct {
 	}
 
 	this.Data["agent"] = agent
-	this.Data["groups"] = agents.SharedGroupConfig().Groups
+	this.Data["groups"] = agents.SharedGroupList().Groups
 	if len(agent.GroupIds) > 0 {
 		this.Data["groupId"] = agent.GroupIds[0]
 	} else {
-		this.Data["groupId"] = ""
+		this.Data["groupId"] = "default"
 	}
 
 	this.Show()

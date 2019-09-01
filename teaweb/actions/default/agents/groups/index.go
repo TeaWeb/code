@@ -4,7 +4,6 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -18,12 +17,11 @@ func (this *IndexAction) Run(params struct{}) {
 	}
 	allAgents := agentsList.FindAllAgents()
 
-	countDefaultReceivers := 0
 	groups := []maps.Map{}
-	for _, group := range agents.SharedGroupConfig().Groups {
+	for _, group := range agents.SharedGroupList().Groups {
 		countAgents := 0
 		for _, agent := range allAgents {
-			if lists.ContainsString(agent.GroupIds, group.Id) {
+			if agent.BelongsToGroup(group.Id) {
 				countAgents++
 			}
 		}
@@ -33,40 +31,17 @@ func (this *IndexAction) Run(params struct{}) {
 			countReceivers += len(receivers)
 		}
 
-		if len(group.Id) == 0 {
-			countDefaultReceivers = countReceivers
-			continue
-		} else {
-			groups = append(groups, maps.Map{
-				"id":             group.Id,
-				"name":           group.Name,
-				"on":             group.On,
-				"countAgents":    countAgents,
-				"countReceivers": countReceivers,
-				"canDelete":      true,
-			})
-		}
+		groups = append(groups, maps.Map{
+			"id":             group.Id,
+			"name":           group.Name,
+			"on":             group.On,
+			"countAgents":    countAgents,
+			"countReceivers": countReceivers,
+			"canDelete":      !group.IsDefault,
+		})
 	}
 
-	// 默认分组
-	countDefaultAgents := 0
-	for _, agent := range allAgents {
-		if len(agent.GroupIds) == 0 && len(agent.Id) > 0 {
-			countDefaultAgents++
-		}
-	}
-
-	defaultGroupObject := agents.LoadDefaultGroup()
-	defaultGroup := maps.Map{
-		"id":             "",
-		"name":           "[" + defaultGroupObject.Name + "]",
-		"on":             true,
-		"countAgents":    countDefaultAgents,
-		"countReceivers": countDefaultReceivers,
-		"canDelete":      false,
-	}
-
-	this.Data["groups"] = append([]maps.Map{defaultGroup}, groups ...)
+	this.Data["groups"] = groups
 	this.Data["noticeLevels"] = notices.AllNoticeLevels()
 
 	this.Show()

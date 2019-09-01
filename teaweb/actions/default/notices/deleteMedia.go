@@ -13,7 +13,7 @@ func (this *DeleteMediaAction) Run(params struct {
 	MediaId string
 }) {
 	// 删除agent group中的相关接收人
-	groupConfig := agents.SharedGroupConfig()
+	groupConfig := agents.SharedGroupList()
 	isChanged := false // 有变化才会保存
 	for _, group := range groupConfig.FindAllGroups() {
 		found := group.RemoveMedia(params.MediaId)

@@ -11,6 +11,14 @@ type DeleteAction actions.Action
 func (this *DeleteAction) Run(params struct {
 	GroupId string
 }) {
+	if len(params.GroupId) == 0 {
+		this.Fail("请输入要删除的分组ID")
+	}
+
+	if params.GroupId == "default" {
+		this.Fail("无法删除默认分组")
+	}
+
 	// 删除agent中的groupId
 	agentList, err := agents.SharedAgentList()
 	if err != nil {
@@ -25,7 +33,7 @@ func (this *DeleteAction) Run(params struct {
 		}
 	}
 
-	config := agents.SharedGroupConfig()
+	config := agents.SharedGroupList()
 	config.RemoveGroup(params.GroupId)
 	err = config.Save()
 	if err != nil {

@@ -401,7 +401,7 @@ func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, i
 		if len(agent.GroupIds) > 0 {
 			groupId = agent.GroupIds[0]
 		}
-		group := agents.SharedGroupConfig().FindGroup(groupId)
+		group := agents.SharedGroupList().FindGroup(groupId)
 		if group != nil {
 			receivers := group.FindAllNoticeReceivers(receiverLevels...)
 			if len(receivers) > 0 {

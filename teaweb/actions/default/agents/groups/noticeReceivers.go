@@ -14,17 +14,9 @@ type NoticeReceiversAction actions.Action
 func (this *NoticeReceiversAction) Run(params struct {
 	GroupId string
 }) {
-	group := agents.SharedGroupConfig().FindGroup(params.GroupId)
+	group := agents.SharedGroupList().FindGroup(params.GroupId)
 	if group == nil {
-		if len(params.GroupId) == 0 || params.GroupId == "default" {
-			group = &agents.Group{
-				Id:   "",
-				Name: agents.LoadDefaultGroup().Name,
-				On:   true,
-			}
-		} else {
-			this.Fail("Group不存在")
-		}
+		this.Fail("Group不存在")
 	}
 
 	this.Data["group"] = group

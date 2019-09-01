@@ -12,7 +12,7 @@ type IndexAction actions.Action
 func (this *IndexAction) Run(params struct {
 	AgentId string
 }) {
-	this.Data["defaultGroupName"] = agents.LoadDefaultGroup().Name
+	this.Data["defaultGroupName"] = agents.SharedGroupList().FindDefaultGroup().Name
 	this.Data["selectedTab"] = "detail"
 
 	agent := agents.NewAgentConfigFromId(params.AgentId)
@@ -37,7 +37,7 @@ func (this *IndexAction) Run(params struct {
 
 	// 分组
 	groupNames := []string{}
-	config := agents.SharedGroupConfig()
+	config := agents.SharedGroupList()
 	for _, groupId := range agent.GroupIds {
 		group := config.FindGroup(groupId)
 		if group == nil {

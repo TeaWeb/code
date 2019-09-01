@@ -14,7 +14,7 @@ func (this *DeleteNoticeReceiversAction) Run(params struct {
 	Level      notices.NoticeLevel
 	ReceiverId string
 }) {
-	config := agents.SharedGroupConfig()
+	config := agents.SharedGroupList()
 	group := config.FindGroup(params.GroupId)
 	if group == nil {
 		this.Fail("要删除的组不存在")
