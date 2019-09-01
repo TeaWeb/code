@@ -193,6 +193,18 @@ func (this *IndexAction) RunPost(params struct {
 		}
 	}
 
+	// agent分组
+	for _, group := range agents.SharedGroupConfig().FindAllGroups() {
+		if matched, name, tags := group.MatchKeyword(params.Keyword); matched {
+			results = append(results, maps.Map{
+				"type": "主机分组",
+				"name": name,
+				"tags": tags,
+				"link": "/agents/groups/detail?groupId=" + group.Id,
+			})
+		}
+	}
+
 	// 通知
 	if teautils.MatchKeyword("通知", params.Keyword) {
 		results = append(results, maps.Map{
