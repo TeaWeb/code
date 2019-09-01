@@ -91,10 +91,7 @@ func (this *TCPClient) Close() error {
 	lCloseError := this.lConn.Close()
 
 	if this.rConn != nil {
-		err := this.rConn.Close()
-		if err != nil {
-			logs.Error(err)
-		}
+		_ = this.rConn.Close()
 	}
 
 	// 关闭stream
