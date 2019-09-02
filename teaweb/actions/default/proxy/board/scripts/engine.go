@@ -487,6 +487,15 @@ func (this *Engine) callStatExecuteQuery(call otto.FunctionCall) otto.Value {
 		v, err = teadb.
 			ServerValueDAO().
 			QueryValues(query)
+	case "find":
+		result, err1 := teadb.ServerValueDAO().
+			QueryValues(query)
+		if err1 != nil {
+			err = err1
+		}
+		if len(result) > 0 {
+			v = result[0]
+		}
 	default:
 		logs.Error(errors.New("unsupported action '" + action + "'"))
 		return otto.UndefinedValue()
