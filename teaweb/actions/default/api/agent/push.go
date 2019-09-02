@@ -345,99 +345,29 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	}
 }
 
-// 通知消息
-func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, itemId string, setting *notices.NoticeSetting, level notices.NoticeLevel, subject string, message string, isSuccess bool) []string {
-
-	isNotified := false
-	receiverIds := []string{}
-
+// 发送通知消息
+func (this *PushAction) notifyMessage(agent *agents.AgentConfig, appId string, itemId string, setting *notices.NoticeSetting, level notices.NoticeLevel, subject string, message string, isSuccess bool) (receiverIds []string) {
 	receiverLevels := []notices.NoticeLevel{level}
-	if isSuccess {
+	receivers := this.findNoticeReceivers(agent, appId, setting, receiverLevels)
+	if len(receivers) == 0 && isSuccess {
 		receiverLevels = append(receiverLevels, notices.NoticeLevelError, notices.NoticeLevelWarning)
+		receivers = this.findNoticeReceivers(agent, appId, setting, receiverLevels)
+	}
+	if len(receivers) == 0 {
+		return []string{}
 	}
 
-	// 查找App的通知设置
-	app := agent.FindApp(appId)
-	if app != nil {
-		receivers := app.FindAllNoticeReceivers(receiverLevels...)
-		if len(receivers) > 0 {
-			isNotified = true
-			receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]"+subject, message, func(receiverId string, minutes int) int {
-				count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
-					"agent.agentId": agent.Id,
-					"agent.appId":   appId,
-					"agent.itemId":  itemId,
-				}, minutes)
-				if err != nil {
-					logs.Error(err)
-				}
-				return count
-			})
+	receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]"+subject, message, func(receiverId string, minutes int) int {
+		count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
+			"agent.agentId": agent.Id,
+			"agent.appId":   appId,
+			"agent.itemId":  itemId,
+		}, minutes)
+		if err != nil {
+			logs.Error(err)
 		}
-	}
-
-	// 查找Agent的通知设置
-	if !isNotified {
-		receivers := agent.FindAllNoticeReceivers(receiverLevels...)
-		if len(receivers) > 0 {
-			isNotified = true
-			receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]"+subject, message, func(receiverId string, minutes int) int {
-				count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
-					"agent.agentId": agent.Id,
-					"agent.appId":   appId,
-					"agent.itemId":  itemId,
-				}, minutes)
-				if err != nil {
-					logs.Error(err)
-				}
-				return count
-			})
-		}
-	}
-
-	// 查找分组的通知设置
-	if !isNotified {
-		groupId := ""
-		if len(agent.GroupIds) > 0 {
-			groupId = agent.GroupIds[0]
-		}
-		group := agents.SharedGroupList().FindGroup(groupId)
-		if group != nil {
-			receivers := group.FindAllNoticeReceivers(receiverLevels...)
-			if len(receivers) > 0 {
-				isNotified = true
-				receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]"+subject, message, func(receiverId string, minutes int) int {
-					count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
-						"agent.agentId": agent.Id,
-						"agent.appId":   appId,
-						"agent.itemId":  itemId,
-					}, minutes)
-					if err != nil {
-						logs.Error(err)
-					}
-					return count
-				})
-			}
-		}
-	}
-
-	// 全局通知
-	if !isNotified {
-		receivers := setting.FindAllNoticeReceivers(receiverLevels...)
-		if len(receivers) > 0 {
-			receiverIds = setting.NotifyReceivers(level, receivers, "["+agent.GroupName()+"]["+agent.Name+"]"+subject, message, func(receiverId string, minutes int) int {
-				count, err := teadb.NoticeDAO().CountReceivedNotices(receiverId, map[string]interface{}{
-					"agent.agentId": agent.Id,
-					"agent.appId":   appId,
-					"agent.itemId":  itemId,
-				}, minutes)
-				if err != nil {
-					logs.Error(err)
-				}
-				return count
-			})
-		}
-	}
+		return count
+	})
 
 	return receiverIds
 }
@@ -452,4 +382,49 @@ func (this *PushAction) findLatestAgentValue(agentId string, appId string, itemI
 		return nil, nil
 	}
 	return v.Value, nil
+}
+
+// 查找接收者
+func (this *PushAction) findNoticeReceivers(agent *agents.AgentConfig, appId string, setting *notices.NoticeSetting, receiverLevels []notices.NoticeLevel) (receivers []*notices.NoticeReceiver) {
+	if agent == nil {
+		return
+	}
+
+	// 查找App的通知设置
+	app := agent.FindApp(appId)
+	if app != nil {
+		receivers = app.FindAllNoticeReceivers(receiverLevels...)
+		if len(receivers) > 0 {
+			return
+		}
+	}
+
+	// 查找Agent的通知设置
+	receivers = agent.FindAllNoticeReceivers(receiverLevels...)
+	if len(receivers) > 0 {
+		return receivers
+	}
+
+	// 查找分组的通知设置
+	groupId := "default"
+	if len(agent.GroupIds) > 0 {
+		groupId = agent.GroupIds[0]
+	}
+	group := agents.SharedGroupList().FindGroup(groupId)
+	if group != nil {
+		receivers = group.FindAllNoticeReceivers(receiverLevels...)
+		if len(receivers) > 0 {
+			return
+		}
+	}
+
+	// 全局通知
+	if setting != nil {
+		receivers = setting.FindAllNoticeReceivers(receiverLevels...)
+		if len(receivers) > 0 {
+			return
+		}
+	}
+
+	return
 }
