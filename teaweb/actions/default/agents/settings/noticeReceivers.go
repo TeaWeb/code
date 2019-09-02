@@ -3,6 +3,7 @@ package settings
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -22,32 +23,32 @@ func (this *NoticeReceiversAction) Run(params struct {
 	}
 	this.Data["agent"] = agent
 
+	group := agent.FirstGroup()
+	this.Data["groupId"] = group.Id
 	this.Data["levels"] = lists.Map(notices.AllNoticeLevels(), func(k int, v interface{}) interface{} {
 		level := v.(maps.Map)
 		code := level["code"].(notices.NoticeLevel)
 		receivers, found := agent.NoticeSetting[code]
+
+		// 当前Agent的设置
 		if found && len(receivers) > 0 {
-			level["receivers"] = lists.Map(receivers, func(k int, v interface{}) interface{} {
-				receiver := v.(*notices.NoticeReceiver)
-
-				m := maps.Map{
-					"name":      receiver.Name,
-					"id":        receiver.Id,
-					"user":      receiver.User,
-					"mediaType": "",
-				}
-
-				// 媒介
-				media := notices.SharedNoticeSetting().FindMedia(receiver.MediaId)
-				if media != nil {
-					m["mediaType"] = media.Name
-				}
-
-				return m
-			})
+			level["receivers"] = agentutils.ConvertReceiversToMaps(receivers)
 		} else {
 			level["receivers"] = []interface{}{}
 		}
+
+		// 当前所属分组的设置
+		if group != nil {
+			groupReceivers, ok := group.NoticeSetting[code]
+			if ok {
+				level["groupReceivers"] = agentutils.ConvertReceiversToMaps(groupReceivers)
+			} else {
+				level["groupReceivers"] = []interface{}{}
+			}
+		} else {
+			level["groupReceivers"] = []interface{}{}
+		}
+
 		return level
 	})
 
