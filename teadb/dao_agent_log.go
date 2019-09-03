@@ -5,6 +5,7 @@ import (
 )
 
 type AgentLogDAOInterface interface {
+	// 初始化
 	Init()
 
 	// 插入一条数据

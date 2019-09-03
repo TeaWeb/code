@@ -6,6 +6,7 @@ import (
 )
 
 type NoticeDAOInterface interface {
+	// 初始化
 	Init()
 
 	// 写入一个通知

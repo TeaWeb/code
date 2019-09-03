@@ -6,7 +6,10 @@ import (
 )
 
 type ServerValueDAOInterface interface {
+	// 初始化
 	Init()
+
+	// 表名
 	TableName(serverId string) string
 
 	// 插入新数据
