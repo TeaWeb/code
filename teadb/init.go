@@ -1,5 +1,9 @@
 package teadb
 
+import "github.com/iwind/TeaGo"
+
 func init() {
-	SetupDB()
+	TeaGo.BeforeStart(func(server *TeaGo.Server) {
+		SetupDB()
+	})
 }
