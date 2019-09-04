@@ -20,15 +20,24 @@ func (this *Request) callShutdown(writer *ResponseWriter) error {
 			msg := "404 page not found: '" + this.shutdownPage + "'"
 
 			writer.WriteHeader(http.StatusNotFound)
-			writer.Write([]byte(msg))
+			_, err = writer.Write([]byte(msg))
+			if err != nil {
+				logs.Error(err)
+			}
 			return err
 		}
+
+		// 自定义响应Headers
+		this.WriteResponseHeaders(writer, http.StatusOK)
 
 		writer.WriteHeader(http.StatusOK)
 		buf := bytePool1k.Get()
 		_, err = io.CopyBuffer(writer, fp, buf)
 		bytePool1k.Put(buf)
-		fp.Close()
+		err = fp.Close()
+		if err != nil {
+			logs.Error(err)
+		}
 
 		return err
 	}

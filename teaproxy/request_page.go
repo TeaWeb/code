@@ -15,6 +15,7 @@ func (this *Request) callPage(writer *ResponseWriter, status int) (shouldStop bo
 	if len(this.pages) == 0 {
 		return false
 	}
+
 	for _, page := range this.pages {
 		if page.Match(status) {
 			if urlPrefixRegexp.MatchString(page.URL) {
@@ -31,11 +32,16 @@ func (this *Request) callPage(writer *ResponseWriter, status int) (shouldStop bo
 					msg := "404 page not found: '" + page.URL + "'"
 
 					writer.WriteHeader(http.StatusNotFound)
-					writer.Write([]byte(msg))
+					_, err := writer.Write([]byte(msg))
+					if err != nil {
+						logs.Error(err)
+					}
 					return true
 				}
 
-				// writer.WriteHeader(status)
+				// 自定义响应Headers
+				this.WriteResponseHeaders(writer, http.StatusOK)
+
 				// 状态码改成200
 				writer.WriteHeader(http.StatusOK)
 				buf := bytePool1k.Get()
@@ -44,7 +50,10 @@ func (this *Request) callPage(writer *ResponseWriter, status int) (shouldStop bo
 				if err != nil {
 					logs.Error(err)
 				}
-				fp.Close()
+				err = fp.Close()
+				if err != nil {
+					logs.Error(err)
+				}
 			}
 
 			return true
