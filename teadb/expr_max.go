@@ -1,5 +1,6 @@
 package teadb
 
+// 最大值表达式
 type MaxExpr struct {
 	Field string
 }

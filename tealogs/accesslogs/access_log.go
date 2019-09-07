@@ -9,6 +9,7 @@ import (
 	"github.com/TeaWeb/uaparser"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/pquerna/ffjson/ffjson"
 	"path/filepath"
 	"reflect"
@@ -346,6 +347,163 @@ func (this *AccessLog) CleanFields() {
 			this.UserAgent = ""
 		}
 	}
+}
+
+// 设置数据库列值
+func (this *AccessLog) SetDBColumns(v maps.Map) {
+	idString := v.GetString("_id")
+	if len(idString) > 0 {
+		id, err := shared.ObjectIdFromHex(idString)
+		if err != nil {
+			logs.Error(err)
+		} else {
+			this.Id = id
+		}
+	}
+	this.ServerId = v.GetString("serverId")
+	this.BackendId = v.GetString("backendId")
+	this.LocationId = v.GetString("locationId")
+	this.FastcgiId = v.GetString("fastcgiId")
+	this.RewriteId = v.GetString("rewriteId")
+	this.TeaVersion = v.GetString("teaVersion")
+	this.RemoteAddr = v.GetString("remoteAddr")
+	this.RemotePort = v.GetInt("remotePort")
+	this.RemoteUser = v.GetString("remoteUser")
+	this.RequestURI = v.GetString("requestURI")
+	this.RequestPath = v.GetString("requestPath")
+	this.RequestLength = v.GetInt64("requestLength")
+	this.RequestTime = v.GetFloat64("requestTime")
+	this.RequestMethod = v.GetString("requestMethod")
+	this.RequestFilename = v.GetString("requestFilename")
+	this.Scheme = v.GetString("scheme")
+	this.Proto = v.GetString("proto")
+	this.BytesSent = v.GetInt64("bytesSent")
+	this.BodyBytesSent = v.GetInt64("bodyBytesSent")
+	this.Status = v.GetInt("status")
+	this.StatusMessage = v.GetString("statusMessage")
+	this.jsonDecode(v.Get("sentHeader"), &this.SentHeader)
+	this.TimeISO8601 = v.GetString("timeISO8601")
+	this.TimeLocal = v.GetString("timeLocal")
+	this.Msec = v.GetFloat64("msec")
+	this.Timestamp = v.GetInt64("timestamp")
+	this.Host = v.GetString("host")
+	this.Referer = v.GetString("referer")
+	this.UserAgent = v.GetString("userAgent")
+	this.Request = v.GetString("request")
+	this.ContentType = v.GetString("contentType")
+	this.jsonDecode(v.Get("cookie"), &this.Cookie)
+	this.jsonDecode(v.Get("arg"), &this.Arg)
+	this.Args = v.GetString("args")
+	this.QueryString = v.GetString("queryString")
+	this.jsonDecode(v.Get("header"), &this.Header)
+	this.ServerName = v.GetString("serverName")
+	this.ServerPort = v.GetInt("serverPort")
+	this.ServerProtocol = v.GetString("serverProtocol")
+	this.BackendAddress = v.GetString("backendAddress")
+	this.FastcgiAddress = v.GetString("fastcgiAddress")
+	this.RequestData = this.toBytes(v.Get("requestData"))
+	this.ResponseHeaderData = this.toBytes(v.Get("responseHeaderData"))
+	this.ResponseBodyData = this.toBytes(v.Get("responseBodyData"))
+	this.jsonDecode(v.Get("errors"), &this.Errors)
+	this.HasErrors = v.GetInt("hasErrors") > 0
+	this.jsonDecode(v.Get("extend"), &this.Extend)
+	this.jsonDecode(v.Get("attrs"), &this.Attrs)
+}
+
+// 获取数据库列值
+func (this *AccessLog) DBColumns() maps.Map {
+	if this.Id.IsZero() {
+		this.Id = shared.NewObjectId()
+	}
+	hasErrors := 0
+	if this.HasErrors {
+		hasErrors = 1
+	}
+	return maps.Map{
+		"_id":                this.Id.Hex(),
+		"serverId":           this.ServerId,
+		"backendId":          this.BackendId,
+		"locationId":         this.LocationId,
+		"fastcgiId":          this.FastcgiId,
+		"rewriteId":          this.RewriteId,
+		"teaVersion":         this.TeaVersion,
+		"remoteAddr":         this.RemoteAddr,
+		"remotePort":         this.RemotePort,
+		"remoteUser":         this.RemoteUser,
+		"requestURI":         this.RequestURI,
+		"requestPath":        this.RequestPath,
+		"requestLength":      this.RequestLength,
+		"requestTime":        this.RequestTime,
+		"requestMethod":      this.RequestMethod,
+		"requestFilename":    this.RequestFilename,
+		"scheme":             this.Scheme,
+		"proto":              this.Proto,
+		"bytesSent":          this.BytesSent,
+		"bodyBytesSent":      this.BodyBytesSent,
+		"status":             this.Status,
+		"statusMessage":      this.StatusMessage,
+		"sentHeader":         this.jsonEncode(this.SentHeader),
+		"timeISO8601":        this.TimeISO8601,
+		"timeLocal":          this.TimeLocal,
+		"msec":               this.Msec,
+		"timestamp":          this.Timestamp,
+		"host":               this.Host,
+		"referer":            this.Referer,
+		"userAgent":          this.UserAgent,
+		"request":            this.Request,
+		"contentType":        this.ContentType,
+		"cookie":             this.jsonEncode(this.Cookie),
+		"arg":                this.jsonEncode(this.Arg),
+		"args":               this.Args,
+		"queryString":        this.QueryString,
+		"header":             this.jsonEncode(this.Header),
+		"serverName":         this.ServerName,
+		"serverPort":         this.ServerPort,
+		"serverProtocol":     this.ServerProtocol,
+		"backendAddress":     this.BackendAddress,
+		"fastcgiAddress":     this.FastcgiAddress,
+		"requestData":        this.RequestData,
+		"responseHeaderData": this.ResponseHeaderData,
+		"responseBodyData":   this.ResponseBodyData,
+		"errors":             this.jsonEncode(this.Errors),
+		"hasErrors":          hasErrors,
+		"extend":             this.jsonEncode(this.Extend),
+		"attrs":              this.jsonEncode(this.Attrs),
+	}
+}
+
+func (this *AccessLog) jsonEncode(v interface{}) []byte {
+	data, _ := ffjson.Marshal(v)
+	return data
+}
+
+func (this *AccessLog) jsonDecode(data interface{}, vPtr interface{}) {
+	if data == nil {
+		return
+	}
+	b, ok := data.([]byte)
+	if ok {
+		_ = ffjson.Unmarshal(b, vPtr)
+	}
+	s, ok := data.(string)
+	if ok {
+		_ = ffjson.Unmarshal([]byte(s), vPtr)
+	}
+}
+
+func (this *AccessLog) toBytes(v interface{}) []byte {
+	if v == nil {
+		return nil
+	}
+	b, ok := v.([]byte)
+	if ok {
+		return b
+	}
+	s, ok := v.(string)
+	if ok {
+		return []byte(s)
+	}
+	return nil
 }
 
 func (this *AccessLog) parseMime() {

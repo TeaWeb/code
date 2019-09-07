@@ -1,5 +1,6 @@
 package teadb
 
+// 总和表达式
 type SumExpr struct {
 	Field string
 }

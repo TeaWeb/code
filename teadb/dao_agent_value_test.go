@@ -2,6 +2,7 @@ package teadb
 
 import (
 	"encoding/json"
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/iwind/TeaGo/logs"
@@ -12,6 +13,7 @@ import (
 
 func TestAgentValueDAO_Insert(t *testing.T) {
 	dao := AgentValueDAO()
+	node := teaconfigs.SharedNodeConfig()
 
 	{
 		value := agents.NewValue()
@@ -19,6 +21,41 @@ func TestAgentValueDAO_Insert(t *testing.T) {
 		value.AppId = "mysql"
 		value.SetTime(time.Now())
 		value.Value = 4
+		value.ItemId = "ping"
+		value.Error = "error"
+		value.NoticeLevel = notices.NoticeLevelWarning
+		value.IsNotified = true
+		value.Threshold = "${0} gt 10"
+		value.ThresholdId = "abc"
+
+		if node != nil {
+			value.NodeId = node.Id
+		}
+
+		err := dao.Insert(value.AgentId, value)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	{
+		value := agents.NewValue()
+		value.AgentId = "local"
+		value.AppId = "system"
+		value.SetTime(time.Now())
+		value.Value = map[string]interface{}{
+			"load1":  1,
+			"load5":  2,
+			"load15": 2.12,
+		}
+		value.ItemId = "cpu.load"
+		value.Error = ""
+		value.IsNotified = true
+
+		if node != nil {
+			value.NodeId = node.Id
+		}
+
 		err := dao.Insert(value.AgentId, value)
 		if err != nil {
 			t.Fatal(err)
@@ -49,6 +86,11 @@ func TestAgentValueDAO_Insert2(t *testing.T) {
 		NoticeLevel: notices.NoticeLevelWarning,
 	}
 	value.SetTime(time.Now())
+
+	node := teaconfigs.SharedNodeConfig()
+	if node != nil {
+		value.NodeId = node.Id
+	}
 
 	err = AgentValueDAO().Insert("local", value)
 	if err != nil {
@@ -94,6 +136,43 @@ func TestAgentValuedAO_FindLatestItemValueNoError(t *testing.T) {
 	t.Log("createdTime:", timeutil.Format("Y-m-d H:i:s", time.Unix(v.CreatedAt, 0)))
 }
 
+func TestAgentValueDAO_FindLatestItemValues(t *testing.T) {
+	{
+		dao := AgentValueDAO()
+		values, err := dao.FindLatestItemValues("local", "system", "cpu.load", 0, "", 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, v := range values {
+			t.Log(v.Id, v.Value, v.NoticeLevel)
+		}
+	}
+
+	t.Log("===all local===")
+	{
+		dao := AgentValueDAO()
+		values, err := dao.FindLatestItemValues("local", "", "", 0, "", 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, v := range values {
+			t.Log(v.Id, v.Value, v.NoticeLevel)
+		}
+	}
+
+	t.Log("===level & lastId===")
+	{
+		dao := AgentValueDAO()
+		values, err := dao.FindLatestItemValues("local", "", "", notices.NoticeLevelInfo, "123", 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, v := range values {
+			t.Log(v.Id, v.Value, v.NoticeLevel)
+		}
+	}
+}
+
 func TestAgentValueDAO_ListItemValues(t *testing.T) {
 	dao := AgentValueDAO()
 	values, err := dao.ListItemValues("local", "system", "cpu.load", 0, "", 0, 5)
@@ -108,6 +187,7 @@ func TestAgentValueDAO_ListItemValues(t *testing.T) {
 func TestAgentValueDAO_QueryValues(t *testing.T) {
 	dao := AgentValueDAO()
 	q := NewQuery("values.agent.local")
+	//q.Attr("timeFormat.year", timeutil.Format("Y"))
 	q.Limit(10)
 	values, err := dao.QueryValues(q)
 	if err != nil {
@@ -116,15 +196,6 @@ func TestAgentValueDAO_QueryValues(t *testing.T) {
 	for _, v := range values {
 		t.Log(v)
 	}
-}
-
-func TestAgentValueDAO_DropAgentTable(t *testing.T) {
-	dao := AgentValueDAO()
-	err := dao.DropAgentTable("test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("ok")
 }
 
 func TestAgentValueDAO_GroupValues(t *testing.T) {
@@ -145,4 +216,13 @@ func TestAgentValueDAO_GroupValues(t *testing.T) {
 	for _, v := range values {
 		t.Log(v.TimeFormat.Day, v.Value)
 	}
+}
+
+func TestAgentValueDAO_DropAgentTable(t *testing.T) {
+	dao := AgentValueDAO()
+	err := dao.DropAgentTable("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("ok")
 }

@@ -1,7 +1,10 @@
 package audits
 
 import (
+	"encoding/json"
 	"github.com/TeaWeb/code/teadb/shared"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"time"
 )
 
@@ -31,6 +34,45 @@ func NewLog(username string, action Action, description string, options map[stri
 		Description: description,
 		Timestamp:   time.Now().Unix(),
 		Options:     options,
+	}
+}
+
+// 设置数据库列值
+func (this *Log) SetDBColumns(v maps.Map) {
+	this.Action = v.GetString("action")
+	id, err := shared.ObjectIdFromHex(v.GetString("_id"))
+	if err != nil {
+		logs.Error(err)
+	} else {
+		this.Id = id
+	}
+	this.Username = v.GetString("username")
+	this.Description = v.GetString("description")
+	this.Timestamp = v.GetInt64("timestamp")
+	this.Options = map[string]string{}
+
+	options := v.GetString("options")
+	if len(options) > 0 {
+		err = json.Unmarshal([]byte(v.GetString("options")), &this.Options)
+		if err != nil {
+			logs.Error(err)
+		}
+	}
+}
+
+// 获取数据库列值
+func (this *Log) DBColumns() maps.Map {
+	if this.Id.IsZero() {
+		this.Id = shared.NewObjectId()
+	}
+	optionsData, _ := json.Marshal(this.Options)
+	return maps.Map{
+		"_id":         this.Id.Hex(),
+		"action":      this.Action,
+		"username":    this.Username,
+		"description": this.Description,
+		"timestamp":   this.Timestamp,
+		"options":     optionsData,
 	}
 }
 

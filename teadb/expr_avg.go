@@ -1,5 +1,6 @@
 package teadb
 
+// 平均值表达式
 type AvgExpr struct {
 	Field string
 }

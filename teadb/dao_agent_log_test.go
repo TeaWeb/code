@@ -15,6 +15,9 @@ func TestAgentLogDAO_InsertOne(t *testing.T) {
 		log.Data = "abcdefg"
 		log.TaskId = "abc"
 		log.SetTime(time.Now())
+		log.EventType = "start"
+		log.ProcessId = stringutil.Rand(16)
+		log.ProcessPid = 1024
 		err := AgentLogDAO().InsertOne("test", log)
 		if err != nil {
 			t.Fatal(err)
@@ -27,6 +30,7 @@ func TestAgentLogDAO_InsertOne(t *testing.T) {
 		log.AgentId = "test"
 		log.Data = "abcdefg1"
 		log.TaskId = "abc"
+		log.ProcessPid = 1025
 		log.SetTime(time.Now())
 		err := AgentLogDAO().InsertOne("test", log)
 		if err != nil {
@@ -40,6 +44,7 @@ func TestAgentLogDAO_InsertOne(t *testing.T) {
 		log.AgentId = "test"
 		log.Data = "abcdefg2"
 		log.TaskId = "abc"
+		log.ProcessPid = 1026
 		log.SetTime(time.Now())
 		err := AgentLogDAO().InsertOne("test", log)
 		if err != nil {
@@ -77,7 +82,7 @@ func TestAgentLogDAO_ListTaskLogs(t *testing.T) {
 	}
 }
 
-func TestMongoAgentLogDAO_FindLatestTaskLog(t *testing.T) {
+func TestAgentLogDAO_FindLatestTaskLog(t *testing.T) {
 	a := assert.NewAssertion(t)
 
 	taskId := "abc"

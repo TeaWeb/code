@@ -1,5 +1,6 @@
 package teadb
 
+// 最小值表达式
 type MinExpr struct {
 	Field string
 }

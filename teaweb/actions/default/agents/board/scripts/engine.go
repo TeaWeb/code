@@ -423,7 +423,7 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 				opsMap, ok := ops.(map[string]interface{})
 				if ok {
 					for op, v := range opsMap {
-						query.Op(op, field, v)
+						query.Op(field, op, v)
 					}
 				}
 			}

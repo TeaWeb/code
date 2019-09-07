@@ -18,7 +18,7 @@ func (this *MongoAgentValueDAO) Init() {
 }
 
 func (this *MongoAgentValueDAO) TableName(agentId string) string {
-	return this.agentCollName(agentId)
+	return "values.agent." + agentId
 }
 
 func (this *MongoAgentValueDAO) Insert(agentId string, value *agents.Value) error {
@@ -41,7 +41,7 @@ func (this *MongoAgentValueDAO) Insert(agentId string, value *agents.Value) erro
 		value.Id = shared.NewObjectId()
 	}
 
-	coll := this.selectColl(this.agentCollName(agentId))
+	coll := this.selectColl(this.TableName(agentId))
 	_, err := coll.InsertOne(context.Background(), *value)
 	return err
 }
@@ -50,7 +50,7 @@ func (this *MongoAgentValueDAO) ClearItemValues(agentId string, appId string, it
 	if len(agentId) == 0 {
 		return errors.New("agentId should not be empty")
 	}
-	query := NewQuery(this.agentCollName(agentId)).
+	query := NewQuery(this.TableName(agentId)).
 		Attr("appId", appId).
 		Attr("itemId", itemId)
 	if level > 0 {
@@ -60,7 +60,7 @@ func (this *MongoAgentValueDAO) ClearItemValues(agentId string, appId string, it
 }
 
 func (this *MongoAgentValueDAO) FindLatestItemValue(agentId string, appId string, itemId string) (*agents.Value, error) {
-	query := NewQuery(this.agentCollName(agentId)).
+	query := NewQuery(this.TableName(agentId)).
 		Attr("itemId", itemId).
 		Node().
 		Desc("createdAt")
@@ -78,7 +78,7 @@ func (this *MongoAgentValueDAO) FindLatestItemValue(agentId string, appId string
 }
 
 func (this *MongoAgentValueDAO) FindLatestItemValueNoError(agentId string, appId string, itemId string) (*agents.Value, error) {
-	query := NewQuery(this.agentCollName(agentId)).
+	query := NewQuery(this.TableName(agentId)).
 		Attr("itemId", itemId).
 		Attr("error", "").
 		Node().
@@ -98,9 +98,13 @@ func (this *MongoAgentValueDAO) FindLatestItemValueNoError(agentId string, appId
 
 // 取得最近的数值记录
 func (this *MongoAgentValueDAO) FindLatestItemValues(agentId string, appId string, itemId string, noticeLevel notices.NoticeLevel, lastId string, size int) ([]*agents.Value, error) {
-	query := NewQuery(this.agentCollName(agentId))
-	query.Attr("appId", appId)
-	query.Attr("itemId", itemId)
+	query := NewQuery(this.TableName(agentId))
+	if len(appId) > 0 {
+		query.Attr("appId", appId)
+	}
+	if len(itemId) > 0 {
+		query.Attr("itemId", itemId)
+	}
 	query.Node()
 	query.Limit(size)
 	query.Desc("createdAt")
@@ -133,9 +137,13 @@ func (this *MongoAgentValueDAO) FindLatestItemValues(agentId string, appId strin
 }
 
 func (this *MongoAgentValueDAO) ListItemValues(agentId string, appId string, itemId string, noticeLevel notices.NoticeLevel, lastId string, offset int, size int) ([]*agents.Value, error) {
-	query := NewQuery(this.agentCollName(agentId))
-	query.Attr("appId", appId)
-	query.Attr("itemId", itemId)
+	query := NewQuery(this.TableName(agentId))
+	if len(appId) > 0 {
+		query.Attr("appId", appId)
+	}
+	if len(itemId) > 0 {
+		query.Attr("itemId", itemId)
+	}
 	query.Node()
 	query.Offset(offset)
 	query.Limit(size)
@@ -197,6 +205,7 @@ func (this *MongoAgentValueDAO) GroupValuesByTime(query *Query, timeField string
 		value.Value = one
 		value.TimeFormat.Year = timeFormat.GetString("year")
 		value.TimeFormat.Month = timeFormat.GetString("month")
+		value.TimeFormat.Week = timeFormat.GetString("week")
 		value.TimeFormat.Day = timeFormat.GetString("day")
 		value.TimeFormat.Hour = timeFormat.GetString("hour")
 		value.TimeFormat.Minute = timeFormat.GetString("minute")
@@ -208,7 +217,7 @@ func (this *MongoAgentValueDAO) GroupValuesByTime(query *Query, timeField string
 
 func (this *MongoAgentValueDAO) DropAgentTable(agentId string) error {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	return this.selectColl(this.agentCollName(agentId)).Drop(ctx)
+	return this.selectColl(this.TableName(agentId)).Drop(ctx)
 }
 
 func (this *MongoAgentValueDAO) selectColl(collName string) *teamongo.Collection {
@@ -235,10 +244,6 @@ func (this *MongoAgentValueDAO) selectColl(collName string) *teamongo.Collection
 		logs.Error(err)
 	}
 	return coll
-}
-
-func (this *MongoAgentValueDAO) agentCollName(agentId string) string {
-	return "values.agent." + agentId
 }
 
 func (this *MongoAgentValueDAO) processValue(ptr *agents.Value) *agents.Value {

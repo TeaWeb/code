@@ -1,8 +1,12 @@
 package stats
 
 import (
+	"encoding/json"
 	"github.com/TeaWeb/code/teadb/shared"
+	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/time"
+	"github.com/pquerna/ffjson/ffjson"
 	"time"
 )
 
@@ -54,4 +58,70 @@ func (this *Value) SetTime(t time.Time) {
 	this.TimeFormat.Hour = timeutil.Format("YmdH", t)
 	this.TimeFormat.Minute = timeutil.Format("YmdHi", t)
 	this.TimeFormat.Second = timeutil.Format("YmdHis", t)
+}
+
+// 设置数据库列值
+func (this *Value) SetDBColumns(v maps.Map) {
+	id, err := shared.ObjectIdFromHex(v.GetString("_id"))
+	if err != nil {
+		logs.Error(err)
+	} else {
+		this.Id = id
+	}
+	this.Item = v.GetString("item")
+	this.Period = v.GetString("period")
+	this.jsonDecode(v.Get("value"), &this.Value)
+	this.jsonDecode(v.Get("params"), &this.Params)
+	this.Timestamp = v.GetInt64("timestamp")
+	this.TimeFormat.Year = v.GetString("timeFormat_year")
+	this.TimeFormat.Month = v.GetString("timeFormat_month")
+	this.TimeFormat.Week = v.GetString("timeFormat_week")
+	this.TimeFormat.Day = v.GetString("timeFormat_day")
+	this.TimeFormat.Hour = v.GetString("timeFormat_hour")
+	this.TimeFormat.Minute = v.GetString("timeFormat_minute")
+	this.TimeFormat.Second = v.GetString("timeFormat_second")
+}
+
+// 获取数据库列值
+func (this *Value) DBColumns() maps.Map {
+	if this.Id.IsZero() {
+		this.Id = shared.NewObjectId()
+	}
+	valueJSON, err := json.Marshal(this.Value)
+	if err != nil {
+		logs.Error(err)
+	}
+	paramsJSON, err := json.Marshal(this.Params)
+	if err != nil {
+		logs.Error(err)
+	}
+	return maps.Map{
+		"_id":               this.Id.Hex(),
+		"item":              this.Item,
+		"period":            this.Period,
+		"value":             valueJSON,
+		"params":            paramsJSON,
+		"timestamp":         this.Timestamp,
+		"timeFormat_year":   this.TimeFormat.Year,
+		"timeFormat_month":  this.TimeFormat.Month,
+		"timeFormat_week":   this.TimeFormat.Week,
+		"timeFormat_day":    this.TimeFormat.Day,
+		"timeFormat_hour":   this.TimeFormat.Hour,
+		"timeFormat_minute": this.TimeFormat.Minute,
+		"timeFormat_second": this.TimeFormat.Second,
+	}
+}
+
+func (this *Value) jsonDecode(data interface{}, vPtr interface{}) {
+	if data == nil {
+		return
+	}
+	b, ok := data.([]byte)
+	if ok {
+		_ = ffjson.Unmarshal(b, vPtr)
+	}
+	s, ok := data.(string)
+	if ok {
+		_ = ffjson.Unmarshal([]byte(s), vPtr)
+	}
 }

@@ -10,6 +10,8 @@ import (
 func TestNoticeDAO_InsertOne(t *testing.T) {
 	notice := notices.NewNotice()
 	notice.Message = "this is test"
+	notice.Receivers = []string{"EpBqPQMqpRlvFh9Q"}
+	notice.SetTime(time.Now())
 	notice.Hash()
 
 	dao := NoticeDAO()
@@ -78,7 +80,9 @@ func TestNoticeDAO_CountReadNoticesForAgent(t *testing.T) {
 
 func TestNoticeDAO_CountReceivedNotices(t *testing.T) {
 	dao := NoticeDAO()
-	count, err := dao.CountReceivedNotices("EpBqPQMqpRlvFh9Q", map[string]interface{}{}, 86400)
+	count, err := dao.CountReceivedNotices("EpBqPQMqpRlvFh9Q", map[string]interface{}{
+		"agent.agentId": "local",
+	}, 86400)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,25 +91,58 @@ func TestNoticeDAO_CountReceivedNotices(t *testing.T) {
 
 func TestNoticeDAO_ExistNoticesWithHash(t *testing.T) {
 	dao := NoticeDAO()
-	b, err := dao.ExistNoticesWithHash("4157704578", map[string]interface{}{}, 86400*time.Minute)
-	if err != nil {
-		t.Fatal(err)
+	{
+		b, err := dao.ExistNoticesWithHash("4157704578", map[string]interface{}{
+			"agent.agentId": "local",
+		}, 86400*time.Minute)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if b {
+			t.Log("exists")
+		} else {
+			t.Log("not exists")
+		}
 	}
-	if b {
-		t.Log("exists")
-	} else {
-		t.Log("not exists")
+
+	{
+		b, err := dao.ExistNoticesWithHash("4157704579", map[string]interface{}{
+			"agent.agentId": "local",
+		}, 86400*time.Minute)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if b {
+			t.Log("exists")
+		} else {
+			t.Log("not exists")
+		}
 	}
 }
 
 func TestNoticeDAO_ListNotices(t *testing.T) {
-	result, err := NoticeDAO().ListNotices(true, 0, 5)
-	if err != nil {
-		t.Fatal(err)
+	t.Log("===read===")
+	{
+		result, err := NoticeDAO().ListNotices(true, 0, 5)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(len(result), "notices")
+		for _, n := range result {
+			t.Log(n.Id, n.Message)
+		}
 	}
-	t.Log(len(result), "notices")
-	for _, n := range result {
-		t.Log(n.Id, n.Message)
+
+	t.Log("===unread===")
+	{
+		result, err := NoticeDAO().ListNotices(false, 0, 5)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(len(result), "notices")
+		for _, n := range result {
+			t.Log(n.Id, n.Message, n.Agent.AgentId, n.Agent.AppId)
+		}
 	}
 }
 

@@ -21,15 +21,16 @@ var (
 	initTableLocker = sync.Mutex{}
 )
 
+// 建立数据库驱动
 func SetupDB() {
 	dbConfig := db.SharedDBConfig()
 	switch dbConfig.Type {
 	case db.DBTypeMongo:
 		sharedDriver = new(MongoDriver)
-		/**case db.DBTypeMySQL:
-			sharedDriver = new(MySQLDriver)
-		case db.DBTypePostgres:
-			sharedDriver = new(PostgresDriver)**/
+	case db.DBTypeMySQL:
+		sharedDriver = new(MySQLDriver)
+		/**case db.DBTypePostgres:
+		sharedDriver = new(PostgresDriver)**/
 	}
 
 	// initialize

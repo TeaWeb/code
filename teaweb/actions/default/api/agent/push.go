@@ -68,6 +68,7 @@ func (this *PushAction) Run(params struct{}) {
 			TimeFormat: struct {
 				Year   string `bson:"year" json:"year"`
 				Month  string `bson:"month" json:"month"`
+				Week   string `bson:"week" json:"week"`
 				Day    string `bson:"day" json:"day"`
 				Hour   string `bson:"hour" json:"hour"`
 				Minute string `bson:"minute" json:"minute"`
@@ -75,6 +76,7 @@ func (this *PushAction) Run(params struct{}) {
 			}{
 				Year:   timeutil.Format("Y", t),
 				Month:  timeutil.Format("Ym", t),
+				Week:   timeutil.Format("YW", t),
 				Day:    timeutil.Format("Ymd", t),
 				Hour:   timeutil.Format("YmdH", t),
 				Minute: timeutil.Format("YmdHi", t),

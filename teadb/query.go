@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// 查询构造
 type Query struct {
 	table        string
 	offset       int
@@ -16,6 +17,7 @@ type Query struct {
 	debug        bool
 	timeout      time.Duration
 	resultFields []string
+	fieldMapping func(field string) string
 }
 
 func NewQuery(table string) *Query {
@@ -97,6 +99,15 @@ func (this *Query) Gt(field string, value interface{}) *Query {
 
 func (this *Query) Gte(field string, value interface{}) *Query {
 	return this.Op(field, OperandGte, value)
+}
+
+// SQL查询专用
+func (this *Query) sqlCond(expr string, params map[string]interface{}) *Query {
+	this.Op("", operandSQLCond, &SQLCond{
+		Expr:   expr,
+		Params: params,
+	})
+	return this
 }
 
 func (this *Query) Asc(field string) *Query {
@@ -183,6 +194,11 @@ func (this *Query) Avg(field string) (float64, error) {
 
 func (this *Query) Group(field string, result map[string]Expr) ([]maps.Map, error) {
 	return sharedDriver.Group(this, field, result)
+}
+
+func (this *Query) FieldMap(mapping func(field string) string) *Query {
+	this.fieldMapping = mapping
+	return this
 }
 
 func (this *Query) hasSortField(field string) bool {
