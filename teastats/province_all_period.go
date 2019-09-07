@@ -43,6 +43,9 @@ func (this *ProvinceAllPeriodFilter) Start(queue *Queue, code string) {
 }
 
 func (this *ProvinceAllPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
+	if accessLog.Extend == nil {
+		return
+	}
 	if len(accessLog.Extend.Geo.State) == 0 {
 		return
 	}

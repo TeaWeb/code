@@ -43,6 +43,9 @@ func (this *RegionAllPeriodFilter) Start(queue *Queue, code string) {
 }
 
 func (this *RegionAllPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
+	if accessLog.Extend == nil {
+		return
+	}
 	if len(accessLog.Extend.Geo.Region) == 0 {
 		return
 	}

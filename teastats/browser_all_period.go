@@ -43,6 +43,9 @@ func (this *BrowserAllPeriodFilter) Start(queue *Queue, code string) {
 }
 
 func (this *BrowserAllPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
+	if accessLog.Extend == nil {
+		return
+	}
 	if len(accessLog.Extend.Client.Browser.Family) == 0 {
 		return
 	}

@@ -43,6 +43,9 @@ func (this *OSAllPeriodFilter) Start(queue *Queue, code string) {
 }
 
 func (this *OSAllPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
+	if accessLog.Extend == nil {
+		return
+	}
 	if len(accessLog.Extend.Client.OS.Family) == 0 {
 		return
 	}
