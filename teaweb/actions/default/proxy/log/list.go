@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teadb"
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
@@ -65,6 +66,10 @@ func (this *ListAction) Run(params struct {
 			this.Data["lastId"] = accessLogs[0].Id.Hex()
 		}
 		for _, accessLog := range accessLogs {
+			if accessLog.Extend == nil {
+				accessLog.Extend = new(accesslogs.AccessLogExtend)
+			}
+
 			// filters
 			if len(params.RemoteAddr) > 0 && !this.match(accessLog.RemoteAddr, params.RemoteAddr) {
 				continue
