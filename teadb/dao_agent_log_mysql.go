@@ -15,7 +15,7 @@ func (this *MySQLAgentLogDAO) Init() {
 }
 
 func (this *MySQLAgentLogDAO) TableName(agentId string) string {
-	table := "logs.agent." + agentId
+	table := "teaweb.logs.agent." + agentId
 	this.initTable(table)
 	return table
 }

@@ -49,34 +49,42 @@ func SetupDB() {
 	}
 }
 
+// 获取共享的数据库驱动
 func SharedDB() DriverInterface {
 	return sharedDriver
 }
 
+// 获取访问日志DAO
 func AccessLogDAO() AccessLogDAOInterface {
 	return accessLogDAO
 }
 
+// 获取Agent日志DAO
 func AgentLogDAO() AgentLogDAOInterface {
 	return agentLogDAO
 }
 
+// 获取审计日志DAO
 func AuditLogDAO() AuditLogDAOInterface {
 	return auditLogDAO
 }
 
+// 获取通知DAO
 func NoticeDAO() NoticeDAOInterface {
 	return noticeDAO
 }
 
+// 获取Agent数值记录DAO
 func AgentValueDAO() AgentValueDAOInterface {
 	return agentValueDAO
 }
 
+// 获取代理统计数值DAO
 func ServerValueDAO() ServerValueDAOInterface {
 	return serverValueDAO
 }
 
+// 判断表格是否已经初始化
 func isInitializedTable(table string) bool {
 	initTableLocker.Lock()
 	defer initTableLocker.Unlock()

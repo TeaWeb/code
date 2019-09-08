@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// 通知DAO
 type NoticeDAOInterface interface {
 	// 初始化
 	Init()

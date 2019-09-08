@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 )
 
+// Agent数值记录DAO
 type AgentValueDAOInterface interface {
 	// 初始化
 	Init()

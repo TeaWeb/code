@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/tealogs/accesslogs"
 )
 
+// 访问日志DAO
 type AccessLogDAOInterface interface {
 	// 初始化
 	Init()

@@ -19,8 +19,8 @@ func (this *MySQLServerValueDAO) Init() {
 
 // 表名
 func (this *MySQLServerValueDAO) TableName(serverId string) string {
-	this.initTable("values.server." + serverId)
-	return "values.server." + serverId
+	this.initTable("teaweb.values.server." + serverId)
+	return "teaweb.values.server." + serverId
 }
 
 // 插入新数据

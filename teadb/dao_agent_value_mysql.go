@@ -18,8 +18,8 @@ func (this *MySQLAgentValueDAO) Init() {
 
 // 获取表格
 func (this *MySQLAgentValueDAO) TableName(agentId string) string {
-	this.initTable("values.agent." + agentId)
-	return "values.agent." + agentId
+	this.initTable("teaweb.values.agent." + agentId)
+	return "teaweb.values.agent." + agentId
 }
 
 // 插入数据

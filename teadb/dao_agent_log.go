@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 )
 
+// Agent任务日志DAO
 type AgentLogDAOInterface interface {
 	// 初始化
 	Init()

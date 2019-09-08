@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teadb/shared"
 )
 
+// 代理统计DAO
 type ServerValueDAOInterface interface {
 	// 初始化
 	Init()

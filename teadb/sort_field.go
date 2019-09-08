@@ -7,6 +7,7 @@ const (
 	SortDesc = "desc"
 )
 
+// 排序字段
 type SortField struct {
 	Name string
 	Type SortType

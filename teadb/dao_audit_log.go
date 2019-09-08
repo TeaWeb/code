@@ -2,6 +2,7 @@ package teadb
 
 import "github.com/TeaWeb/code/teaconfigs/audits"
 
+// 审计日志DAO
 type AuditLogDAOInterface interface {
 	// 初始化
 	Init()

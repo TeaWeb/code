@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
+	"github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	timeutil "github.com/iwind/TeaGo/utils/time"
@@ -19,8 +20,10 @@ func (this *MySQLAccessLogDAO) Init() {
 
 // 获取表名
 func (this *MySQLAccessLogDAO) TableName(day string) string {
-	this.initTable("logs." + day)
-	return "logs." + day
+	if day == timeutil.Format("Ymd") {
+		this.initTable("teaweb.logs." + day)
+	}
+	return "teaweb.logs." + day
 }
 
 // 获取当前时间表名
@@ -50,6 +53,9 @@ func (this *MySQLAccessLogDAO) FindAccessLogCookie(day string, logId string) (*a
 		Result("_id", "cookie").
 		FindOne(new(accesslogs.AccessLog))
 	if err != nil {
+		if this.tableNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if one == nil {
@@ -65,6 +71,9 @@ func (this *MySQLAccessLogDAO) FindRequestHeaderAndBody(day string, logId string
 		Result("_id", "header", "requestData").
 		FindOne(new(accesslogs.AccessLog))
 	if err != nil {
+		if this.tableNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if one == nil {
@@ -80,6 +89,9 @@ func (this *MySQLAccessLogDAO) FindResponseHeaderAndBody(day string, logId strin
 		Result("_id", "sentHeader", "responseBodyData").
 		FindOne(new(accesslogs.AccessLog))
 	if err != nil {
+		if this.tableNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if one == nil {
@@ -113,6 +125,9 @@ func (this *MySQLAccessLogDAO) ListAccessLogs(day string, serverId string, fromI
 	query.Desc("_id")
 	ones, err := query.FindOnes(new(accesslogs.AccessLog))
 	if err != nil {
+		if this.tableNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -147,6 +162,9 @@ func (this *MySQLAccessLogDAO) HasNextAccessLog(day string, serverId string, fro
 
 	one, err := query.FindOne(new(accesslogs.AccessLog))
 	if err != nil {
+		if this.tableNotFound(err) {
+			return false, nil
+		}
 		return false, err
 	}
 	return one != nil, nil
@@ -158,6 +176,9 @@ func (this *MySQLAccessLogDAO) HasAccessLog(day string, serverId string) (bool, 
 	one, err := query.Attr("serverId", serverId).
 		Result("_id").
 		FindOne(new(accesslogs.AccessLog))
+	if err != nil && this.tableNotFound(err) {
+		return false, nil
+	}
 	return one != nil, err
 }
 
@@ -187,6 +208,9 @@ func (this *MySQLAccessLogDAO) ListLatestAccessLogs(day string, serverId string,
 	query.Limit(size)
 	ones, err := query.FindOnes(new(accesslogs.AccessLog))
 	if err != nil {
+		if this.tableNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -209,6 +233,9 @@ func (this *MySQLAccessLogDAO) ListTopAccessLogs(day string, size int) ([]*acces
 		Desc("_id").
 		FindOnes(new(accesslogs.AccessLog))
 	if err != nil {
+		if this.tableNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -226,6 +253,9 @@ func (this *MySQLAccessLogDAO) QueryAccessLogs(day string, serverId string, quer
 		Attr("serverId", serverId).
 		FindOnes(new(accesslogs.AccessLog))
 	if err != nil {
+		if this.tableNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -311,4 +341,15 @@ func (this *MySQLAccessLogDAO) initTable(table string) {
 			logs.Error(err)
 		}
 	}
+}
+
+func (this *MySQLAccessLogDAO) tableNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	mysqlErr, ok := err.(*mysql.MySQLError)
+	if !ok {
+		return false
+	}
+	return mysqlErr.Number == 1146
 }

@@ -18,8 +18,8 @@ func (this *MySQLNoticeDAO) Init() {
 
 // 表名
 func (this *MySQLNoticeDAO) TableName() string {
-	this.initTable("notices")
-	return "notices"
+	this.initTable("teaweb.notices")
+	return "teaweb.notices"
 }
 
 // 写入一个通知

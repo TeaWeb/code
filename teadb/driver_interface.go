@@ -2,6 +2,7 @@ package teadb
 
 import "github.com/iwind/TeaGo/maps"
 
+// 数据库驱动
 type DriverInterface interface {
 	// 初始化
 	Init()
