@@ -51,7 +51,8 @@ func TestMySQLDriver_buildWhere(t *testing.T) {
 	})
 
 	driver := new(MySQLDriver)
-	paramsHolder := NewSQLParamsHolder()
+	driver.Init()
+	paramsHolder := NewSQLParamsHolder(driver.driver)
 	where, err := driver.buildWhere(q.operandMap, nil, paramsHolder)
 	if err != nil {
 		t.Fatal(err)
@@ -94,7 +95,7 @@ func TestMySQLDriver_buildWhere_Or(t *testing.T) {
 	})
 
 	driver := new(MySQLDriver)
-	paramsHolder := NewSQLParamsHolder()
+	paramsHolder := NewSQLParamsHolder(driver.driver)
 	where, err := driver.buildWhere(q.operandMap, nil, paramsHolder)
 	if err != nil {
 		t.Fatal(err)
@@ -110,7 +111,7 @@ func TestMySQLDriver_asSQL_SELECT(t *testing.T) {
 		q.Attr("age", 10)
 
 		driver := new(MySQLDriver)
-		s, err := driver.asSQL(SQLSelect, q, NewSQLParamsHolder(), "", nil)
+		s, err := driver.asSQL(SQLSelect, q, NewSQLParamsHolder(driver.driver), "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -128,7 +129,7 @@ func TestMySQLDriver_asSQL_SELECT(t *testing.T) {
 		q.Asc("createdAt")
 
 		driver := new(MySQLDriver)
-		s, err := driver.asSQL(SQLSelect, q, NewSQLParamsHolder(), "", nil)
+		s, err := driver.asSQL(SQLSelect, q, NewSQLParamsHolder(driver.driver), "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -143,7 +144,7 @@ func TestMySQLDriver_asSQL_DELETE(t *testing.T) {
 		q.Attr("age", 10)
 
 		driver := new(MySQLDriver)
-		s, err := driver.asSQL(SQLDelete, q, NewSQLParamsHolder(), "", nil)
+		s, err := driver.asSQL(SQLDelete, q, NewSQLParamsHolder(driver.driver), "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -161,7 +162,7 @@ func TestMySQLDriver_asSQL_DELETE(t *testing.T) {
 		q.Asc("createdAt")
 
 		driver := new(MySQLDriver)
-		s, err := driver.asSQL(SQLDelete, q, NewSQLParamsHolder(), "", nil)
+		s, err := driver.asSQL(SQLDelete, q, NewSQLParamsHolder(driver.driver), "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -176,7 +177,7 @@ func TestMySQLDriver_asSQL_Update(t *testing.T) {
 		q.Attr("age", 10)
 
 		driver := new(MySQLDriver)
-		s, err := driver.asSQL(SQLUpdate, q, NewSQLParamsHolder(), "", map[string]interface{}{
+		s, err := driver.asSQL(SQLUpdate, q, NewSQLParamsHolder(driver.driver), "", map[string]interface{}{
 			"a": 1,
 			"b": 2,
 		})
@@ -197,7 +198,7 @@ func TestMySQLDriver_asSQL_Update(t *testing.T) {
 		q.Asc("createdAt")
 
 		driver := new(MySQLDriver)
-		s, err := driver.asSQL(SQLUpdate, q, NewSQLParamsHolder(), "", map[string]interface{}{
+		s, err := driver.asSQL(SQLUpdate, q, NewSQLParamsHolder(driver.driver), "", map[string]interface{}{
 			"a": 1,
 			"b": 2,
 		})

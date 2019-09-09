@@ -30,6 +30,7 @@ func TestAgentLogDAO_InsertOne(t *testing.T) {
 		log.AgentId = "test"
 		log.Data = "abcdefg1"
 		log.TaskId = "abc"
+		log.EventType = "run"
 		log.ProcessPid = 1025
 		log.SetTime(time.Now())
 		err := AgentLogDAO().InsertOne("test", log)
@@ -44,6 +45,7 @@ func TestAgentLogDAO_InsertOne(t *testing.T) {
 		log.AgentId = "test"
 		log.Data = "abcdefg2"
 		log.TaskId = "abc"
+		log.EventType = "run"
 		log.ProcessPid = 1026
 		log.SetTime(time.Now())
 		err := AgentLogDAO().InsertOne("test", log)

@@ -7,6 +7,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	stringutil "github.com/iwind/TeaGo/utils/string"
 	timeutil "github.com/iwind/TeaGo/utils/time"
+	"strings"
 	"testing"
 	"time"
 )
@@ -109,16 +110,49 @@ func TestAccessLogDAO_ListAccessLogs(t *testing.T) {
 	}
 }
 
-func TestAccessLogDAO_HasNextAccessLog(t *testing.T) {
+func TestAccessLogDAO_ListAccessLogs_PastDays(t *testing.T) {
 	dao := AccessLogDAO()
-	b, err := dao.HasNextAccessLog(timeutil.Format("Ymd"), "5W8NLAoMYo6iJ78V", "5cfbbc918e6b5df25169a432", false, "")
+	_, err := dao.ListAccessLogs("201901", "5W8NLAoMYo6iJ78V", "", false, "", 0, 5)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if b {
-		t.Log("has next")
-	} else {
+}
+
+func TestAccessLogDAO_HasNextAccessLog(t *testing.T) {
+	dao := AccessLogDAO()
+	ones, err := dao.ListTopAccessLogs(timeutil.Format("Ymd"), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(ones) == 0 {
 		t.Log("has no next")
+		return
+	}
+
+	{
+		b, err := dao.HasNextAccessLog(timeutil.Format("Ymd"), "5W8NLAoMYo6iJ78V", ones[0].Id.Hex(), false, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if b {
+			t.Log("has next")
+		} else {
+			t.Log("has no next")
+		}
+	}
+
+	{
+		b, err := dao.HasNextAccessLog(timeutil.Format("Ymd"), "5W8NLAoMYo6iJ78V", strings.Repeat("0", 24),
+			false, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if b {
+			t.Log("has next")
+		} else {
+			t.Log("has no next")
+		}
 	}
 }
 
@@ -166,11 +200,6 @@ func TestAccessLogDAO_ListLatestAccessLogs(t *testing.T) {
 
 func TestAccessLogDAO_ListTopAccessLogs(t *testing.T) {
 	dao := AccessLogDAO()
-
-	query := NewQuery("")
-	query.Limit(5)
-	query.Debug()
-
 	accessLogs, err := dao.ListTopAccessLogs(timeutil.Format("Ymd"), 10)
 	if err != nil {
 		t.Fatal(err)
@@ -184,6 +213,7 @@ func TestAccessLogDAO_QueryAccessLogs(t *testing.T) {
 	dao := AccessLogDAO()
 
 	query := NewQuery("")
+	query.Offset(1)
 	query.Limit(5)
 	query.Debug()
 

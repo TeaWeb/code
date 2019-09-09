@@ -13,13 +13,15 @@ type SQLParamsHolder struct {
 	Params map[string]interface{} // holder => value
 	Args   []interface{}
 	index  int
+	driver string
 }
 
 // 获取新对象
-func NewSQLParamsHolder() *SQLParamsHolder {
+func NewSQLParamsHolder(driver string) *SQLParamsHolder {
 	return &SQLParamsHolder{
 		Params: map[string]interface{}{},
 		index:  0,
+		driver: driver,
 	}
 }
 
@@ -66,9 +68,18 @@ func (this *SQLParamsHolder) Parse(sqlString string) string {
 	if len(this.Params) == 0 {
 		return sqlString
 	}
+	index := 0
 	sqlString = holderReg.ReplaceAllStringFunc(sqlString, func(s string) string {
 		v, _ := this.Params[s]
 		this.Args = append(this.Args, v)
+
+		switch this.driver {
+		case "mysql":
+			return "?"
+		case "postgres":
+			index++
+			return "$" + strconv.Itoa(index)
+		}
 		return "?"
 	})
 	return sqlString

@@ -2,7 +2,6 @@ package teadb
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/audits"
-	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/iwind/TeaGo/logs"
 	"testing"
 	"time"
@@ -18,7 +17,7 @@ func TestDriver_Test(t *testing.T) {
 }
 
 func TestDriver_FindOne(t *testing.T) {
-	query := NewQuery("logs.audit")
+	query := NewQuery("teaweb.logs.audit")
 	query.Attr("id", 1)
 	one, err := SharedDB().FindOne(query, new(audits.Log))
 	if err != nil {
@@ -28,7 +27,7 @@ func TestDriver_FindOne(t *testing.T) {
 }
 
 func TestDriver_FindOnes(t *testing.T) {
-	query := NewQuery("logs.audit")
+	query := NewQuery("teaweb.logs.audit")
 	query.Attr("id", []int{1, 2})
 	ones, err := SharedDB().FindOnes(query, new(audits.Log))
 	if err != nil {
@@ -47,7 +46,7 @@ func TestDriver_InsertOne(t *testing.T) {
 		"a": "1",
 		"b": "2",
 	}
-	err := SharedDB().InsertOne("logs.audit", log)
+	err := SharedDB().InsertOne("teaweb.logs.audit", log)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +68,7 @@ func TestDriver_InsertOnes(t *testing.T) {
 			Username:    "user",
 		},
 	}
-	err := SharedDB().InsertOnes("logs.audit", ones)
+	err := SharedDB().InsertOnes("teaweb.logs.audit", ones)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,8 +76,8 @@ func TestDriver_InsertOnes(t *testing.T) {
 }
 
 func TestDriver_DeleteOnes(t *testing.T) {
-	q := NewQuery("logs.audit")
-	q.Gt("id", 10)
+	q := NewQuery("teaweb.logs.audit")
+	q.Gt("id", 3)
 	err := SharedDB().DeleteOnes(q)
 	if err != nil {
 		t.Fatal(err)
@@ -88,7 +87,7 @@ func TestDriver_DeleteOnes(t *testing.T) {
 
 func TestDriver_Count(t *testing.T) {
 	{
-		q := NewQuery("logs.audit")
+		q := NewQuery("teaweb.logs.audit")
 		count, err := SharedDB().Count(q)
 		if err != nil {
 			t.Fatal(err)
@@ -97,7 +96,7 @@ func TestDriver_Count(t *testing.T) {
 	}
 
 	{
-		q := NewQuery("logs.audit")
+		q := NewQuery("teaweb.logs.audit")
 		q.Gt("id", 5)
 		count, err := SharedDB().Count(q)
 		if err != nil {
@@ -108,7 +107,7 @@ func TestDriver_Count(t *testing.T) {
 }
 
 func TestDriver_Avg(t *testing.T) {
-	q := NewQuery("logs.audit")
+	q := NewQuery("teaweb.logs.audit")
 	count, err := SharedDB().Avg(q, "id")
 	if err != nil {
 		t.Fatal(err)
@@ -117,7 +116,7 @@ func TestDriver_Avg(t *testing.T) {
 }
 
 func TestDriver_Sum(t *testing.T) {
-	q := NewQuery("logs.audit")
+	q := NewQuery("teaweb.logs.audit")
 	count, err := SharedDB().Sum(q, "id")
 	if err != nil {
 		t.Fatal(err)
@@ -126,7 +125,7 @@ func TestDriver_Sum(t *testing.T) {
 }
 
 func TestDriver_Min(t *testing.T) {
-	q := NewQuery("logs.audit")
+	q := NewQuery("teaweb.logs.audit")
 	count, err := SharedDB().Min(q, "id")
 	if err != nil {
 		t.Fatal(err)
@@ -135,7 +134,7 @@ func TestDriver_Min(t *testing.T) {
 }
 
 func TestDriver_Max(t *testing.T) {
-	q := NewQuery("logs.audit")
+	q := NewQuery("teaweb.logs.audit")
 	count, err := SharedDB().Max(q, "id")
 	if err != nil {
 		t.Fatal(err)
@@ -144,7 +143,7 @@ func TestDriver_Max(t *testing.T) {
 }
 
 func TestDriver_Group(t *testing.T) {
-	q := NewQuery("logs.audit")
+	q := NewQuery("teaweb.logs.audit")
 	q.Gt("id", 0)
 	q.Desc("_id")
 	result, err := SharedDB().Group(q, "action", map[string]Expr{
@@ -158,8 +157,4 @@ func TestDriver_Group(t *testing.T) {
 		t.Fatal(err)
 	}
 	logs.PrintAsJSON(result, t)
-}
-
-func TestDriver_GenerateId(t *testing.T) {
-	t.Log(shared.NewObjectId().Hex())
 }

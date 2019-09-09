@@ -9,7 +9,9 @@ import (
 )
 
 var (
-	sharedDriver   DriverInterface         = nil
+	sharedDriver DriverInterface = nil
+	sharedDBType                 = "mongo"
+
 	accessLogDAO   AccessLogDAOInterface   = nil
 	agentLogDAO    AgentLogDAOInterface    = nil
 	auditLogDAO    AuditLogDAOInterface    = nil
@@ -24,13 +26,14 @@ var (
 // 建立数据库驱动
 func SetupDB() {
 	dbConfig := db.SharedDBConfig()
+	sharedDBType = dbConfig.Type
 	switch dbConfig.Type {
 	case db.DBTypeMongo:
 		sharedDriver = new(MongoDriver)
 	case db.DBTypeMySQL:
 		sharedDriver = new(MySQLDriver)
-		/**case db.DBTypePostgres:
-		sharedDriver = new(PostgresDriver)**/
+	case db.DBTypePostgres:
+		sharedDriver = new(PostgresDriver)
 	}
 
 	// initialize
@@ -96,4 +99,11 @@ func isInitializedTable(table string) bool {
 
 	initTableMap[table] = true
 	return false
+}
+
+// 删除初始化的表格
+func removeInitializedTable(table string) {
+	initTableLocker.Lock()
+	defer initTableLocker.Unlock()
+	delete(initTableMap, table)
 }

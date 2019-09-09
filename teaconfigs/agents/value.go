@@ -94,6 +94,10 @@ func (this *Value) DBColumns() maps.Map {
 	if err != nil {
 		logs.Error(err)
 	}
+	isNotified := 0
+	if this.IsNotified {
+		isNotified = 1
+	}
 	return maps.Map{
 		"_id":               this.Id.Hex(),
 		"nodeId":            this.NodeId,
@@ -105,7 +109,7 @@ func (this *Value) DBColumns() maps.Map {
 		"value":             valueJSON,
 		"error":             this.Error,
 		"noticeLevel":       this.NoticeLevel,
-		"isNotified":        this.IsNotified,
+		"isNotified":        isNotified,
 		"thresholdId":       this.ThresholdId,
 		"threshold":         this.Threshold,
 		"timeFormat_year":   this.TimeFormat.Year,

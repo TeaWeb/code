@@ -6,7 +6,7 @@ import (
 )
 
 func TestSQLParamsHolder_AddParam(t *testing.T) {
-	holder := NewSQLParamsHolder()
+	holder := NewSQLParamsHolder("mysql")
 	t.Log(holder.Add(123))
 	t.Log(holder.Add("456"))
 	logs.PrintAsJSON(holder.Params, t)

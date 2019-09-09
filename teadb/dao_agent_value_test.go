@@ -27,6 +27,7 @@ func TestAgentValueDAO_Insert(t *testing.T) {
 		value.IsNotified = true
 		value.Threshold = "${0} gt 10"
 		value.ThresholdId = "abc"
+		value.CreatedAt = time.Now().Unix()
 
 		if node != nil {
 			value.NodeId = node.Id
@@ -44,13 +45,14 @@ func TestAgentValueDAO_Insert(t *testing.T) {
 		value.AppId = "system"
 		value.SetTime(time.Now())
 		value.Value = map[string]interface{}{
-			"load1":  1,
-			"load5":  2,
+			"load1":  1.23,
+			"load5":  2.54,
 			"load15": 2.12,
 		}
 		value.ItemId = "cpu.load"
 		value.Error = ""
 		value.IsNotified = true
+		value.CreatedAt = time.Now().Unix()
 
 		if node != nil {
 			value.NodeId = node.Id
@@ -84,6 +86,7 @@ func TestAgentValueDAO_Insert2(t *testing.T) {
 		Value:       v,
 		Error:       "",
 		NoticeLevel: notices.NoticeLevelWarning,
+		CreatedAt:   time.Now().Unix(),
 	}
 	value.SetTime(time.Now())
 
@@ -186,7 +189,7 @@ func TestAgentValueDAO_ListItemValues(t *testing.T) {
 
 func TestAgentValueDAO_QueryValues(t *testing.T) {
 	dao := AgentValueDAO()
-	q := NewQuery("values.agent.local")
+	q := NewQuery("teaweb.values.agent.local")
 	//q.Attr("timeFormat.year", timeutil.Format("Y"))
 	q.Limit(10)
 	values, err := dao.QueryValues(q)
@@ -201,7 +204,7 @@ func TestAgentValueDAO_QueryValues(t *testing.T) {
 func TestAgentValueDAO_GroupValues(t *testing.T) {
 	dao := AgentValueDAO()
 
-	q := NewQuery("values.agent.local").
+	q := NewQuery("teaweb.values.agent.local").
 		Attr("itemId", "cpu.load")
 
 	values, err := dao.GroupValuesByTime(q, "day", map[string]Expr{
@@ -220,7 +223,12 @@ func TestAgentValueDAO_GroupValues(t *testing.T) {
 
 func TestAgentValueDAO_DropAgentTable(t *testing.T) {
 	dao := AgentValueDAO()
-	err := dao.DropAgentTable("test")
+	_, err := dao.FindLatestItemValue("test", "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = dao.DropAgentTable("test")
 	if err != nil {
 		t.Fatal(err)
 	}

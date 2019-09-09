@@ -8,18 +8,60 @@ import (
 )
 
 func TestNoticeDAO_InsertOne(t *testing.T) {
-	notice := notices.NewNotice()
-	notice.Message = "this is test"
-	notice.Receivers = []string{"EpBqPQMqpRlvFh9Q"}
-	notice.SetTime(time.Now())
-	notice.Hash()
+	{
+		notice := notices.NewNotice()
+		notice.Message = "this is test"
+		notice.Receivers = []string{"EpBqPQMqpRlvFh9Q"}
+		notice.Agent.AgentId = "local"
+		notice.Agent.AppId = "system"
+		notice.Agent.ItemId = "cpu.load"
+		notice.SetTime(time.Now())
+		notice.Hash()
 
-	dao := NoticeDAO()
-	err := dao.InsertOne(notice)
-	if err != nil {
-		t.Fatal(err)
+		dao := NoticeDAO()
+		err := dao.InsertOne(notice)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("ok")
 	}
-	t.Log("ok")
+
+	{
+		notice := notices.NewNotice()
+		notice.Message = "this is test"
+		notice.Receivers = []string{"EpBqPQMqpRlvFh9Q"}
+		notice.Agent.AgentId = "local"
+		notice.Agent.AppId = "system"
+		notice.Agent.ItemId = "cpu.load"
+		notice.IsRead = true
+		notice.SetTime(time.Now())
+		notice.Hash()
+
+		dao := NoticeDAO()
+		err := dao.InsertOne(notice)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("ok")
+	}
+
+	{
+		notice := notices.NewNotice()
+		notice.Message = "this is test"
+		notice.Receivers = []string{"EpBqPQMqpRlvFh9Q"}
+		notice.Agent.AgentId = "1TABzdF0uAIFPGkr"
+		notice.Agent.AppId = "system"
+		notice.Agent.ItemId = "cpu.load"
+		notice.SetTime(time.Now())
+		notice.Hash()
+
+		dao := NoticeDAO()
+		err := dao.InsertOne(notice)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("ok")
+	}
 }
 
 func TestNoticeDAO_NotifyProxyMessage(t *testing.T) {
@@ -92,7 +134,7 @@ func TestNoticeDAO_CountReceivedNotices(t *testing.T) {
 func TestNoticeDAO_ExistNoticesWithHash(t *testing.T) {
 	dao := NoticeDAO()
 	{
-		b, err := dao.ExistNoticesWithHash("4157704578", map[string]interface{}{
+		b, err := dao.ExistNoticesWithHash("4604200", map[string]interface{}{
 			"agent.agentId": "local",
 		}, 86400*time.Minute)
 		if err != nil {
@@ -188,7 +230,22 @@ func TestNoticeDAO_DeleteNoticesForAgent(t *testing.T) {
 
 func TestNoticeDAO_UpdateNoticeReceivers(t *testing.T) {
 	dao := NoticeDAO()
-	err := dao.UpdateNoticeReceivers("5d6284e5e31cd55d472761c4", []string{"a", "b", "c"})
+	ones, err := dao.ListNotices(false, 0, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ones) == 0 {
+		ones, err = dao.ListNotices(false, 0, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(ones) == 0 {
+			t.Log("not found")
+			return
+		}
+	}
+
+	err = dao.UpdateNoticeReceivers(ones[0].Id.Hex(), []string{"a", "b", "c"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,7 +263,20 @@ func TestNoticeDAO_UpdateAllNoticesRead(t *testing.T) {
 
 func TestNoticeDAO_UpdateNoticesRead(t *testing.T) {
 	dao := NoticeDAO()
-	err := dao.UpdateNoticesRead([]string{"5c92676949d81a09b2f1a760", "5c925b0086e004b594e9a90c"})
+	ones, err := dao.ListNotices(false, 0, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ones) == 0 {
+		t.Log("ok")
+		return
+	}
+	ids := []string{}
+	for _, one := range ones {
+		ids = append(ids, one.Id.Hex())
+	}
+	t.Log("ids:", ids)
+	err = dao.UpdateNoticesRead(ids)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,7 +284,21 @@ func TestNoticeDAO_UpdateNoticesRead(t *testing.T) {
 }
 
 func TestNoticeDAO_UpdateAgentNoticesRead(t *testing.T) {
-	err := NoticeDAO().UpdateAgentNoticesRead("local", []string{"5c925b0086e004b594e9a90c"})
+	dao := NoticeDAO()
+	ones, err := dao.ListAgentNotices("local", false, 0, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ones) == 0 {
+		t.Log("ok")
+		return
+	}
+	ids := []string{}
+	for _, one := range ones {
+		ids = append(ids, one.Id.Hex())
+	}
+	t.Log("ids:", ids)
+	err = dao.UpdateAgentNoticesRead("local", ids)
 	if err != nil {
 		t.Fatal(err)
 	}

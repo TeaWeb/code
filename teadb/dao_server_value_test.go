@@ -134,7 +134,15 @@ func TestServerValueDAO_FindSameItemValue2(t *testing.T) {
 
 func TestServerValueDAO_UpdateItemValueAndTimestamp(t *testing.T) {
 	dao := ServerValueDAO()
-	err := dao.UpdateItemValueAndTimestamp("test", "5d613431b1be37e820bc8409", map[string]interface{}{
+	ones, err := dao.QueryValues(NewQuery(dao.TableName("test")).Limit(1).Desc("_id"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ones) == 0 {
+		t.Log("not found")
+		return
+	}
+	err = dao.UpdateItemValueAndTimestamp("test", ones[0].Id.Hex(), map[string]interface{}{
 		"name": "xia",
 		"age":  "21",
 	}, 1566651442)
