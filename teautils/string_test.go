@@ -19,3 +19,9 @@ func BenchmarkBytesToString2(b *testing.B) {
 		_ = string(data)
 	}
 }
+
+func TestFormatAddress(t *testing.T) {
+	t.Log(FormatAddress("127.0.0.1:1234"))
+	t.Log(FormatAddress("127.0.0.1 : 1234"))
+	t.Log(FormatAddress("127.0.0.1：1234"))
+}

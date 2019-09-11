@@ -7,6 +7,9 @@ import (
 
 // 通知DAO
 type NoticeDAOInterface interface {
+	// 设置驱动
+	SetDriver(driver DriverInterface)
+
 	// 初始化
 	Init()
 

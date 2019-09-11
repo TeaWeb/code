@@ -29,3 +29,23 @@ func TestMongoDriver_setMapValue(t *testing.T) {
 	driver.setMapValue(m, []string{"a", "b", "c", "d", "e"}, 123)
 	logs.PrintAsJSON(m, t)
 }
+
+func TestMongoDriver_connect(t *testing.T) {
+	driver := new(MongoDriver)
+	client, err := driver.connect()
+	if err != nil {
+		t.Log("ERROR:", err.Error())
+		return
+	}
+	t.Log("client:", client)
+}
+
+func TestMongoDriver_Test(t *testing.T) {
+	driver := new(MongoDriver)
+	err := driver.Test()
+	if err != nil {
+		t.Log("ERROR:", err.Error())
+		return
+	}
+	t.Log("client:", driver)
+}

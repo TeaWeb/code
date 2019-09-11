@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
-	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	timeutil "github.com/iwind/TeaGo/utils/time"
@@ -16,6 +15,7 @@ import (
 )
 
 type MongoAccessLogDAO struct {
+	BaseDAO
 }
 
 func (this *MongoAccessLogDAO) Init() {
@@ -38,8 +38,11 @@ func (this *MongoAccessLogDAO) InsertOne(accessLog *accesslogs.AccessLog) error 
 // 写入一组日志
 func (this *MongoAccessLogDAO) InsertAccessLogs(accessLogList []interface{}) error {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	_, err := teamongo.SharedCollection(this.TableName(timeutil.Format("Ymd"))).
-		InsertMany(ctx, accessLogList)
+	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName(timeutil.Format("Ymd")))
+	if err != nil {
+		return err
+	}
+	_, err = coll.InsertMany(ctx, accessLogList)
 	return err
 }
 
@@ -286,7 +289,10 @@ func (this *MongoAccessLogDAO) createIndex(day string, fields []*shared.IndexFie
 		return nil
 	}
 
-	coll := teamongo.SharedCollection(this.TableName(day))
+	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName(day))
+	if err != nil {
+		return err
+	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	// 创建新的
@@ -299,7 +305,7 @@ func (this *MongoAccessLogDAO) createIndex(day string, fields []*shared.IndexFie
 		}
 	}
 
-	_, err := coll.Indexes().CreateOne(ctx, mongo.IndexModel{
+	_, err = coll.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys:    bsonDoc,
 		Options: options.Index().SetBackground(true),
 	})

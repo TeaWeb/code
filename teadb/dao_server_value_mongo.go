@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/stats"
 	"github.com/TeaWeb/code/teadb/shared"
-	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,6 +15,7 @@ import (
 )
 
 type MongoServerValueDAO struct {
+	BaseDAO
 }
 
 func (this *MongoServerValueDAO) Init() {
@@ -26,12 +26,17 @@ func (this *MongoServerValueDAO) TableName(serverId string) string {
 }
 
 func (this *MongoServerValueDAO) InsertOne(serverId string, value *stats.Value) error {
+	coll, err := this.selectColl(this.TableName(serverId))
+	if err != nil {
+		return err
+	}
+
 	if value.Id.IsZero() {
 		value.Id = shared.NewObjectId()
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	_, err := this.selectColl(this.TableName(serverId)).InsertOne(ctx, value)
+	_, err = coll.InsertOne(ctx, value)
 	return err
 }
 
@@ -89,8 +94,14 @@ func (this *MongoServerValueDAO) UpdateItemValueAndTimestamp(serverId string, va
 	if err != nil {
 		return err
 	}
+
+	coll, err := this.selectColl(this.TableName(serverId))
+	if err != nil {
+		return err
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	_, err = this.selectColl(this.TableName(serverId)).UpdateOne(ctx, map[string]interface{}{
+	_, err = coll.UpdateOne(ctx, map[string]interface{}{
 		"_id": objectId,
 	}, map[string]interface{}{
 		"$set": map[string]interface{}{
@@ -106,7 +117,10 @@ func (this *MongoServerValueDAO) CreateIndex(serverId string, fields []*shared.I
 		return nil
 	}
 
-	coll := this.selectColl(this.TableName(serverId))
+	coll, err := this.selectColl(this.TableName(serverId))
+	if err != nil {
+		return err
+	}
 
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
@@ -120,7 +134,7 @@ func (this *MongoServerValueDAO) CreateIndex(serverId string, fields []*shared.I
 		}
 	}
 
-	_, err := coll.Indexes().CreateOne(ctx, mongo.IndexModel{
+	_, err = coll.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys:    bsonDoc,
 		Options: options.Index().SetBackground(true),
 	})
@@ -160,15 +174,22 @@ func (this *MongoServerValueDAO) FindOneWithItem(serverId string, item string) (
 
 // 删除代理服务相关表
 func (this *MongoServerValueDAO) DropServerTable(serverId string) error {
+	coll, err := this.selectColl(this.TableName(serverId))
+	if err != nil {
+		return err
+	}
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	return this.selectColl(this.TableName(serverId)).Drop(ctx)
+	return coll.Drop(ctx)
 }
 
-func (this *MongoServerValueDAO) selectColl(collName string) *teamongo.Collection {
-	coll := teamongo.SharedCollection(collName)
+func (this *MongoServerValueDAO) selectColl(collName string) (*MongoCollection, error) {
+	coll, err := this.driver.(*MongoDriver).SelectColl(collName)
+	if err != nil {
+		return nil, err
+	}
 
 	if isInitializedTable(collName) {
-		return coll
+		return coll, nil
 	}
 
 	for _, fields := range [][]*shared.IndexField{
@@ -211,7 +232,7 @@ func (this *MongoServerValueDAO) selectColl(collName string) *teamongo.Collectio
 		}
 	}
 
-	return coll
+	return coll, nil
 }
 
 func (this *MongoServerValueDAO) checkIndexEqual(index1 map[string]interface{}, index2 map[string]interface{}) bool {

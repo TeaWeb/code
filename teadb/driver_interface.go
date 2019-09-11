@@ -48,4 +48,13 @@ type DriverInterface interface {
 
 	// 测试数据库连接
 	Test() error
+
+	// 关闭
+	Shutdown() error
+
+	// 统计数据表信息
+	StatTables(tables []string) (map[string]*TableStat, error)
+
+	// 删除表
+	DropTable(table string) error
 }

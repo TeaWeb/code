@@ -23,7 +23,8 @@ var sharedDBConfig *DBConfig = nil
 
 // 数据库配置
 type DBConfig struct {
-	Type DBType `yaml:"type" json:"type"`
+	Type          DBType `yaml:"type" json:"type"`                   // 类型：mongo, mysql, postgres ...
+	IsInitialized bool   `yaml:"isInitialized" json:"isInitialized"` // 是否初始化
 }
 
 // 取得共享的配置
@@ -32,7 +33,8 @@ func SharedDBConfig() *DBConfig {
 		return sharedDBConfig
 	}
 	config := &DBConfig{
-		Type: DBTypeMongo,
+		Type:          DBTypeMongo,
+		IsInitialized: true,
 	}
 	data, err := ioutil.ReadFile(Tea.ConfigFile(DBConfigFile))
 	if err != nil {
@@ -43,7 +45,7 @@ func SharedDBConfig() *DBConfig {
 		logs.Error(err)
 		return config
 	}
-
+	sharedDBConfig = config
 	return config
 }
 
@@ -54,4 +56,17 @@ func (this *DBConfig) Save() error {
 		return err
 	}
 	return ioutil.WriteFile(Tea.ConfigFile(DBConfigFile), data, 0777)
+}
+
+// 数据库名称
+func (this *DBConfig) TypeName() string {
+	switch this.Type {
+	case DBTypeMongo:
+		return "MongoDB"
+	case DBTypeMySQL:
+		return "MySQL"
+	case DBTypePostgres:
+		return "PostgreSQL"
+	}
+	return ""
 }

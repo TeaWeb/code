@@ -4,6 +4,9 @@ import "github.com/TeaWeb/code/teaconfigs/audits"
 
 // 审计日志DAO
 type AuditLogDAOInterface interface {
+	// 设置驱动
+	SetDriver(driver DriverInterface)
+
 	// 初始化
 	Init()
 

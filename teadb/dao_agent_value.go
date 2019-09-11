@@ -7,6 +7,9 @@ import (
 
 // Agent数值记录DAO
 type AgentValueDAOInterface interface {
+	// 设置驱动
+	SetDriver(driver DriverInterface)
+
 	// 初始化
 	Init()
 

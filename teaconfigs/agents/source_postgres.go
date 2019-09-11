@@ -82,7 +82,7 @@ func (this *PostgreSQLSource) Execute(params map[string]string) (value interface
 			var ptr interface{} = nil
 			values = append(values, &ptr)
 		}
-		err = rows.Scan(values ...)
+		err = rows.Scan(values...)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +122,7 @@ func (this *PostgreSQLSource) Form() *forms.Form {
 			field.Code = "addr"
 			field.ValidateCode = `
 if (value.length == 0) {
-	throw new Error("请输入PostgresSQL数据库地址");
+	throw new Error("请输入PostgreSQL数据库地址");
 }`
 			group.Add(field)
 		}

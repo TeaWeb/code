@@ -8,9 +8,6 @@ type SQLDriverInterface interface {
 	// 修改多条记录
 	UpdateOnes(query *Query, values map[string]interface{}) error
 
-	// 删除表
-	DropTable(table string) error
-
 	// 读取JSON字段
 	JSONExtract(field string, path string) string
 }

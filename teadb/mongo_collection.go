@@ -1,4 +1,4 @@
-package teamongo
+package teadb
 
 import (
 	"context"
@@ -8,41 +8,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
-	"sync"
 	"time"
 )
 
-var collMap = map[string]*Collection{}
-var collLocker = sync.RWMutex{}
-
 // 集合定义
-type Collection struct {
+type MongoCollection struct {
 	*mongo.Collection
 }
 
-// 取得共享的集合
-func SharedCollection(collName string) *Collection {
-	collLocker.RLock()
-	coll, ok := collMap[collName]
-	if ok {
-		collLocker.RUnlock()
-		return coll
-	}
-	collLocker.RUnlock()
-
-	coll = &Collection{
-		SharedClient().Database(DatabaseName).Collection(collName),
-	}
-
-	collLocker.Lock()
-	collMap[collName] = coll
-	collLocker.Unlock()
-
-	return coll
-}
-
 // 创建索引
-func (this *Collection) CreateIndex(fields ...*shared.IndexField) error {
+func (this *MongoCollection) CreateIndex(fields ...*shared.IndexField) error {
 	indexView := this.Indexes()
 
 	doc := map[string]interface{}{}
@@ -104,7 +79,7 @@ func (this *Collection) CreateIndex(fields ...*shared.IndexField) error {
 }
 
 // 创建一组索引
-func (this *Collection) CreateIndexes(fields ...[]*shared.IndexField) error {
+func (this *MongoCollection) CreateIndexes(fields ...[]*shared.IndexField) error {
 	var err error = nil
 	for _, f := range fields {
 		err1 := this.CreateIndex(f...)

@@ -2,40 +2,67 @@ package teadb
 
 import (
 	"errors"
-	"github.com/TeaWeb/code/teamongo"
+	"fmt"
+	"github.com/TeaWeb/code/teaconfigs/db"
+	"github.com/TeaWeb/code/teautils"
+	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/processes"
 	stringutil "github.com/iwind/TeaGo/utils/string"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 	"golang.org/x/net/context"
 	"reflect"
+	"regexp"
+	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
 type MongoDriver struct {
 	BaseDriver
+
+	sharedClient       *mongo.Client
+	sharedClientLocker sync.Mutex
+	dbName             string
+
+	collMap    map[string]*MongoCollection
+	collLocker sync.Mutex
 }
 
 func (this *MongoDriver) Init() {
+	this.collMap = map[string]*MongoCollection{}
+
 	agentValueDAO = new(MongoAgentValueDAO)
+	agentValueDAO.SetDriver(this)
 	agentValueDAO.Init()
 
 	agentLogDAO = new(MongoAgentLogDAO)
+	agentLogDAO.SetDriver(this)
 	agentLogDAO.Init()
 
 	serverValueDAO = new(MongoServerValueDAO)
+	serverValueDAO.SetDriver(this)
 	serverValueDAO.Init()
 
 	auditLogDAO = new(MongoAuditLogDAO)
+	auditLogDAO.SetDriver(this)
 	auditLogDAO.Init()
 
 	accessLogDAO = new(MongoAccessLogDAO)
+	accessLogDAO.SetDriver(this)
 	accessLogDAO.Init()
 
 	noticeDAO = new(MongoNoticeDAO)
+	noticeDAO.SetDriver(this)
 	noticeDAO.Init()
+
+	this.initDB()
 }
 
 func (this *MongoDriver) FindOne(query *Query, modelPtr interface{}) (interface{}, error) {
@@ -47,8 +74,8 @@ func (this *MongoDriver) FindOne(query *Query, modelPtr interface{}) (interface{
 		return nil, errors.New("'table' should not be empty")
 	}
 
-	db := this.db()
-	if db == nil {
+	currentDB := this.DB()
+	if currentDB == nil {
 		return nil, errors.New("can not select db")
 	}
 
@@ -87,7 +114,7 @@ func (this *MongoDriver) FindOne(query *Query, modelPtr interface{}) (interface{
 		logs.PrintAsJSON(filter)
 	}
 
-	cursor, err := db.Collection(query.table).Find(this.timeoutContext(5*time.Second), filter, opt)
+	cursor, err := currentDB.Collection(query.table).Find(this.timeoutContext(5*time.Second), filter, opt)
 	if err != nil {
 		if this.isNotFoundError(err) {
 			return nil, nil
@@ -122,8 +149,8 @@ func (this *MongoDriver) FindOnes(query *Query, modelPtr interface{}) ([]interfa
 		return nil, errors.New("'table' should not be empty")
 	}
 
-	db := this.db()
-	if db == nil {
+	currentDB := this.DB()
+	if currentDB == nil {
 		return nil, errors.New("can not select db")
 	}
 
@@ -165,7 +192,7 @@ func (this *MongoDriver) FindOnes(query *Query, modelPtr interface{}) ([]interfa
 		logs.PrintAsJSON(filter)
 	}
 
-	cursor, err := db.Collection(query.table).Find(this.timeoutContext(5*time.Second), filter, opt)
+	cursor, err := currentDB.Collection(query.table).Find(this.timeoutContext(5*time.Second), filter, opt)
 	if err != nil {
 		if this.isNotFoundError(err) {
 			return nil, nil
@@ -207,7 +234,7 @@ func (this *MongoDriver) DeleteOnes(query *Query) error {
 		return err
 	}
 
-	_, err = this.db().Collection(query.table).DeleteMany(this.timeoutContext(5*time.Second), filter)
+	_, err = this.DB().Collection(query.table).DeleteMany(this.timeoutContext(5*time.Second), filter)
 	return err
 }
 
@@ -221,7 +248,7 @@ func (this *MongoDriver) InsertOne(table string, modelPtr interface{}) error {
 	if modelPtr == nil {
 		return errors.New("insertOne: modelPtr should not be nil")
 	}
-	_, err := this.db().Collection(table).InsertOne(this.timeoutContext(5*time.Second), modelPtr)
+	_, err := this.DB().Collection(table).InsertOne(this.timeoutContext(5*time.Second), modelPtr)
 	return err
 }
 
@@ -250,7 +277,7 @@ func (this *MongoDriver) InsertOnes(table string, modelPtrSlice interface{}) err
 		s = append(s, t.Index(i).Interface())
 	}
 
-	_, err := this.db().Collection(table).InsertMany(this.timeoutContext(5*time.Second), s)
+	_, err := this.DB().Collection(table).InsertMany(this.timeoutContext(5*time.Second), s)
 	return err
 }
 
@@ -262,8 +289,8 @@ func (this *MongoDriver) Count(query *Query) (int64, error) {
 		return 0, errors.New("'table' should not be empty")
 	}
 
-	db := this.db()
-	if db == nil {
+	currentDB := this.DB()
+	if currentDB == nil {
 		return 0, errors.New("can not select db")
 	}
 
@@ -281,7 +308,7 @@ func (this *MongoDriver) Count(query *Query) (int64, error) {
 		return 0, err
 	}
 
-	return this.db().Collection(query.table).CountDocuments(this.timeoutContext(10*time.Second), filter, opts)
+	return this.DB().Collection(query.table).CountDocuments(this.timeoutContext(10*time.Second), filter, opts)
 }
 
 func (this *MongoDriver) Sum(query *Query, field string) (float64, error) {
@@ -371,7 +398,7 @@ func (this *MongoDriver) Group(query *Query, field string, result map[string]Exp
 		logs.PrintAsJSON(pipelines)
 	}
 
-	cursor, err := this.db().Collection(query.table).Aggregate(this.timeoutContext(30*time.Second), pipelines)
+	cursor, err := this.DB().Collection(query.table).Aggregate(this.timeoutContext(30*time.Second), pipelines)
 	if err != nil {
 		return nil, err
 	}
@@ -405,15 +432,230 @@ func (this *MongoDriver) Group(query *Query, field string, result map[string]Exp
 
 // 测试数据库连接
 func (this *MongoDriver) Test() error {
-	return teamongo.Test()
+	client, err := this.connect()
+	if err != nil {
+		return err
+	}
+
+	// 尝试查询
+	ctx, _ := context.WithTimeout(context.Background(), 1*time.Second)
+	_, err = client.Database(this.dbName).
+		Collection("logs").
+		Find(ctx, map[string]interface{}{}, options.Find().SetLimit(1))
+	return err
 }
 
-func (this *MongoDriver) db() *mongo.Database {
-	client := teamongo.SharedClient()
+// 删除表
+func (this *MongoDriver) DropTable(table string) error {
+	coll, err := this.SelectColl(table)
+	if err != nil {
+		return err
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	return coll.Drop(ctx)
+}
+
+// 测试URI
+func (this *MongoDriver) TestConfig(config *db.MongoConfig) (message string, ok bool) {
+	opts := options.Client().ApplyURI(config.ComposeURI())
+	if config.AuthEnabled {
+		opts.SetAuth(options.Credential{
+			Username:                config.Username,
+			Password:                config.Password,
+			AuthMechanism:           config.AuthMechanism,
+			AuthMechanismProperties: config.AuthMechanismPropertiesMap(),
+			AuthSource:              config.DBName,
+		})
+	}
+	client, err := mongo.NewClient(opts)
+	if err != nil {
+		message = "尝试分析配置错误：" + err.Error()
+		return
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	err = client.Connect(ctx)
+	if err != nil {
+		message = "尝试连接数据库失败：" + err.Error()
+		return
+	}
+
+	defer func() {
+		_ = client.Disconnect(context.Background())
+	}()
+
+	coll := client.Database(config.DBName).Collection("test")
+	_, err = coll.InsertOne(context.Background(), map[string]interface{}{
+		"a": 1,
+	})
+	if err != nil {
+		message = "尝试写入数据失败：" + err.Error()
+		return
+	}
+
+	err = coll.Drop(context.Background())
+	if err != nil {
+		message = "尝试删除集合失败：" + err.Error()
+		return
+	}
+
+	ok = true
+	return
+}
+
+// 关闭服务
+func (this *MongoDriver) Shutdown() error {
+	this.collLocker.Lock()
+	this.collMap = map[string]*MongoCollection{}
+	this.collLocker.Unlock()
+
+	this.sharedClientLocker.Lock()
+	if this.sharedClient != nil {
+		oldClient := this.sharedClient
+		go func() {
+			if oldClient != nil {
+				_ = oldClient.Disconnect(context.Background())
+			}
+		}()
+		this.sharedClient = nil
+	}
+	this.sharedClientLocker.Unlock()
+
+	return nil
+}
+
+// 选择数据集合
+func (this *MongoDriver) SelectColl(name string) (*MongoCollection, error) {
+	this.collLocker.Lock()
+	defer this.collLocker.Unlock()
+
+	coll, ok := this.collMap[name]
+	if ok {
+		return coll, nil
+	}
+
+	currentDB := this.DB()
+	if currentDB != nil {
+		coll = &MongoCollection{
+			currentDB.Collection(name),
+		}
+		this.collMap[name] = coll
+		return coll, nil
+	}
+	return nil, errors.New("can not select collection '" + name + "'")
+}
+
+// 统计数据表
+func (this *MongoDriver) StatTables(tables []string) (map[string]*TableStat, error) {
+	statMap := map[string]*TableStat{}
+
+	currentDB := this.DB()
+	if currentDB == nil {
+		return statMap, errors.New("database is not available now")
+	}
+
+	for _, collName := range tables {
+		if len(collName) == 0 {
+			continue
+		}
+
+		result := currentDB.RunCommand(context.Background(), bsonx.Doc{{"collStats", bsonx.String(collName)}, {"verbose", bsonx.Boolean(false)}})
+		if result.Err() != nil {
+			return statMap, result.Err()
+		}
+
+		m1 := maps.Map{}
+		err := result.Decode(&m1)
+		if err != nil {
+			if result.Err() != nil {
+				return statMap, result.Err()
+			}
+		}
+		if m1.GetInt("ok") != 1 {
+			continue
+		}
+		size := float64(m1.GetInt("size"))
+		formattedSize := ""
+		if size < 1024 {
+			formattedSize = fmt.Sprintf("%.2fB", size)
+		} else if size < 1024*1024 {
+			formattedSize = fmt.Sprintf("%.2fKB", size/1024)
+		} else if size < 1024*1024*1024 {
+			formattedSize = fmt.Sprintf("%.2fMB", size/1024/1024)
+		} else {
+			formattedSize = fmt.Sprintf("%.2fGB", size/1024/1024/1024)
+		}
+		statMap[collName] = &TableStat{
+			Count:         m1.GetInt64("count"),
+			Size:          m1.GetInt64("size"),
+			FormattedSize: formattedSize,
+		}
+	}
+	return statMap, nil
+}
+
+// 选取数据库
+func (this *MongoDriver) DB() *mongo.Database {
+	client, _ := this.connect()
 	if client == nil {
 		return nil
 	}
-	return client.Database(teamongo.DatabaseName)
+	return client.Database(this.dbName)
+}
+
+// 获取共享的Client
+func (this *MongoDriver) connect() (*mongo.Client, error) {
+	if this.sharedClient != nil {
+		return this.sharedClient, nil
+	}
+
+	this.sharedClientLocker.Lock()
+	defer this.sharedClientLocker.Unlock()
+
+	if this.sharedClient != nil {
+		return this.sharedClient, nil
+	}
+
+	config, err := db.LoadMongoConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(config.DBName) == 0 {
+		config.DBName = "teaweb"
+	}
+	this.dbName = config.DBName
+
+	opts := options.Client().ApplyURI(config.URI)
+	opts.SetMaxPoolSize(10).
+		SetConnectTimeout(5 * time.Second)
+	sharedConfig, err := db.LoadMongoConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if sharedConfig != nil && len(sharedConfig.AuthMechanism) > 0 {
+		opts.SetAuth(options.Credential{
+			Username:                sharedConfig.Username,
+			Password:                sharedConfig.Password,
+			AuthMechanism:           sharedConfig.AuthMechanism,
+			AuthMechanismProperties: sharedConfig.AuthMechanismPropertiesMap(),
+			AuthSource:              config.DBName,
+		})
+	}
+
+	client, err := mongo.NewClient(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = client.Connect(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+
 }
 
 func (this *MongoDriver) buildFilter(query *Query) (filter map[string]interface{}, err error) {
@@ -495,7 +737,7 @@ func (this *MongoDriver) aggregate(funcName string, query *Query, field string) 
 		return 0, err
 	}
 
-	pipelines, err := teamongo.BSONArrayBytes([]byte(`[
+	pipelines, err := BSONArrayBytes([]byte(`[
 	{
 		"$match": ` + stringutil.JSONEncode(filter) + `
 	},
@@ -510,7 +752,7 @@ func (this *MongoDriver) aggregate(funcName string, query *Query, field string) 
 		return 0, err
 	}
 
-	cursor, err := this.db().Collection(query.table).Aggregate(this.timeoutContext(30*time.Second), pipelines)
+	cursor, err := this.DB().Collection(query.table).Aggregate(this.timeoutContext(30*time.Second), pipelines)
 	if err != nil {
 		return 0, err
 	}
@@ -553,4 +795,116 @@ func (this *MongoDriver) setMapValue(m maps.Map, keys []string, v interface{}) {
 		m[keys[0]] = maps.Map{}
 		this.setMapValue(m[keys[0]].(maps.Map), keys[1:], v)
 	}
+}
+
+// 初始化MongoDB
+func (this *MongoDriver) initDB() {
+	go func() {
+		this.startInstalledMongo()
+		this.cleanAccessLogs()
+	}()
+}
+
+// 启动本机安装的Mongo
+func (this *MongoDriver) startInstalledMongo() {
+	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
+		return
+	}
+
+	config, err := db.LoadMongoConfig()
+	if strings.HasSuffix(config.Addr, "127.0.0.1") || strings.HasSuffix(config.Addr, "localhost") {
+		return
+	}
+
+	err = this.Test()
+
+	if err != nil {
+		mongodbDir := Tea.Root + "/mongodb"
+
+		// 是否已安装
+		if !files.NewFile(mongodbDir + "/bin/mongod").Exists() {
+			return
+		}
+
+		// 启动
+		p := processes.NewProcess(mongodbDir+"/bin/mongod", "--dbpath="+mongodbDir+"/data", "--fork", "--logpath="+mongodbDir+"/data/fork.log")
+		p.SetPwd(mongodbDir)
+
+		logs.Println("[mongo]start mongo: ", mongodbDir+"/bin/mongod", "--dbpath="+mongodbDir+"/data", "--fork", "--logpath="+mongodbDir+"/data/fork.log")
+
+		err := p.StartBackground()
+		if err != nil {
+			logs.Println("[mongo]start error: " + err.Error())
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
+
+// 清理访问日志任务
+func (this *MongoDriver) cleanAccessLogs() {
+	reg := regexp.MustCompile("^logs\\.\\d{8}$")
+
+	teautils.Every(1*time.Minute, func(ticker *teautils.Ticker) {
+		config, _ := db.LoadMongoConfig()
+		if config == nil {
+			return
+		}
+
+		if config.AccessLog == nil {
+			return
+		}
+
+		now := time.Now()
+		if config.AccessLog.CleanHour != now.Hour() ||
+			now.Minute() != 0 ||
+			config.AccessLog.KeepDays < 1 {
+			return
+		}
+
+		compareDay := "logs." + timeutil.Format("Ymd", time.Now().Add(-time.Duration(config.AccessLog.KeepDays * 24)*time.Hour))
+		logs.Println("[mongo]clean access logs before '" + compareDay + "'")
+
+		currentDB := this.DB()
+		if currentDB == nil {
+			return
+		}
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		cursor, err := currentDB.ListCollections(ctx, maps.Map{})
+		if err != nil {
+			logs.Error(err)
+			return
+		}
+
+		defer func() {
+			err = cursor.Close(context.Background())
+			if err != nil {
+				logs.Error(err)
+			}
+		}()
+
+		for cursor.Next(context.Background()) {
+			m := maps.Map{}
+			err := cursor.Decode(&m)
+			if err != nil {
+				logs.Error(err)
+				return
+			}
+			name := m.GetString("name")
+			if len(name) == 0 {
+				continue
+			}
+			if !reg.MatchString(name) {
+				continue
+			}
+
+			if name < compareDay {
+				logs.Println("[mongo]clean collection '" + name + "'")
+				ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+				err := currentDB.Collection(name).Drop(ctx)
+				if err != nil {
+					logs.Error(err)
+				}
+			}
+		}
+	})
 }

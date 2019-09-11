@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo/actions"
@@ -41,7 +42,22 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 
 		if user.Granted(configs.AdminGrantAll) {
 			// mongodb管理
-			menu.Add("MongoDB", "", "/settings/mongo", action.Spec.HasClassPrefix("mongo."))
+			if db.SharedDBConfig().Type == db.DBTypeMongo {
+				menu.Add("MongoDB设置", "", "/settings/mongo", action.Spec.HasClassPrefix("mongo."))
+			}
+
+			// MySQL管理
+			if db.SharedDBConfig().Type == db.DBTypeMySQL {
+				menu.Add("MySQL设置", "", "/settings/mysql", action.Spec.HasClassPrefix("mysql."))
+			}
+
+			// mongodb管理
+			if db.SharedDBConfig().Type == db.DBTypePostgres {
+				menu.Add("PostgreSQL设置", "", "/settings/postgres", action.Spec.HasClassPrefix("postgres."))
+			}
+
+			// 数据库
+			menu.Add("切换数据库", "", "/settings/database", action.Spec.HasClassPrefix("database."))
 
 			// 备份
 			menu.Add("备份", "", "/settings/backup", action.Spec.HasClassPrefix("backup."))

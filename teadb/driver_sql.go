@@ -23,9 +23,8 @@ type SQLDriver struct {
 
 	driver string
 
-	db          *sql.DB
-	conn        *sql.Conn
-	queryLocker sync.Mutex
+	db       *sql.DB
+	dbLocker sync.Mutex
 }
 
 // 查找单条记录
@@ -42,13 +41,10 @@ func (this *SQLDriver) FindOne(query *Query, modelPtr interface{}) (interface{},
 
 // 查找多条记录
 func (this *SQLDriver) FindOnes(query *Query, modelPtr interface{}) ([]interface{}, error) {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return nil, err
 	}
-
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
 
 	holder := NewSQLParamsHolder(this.driver)
 	sqlString, err := this.asSQL(SQLSelect, query, holder, "", nil)
@@ -60,7 +56,7 @@ func (this *SQLDriver) FindOnes(query *Query, modelPtr interface{}) ([]interface
 		logs.Println("sql:", sqlString)
 	}
 
-	stmt, err := conn.PrepareContext(context.Background(), sqlString)
+	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
 	if err != nil {
 		return nil, this.processError(err)
 	}
@@ -116,7 +112,7 @@ func (this *SQLDriver) FindOnes(query *Query, modelPtr interface{}) ([]interface
 
 // 插入一条记录
 func (this *SQLDriver) InsertOne(table string, modelPtr interface{}) error {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return err
 	}
@@ -124,9 +120,6 @@ func (this *SQLDriver) InsertOne(table string, modelPtr interface{}) error {
 	if modelPtr == nil {
 		return errors.New("modelPtr should not be nil")
 	}
-
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
 
 	modelType := reflect.TypeOf(modelPtr)
 	method, methodExists := modelType.MethodByName("DBColumns")
@@ -179,7 +172,7 @@ func (this *SQLDriver) InsertOne(table string, modelPtr interface{}) error {
 		}
 	}
 	b.WriteString(")")
-	stmt, err := conn.PrepareContext(context.Background(), b.String())
+	stmt, err := currentDB.PrepareContext(context.Background(), b.String())
 	if err != nil {
 		return this.processError(err)
 	}
@@ -194,16 +187,13 @@ func (this *SQLDriver) InsertOne(table string, modelPtr interface{}) error {
 
 // 插入多条记录
 func (this *SQLDriver) InsertOnes(table string, modelPtrSlice interface{}) error {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return err
 	}
 	if modelPtrSlice == nil {
 		return nil
 	}
-
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
 
 	sliceType := reflect.TypeOf(modelPtrSlice)
 	if sliceType.Kind() != reflect.Slice {
@@ -292,7 +282,7 @@ func (this *SQLDriver) InsertOnes(table string, modelPtrSlice interface{}) error
 		b.WriteString(")")
 	}
 
-	stmt, err := conn.PrepareContext(context.Background(), b.String())
+	stmt, err := currentDB.PrepareContext(context.Background(), b.String())
 	if err != nil {
 		return this.processError(err)
 	}
@@ -307,20 +297,18 @@ func (this *SQLDriver) InsertOnes(table string, modelPtrSlice interface{}) error
 
 // 删除多条记录
 func (this *SQLDriver) DeleteOnes(query *Query) error {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return err
 	}
 
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
 	holder := NewSQLParamsHolder(this.driver)
 	sqlString, err := this.asSQL(SQLDelete, query, holder, "", nil)
 	if err != nil {
 		return err
 	}
 
-	stmt, err := conn.PrepareContext(context.Background(), sqlString)
+	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
 	if err != nil {
 		return this.processError(err)
 	}
@@ -334,13 +322,10 @@ func (this *SQLDriver) DeleteOnes(query *Query) error {
 
 // 修改多条记录
 func (this *SQLDriver) UpdateOnes(query *Query, values map[string]interface{}) error {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return err
 	}
-
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
 
 	holder := NewSQLParamsHolder(this.driver)
 	sqlString, err := this.asSQL(SQLUpdate, query, holder, "", values)
@@ -348,7 +333,7 @@ func (this *SQLDriver) UpdateOnes(query *Query, values map[string]interface{}) e
 		return err
 	}
 
-	stmt, err := conn.PrepareContext(context.Background(), sqlString)
+	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
 	if err != nil {
 		return this.processError(err)
 	}
@@ -363,13 +348,10 @@ func (this *SQLDriver) UpdateOnes(query *Query, values map[string]interface{}) e
 
 // 计算总数量
 func (this *SQLDriver) Count(query *Query) (int64, error) {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return 0, err
 	}
-
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
 
 	holder := NewSQLParamsHolder(this.driver)
 	query.Result("COUNT(*)")
@@ -382,7 +364,7 @@ func (this *SQLDriver) Count(query *Query) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := conn.PrepareContext(context.Background(), sqlString)
+	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
 	if err != nil {
 		return 0, this.processError(err)
 	}
@@ -406,13 +388,10 @@ func (this *SQLDriver) Count(query *Query) (int64, error) {
 
 // 计算总和
 func (this *SQLDriver) Sum(query *Query, field string) (float64, error) {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return 0, err
 	}
-
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
 
 	holder := NewSQLParamsHolder(this.driver)
 	query.Result("SUM(" + this.quoteKeyword(field) + ")")
@@ -425,7 +404,7 @@ func (this *SQLDriver) Sum(query *Query, field string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := conn.PrepareContext(context.Background(), sqlString)
+	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
 	if err != nil {
 		return 0, this.processError(err)
 	}
@@ -449,13 +428,10 @@ func (this *SQLDriver) Sum(query *Query, field string) (float64, error) {
 
 // 计算平均值
 func (this *SQLDriver) Avg(query *Query, field string) (float64, error) {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return 0, err
 	}
-
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
 
 	holder := NewSQLParamsHolder(this.driver)
 	query.Result("AVG(" + this.quoteKeyword(field) + ")")
@@ -468,7 +444,7 @@ func (this *SQLDriver) Avg(query *Query, field string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := conn.PrepareContext(context.Background(), sqlString)
+	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
 	if err != nil {
 		return 0, this.processError(err)
 	}
@@ -492,13 +468,10 @@ func (this *SQLDriver) Avg(query *Query, field string) (float64, error) {
 
 // 计算最小值
 func (this *SQLDriver) Min(query *Query, field string) (float64, error) {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return 0, err
 	}
-
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
 
 	holder := NewSQLParamsHolder(this.driver)
 	query.Result("MIN(" + this.quoteKeyword(field) + ")")
@@ -511,7 +484,7 @@ func (this *SQLDriver) Min(query *Query, field string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := conn.PrepareContext(context.Background(), sqlString)
+	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
 	if err != nil {
 		return 0, this.processError(err)
 	}
@@ -535,13 +508,10 @@ func (this *SQLDriver) Min(query *Query, field string) (float64, error) {
 
 // 计算最大值
 func (this *SQLDriver) Max(query *Query, field string) (float64, error) {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return 0, err
 	}
-
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
 
 	holder := NewSQLParamsHolder(this.driver)
 	query.Result("MAX(" + this.quoteKeyword(field) + ")")
@@ -554,7 +524,7 @@ func (this *SQLDriver) Max(query *Query, field string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := conn.PrepareContext(context.Background(), sqlString)
+	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
 	if err != nil {
 		return 0, this.processError(err)
 	}
@@ -578,17 +548,14 @@ func (this *SQLDriver) Max(query *Query, field string) (float64, error) {
 
 // 对数据进行分组统计
 func (this *SQLDriver) Group(query *Query, groupField string, result map[string]Expr) ([]maps.Map, error) {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return nil, err
 	}
 
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
-
 	switch this.driver {
 	case "mysql":
-		_, err = conn.ExecContext(context.Background(), "SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));")
+		_, err = currentDB.ExecContext(context.Background(), "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));")
 		if err != nil {
 			return nil, this.processError(err)
 		}
@@ -653,7 +620,7 @@ func (this *SQLDriver) Group(query *Query, groupField string, result map[string]
 		logs.Println("sql:", sqlString)
 	}
 
-	stmt, err := conn.PrepareContext(context.Background(), sqlString)
+	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
 	if err != nil {
 		return nil, this.processError(err)
 	}
@@ -710,56 +677,57 @@ func (this *SQLDriver) Group(query *Query, groupField string, result map[string]
 
 // 测试数据库连接
 func (this *SQLDriver) Test() error {
-	if this.db == nil {
-		return errors.New("no db available")
+	_, err := this.checkDB()
+	if err != nil {
+		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	done := make(chan bool, 1)
-	isClosed := false
-
-	var err error
+	isDone := false
 
 	go func() {
 		select {
 		case <-ctx.Done():
-			if !isClosed {
+			cancel()
+			err = errors.New("unable connect to database: timeout")
+
+			if !isDone {
 				done <- true
 			}
-			cancel()
-			err = errors.New("connection timeout")
 		}
 	}()
 
 	go func() {
-		conn, err1 := this.db.Conn(ctx)
-		if err1 != nil {
-			err = err1
-			_ = this.processError(err)
-			return
-		}
-		if !isClosed {
+		err = this.db.PingContext(ctx)
+		if !isDone {
 			done <- true
-		}
-		err = conn.Close()
-		if err != nil {
-			logs.Error(err)
 		}
 	}()
 
 	<-done
 	close(done)
-	isClosed = true
+	isDone = true
 
 	return err
 }
 
+// 重启服务
+func (this *SQLDriver) Shutdown() error {
+	this.dbLocker.Lock()
+	defer this.dbLocker.Unlock()
+	if this.db != nil {
+		_ = this.db.Close()
+	}
+	return nil
+}
+
 // 删除表
 func (this *SQLDriver) DropTable(table string) error {
-	conn, err := this.connect()
+	currentDB, err := this.checkDB()
 	if err != nil {
 		return err
 	}
-	_, err = conn.ExecContext(context.Background(), "DROP TABLE "+this.quoteKeyword(table))
+	_, err = currentDB.ExecContext(context.Background(), "DROP TABLE "+this.quoteKeyword(table))
 	return this.processError(err)
 }
 
@@ -785,42 +753,13 @@ func (this *SQLDriver) JSONExtractNumeric(field string, path string) string {
 	return ""
 }
 
-// 连接
-func (this *SQLDriver) connect() (*sql.Conn, error) {
-	this.queryLocker.Lock()
-	defer this.queryLocker.Unlock()
-
-	if this.db == nil {
-		return nil, errors.New("no db available")
-	}
-
-	if this.conn != nil {
-		return this.conn, nil
-	}
-
-	if this.conn != nil {
-		return this.conn, nil
-	}
-
-	logs.Println("[db]connecting to database")
-
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	conn, err := this.db.Conn(ctx)
-	if err != nil {
-		return nil, errors.New("[db]connect: " + err.Error())
-	}
-	this.conn = conn
-
-	return this.conn, nil
-}
-
 // 处理错误
 func (this *SQLDriver) processError(err error) error {
 	if err == nil {
 		return nil
 	}
 	if err == sql.ErrConnDone || err == driver.ErrBadConn {
-		this.conn = nil
+		// 断开连接时处理
 	}
 	return err
 }
@@ -1058,4 +997,11 @@ func (this *SQLDriver) buildWhere(operandMap OperandMap, fieldMapping func(field
 	}
 
 	return b.String(), nil
+}
+
+func (this *SQLDriver) checkDB() (*sql.DB, error) {
+	if this.db == nil {
+		return nil, errors.New("db open failed")
+	}
+	return this.db, nil
 }

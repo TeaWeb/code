@@ -1,4 +1,4 @@
-package teamongo
+package teadb
 
 import (
 	"encoding/json"

@@ -1,16 +1,10 @@
 package mongo
 
 import (
-	"context"
+	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/db"
-	"github.com/TeaWeb/code/teaconfigs/shared"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"regexp"
-	"strings"
-	"time"
 )
 
 type TestAction actions.Action
@@ -18,64 +12,42 @@ type TestAction actions.Action
 func (this *TestAction) Run(params struct {
 	Host                    string
 	Port                    uint
+	DBName                  string `alias:"dbName"`
 	Username                string
 	Password                string
+	AuthEnabled             bool
 	AuthMechanism           string
 	AuthMechanismProperties string
 }) {
-	oldConfig := db.SharedMongoConfig()
-
-	config := db.MongoConnectionConfig{
-		Host:          params.Host,
-		Port:          params.Port,
-		Username:      params.Username,
-		Password:      params.Password,
-		AuthMechanism: params.AuthMechanism,
+	config := db.NewMongoConfig()
+	config.Addr = params.Host
+	if params.Port > 0 {
+		config.Addr += ":" + fmt.Sprintf("%d", params.Port)
 	}
+	config.DBName = params.DBName
+	config.AuthEnabled = params.AuthEnabled
+	config.Username = params.Username
+	config.Password = params.Password
+	config.AuthMechanism = params.AuthMechanism
+	config.LoadAuthMechanismProperties(params.AuthMechanismProperties)
 
-	if len(params.AuthMechanismProperties) > 0 {
-		properties := regexp.MustCompile("\\s*,\\s*").Split(params.AuthMechanismProperties, -1)
-		for _, property := range properties {
-			if strings.Contains(property, ":") {
-				pieces := strings.Split(property, ":")
-				config.AuthMechanismProperties = append(config.AuthMechanismProperties, shared.NewVariable(pieces[0], pieces[1]))
-			}
-		}
+	oldConfig, err := db.LoadMongoConfig()
+	if err != nil {
+		this.Fail(err.Error())
 	}
-
-	if len(config.Password) == 0 && oldConfig != nil {
+	if oldConfig != nil && len(config.Password) == 0 {
 		config.Password = oldConfig.Password
 	}
 
-	uri := config.URI()
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	clientOptions := options.Client().ApplyURI(uri)
-	if len(config.AuthMechanism) > 0 {
-		clientOptions.SetAuth(options.Credential{
-			Username:                config.Username,
-			Password:                config.Password,
-			AuthMechanism:           config.AuthMechanism,
-			AuthMechanismProperties: config.AuthMechanismPropertiesMap(),
-			AuthSource:              teamongo.DatabaseName,
-		})
-	}
-	client, err := mongo.Connect(ctx, clientOptions)
-	if err != nil {
-		this.Message = "[连接]有错误需要修复：" + err.Error()
-		this.Fail()
+	driver, ok := teadb.SharedDB().(*teadb.MongoDriver)
+	if !ok {
+		this.Fail("当前配置不是MongoDB数据库")
 	}
 
-	ctx, _ = context.WithTimeout(context.Background(), 1*time.Second)
-	_, err = client.
-		Database(teamongo.DatabaseName).
-		Collection("logs").
-		Find(ctx, map[string]interface{}{}, options.Find().SetLimit(1))
-	if err != nil {
-		this.Message = "[查询]有错误需要修复：" + err.Error()
-		this.Fail()
+	message, ok := driver.TestConfig(config)
+	if !ok {
+		this.Fail(message)
 	}
-
-	client.Disconnect(context.Background())
 
 	this.Success()
 }

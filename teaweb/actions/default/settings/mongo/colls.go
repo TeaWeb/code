@@ -2,7 +2,7 @@ package mongo
 
 import (
 	"context"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
@@ -16,14 +16,25 @@ type CollsAction actions.Action
 
 // 集合列表
 func (this *CollsAction) Run(params struct{}) {
-	db := teamongo.SharedClient().Database(teamongo.DatabaseName)
+	driver, ok := teadb.SharedDB().(*teadb.MongoDriver)
+	if !ok {
+		this.Fail("驱动错误")
+	}
+
+	db := driver.DB()
+	if db == nil {
+		this.Fail("无法选取数据库")
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	cursor, err := db.ListCollections(ctx, maps.Map{})
 	if err != nil {
 		logs.Error(err)
 		this.Fail("读取集合列表失败：" + err.Error())
 	}
-	defer cursor.Close(context.Background())
+	defer func() {
+		_ = cursor.Close(context.Background())
+	}()
 
 	names := []string{}
 	for cursor.Next(context.Background()) {
@@ -162,6 +173,23 @@ func (this *CollsAction) Run(params struct{}) {
 		}
 	}
 
+	// 测试
+	{
+		reg := regexp.MustCompile("^test\\.")
+		for _, name := range names {
+			if !reg.MatchString(name) {
+				continue
+			}
+			recognizedNames = append(recognizedNames, name)
+			result = append(result, maps.Map{
+				"name":      name,
+				"type":      "测试表",
+				"canDelete": true,
+				"warning":   true,
+			})
+		}
+	}
+
 	// 其他
 	for _, name := range names {
 		if lists.ContainsString(recognizedNames, name) {
@@ -170,7 +198,7 @@ func (this *CollsAction) Run(params struct{}) {
 		result = append(result, maps.Map{
 			"name":      name,
 			"type":      "无法识别，请报告官方",
-			"canDelete": false,
+			"canDelete": true,
 			"warning":   true,
 		})
 	}

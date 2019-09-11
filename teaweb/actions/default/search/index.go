@@ -3,6 +3,7 @@ package search
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/utils"
 	"github.com/iwind/TeaGo/actions"
@@ -232,12 +233,39 @@ func (this *IndexAction) RunPost(params struct {
 			"link": "/settings/login",
 		})
 	}
-	if teautils.MatchKeyword("MongoDB设置", params.Keyword) {
+
+	if teautils.MatchKeyword("数据库设置", params.Keyword) {
+		results = append(results, maps.Map{
+			"type": "设置",
+			"name": "数据库设置",
+			"tags": []string{},
+			"link": "/settings/database",
+		})
+	}
+
+	dbType := db.SharedDBConfig().Type
+	if dbType == db.DBTypeMongo && teautils.MatchKeyword("MongoDB设置", params.Keyword) {
 		results = append(results, maps.Map{
 			"type": "设置",
 			"name": "MongoDB设置",
 			"tags": []string{},
 			"link": "/settings/mongo",
+		})
+	}
+	if dbType == db.DBTypeMySQL && teautils.MatchKeyword("MySQL设置", params.Keyword) {
+		results = append(results, maps.Map{
+			"type": "设置",
+			"name": "MySQL配置",
+			"tags": []string{},
+			"link": "/settings/mysql",
+		})
+	}
+	if dbType == db.DBTypePostgres && teautils.MatchKeyword("Postgres设置", params.Keyword) {
+		results = append(results, maps.Map{
+			"type": "设置",
+			"name": "PostgreSQL设置",
+			"tags": []string{},
+			"link": "/settings/postgres",
 		})
 	}
 	if teautils.MatchKeyword("备份Backup设置", params.Keyword) {

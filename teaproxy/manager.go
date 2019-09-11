@@ -168,7 +168,7 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 				if teaconfigs.RegexpDigitNumber.MatchString(address) {
 					address = ":" + address
 				} else if _, _, err := net.SplitHostPort(address); err != nil {
-					logs.Println("invalid tcp address: '" + address + "'")
+					logs.Println("[proxy]invalid tcp address: '" + address + "'")
 					continue
 				}
 
@@ -186,7 +186,7 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 				if teaconfigs.RegexpDigitNumber.MatchString(address) {
 					address = ":" + address
 				} else if _, _, err := net.SplitHostPort(address); err != nil {
-					logs.Println("invalid tcp+tls address: '" + address + "'")
+					logs.Println("[proxy]invalid tcp+tls address: '" + address + "'")
 					continue
 				}
 

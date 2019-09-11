@@ -25,6 +25,32 @@ var (
 
 // 建立数据库驱动
 func SetupDB() {
+	ChangeDB()
+
+	// 测试数据库连接
+	isAvailable := true
+	timers.Loop(30*time.Second, func(looper *timers.Looper) {
+		if sharedDriver == nil {
+			return
+		}
+		err := sharedDriver.Test()
+		if err != nil && isAvailable {
+			logs.Println("[db]database connection unavailable: " + err.Error())
+		}
+		sharedDriver.SetIsAvailable(err == nil)
+		isAvailable = sharedDriver.IsAvailable()
+	})
+}
+
+// 切换数据库驱动
+func ChangeDB() {
+	if sharedDriver != nil {
+		err := sharedDriver.Shutdown()
+		if err != nil {
+			logs.Error(err)
+		}
+	}
+
 	dbConfig := db.SharedDBConfig()
 	sharedDBType = dbConfig.Type
 	switch dbConfig.Type {
@@ -36,20 +62,15 @@ func SetupDB() {
 		sharedDriver = new(PostgresDriver)
 	}
 
-	// initialize
 	if sharedDriver != nil {
 		sharedDriver.Init()
 		sharedDriver.SetIsAvailable(true)
-
-		// 测试数据库
-		timers.Loop(10*time.Second, func(looper *timers.Looper) {
-			err := sharedDriver.Test()
-			if err != nil {
-				logs.Println("[db]database connection unavailable: " + err.Error())
-			}
-			sharedDriver.SetIsAvailable(err == nil)
-		})
 	}
+
+	// 缓存表
+	initTableLocker.Lock()
+	initTableMap = map[string]bool{}
+	initTableLocker.Unlock()
 }
 
 // 获取共享的数据库驱动

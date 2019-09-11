@@ -6,6 +6,9 @@ import (
 
 // 访问日志DAO
 type AccessLogDAOInterface interface {
+	// 设置驱动
+	SetDriver(driver DriverInterface)
+
 	// 初始化
 	Init()
 

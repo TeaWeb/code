@@ -8,6 +8,7 @@ import (
 )
 
 type SQLAgentValueDAO struct {
+	BaseDAO
 }
 
 // 初始化
@@ -218,7 +219,7 @@ func (this *SQLAgentValueDAO) GroupValuesByTime(query *Query, timeField string, 
 
 // 删除Agent相关表
 func (this *SQLAgentValueDAO) DropAgentTable(agentId string) error {
-	return SharedDB().(SQLDriverInterface).DropTable(this.TableName(agentId))
+	return this.driver.DropTable(this.TableName(agentId))
 }
 
 func (this *SQLAgentValueDAO) initTable(table string) {
@@ -230,7 +231,7 @@ func (this *SQLAgentValueDAO) initTable(table string) {
 
 	switch sharedDBType {
 	case "mysql":
-		err := SharedDB().(SQLDriverInterface).CreateTable(table, "CREATE TABLE `"+table+"` ("+
+		err := this.driver.(SQLDriverInterface).CreateTable(table, "CREATE TABLE `"+table+"` ("+
 			"`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,"+
 			"`_id` varchar(24) DEFAULT NULL,"+
 			"`nodeId` varchar(64) DEFAULT NULL,"+
@@ -263,7 +264,7 @@ func (this *SQLAgentValueDAO) initTable(table string) {
 		}
 
 	case "postgres":
-		err := SharedDB().(SQLDriverInterface).CreateTable(table, `CREATE TABLE "public"."`+table+`" (
+		err := this.driver.(SQLDriverInterface).CreateTable(table, `CREATE TABLE "public"."`+table+`" (
 			"id" serial8 primary key,
 			"_id" varchar(24),
 			"nodeId" varchar(64),

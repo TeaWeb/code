@@ -196,14 +196,14 @@ func (this *Listener) Reload() error {
 func (this *Listener) Shutdown() error {
 	if this.Scheme == SchemeHTTP || this.Scheme == SchemeHTTPS { // HTTP
 		if this.httpServer != nil {
-			logs.Println("shutdown listener on", this.Address)
+			logs.Println("[proxy]shutdown listener on", this.Address)
 			err := this.httpServer.Close()
 			this.httpServer = nil
 			return err
 		}
 	} else if this.Scheme == SchemeTCP || this.Scheme == SchemeTCPTLS {
 		if this.tcpServer != nil {
-			logs.Println("shutdown listener on", this.Address)
+			logs.Println("[proxy]shutdown listener on", this.Address)
 
 			// 关闭listener
 			err := this.tcpServer.Close()
@@ -301,17 +301,17 @@ func (this *Listener) startHTTPServer() error {
 	this.httpServer.SetKeepAlivesEnabled(true)
 
 	if this.Scheme == SchemeHTTP {
-		logs.Println("start listener on http", this.Address)
+		logs.Println("[proxy]start listener on http", this.Address)
 		err = this.httpServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
-			logs.Error(errors.New("[listener]" + this.Address + ": " + err.Error()))
+			logs.Error(errors.New("[proxy]" + this.Address + ": " + err.Error()))
 		} else {
 			err = nil
 		}
 	}
 
 	if this.Scheme == SchemeHTTPS {
-		logs.Println("start listener on https", this.Address)
+		logs.Println("[proxy]start listener on https", this.Address)
 
 		this.httpServer.TLSConfig = this.buildTLSConfig()
 
@@ -323,7 +323,7 @@ func (this *Listener) startHTTPServer() error {
 
 		err = this.httpServer.ListenAndServeTLS("", "")
 		if err != nil && err != http.ErrServerClosed {
-			logs.Error(errors.New("[listener]" + this.Address + ": " + err.Error()))
+			logs.Error(errors.New("[proxy]" + this.Address + ": " + err.Error()))
 		} else {
 			err = nil
 		}
@@ -345,17 +345,17 @@ func (this *Listener) startTCPServer() error {
 	var err error
 
 	if this.Scheme == SchemeTCP {
-		logs.Println("start listener on tcp", this.Address)
+		logs.Println("[proxy]start listener on tcp", this.Address)
 		listener, err := net.Listen("tcp", this.Address)
 		if err != nil {
-			return errors.New("[listener]tcp " + this.Address + ": " + err.Error())
+			return errors.New("[proxy]tcp " + this.Address + ": " + err.Error())
 		}
 		this.tcpServer = listener
 	} else if this.Scheme == SchemeTCPTLS {
-		logs.Println("start listener on tcp+tls", this.Address)
+		logs.Println("[proxy]start listener on tcp+tls", this.Address)
 		listener, err := tls.Listen("tcp", this.Address, this.buildTLSConfig())
 		if err != nil {
-			return errors.New("[listener]tcp " + this.Address + ": " + err.Error())
+			return errors.New("[proxy]tcp " + this.Address + ": " + err.Error())
 		}
 		this.tcpServer = listener
 	}
@@ -557,7 +557,7 @@ func (this *Listener) matchSSL(domain string) (*teaconfigs.SSLConfig, *tls.Certi
 		if len(this.currentServers) > 0 && this.currentServers[0].SSL != nil {
 			return this.currentServers[0].SSL, this.currentServers[0].SSL.FirstCert(), nil
 		}
-		return nil, nil, errors.New("[listener]no tls server name found")
+		return nil, nil, errors.New("[proxy]no tls server name found")
 	}
 
 	// 通过代理服务域名配置匹配
@@ -574,7 +574,7 @@ func (this *Listener) matchSSL(domain string) (*teaconfigs.SSLConfig, *tls.Certi
 			}
 		}
 
-		return nil, nil, errors.New("[listener]no server found for '" + domain + "'")
+		return nil, nil, errors.New("[proxy]no server found for '" + domain + "'")
 	}
 
 	// 证书是否匹配
@@ -611,7 +611,7 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 						return nil, err
 					}
 					if cert == nil {
-						return nil, errors.New("[listener]no certs found for '" + info.ServerName + "'")
+						return nil, errors.New("[proxy]no certs found for '" + info.ServerName + "'")
 					}
 					return cert, nil
 				},
@@ -627,7 +627,7 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 				return nil, err
 			}
 			if cert == nil {
-				return nil, errors.New("[listener]no certs found for '" + info.ServerName + "'")
+				return nil, errors.New("[proxy]no certs found for '" + info.ServerName + "'")
 			}
 			return cert, nil
 		},

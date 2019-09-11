@@ -6,6 +6,7 @@ import (
 )
 
 type SQLAgentLogDAO struct {
+	BaseDAO
 }
 
 // 初始化
@@ -69,7 +70,7 @@ func (this *SQLAgentLogDAO) initTable(table string) {
 	logs.Println("[db]check table '" + table + "'")
 	switch sharedDBType {
 	case "mysql":
-		err := SharedDB().(SQLDriverInterface).CreateTable(table, "CREATE TABLE `"+table+"` ("+
+		err := this.driver.(SQLDriverInterface).CreateTable(table, "CREATE TABLE `"+table+"` ("+
 			"`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,"+
 			"`_id` varchar(24) DEFAULT NULL,"+
 			"`agentId` varchar(64) DEFAULT NULL,"+
@@ -95,7 +96,7 @@ func (this *SQLAgentLogDAO) initTable(table string) {
 			removeInitializedTable(table)
 		}
 	case "postgres":
-		err := SharedDB().(SQLDriverInterface).CreateTable(table, `CREATE TABLE "public"."`+table+`" (
+		err := this.driver.(SQLDriverInterface).CreateTable(table, `CREATE TABLE "public"."`+table+`" (
 "id" serial8 primary key,
 "_id" varchar(24),
 "agentId" varchar(64),

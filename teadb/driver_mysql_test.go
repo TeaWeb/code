@@ -208,3 +208,29 @@ func TestMySQLDriver_asSQL_Update(t *testing.T) {
 		t.Log(s)
 	}
 }
+
+func TestMySQLDriver_TestDSN(t *testing.T) {
+	driver := new(MySQLDriver)
+	{
+		message, ok := driver.TestDSN("root:abcdef@tcp(127.0.0.1:3306)/teaweb123?charset=utf8mb4&timeout=30s")
+		t.Log(message, ok)
+	}
+	{
+		message, ok := driver.TestDSN("root:123456@tcp(127.0.0.1:3306)/teaweb123?charset=utf8mb4&timeout=30s")
+		t.Log(message, ok)
+	}
+	{
+		message, ok := driver.TestDSN("root:123456@tcp(127.0.0.1:3306)/teaweb?charset=utf8mb4&timeout=30s")
+		t.Log(message, ok)
+	}
+}
+
+func TestMySQLDriver_Ping(t *testing.T) {
+	driver := new(MySQLDriver)
+	err := driver.initDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(driver.Test())
+}

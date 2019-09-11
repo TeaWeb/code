@@ -6,6 +6,9 @@ import (
 
 // Agent任务日志DAO
 type AgentLogDAOInterface interface {
+	// 设置驱动
+	SetDriver(driver DriverInterface)
+
 	// 初始化
 	Init()
 

@@ -7,6 +7,9 @@ import (
 
 // 代理统计DAO
 type ServerValueDAOInterface interface {
+	// 设置驱动
+	SetDriver(driver DriverInterface)
+	
 	// 初始化
 	Init()
 

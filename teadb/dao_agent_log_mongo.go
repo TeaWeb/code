@@ -3,11 +3,11 @@ package teadb
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teadb/shared"
-	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 )
 
 type MongoAgentLogDAO struct {
+	BaseDAO
 }
 
 func (this *MongoAgentLogDAO) Init() {
@@ -74,8 +74,12 @@ func (this *MongoAgentLogDAO) initTable(agentId string) {
 		return
 	}
 
-	coll := teamongo.SharedCollection(table)
-	err := coll.CreateIndex(shared.NewIndexField("agentId", true))
+	coll, err := this.driver.(*MongoDriver).SelectColl(table)
+	if err != nil {
+		logs.Error(err)
+		return
+	}
+	err = coll.CreateIndex(shared.NewIndexField("agentId", true))
 	if err != nil {
 		logs.Error(err)
 	}

@@ -10,6 +10,7 @@ import (
 )
 
 type SQLServerValueDAO struct {
+	BaseDAO
 }
 
 // 初始化
@@ -63,7 +64,7 @@ func (this *SQLServerValueDAO) FindSameItemValue(serverId string, item *stats.Va
 	// 参数
 	if len(item.Params) > 0 {
 		for k, v := range item.Params {
-			query.Attr(SharedDB().(SQLDriverInterface).JSONExtract("params", k), v)
+			query.Attr(this.driver.(SQLDriverInterface).JSONExtract("params", k), v)
 		}
 	} else {
 		switch sharedDBType {
@@ -94,7 +95,7 @@ func (this *SQLServerValueDAO) UpdateItemValueAndTimestamp(serverId string, valu
 	if err != nil {
 		return err
 	}
-	return SharedDB().(SQLDriverInterface).UpdateOnes(query, map[string]interface{}{
+	return this.driver.(SQLDriverInterface).UpdateOnes(query, map[string]interface{}{
 		"value": valuesJSON,
 	})
 }
@@ -135,7 +136,7 @@ func (this *SQLServerValueDAO) FindOneWithItem(serverId string, item string) (*s
 
 // 删除代理服务相关表
 func (this *SQLServerValueDAO) DropServerTable(serverId string) error {
-	return SharedDB().(SQLDriverInterface).DropTable(this.TableName(serverId))
+	return this.driver.DropTable(this.TableName(serverId))
 }
 
 func (this *SQLServerValueDAO) initTable(table string) {
@@ -147,7 +148,7 @@ func (this *SQLServerValueDAO) initTable(table string) {
 
 	switch sharedDBType {
 	case "mysql":
-		err := SharedDB().(SQLDriverInterface).CreateTable(table, "CREATE TABLE `"+table+"` ("+
+		err := this.driver.(SQLDriverInterface).CreateTable(table, "CREATE TABLE `"+table+"` ("+
 			"`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,"+
 			"`_id` varchar(24) DEFAULT NULL,"+
 			"`item` varchar(256) DEFAULT NULL,"+
@@ -179,7 +180,7 @@ func (this *SQLServerValueDAO) initTable(table string) {
 		}
 
 	case "postgres":
-		err := SharedDB().(SQLDriverInterface).CreateTable(table, `CREATE TABLE "public"."`+table+`" (
+		err := this.driver.(SQLDriverInterface).CreateTable(table, `CREATE TABLE "public"."`+table+`" (
 			"id" serial8 primary key,
 			"_id" varchar(24),
 			"item" varchar(256),

@@ -5,13 +5,13 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teadb/shared"
-	"github.com/TeaWeb/code/teamongo"
 	"github.com/iwind/TeaGo/logs"
 	"golang.org/x/net/context"
 	"time"
 )
 
 type MongoAgentValueDAO struct {
+	BaseDAO
 }
 
 func (this *MongoAgentValueDAO) Init() {
@@ -41,8 +41,11 @@ func (this *MongoAgentValueDAO) Insert(agentId string, value *agents.Value) erro
 		value.Id = shared.NewObjectId()
 	}
 
-	coll := this.selectColl(this.TableName(agentId))
-	_, err := coll.InsertOne(context.Background(), *value)
+	coll, err := this.selectColl(this.TableName(agentId))
+	if err != nil {
+		return err
+	}
+	_, err = coll.InsertOne(context.Background(), *value)
 	return err
 }
 
@@ -216,17 +219,24 @@ func (this *MongoAgentValueDAO) GroupValuesByTime(query *Query, timeField string
 }
 
 func (this *MongoAgentValueDAO) DropAgentTable(agentId string) error {
+	coll, err := this.selectColl(this.TableName(agentId))
+	if err != nil {
+		return err
+	}
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	return this.selectColl(this.TableName(agentId)).Drop(ctx)
+	return coll.Drop(ctx)
 }
 
-func (this *MongoAgentValueDAO) selectColl(collName string) *teamongo.Collection {
-	coll := teamongo.SharedCollection(collName)
+func (this *MongoAgentValueDAO) selectColl(collName string) (*MongoCollection, error) {
+	coll, err := this.driver.(*MongoDriver).SelectColl(collName)
+	if err != nil {
+		return nil, err
+	}
 
 	if isInitializedTable(collName) {
-		return coll
+		return coll, nil
 	}
-	err := coll.CreateIndex(
+	err = coll.CreateIndex(
 		shared.NewIndexField("appId", true),
 		shared.NewIndexField("itemId", true),
 		shared.NewIndexField("createdAt", false),
@@ -243,14 +253,14 @@ func (this *MongoAgentValueDAO) selectColl(collName string) *teamongo.Collection
 	if err != nil {
 		logs.Error(err)
 	}
-	return coll
+	return coll, nil
 }
 
 func (this *MongoAgentValueDAO) processValue(ptr *agents.Value) *agents.Value {
 	if ptr.Value == nil {
 		return ptr
 	}
-	v, err := teamongo.BSONDecode(ptr.Value)
+	v, err := BSONDecode(ptr.Value)
 	if err == nil {
 		ptr.Value = v
 	} else {

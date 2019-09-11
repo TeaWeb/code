@@ -15,22 +15,27 @@ type IndexAction actions.Action
 
 // MongoDB连接信息
 func (this *IndexAction) Run(params struct{}) {
-	config := db.SharedMongoConfig()
+	config, err := db.LoadMongoConfig()
+	if err != nil {
+		this.Data["error"] = err.Error()
+		config = db.DefaultMongoConfig()
+	}
 
 	this.Data["config"] = maps.Map{
 		"scheme":                  config.Scheme,
+		"authEnabled":             config.AuthEnabled,
 		"username":                config.Username,
 		"password":                strings.Repeat("*", len(config.Password)),
-		"host":                    config.Host,
-		"port":                    config.Port,
+		"host":                    config.Host(),
+		"port":                    config.Port(),
 		"authMechanism":           config.AuthMechanism,
 		"authMechanismProperties": config.AuthMechanismPropertiesString(),
 		"requestURI":              config.RequestURI,
 	}
-	this.Data["uri"] = config.URIMask()
+	this.Data["uri"] = config.ComposeURIMask(true)
 
 	// 连接状态
-	err := teadb.SharedDB().Test()
+	err = teadb.SharedDB().Test()
 	if err != nil {
 		this.Data["error"] = err.Error()
 	} else {

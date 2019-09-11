@@ -1,10 +1,8 @@
 package mongo
 
 import (
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
-	"golang.org/x/net/context"
-	"time"
 )
 
 type DeleteCollAction actions.Action
@@ -14,8 +12,7 @@ func (this *DeleteCollAction) Run(params struct {
 	CollName string
 }) {
 	if len(params.CollName) > 0 {
-		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-		err := teamongo.SharedClient().Database(teamongo.DatabaseName).Collection(params.CollName).Drop(ctx)
+		err := teadb.SharedDB().DropTable(params.CollName)
 		if err != nil {
 			this.Fail("删除失败：" + err.Error())
 		}

@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
@@ -106,7 +107,9 @@ func (this *InstallAction) RunPost(params struct{}) {
 	if err != nil {
 		this.Fail("发生错误：", err.Error())
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		this.Fail("服务器状态码返回错误：", fmt.Sprintf("%d", resp.StatusCode))
@@ -194,13 +197,17 @@ func (this *InstallAction) install(mongodbDir string, target string) {
 	if err != nil {
 		this.Fail("压缩包读取失败：", err.Error())
 	}
-	defer fp.Close()
+	defer func() {
+		_ = fp.Close()
+	}()
 
 	gzReader, err := gzip.NewReader(fp)
 	if err != nil {
 		this.Fail("压缩包读取失败：", err.Error())
 	}
-	defer gzReader.Close()
+	defer func() {
+		_ = gzReader.Close()
+	}()
 
 	tarReader := tar.NewReader(gzReader)
 	for {
@@ -240,8 +247,8 @@ func (this *InstallAction) install(mongodbDir string, target string) {
 			if err != nil {
 				this.Fail("安装失败：", err.Error())
 			}
-			io.Copy(fp, tarReader)
-			fp.Close()
+			_, _ = io.Copy(fp, tarReader)
+			_ = fp.Close()
 		}
 	}
 
@@ -272,16 +279,27 @@ func (this *InstallAction) start(mongodbDir string) {
 		this.Fail("试图启动失败：", err.Error())
 	}
 
-	p.Wait()
+	_ = p.Wait()
 
 	this.check()
 }
 
 func (this *InstallAction) check() {
+	// 保存数据库设置
+	config := db.SharedDBConfig()
+	config.Type = db.DBTypeMongo
+	config.IsInitialized = true
+	err := config.Save()
+	if err != nil {
+		logs.Error(err)
+	}
+	teadb.ChangeDB()
+
+	// 检查状态
 	installStatus = "check"
 	installPercent = 10
 
-	err := teadb.SharedDB().Test()
+	err = teadb.SharedDB().Test()
 	if err != nil {
 		this.Fail("仍然无法连接到MongoDb，请尝试手动安装")
 	}

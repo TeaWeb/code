@@ -3,13 +3,14 @@ package teadb
 import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teadb/shared"
-	"github.com/TeaWeb/code/teamongo"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"golang.org/x/net/context"
 	"time"
 )
 
 type MongoNoticeDAO struct {
+	BaseDAO
 }
 
 func (this *MongoNoticeDAO) Init() {
@@ -176,27 +177,34 @@ func (this *MongoNoticeDAO) UpdateNoticeReceivers(noticeId string, receiverIds [
 		return err
 	}
 
+	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName())
+	if err != nil {
+		return err
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	_, err = teamongo.SharedCollection(this.TableName()).
-		UpdateMany(ctx, map[string]interface{}{
-			"_id": idObject,
-		}, maps.Map{
-			"$set": maps.Map{
-				"isNotified": true,
-				"receivers":  receiverIds,
-			},
-		})
+	_, err = coll.UpdateMany(ctx, map[string]interface{}{
+		"_id": idObject,
+	}, maps.Map{
+		"$set": maps.Map{
+			"isNotified": true,
+			"receivers":  receiverIds,
+		},
+	})
 	return err
 }
 
 func (this *MongoNoticeDAO) UpdateAllNoticesRead() error {
+	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName())
+	if err != nil {
+		return err
+	}
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	_, err := teamongo.SharedCollection(this.TableName()).
-		UpdateMany(ctx, map[string]interface{}{}, maps.Map{
-			"$set": maps.Map{
-				"isRead": true,
-			},
-		})
+	_, err = coll.UpdateMany(ctx, map[string]interface{}{}, maps.Map{
+		"$set": maps.Map{
+			"isRead": true,
+		},
+	})
 	return err
 }
 
@@ -214,16 +222,19 @@ func (this *MongoNoticeDAO) UpdateNoticesRead(noticeIds []string) error {
 		}
 		noticeIdObjects = append(noticeIdObjects, idObject)
 	}
-	_, err := teamongo.SharedCollection(this.TableName()).
-		UpdateMany(ctx, map[string]interface{}{
-			"_id": map[string]interface{}{
-				"$in": noticeIdObjects,
-			},
-		}, maps.Map{
-			"$set": maps.Map{
-				"isRead": true,
-			},
-		})
+	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName())
+	if err != nil {
+		return err
+	}
+	_, err = coll.UpdateMany(ctx, map[string]interface{}{
+		"_id": map[string]interface{}{
+			"$in": noticeIdObjects,
+		},
+	}, maps.Map{
+		"$set": maps.Map{
+			"isRead": true,
+		},
+	})
 	return err
 }
 
@@ -241,31 +252,37 @@ func (this *MongoNoticeDAO) UpdateAgentNoticesRead(agentId string, noticeIds []s
 		}
 		noticeIdObjects = append(noticeIdObjects, idObject)
 	}
-	_, err := teamongo.SharedCollection(this.TableName()).
-		UpdateMany(ctx, map[string]interface{}{
-			"agent.agentId": agentId,
-			"_id": map[string]interface{}{
-				"$in": noticeIdObjects,
-			},
-		}, maps.Map{
-			"$set": maps.Map{
-				"isRead": true,
-			},
-		})
+	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName())
+	if err != nil {
+		return err
+	}
+	_, err = coll.UpdateMany(ctx, map[string]interface{}{
+		"agent.agentId": agentId,
+		"_id": map[string]interface{}{
+			"$in": noticeIdObjects,
+		},
+	}, maps.Map{
+		"$set": maps.Map{
+			"isRead": true,
+		},
+	})
 	return err
 }
 
 // 设置Agent所有通知已读
 func (this *MongoNoticeDAO) UpdateAllAgentNoticesRead(agentId string) error {
+	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName())
+	if err != nil {
+		return err
+	}
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	_, err := teamongo.SharedCollection(this.TableName()).
-		UpdateMany(ctx, map[string]interface{}{
-			"agent.agentId": agentId,
-		}, maps.Map{
-			"$set": maps.Map{
-				"isRead": true,
-			},
-		})
+	_, err = coll.UpdateMany(ctx, map[string]interface{}{
+		"agent.agentId": agentId,
+	}, maps.Map{
+		"$set": maps.Map{
+			"isRead": true,
+		},
+	})
 	return err
 }
 
@@ -274,7 +291,11 @@ func (this *MongoNoticeDAO) initIndexes() {
 	if isInitializedTable(this.TableName()) {
 		return
 	}
-	coll := teamongo.SharedCollection(this.TableName())
+	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName())
+	if err != nil {
+		logs.Error(err)
+		return
+	}
 	_ = coll.CreateIndex(shared.NewIndexField("proxy.serverId", true))
 	_ = coll.CreateIndex(shared.NewIndexField("agent.agentId", true))
 	_ = coll.CreateIndex(

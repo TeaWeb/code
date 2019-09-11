@@ -3,6 +3,7 @@ package teadb
 import "github.com/TeaWeb/code/teaconfigs/audits"
 
 type MongoAuditLogDAO struct {
+	BaseDAO
 }
 
 func (this *MongoAuditLogDAO) Init() {

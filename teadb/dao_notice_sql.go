@@ -10,6 +10,7 @@ import (
 )
 
 type SQLNoticeDAO struct {
+	BaseDAO
 }
 
 // 初始化
@@ -198,7 +199,7 @@ func (this *SQLNoticeDAO) DeleteNoticesForAgent(agentId string) error {
 
 // 更改某个通知的接收人
 func (this *SQLNoticeDAO) UpdateNoticeReceivers(noticeId string, receiverIds []string) error {
-	return SharedDB().(SQLDriverInterface).UpdateOnes(NewQuery(this.TableName()).Attr("_id", noticeId), map[string]interface{}{
+	return this.driver.(SQLDriverInterface).UpdateOnes(NewQuery(this.TableName()).Attr("_id", noticeId), map[string]interface{}{
 		"isNotified": 1,
 		"receivers":  strings.Join(receiverIds, ","),
 	})
@@ -206,7 +207,7 @@ func (this *SQLNoticeDAO) UpdateNoticeReceivers(noticeId string, receiverIds []s
 
 // 设置全部已读
 func (this *SQLNoticeDAO) UpdateAllNoticesRead() error {
-	return SharedDB().(SQLDriverInterface).UpdateOnes(NewQuery(this.TableName()), map[string]interface{}{
+	return this.driver.(SQLDriverInterface).UpdateOnes(NewQuery(this.TableName()), map[string]interface{}{
 		"isRead": 1,
 	})
 }
@@ -219,7 +220,7 @@ func (this *SQLNoticeDAO) UpdateNoticesRead(noticeIds []string) error {
 
 	query := NewQuery(this.TableName()).
 		Attr("_id", noticeIds)
-	return SharedDB().(SQLDriverInterface).UpdateOnes(query, map[string]interface{}{
+	return this.driver.(SQLDriverInterface).UpdateOnes(query, map[string]interface{}{
 		"isRead": 1,
 	})
 }
@@ -233,7 +234,7 @@ func (this *SQLNoticeDAO) UpdateAgentNoticesRead(agentId string, noticeIds []str
 	query := NewQuery(this.TableName()).
 		Attr("_id", noticeIds).
 		Attr("agentId", agentId)
-	return SharedDB().(SQLDriverInterface).UpdateOnes(query, map[string]interface{}{
+	return this.driver.(SQLDriverInterface).UpdateOnes(query, map[string]interface{}{
 		"isRead": 1,
 	})
 }
@@ -242,7 +243,7 @@ func (this *SQLNoticeDAO) UpdateAgentNoticesRead(agentId string, noticeIds []str
 func (this *SQLNoticeDAO) UpdateAllAgentNoticesRead(agentId string) error {
 	query := NewQuery(this.TableName()).
 		Attr("agentId", agentId)
-	return SharedDB().(SQLDriverInterface).UpdateOnes(query, map[string]interface{}{
+	return this.driver.(SQLDriverInterface).UpdateOnes(query, map[string]interface{}{
 		"isRead": 1,
 	})
 }
@@ -256,7 +257,7 @@ func (this *SQLNoticeDAO) initTable(table string) {
 
 	switch sharedDBType {
 	case "mysql":
-		err := SharedDB().(SQLDriverInterface).CreateTable(table, "CREATE TABLE `"+table+"` ("+
+		err := this.driver.(SQLDriverInterface).CreateTable(table, "CREATE TABLE `"+table+"` ("+
 			"`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,"+
 			"`_id` varchar(24) DEFAULT NULL,"+
 			"`timestamp` int(11) unsigned DEFAULT '0',"+
@@ -289,7 +290,7 @@ func (this *SQLNoticeDAO) initTable(table string) {
 		}
 
 	case "postgres":
-		err := SharedDB().(SQLDriverInterface).CreateTable(table, `CREATE TABLE "public"."`+table+`" (
+		err := this.driver.(SQLDriverInterface).CreateTable(table, `CREATE TABLE "public"."`+table+`" (
 		"id" serial8 primary key,
 		"_id" varchar(24),
 		"timestamp" int4 default 0,

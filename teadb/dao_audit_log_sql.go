@@ -6,6 +6,7 @@ import (
 )
 
 type SQLAuditLogDAO struct {
+	BaseDAO
 }
 
 // 初始化
@@ -42,7 +43,7 @@ func (this *SQLAuditLogDAO) ListAuditLogs(offset int, size int) ([]*audits.Log, 
 
 // 插入一条审计日志
 func (this *SQLAuditLogDAO) InsertOne(auditLog *audits.Log) error {
-	return SharedDB().InsertOne(this.TableName(), auditLog)
+	return this.driver.InsertOne(this.TableName(), auditLog)
 }
 
 // 初始化表格
@@ -55,7 +56,7 @@ func (this *SQLAuditLogDAO) initTable(table string) {
 
 	switch sharedDBType {
 	case "mysql":
-		err := SharedDB().(SQLDriverInterface).CreateTable(table, "CREATE TABLE `"+table+"` ("+
+		err := this.driver.(SQLDriverInterface).CreateTable(table, "CREATE TABLE `"+table+"` ("+
 			"`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',"+
 			"`_id` varchar(24) COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'global id',"+
 			"`action` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,"+
@@ -71,7 +72,7 @@ func (this *SQLAuditLogDAO) initTable(table string) {
 			removeInitializedTable(table)
 		}
 	case "postgres":
-		err := SharedDB().(SQLDriverInterface).CreateTable(table, `CREATE TABLE "public"."`+table+`" (
+		err := this.driver.(SQLDriverInterface).CreateTable(table, `CREATE TABLE "public"."`+table+`" (
 		"id" serial8 primary key,
 		"_id" varchar(24),
 		"action" varchar(255),

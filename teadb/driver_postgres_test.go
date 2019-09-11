@@ -40,12 +40,12 @@ func TestPostgresDriver_CreateTable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	conn, err := driver.connect()
+	currentDB, err := driver.checkDB()
 	if err != nil {
 		t.Fatal(err)
 	}
 	logs.Println("create table")
-	_, err = conn.ExecContext(context.Background(), `CREATE TABLE "public"."a" (
+	_, err = currentDB.ExecContext(context.Background(), `CREATE TABLE "public"."a" (
 			"id" serial8 primary key,
 			"_id" varchar(24)
 		);
@@ -56,7 +56,7 @@ func TestPostgresDriver_CreateTable(t *testing.T) {
 
 	defer func() {
 		logs.Println("drop table")
-		_, err = conn.ExecContext(context.Background(), "DROP TABLE \"a\"")
+		_, err = currentDB.ExecContext(context.Background(), "DROP TABLE \"a\"")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -64,7 +64,7 @@ func TestPostgresDriver_CreateTable(t *testing.T) {
 	}()
 
 	logs.Println("query table")
-	stmt, err := conn.PrepareContext(context.Background(), "SELECT * FROM \"a\"")
+	stmt, err := currentDB.PrepareContext(context.Background(), "SELECT * FROM \"a\"")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,4 +76,20 @@ func TestPostgresDriver_CreateTable(t *testing.T) {
 
 	_ = rows.Close()
 	_ = stmt.Close()
+}
+
+func TestPostgresDriver_TestDSN(t *testing.T) {
+	driver := new(PostgresDriver)
+	{
+		message, ok := driver.TestDSN("postgres://postgres:@127.0.0.1:5432/teaweb?sslmode=disable")
+		t.Log(message, ok)
+	}
+	{
+		message, ok := driver.TestDSN("postgres://postgres:123456@127.0.0.1:5432/teaweb123?sslmode=disable")
+		t.Log(message, ok)
+	}
+	{
+		message, ok := driver.TestDSN("postgres://postgres:123456@127.0.0.1:5432/teaweb?sslmode=disable")
+		t.Log(message, ok)
+	}
 }
