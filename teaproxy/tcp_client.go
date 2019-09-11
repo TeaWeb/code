@@ -253,7 +253,7 @@ func (this *TCPClient) read(server *teaconfigs.ServerConfig) {
 	for {
 		n, err := this.lConn.Read(buf)
 		if n > 0 {
-			this.stream <- buf[:n]
+			this.stream <- append([]byte{}, buf[:n]...)
 
 			atomic.AddInt64(&this.writeSpeed, int64(n))
 		}
