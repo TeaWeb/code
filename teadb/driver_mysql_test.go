@@ -27,33 +27,18 @@ func TestMySQLDriver_buildWhere(t *testing.T) {
 	q.Not("timestamp", "not")
 	q.Attr("a", []string{"a", "b", "c"})
 	q.Attr("timestamp", nil)
-	q.Or([]OperandMap{
-		{
-			"timestamp": {
-				{
-					Code:  OperandEq,
-					Value: "123",
-				},
-			},
-		},
-		{
-			"timestamp": {
-				{
-					Code:  OperandGt,
-					Value: "456",
-				},
-				{
-					Code:  OperandNotIn,
-					Value: []int{1, 2, 3},
-				},
-			},
-		},
+	q.Or([]*OperandList{
+		NewOperandList().Add("timestamp", NewOperand(OperandEq, "123")),
+		NewOperandList().Add("timestamp",
+			NewOperand(OperandGt, "456"),
+			NewOperand(OperandNotIn, []int{1, 2, 3}),
+		),
 	})
 
 	driver := new(MySQLDriver)
 	driver.Init()
 	paramsHolder := NewSQLParamsHolder(driver.driver)
-	where, err := driver.buildWhere(q.operandMap, nil, paramsHolder)
+	where, err := driver.buildWhere(q.operandList, nil, paramsHolder)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,40 +48,19 @@ func TestMySQLDriver_buildWhere(t *testing.T) {
 
 func TestMySQLDriver_buildWhere_Or(t *testing.T) {
 	q := NewQuery("myTable")
-	q.Or([]OperandMap{
-		{
-			"timestamp": {
-				{
-					Code:  OperandEq,
-					Value: "123",
-				},
-			},
-		},
-		{
-			"timestamp": {
-				{
-					Code:  OperandGt,
-					Value: "456",
-				},
-				{
-					Code:  OperandNotIn,
-					Value: []int{1, 2, 3},
-				},
-			},
-		},
-		{
-			"timestamp": {
-				{
-					Code:  OperandLt,
-					Value: 1024,
-				},
-			},
-		},
+	q.Or([]*OperandList{
+		NewOperandList().Add("timestamp", NewOperand(OperandEq, "123")),
+		NewOperandList().Add("timestamp",
+			NewOperand(OperandGt, "456"),
+			NewOperand(OperandNotIn, []int{1, 2, 3}),
+		),
+		NewOperandList().Add("timestamp", NewOperand(OperandLt, 1024)),
 	})
 
 	driver := new(MySQLDriver)
+	driver.Init()
 	paramsHolder := NewSQLParamsHolder(driver.driver)
-	where, err := driver.buildWhere(q.operandMap, nil, paramsHolder)
+	where, err := driver.buildWhere(q.operandList, nil, paramsHolder)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,6 +75,7 @@ func TestMySQLDriver_asSQL_SELECT(t *testing.T) {
 		q.Attr("age", 10)
 
 		driver := new(MySQLDriver)
+		driver.Init()
 		s, err := driver.asSQL(SQLSelect, q, NewSQLParamsHolder(driver.driver), "", nil)
 		if err != nil {
 			t.Fatal(err)
@@ -129,6 +94,7 @@ func TestMySQLDriver_asSQL_SELECT(t *testing.T) {
 		q.Asc("createdAt")
 
 		driver := new(MySQLDriver)
+		driver.driver = "mysql"
 		s, err := driver.asSQL(SQLSelect, q, NewSQLParamsHolder(driver.driver), "", nil)
 		if err != nil {
 			t.Fatal(err)
@@ -144,6 +110,7 @@ func TestMySQLDriver_asSQL_DELETE(t *testing.T) {
 		q.Attr("age", 10)
 
 		driver := new(MySQLDriver)
+		driver.driver = "mysql"
 		s, err := driver.asSQL(SQLDelete, q, NewSQLParamsHolder(driver.driver), "", nil)
 		if err != nil {
 			t.Fatal(err)
@@ -178,8 +145,11 @@ func TestMySQLDriver_asSQL_Update(t *testing.T) {
 
 		driver := new(MySQLDriver)
 		s, err := driver.asSQL(SQLUpdate, q, NewSQLParamsHolder(driver.driver), "", map[string]interface{}{
-			"a": 1,
-			"b": 2,
+			"name":   1,
+			"age":    2,
+			"count":  3,
+			"book":   4,
+			"number": 5,
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -227,6 +197,7 @@ func TestMySQLDriver_TestDSN(t *testing.T) {
 
 func TestMySQLDriver_Ping(t *testing.T) {
 	driver := new(MySQLDriver)
+	driver.driver = "mysql"
 	err := driver.initDB()
 	if err != nil {
 		t.Fatal(err)

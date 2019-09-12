@@ -109,13 +109,9 @@ func (this *SQLAccessLogDAO) ListAccessLogs(day string, serverId string, fromId 
 		query.Lt("_id", fromId)
 	}
 	if onlyErrors {
-		query.Or([]OperandMap{
-			{
-				"hasErrors": []*Operand{NewOperand(OperandEq, 1)},
-			},
-			{
-				"status": []*Operand{NewOperand(OperandGte, 400)},
-			},
+		query.Or([]*OperandList{
+			NewOperandList().Add("hasErrors", NewOperand(OperandEq, 1)),
+			NewOperandList().Add("status", NewOperand(OperandGte, 400)),
 		})
 	}
 	if len(searchIP) > 0 {
@@ -148,13 +144,9 @@ func (this *SQLAccessLogDAO) HasNextAccessLog(day string, serverId string, fromI
 		query.Lt("_id", fromId)
 	}
 	if onlyErrors {
-		query.Or([]OperandMap{
-			{
-				"hasErrors": []*Operand{NewOperand(OperandEq, 1)},
-			},
-			{
-				"status": []*Operand{NewOperand(OperandGte, 400)},
-			},
+		query.Or([]*OperandList{
+			NewOperandList().Add("hasErrors", NewOperand(OperandEq, 1)),
+			NewOperandList().Add("status", NewOperand(OperandGte, 400)),
 		})
 	}
 	if len(searchIP) > 0 {
@@ -197,13 +189,9 @@ func (this *SQLAccessLogDAO) ListLatestAccessLogs(day string, serverId string, f
 		shouldReverse = false
 	}
 	if onlyErrors {
-		query.Or([]OperandMap{
-			{
-				"hasErrors": []*Operand{NewOperand(OperandEq, 1)},
-			},
-			{
-				"status": []*Operand{NewOperand(OperandGte, 400)},
-			},
+		query.Or([]*OperandList{
+			NewOperandList().Add("hasErrors", NewOperand(OperandEq, 1)),
+			NewOperandList().Add("status", NewOperand(OperandGte, 400)),
 		})
 	}
 	query.Limit(size)

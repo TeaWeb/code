@@ -4,15 +4,16 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
+	"strings"
 	"time"
 )
 
-// 查询构造
+// 查询对象
 type Query struct {
 	table        string
 	offset       int
 	size         int
-	operandMap   OperandMap // field => operands
+	operandList  *OperandList
 	sortFields   []*SortField
 	debug        bool
 	timeout      time.Duration
@@ -20,7 +21,13 @@ type Query struct {
 	fieldMapping func(field string) string
 }
 
+// 构造新查询
 func NewQuery(table string) *Query {
+	if sharedDBType != "mongo" {
+		// 关系型数据库使用下划线分隔
+		table = strings.Replace(table, ".", "_", -1)
+	}
+
 	query := &Query{
 		table: table,
 	}
@@ -31,7 +38,7 @@ func NewQuery(table string) *Query {
 func (this *Query) Init() *Query {
 	this.offset = -1
 	this.size = -1
-	this.operandMap = OperandMap{}
+	this.operandList = NewOperandList()
 	return this
 }
 
@@ -64,16 +71,11 @@ func (this *Query) Attr(field string, value interface{}) *Query {
 }
 
 func (this *Query) Op(field string, operandCode OperandCode, value interface{}) *Query {
-	operands, ok := this.operandMap[field]
-	if ok {
-		this.operandMap[field] = append(operands, NewOperand(operandCode, value))
-	} else {
-		this.operandMap[field] = []*Operand{NewOperand(operandCode, value)}
-	}
+	this.operandList.Add(field, NewOperand(operandCode, value))
 	return this
 }
 
-func (this *Query) Or(fieldValues []OperandMap) *Query {
+func (this *Query) Or(fieldValues []*OperandList) *Query {
 	return this.Op("", OperandOr, fieldValues)
 }
 
@@ -81,7 +83,7 @@ func (this *Query) Not(field string, value interface{}) *Query {
 	if types.IsSlice(value) {
 		return this.Op(field, OperandNotIn, value)
 	} else {
-		return this.Op(field, OperandEq, value)
+		return this.Op(field, OperandNeq, value)
 	}
 }
 

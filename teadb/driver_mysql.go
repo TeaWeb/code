@@ -62,6 +62,13 @@ func (this *MySQLDriver) initDB() error {
 	dbInstance.SetConnMaxLifetime(0)
 	this.db = dbInstance
 
+	go func() {
+		row := this.db.QueryRow("SELECT @@sql_mode")
+		if row != nil {
+			_ = row.Scan(&this.sqlMode)
+		}
+	}()
+
 	return nil
 }
 

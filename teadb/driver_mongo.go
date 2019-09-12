@@ -659,15 +659,15 @@ func (this *MongoDriver) connect() (*mongo.Client, error) {
 }
 
 func (this *MongoDriver) buildFilter(query *Query) (filter map[string]interface{}, err error) {
-	if len(query.operandMap) > 0 {
-		return this.buildOperandMap(query.operandMap)
+	if query.operandList.Len() > 0 {
+		return this.buildOperandMap(query.operandList)
 	}
 	return map[string]interface{}{}, nil
 }
 
-func (this *MongoDriver) buildOperandMap(operandMap OperandMap) (filter map[string]interface{}, err error) {
+func (this *MongoDriver) buildOperandMap(operandList *OperandList) (filter map[string]interface{}, err error) {
 	filter = map[string]interface{}{}
-	for field, operands := range operandMap {
+	operandList.Range(func(field string, operands []*Operand) {
 		fieldQuery := map[string]interface{}{}
 		for _, op := range operands {
 			switch op.Code {
@@ -689,13 +689,13 @@ func (this *MongoDriver) buildOperandMap(operandMap OperandMap) (filter map[stri
 				fieldQuery["$ne"] = op.Value
 			case OperandOr:
 				if op.Value != nil {
-					operandMaps, ok := op.Value.([]OperandMap)
+					operandLists, ok := op.Value.([]*OperandList)
 					if ok {
 						result := []map[string]interface{}{}
-						for _, operandMap := range operandMaps {
-							f, err := this.buildOperandMap(operandMap)
+						for _, operandList := range operandLists {
+							f, err := this.buildOperandMap(operandList)
 							if err != nil {
-								return filter, err
+								return
 							}
 							result = append(result, f)
 						}
@@ -713,7 +713,7 @@ func (this *MongoDriver) buildOperandMap(operandMap OperandMap) (filter map[stri
 		if len(fieldQuery) > 0 {
 			filter[field] = fieldQuery
 		}
-	}
+	})
 
 	return
 }

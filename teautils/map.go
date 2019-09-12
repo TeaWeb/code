@@ -2,6 +2,7 @@ package teautils
 
 import (
 	"github.com/go-yaml/yaml"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/pquerna/ffjson/ffjson"
 )
 
@@ -36,4 +37,12 @@ func ObjectToMapJSON(fromPtr interface{}, toMap *map[string]interface{}) error {
 
 	err = ffjson.Unmarshal(data, toMap)
 	return err
+}
+
+// 获取所有的键值
+func MapKeys(s maps.Map) (keys []string) {
+	for k := range s {
+		keys = append(keys, k)
+	}
+	return
 }

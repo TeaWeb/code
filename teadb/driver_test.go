@@ -17,13 +17,25 @@ func TestDriver_Test(t *testing.T) {
 }
 
 func TestDriver_FindOne(t *testing.T) {
-	query := NewQuery("teaweb.logs.audit")
-	query.Attr("id", 1)
-	one, err := SharedDB().FindOne(query, new(audits.Log))
-	if err != nil {
-		t.Fatal(err)
+	{
+		query := NewQuery("teaweb.logs.audit")
+		query.Attr("id", 1)
+		one, err := SharedDB().FindOne(query, new(audits.Log))
+		if err != nil {
+			t.Fatal(err)
+		}
+		logs.PrintAsJSON(one, t)
 	}
-	logs.PrintAsJSON(one, t)
+
+	{
+		query := NewQuery("teaweb.logs.audit")
+		query.Attr("id", 2)
+		one, err := SharedDB().FindOne(query, new(audits.Log))
+		if err != nil {
+			t.Fatal(err)
+		}
+		logs.PrintAsJSON(one, t)
+	}
 }
 
 func TestDriver_FindOnes(t *testing.T) {
@@ -37,20 +49,39 @@ func TestDriver_FindOnes(t *testing.T) {
 }
 
 func TestDriver_InsertOne(t *testing.T) {
-	log := new(audits.Log)
-	log.Timestamp = time.Now().Unix()
-	log.Action = "LOGIN"
-	log.Description = "login from beijing"
-	log.Username = "admin"
-	log.Options = map[string]string{
-		"a": "1",
-		"b": "2",
+	{
+		log := new(audits.Log)
+		log.Timestamp = time.Now().Unix()
+		log.Action = "LOGIN"
+		log.Description = "login from beijing"
+		log.Username = "admin"
+		log.Options = map[string]string{
+			"a": "1",
+			"b": "2",
+		}
+		err := SharedDB().InsertOne("teaweb.logs.audit", log)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("ok")
 	}
-	err := SharedDB().InsertOne("teaweb.logs.audit", log)
-	if err != nil {
-		t.Fatal(err)
+
+	{
+		log := new(audits.Log)
+		log.Timestamp = time.Now().Unix()
+		log.Action = "LOGIN"
+		log.Description = "login from shanghai"
+		log.Username = "admin"
+		log.Options = map[string]string{
+			"a": "1",
+			"b": "2",
+		}
+		err := SharedDB().InsertOne("teaweb.logs.audit", log)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("ok")
 	}
-	t.Log("ok")
 }
 
 func TestDriver_InsertOnes(t *testing.T) {

@@ -6,11 +6,13 @@ import (
 	"database/sql/driver"
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/db"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -26,6 +28,11 @@ type SQLDriver struct {
 
 	db       *sql.DB
 	dbLocker sync.Mutex
+
+	stmtMap    map[string]*sql.Stmt // query => stmt
+	stmtLocker sync.Mutex
+
+	sqlMode string
 }
 
 // 查找单条记录
@@ -57,13 +64,14 @@ func (this *SQLDriver) FindOnes(query *Query, modelPtr interface{}) ([]interface
 		logs.Println("sql:", sqlString)
 	}
 
-	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
-	if err != nil {
-		return nil, this.processError(err)
+	stmt, ok := this.findStmt(sqlString)
+	if !ok {
+		stmt, err = currentDB.PrepareContext(context.Background(), sqlString)
+		if err != nil {
+			return nil, this.processError(err)
+		}
+		this.putStmt(sqlString, stmt)
 	}
-	defer func() {
-		_ = stmt.Close()
-	}()
 
 	rows, err := stmt.Query(holder.Args...)
 	if err != nil {
@@ -113,6 +121,8 @@ func (this *SQLDriver) FindOnes(query *Query, modelPtr interface{}) ([]interface
 
 // 插入一条记录
 func (this *SQLDriver) InsertOne(table string, modelPtr interface{}) error {
+	table = strings.Replace(table, ".", "_", -1)
+
 	currentDB, err := this.checkDB()
 	if err != nil {
 		return err
@@ -137,16 +147,20 @@ func (this *SQLDriver) InsertOne(table string, modelPtr interface{}) error {
 		return errors.New("'DBColumns() maps.Map' method not exist in '" + modelType.String() + "'")
 	}
 
+	// 对字段进行排序
+	keys := teautils.MapKeys(m)
+	sort.Strings(keys)
+
 	b := strings.Builder{}
 	b.WriteString("INSERT INTO " + this.quoteKeyword(table) + " (")
 	index := 0
 	args := []interface{}{}
-	for k, v := range m {
+	for _, k := range keys {
 		if index > 0 {
 			b.WriteString(", ")
 		}
 		b.WriteString(this.quoteKeyword(k))
-		args = append(args, v)
+		args = append(args, m.Get(k))
 		index++
 	}
 	b.WriteString(") ")
@@ -173,13 +187,15 @@ func (this *SQLDriver) InsertOne(table string, modelPtr interface{}) error {
 		}
 	}
 	b.WriteString(")")
-	stmt, err := currentDB.PrepareContext(context.Background(), b.String())
-	if err != nil {
-		return this.processError(err)
+	sqlString := b.String()
+	stmt, ok := this.findStmt(b.String())
+	if !ok {
+		stmt, err = currentDB.PrepareContext(context.Background(), sqlString)
+		if err != nil {
+			return this.processError(err)
+		}
+		this.putStmt(sqlString, stmt)
 	}
-	defer func() {
-		_ = stmt.Close()
-	}()
 
 	_, err = stmt.Exec(args...)
 
@@ -309,13 +325,14 @@ func (this *SQLDriver) DeleteOnes(query *Query) error {
 		return err
 	}
 
-	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
-	if err != nil {
-		return this.processError(err)
+	stmt, ok := this.findStmt(sqlString)
+	if !ok {
+		stmt, err = currentDB.PrepareContext(context.Background(), sqlString)
+		if err != nil {
+			return this.processError(err)
+		}
+		this.putStmt(sqlString, stmt)
 	}
-	defer func() {
-		_ = stmt.Close()
-	}()
 
 	_, err = stmt.Exec(holder.Args...)
 	return this.processError(err)
@@ -334,13 +351,14 @@ func (this *SQLDriver) UpdateOnes(query *Query, values map[string]interface{}) e
 		return err
 	}
 
-	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
-	if err != nil {
-		return this.processError(err)
+	stmt, ok := this.findStmt(sqlString)
+	if !ok {
+		stmt, err = currentDB.PrepareContext(context.Background(), sqlString)
+		if err != nil {
+			return this.processError(err)
+		}
+		this.putStmt(sqlString, stmt)
 	}
-	defer func() {
-		_ = stmt.Close()
-	}()
 
 	_, err = stmt.Exec(holder.Args...)
 
@@ -365,14 +383,14 @@ func (this *SQLDriver) Count(query *Query) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
-	if err != nil {
-		return 0, this.processError(err)
+	stmt, ok := this.findStmt(sqlString)
+	if !ok {
+		stmt, err = currentDB.PrepareContext(context.Background(), sqlString)
+		if err != nil {
+			return 0, this.processError(err)
+		}
+		this.putStmt(sqlString, stmt)
 	}
-	defer func() {
-		_ = stmt.Close()
-	}()
-
 	row := stmt.QueryRow(holder.Args...)
 	if row == nil {
 		return 0, nil
@@ -405,14 +423,14 @@ func (this *SQLDriver) Sum(query *Query, field string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
-	if err != nil {
-		return 0, this.processError(err)
+	stmt, ok := this.findStmt(sqlString)
+	if !ok {
+		stmt, err = currentDB.PrepareContext(context.Background(), sqlString)
+		if err != nil {
+			return 0, this.processError(err)
+		}
+		this.putStmt(sqlString, stmt)
 	}
-	defer func() {
-		_ = stmt.Close()
-	}()
-
 	row := stmt.QueryRow(holder.Args...)
 	if row == nil {
 		return 0, nil
@@ -445,13 +463,14 @@ func (this *SQLDriver) Avg(query *Query, field string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
-	if err != nil {
-		return 0, this.processError(err)
+	stmt, ok := this.findStmt(sqlString)
+	if !ok {
+		stmt, err = currentDB.PrepareContext(context.Background(), sqlString)
+		if err != nil {
+			return 0, this.processError(err)
+		}
+		this.putStmt(sqlString, stmt)
 	}
-	defer func() {
-		_ = stmt.Close()
-	}()
 
 	row := stmt.QueryRow(holder.Args...)
 	if row == nil {
@@ -485,13 +504,15 @@ func (this *SQLDriver) Min(query *Query, field string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
-	if err != nil {
-		return 0, this.processError(err)
+
+	stmt, ok := this.findStmt(sqlString)
+	if !ok {
+		stmt, err = currentDB.PrepareContext(context.Background(), sqlString)
+		if err != nil {
+			return 0, this.processError(err)
+		}
+		this.putStmt(sqlString, stmt)
 	}
-	defer func() {
-		_ = stmt.Close()
-	}()
 
 	row := stmt.QueryRow(holder.Args...)
 	if row == nil {
@@ -525,13 +546,15 @@ func (this *SQLDriver) Max(query *Query, field string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
-	if err != nil {
-		return 0, this.processError(err)
+
+	stmt, ok := this.findStmt(sqlString)
+	if !ok {
+		stmt, err = currentDB.PrepareContext(context.Background(), sqlString)
+		if err != nil {
+			return 0, this.processError(err)
+		}
+		this.putStmt(sqlString, stmt)
 	}
-	defer func() {
-		_ = stmt.Close()
-	}()
 
 	row := stmt.QueryRow(holder.Args...)
 	if row == nil {
@@ -609,29 +632,38 @@ func (this *SQLDriver) Group(query *Query, groupField string, result map[string]
 		logs.Println("sql:", sqlString)
 	}
 
-	tx, err := currentDB.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = tx.Commit()
-	}()
+	var stmt *sql.Stmt = nil
+	if this.driver == db.DBTypeMySQL && strings.Contains(this.sqlMode, "ONLY_FULL_GROUP_BY") {
+		tx, err := currentDB.Begin()
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			_ = tx.Commit()
+		}()
 
-	// 屏蔽MySQL的ONLY_FULL_GROUP_BY选项
-	if this.driver == db.DBTypeMySQL {
+		// 屏蔽MySQL的ONLY_FULL_GROUP_BY选项
 		_, err = tx.ExecContext(context.Background(), "SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));")
 		if err != nil {
 			logs.Error(err)
 		}
-	}
 
-	stmt, err := tx.PrepareContext(context.Background(), sqlString)
-	if err != nil {
-		return nil, this.processError(err)
+		// 事务不能缓存SQL
+		stmt, err = tx.PrepareContext(context.Background(), sqlString)
+		if err != nil {
+			return nil, this.processError(err)
+		}
+	} else {
+		var ok = false
+		stmt, ok = this.findStmt(sqlString)
+		if !ok {
+			stmt, err = currentDB.PrepareContext(context.Background(), sqlString)
+			if err != nil {
+				return nil, this.processError(err)
+			}
+			this.putStmt(sqlString, stmt)
+		}
 	}
-	defer func() {
-		_ = stmt.Close()
-	}()
 
 	rows, err := stmt.Query(holder.Args...)
 	if err != nil {
@@ -831,21 +863,25 @@ func (this *SQLDriver) asSQL(action SQLAction, query *Query, paramsHolder *SQLPa
 	if action == SQLUpdate {
 		b.WriteString("SET ")
 		index := 0
-		for k, v := range updateValues {
+
+		keys := teautils.MapKeys(updateValues)
+		sort.Strings(keys)
+
+		for _, k := range keys {
 			if index > 0 {
 				b.WriteString(", ")
 			}
 			b.WriteString(this.quoteKeyword(k))
 			b.WriteString("=")
-			b.WriteString(paramsHolder.Add(v))
+			b.WriteString(paramsHolder.Add(updateValues[k]))
 			index++
 		}
 		b.WriteString(" ")
 	}
 
 	// where
-	if len(query.operandMap) > 0 {
-		where, err := this.buildWhere(query.operandMap, query.fieldMapping, paramsHolder)
+	if query.operandList.Len() > 0 {
+		where, err := this.buildWhere(query.operandList, query.fieldMapping, paramsHolder)
 		if err != nil {
 			return "", err
 		}
@@ -927,10 +963,13 @@ func (this *SQLDriver) quoteKeyword(s string) string {
 }
 
 // 构造where
-func (this *SQLDriver) buildWhere(operandMap OperandMap, fieldMapping func(field string) string, paramsHolder *SQLParamsHolder) (string, error) {
+func (this *SQLDriver) buildWhere(operandList *OperandList, fieldMapping func(field string) string, paramsHolder *SQLParamsHolder) (string, error) {
 	b := strings.Builder{}
 	hasPrefix := false
-	for field, operands := range operandMap {
+
+	var resultErr error = nil
+
+	operandList.Range(func(field string, operands []*Operand) {
 		if fieldMapping != nil {
 			field = fieldMapping(field)
 		}
@@ -966,20 +1005,22 @@ func (this *SQLDriver) buildWhere(operandMap OperandMap, fieldMapping func(field
 							paramsHolder.AddHolder(k, v)
 						}
 					} else {
-						return "", errors.New("operand 'operandSQLCond' value must be '*SQLCond'")
+						resultErr = errors.New("operand 'operandSQLCond' value must be '*SQLCond'")
+						return
 					}
 				}
 			case OperandOr:
 				if op.Value != nil {
-					operandMaps, ok := op.Value.([]OperandMap)
+					operandLists, ok := op.Value.([]*OperandList)
 					if ok {
-						if len(operandMaps) > 1 {
+						if len(operandLists) > 1 {
 							b.WriteString("(")
 						}
-						for index, operandMap := range operandMaps {
-							f, err := this.buildWhere(operandMap, fieldMapping, paramsHolder)
+						for index, operandList := range operandLists {
+							f, err := this.buildWhere(operandList, fieldMapping, paramsHolder)
 							if err != nil {
-								return "", err
+								resultErr = err
+								return
 							}
 							if index > 0 {
 								b.WriteString("OR ")
@@ -988,21 +1029,26 @@ func (this *SQLDriver) buildWhere(operandMap OperandMap, fieldMapping func(field
 							b.WriteString(f)
 							b.WriteString(") ")
 						}
-						if len(operandMaps) > 1 {
+						if operandList.Len() > 1 {
 							b.WriteString(") ")
 						}
 					} else {
-						return "", errors.New("or: should be a valid []OperandMap")
+						resultErr = errors.New("or: should be a valid []OperandMap")
+						return
 					}
 				} else {
-					return "", errors.New("or: should be a valid []OperandMap")
+					resultErr = errors.New("or: should be a valid []OperandMap")
+					return
 				}
 			default:
-				return "", errors.New("invalid operand '" + op.Code + "'")
+				resultErr = errors.New("invalid operand '" + op.Code + "'")
+				return
 			}
 		}
+	})
+	if resultErr != nil {
+		return "", resultErr
 	}
-
 	return b.String(), nil
 }
 
@@ -1011,4 +1057,30 @@ func (this *SQLDriver) checkDB() (*sql.DB, error) {
 		return nil, errors.New("db open failed")
 	}
 	return this.db, nil
+}
+
+func (this *SQLDriver) findStmt(query string) (stmt *sql.Stmt, ok bool) {
+	this.stmtLocker.Lock()
+	stmt, ok = this.stmtMap[query]
+	this.stmtLocker.Unlock()
+
+	return stmt, ok
+}
+
+func (this *SQLDriver) putStmt(query string, stmt *sql.Stmt) {
+	this.stmtLocker.Lock()
+
+	if this.stmtMap == nil {
+		this.stmtMap = map[string]*sql.Stmt{}
+	}
+
+	// 限制最多只能缓存1024个SQL
+	if len(this.stmtMap) >= 1024 {
+		for _, s := range this.stmtMap {
+			_ = s.Close()
+		}
+		this.stmtMap = map[string]*sql.Stmt{}
+	}
+	this.stmtMap[query] = stmt
+	this.stmtLocker.Unlock()
 }

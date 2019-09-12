@@ -112,13 +112,9 @@ func (this *MongoAccessLogDAO) ListAccessLogs(day string, serverId string, fromI
 		query.Lt("_id", fromIdObject)
 	}
 	if onlyErrors {
-		query.Or([]OperandMap{
-			{
-				"hasErrors": []*Operand{NewOperand(OperandEq, true)},
-			},
-			{
-				"status": []*Operand{NewOperand(OperandGte, 400)},
-			},
+		query.Or([]*OperandList{
+			NewOperandList().Add("hasErrors", NewOperand(OperandEq, true)),
+			NewOperandList().Add("status", NewOperand(OperandGte, 400)),
 		})
 	}
 	if len(searchIP) > 0 {
@@ -151,13 +147,9 @@ func (this *MongoAccessLogDAO) HasNextAccessLog(day string, serverId string, fro
 		query.Lt("_id", fromIdObject)
 	}
 	if onlyErrors {
-		query.Or([]OperandMap{
-			{
-				"hasErrors": []*Operand{NewOperand(OperandEq, true)},
-			},
-			{
-				"status": []*Operand{NewOperand(OperandGte, 400)},
-			},
+		query.Or([]*OperandList{
+			NewOperandList().Add("hasErrors", NewOperand(OperandEq, true)),
+			NewOperandList().Add("status", NewOperand(OperandGte, 400)),
 		})
 	}
 	if len(searchIP) > 0 {
@@ -196,13 +188,9 @@ func (this *MongoAccessLogDAO) ListLatestAccessLogs(day string, serverId string,
 		shouldReverse = false
 	}
 	if onlyErrors {
-		query.Or([]OperandMap{
-			{
-				"hasErrors": []*Operand{NewOperand(OperandEq, true)},
-			},
-			{
-				"status": []*Operand{NewOperand(OperandGte, 400)},
-			},
+		query.Or([]*OperandList{
+			NewOperandList().Add("hasErrors", NewOperand(OperandEq, true)),
+			NewOperandList().Add("status", NewOperand(OperandGte, 400)),
 		})
 	}
 	query.Limit(size)

@@ -22,6 +22,26 @@ func TestMongoDriver_buildFilter(t *testing.T) {
 	logs.PrintAsJSON(filter, t)
 }
 
+func TestMongoDriver_buildFilter_Or(t *testing.T) {
+	q := new(Query)
+	q.Init()
+	q.Attr("a", 1)
+	q.Or([]*OperandList{
+		NewOperandList().Add("timestamp", NewOperand(OperandEq, "123")),
+		NewOperandList().Add("timestamp",
+			NewOperand(OperandGt, "456"),
+			NewOperand(OperandNotIn, []int{1, 2, 3}),
+		),
+		NewOperandList().Add("timestamp", NewOperand(OperandLt, 1024)),
+	})
+	driver := new(MongoDriver)
+	filter, err := driver.buildFilter(q)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logs.PrintAsJSON(filter, t)
+}
+
 func TestMongoDriver_setMapValue(t *testing.T) {
 	m := maps.Map{}
 
