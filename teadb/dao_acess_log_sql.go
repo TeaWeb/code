@@ -22,9 +22,9 @@ func (this *SQLAccessLogDAO) Init() {
 // 获取表名
 func (this *SQLAccessLogDAO) TableName(day string) string {
 	if day == timeutil.Format("Ymd") {
-		this.initTable("teaweb.logs." + day)
+		this.initTable("teaweb_logs_" + day)
 	}
-	return "teaweb.logs." + day
+	return "teaweb_logs_" + day
 }
 
 // 获取当前时间表名

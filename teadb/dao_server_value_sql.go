@@ -20,8 +20,9 @@ func (this *SQLServerValueDAO) Init() {
 
 // 表名
 func (this *SQLServerValueDAO) TableName(serverId string) string {
-	this.initTable("teaweb.values.server." + serverId)
-	return "teaweb.values.server." + serverId
+	table := "teaweb_values_server_" + serverId
+	this.initTable(table)
+	return table
 }
 
 // 插入新数据

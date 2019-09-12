@@ -61,6 +61,7 @@ func (this *MySQLDriver) initDB() error {
 	dbInstance.SetMaxOpenConns(32)
 	dbInstance.SetConnMaxLifetime(0)
 	this.db = dbInstance
+
 	return nil
 }
 

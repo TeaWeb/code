@@ -18,8 +18,9 @@ func (this *SQLAgentValueDAO) Init() {
 
 // 获取表格
 func (this *SQLAgentValueDAO) TableName(agentId string) string {
-	this.initTable("teaweb.values.agent." + agentId)
-	return "teaweb.values.agent." + agentId
+	table := "teaweb_values_agent_" + agentId
+	this.initTable(table)
+	return table
 }
 
 // 插入数据

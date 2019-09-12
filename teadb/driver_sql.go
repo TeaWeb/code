@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -553,18 +554,6 @@ func (this *SQLDriver) Group(query *Query, groupField string, result map[string]
 		return nil, err
 	}
 
-	switch this.driver {
-	case "mysql":
-		_, err = currentDB.ExecContext(context.Background(), "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));")
-		if err != nil {
-			return nil, this.processError(err)
-		}
-	case "postgres":
-		// do nothing
-	default:
-		return nil, errors.New("unknown database type")
-	}
-
 	for field, expr := range result {
 		switch e := expr.(type) {
 		case *SumExpr:
@@ -620,7 +609,23 @@ func (this *SQLDriver) Group(query *Query, groupField string, result map[string]
 		logs.Println("sql:", sqlString)
 	}
 
-	stmt, err := currentDB.PrepareContext(context.Background(), sqlString)
+	tx, err := currentDB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = tx.Commit()
+	}()
+
+	// 屏蔽MySQL的ONLY_FULL_GROUP_BY选项
+	if this.driver == db.DBTypeMySQL {
+		_, err = tx.ExecContext(context.Background(), "SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));")
+		if err != nil {
+			logs.Error(err)
+		}
+	}
+
+	stmt, err := tx.PrepareContext(context.Background(), sqlString)
 	if err != nil {
 		return nil, this.processError(err)
 	}
@@ -705,8 +710,8 @@ func (this *SQLDriver) Test() error {
 	}()
 
 	<-done
-	close(done)
 	isDone = true
+	close(done)
 
 	return err
 }

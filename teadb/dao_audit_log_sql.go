@@ -15,8 +15,9 @@ func (this *SQLAuditLogDAO) Init() {
 }
 
 func (this *SQLAuditLogDAO) TableName() string {
-	this.initTable("teaweb.logs.audit")
-	return "teaweb.logs.audit"
+	table := "teaweb_logs_audit"
+	this.initTable(table)
+	return table
 }
 
 // 计算审计日志数量

@@ -15,7 +15,7 @@ func (this *SQLAgentLogDAO) Init() {
 }
 
 func (this *SQLAgentLogDAO) TableName(agentId string) string {
-	table := "teaweb.logs.agent." + agentId
+	table := "teaweb_logs_agent_" + agentId
 	this.initTable(table)
 	return table
 }

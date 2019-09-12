@@ -20,8 +20,9 @@ func (this *SQLNoticeDAO) Init() {
 
 // 表名
 func (this *SQLNoticeDAO) TableName() string {
-	this.initTable("teaweb.notices")
-	return "teaweb.notices"
+	table := "teaweb_notices"
+	this.initTable(table)
+	return table
 }
 
 // 写入一个通知
