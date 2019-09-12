@@ -697,6 +697,7 @@ func (this *SQLDriver) Test() error {
 			err = errors.New("unable connect to database: timeout")
 
 			if !isDone {
+				isDone = true
 				done <- true
 			}
 		}
@@ -705,6 +706,7 @@ func (this *SQLDriver) Test() error {
 	go func() {
 		err = this.db.PingContext(ctx)
 		if !isDone {
+			isDone = true
 			done <- true
 		}
 	}()

@@ -115,18 +115,12 @@ func (this *PostgresDriver) TestDSN(dsn string) (message string, ok bool) {
 		message = "DSN解析错误：" + err.Error()
 		return
 	}
-
-	conn, err := dbInstance.Conn(context.Background())
-	if err != nil {
-		message = "尝试连接数据库失败：" + err.Error()
-		return
-	}
 	defer func() {
-		_ = conn.Close()
+		_ = dbInstance.Close()
 	}()
 
 	// 测试创建数据表
-	_, err = conn.ExecContext(context.Background(), `CREATE TABLE "public"."teaweb.test" (
+	_, err = dbInstance.ExecContext(context.Background(), `CREATE TABLE "public"."teaweb.test" (
 		"id" serial8 primary key,
 		"_id" varchar(24)
 		);
@@ -138,18 +132,26 @@ func (this *PostgresDriver) TestDSN(dsn string) (message string, ok bool) {
 	}
 
 	// 测试写入数据表
-	_, err = conn.ExecContext(context.Background(), "INSERT INTO \"teaweb.test\" (\"_id\") VALUES ('"+shared.NewObjectId().Hex()+"')")
+	_, err = dbInstance.ExecContext(context.Background(), "INSERT INTO \"teaweb.test\" (\"_id\") VALUES ('"+shared.NewObjectId().Hex()+"')")
 	if err != nil {
 		message = "尝试写入数据表失败：" + err.Error()
 		return
 	}
 
 	// 测试删除数据表
-	_, err = conn.ExecContext(context.Background(), "DROP TABLE \"teaweb.test\"")
+	_, err = dbInstance.ExecContext(context.Background(), "DROP TABLE \"teaweb.test\"")
 	if err != nil {
 		message = "尝试删除数据表失败：" + err.Error()
 		return
 	}
+
+	// 检查函数
+	rows, err := dbInstance.Query(`SELECT JSON_EXTRACT_PATH('{"a":1}', 'a')`)
+	if err != nil {
+		message = "检查JSON_EXTRACT_PATH()函数失败：" + err.Error() + "。请尝试使用PostgreSQL v9.3以上版本。"
+		return
+	}
+	_ = rows.Close()
 
 	ok = true
 	return
