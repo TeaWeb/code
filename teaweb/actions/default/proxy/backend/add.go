@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/certs/certutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
@@ -123,7 +124,7 @@ func (this *AddAction) RunPost(params struct {
 	}
 
 	backend := teaconfigs.NewBackendConfig()
-	backend.Address = params.Address
+	backend.Address = teautils.FormatAddress(params.Address)
 	backend.Scheme = params.Scheme
 
 	// 证书

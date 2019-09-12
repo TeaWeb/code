@@ -3,6 +3,7 @@ package proxy
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
@@ -51,7 +52,7 @@ func (this *AddAction) RunPost(params struct {
 
 	if len(params.Listens) > 0 {
 		for _, listen := range params.Listens {
-			listen = strings.TrimSpace(listen)
+			listen = strings.TrimSpace(teautils.FormatAddress(listen))
 			if len(listen) > 0 {
 				server.AddListen(listen)
 			}
@@ -60,7 +61,7 @@ func (this *AddAction) RunPost(params struct {
 
 	if params.ServerType == "proxy" { // HTTP代理服务
 		for _, backend := range params.Backends {
-			backend = strings.TrimSpace(backend)
+			backend = strings.TrimSpace(teautils.FormatAddress(backend))
 			if len(backend) > 0 {
 				backendObject := teaconfigs.NewBackendConfig()
 				if strings.HasPrefix(backend, "http://") {

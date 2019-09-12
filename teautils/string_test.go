@@ -25,3 +25,11 @@ func TestFormatAddress(t *testing.T) {
 	t.Log(FormatAddress("127.0.0.1 : 1234"))
 	t.Log(FormatAddress("127.0.0.1：1234"))
 }
+
+func TestFormatAddressList(t *testing.T) {
+	t.Log(FormatAddressList([]string{
+		"127.0.0.1:1234",
+		"127.0.0.1 : 1234",
+		"127.0.0.1：1234",
+	}))
+}

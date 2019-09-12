@@ -3,6 +3,7 @@ package fastcgi
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -72,7 +73,7 @@ func (this *AddAction) RunPost(params struct {
 
 	fastcgi := teaconfigs.NewFastcgiConfig()
 	fastcgi.On = params.On
-	fastcgi.Pass = params.Pass
+	fastcgi.Pass = teautils.FormatAddress(params.Pass)
 	fastcgi.ReadTimeout = fmt.Sprintf("%ds", params.ReadTimeout)
 	fastcgi.Params = paramsMap
 	fastcgi.PoolSize = params.PoolSize

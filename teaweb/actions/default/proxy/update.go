@@ -78,7 +78,7 @@ func (this *UpdateAction) RunPost(params struct {
 
 	server.Description = params.Description
 	server.Name = params.Name
-	server.Listen = params.Listen
+	server.Listen = teautils.FormatAddressList(params.Listen)
 
 	if server.TCP != nil { // TCP
 		server.TCP.TCPOn = params.TcpOn

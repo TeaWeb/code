@@ -3,6 +3,7 @@ package ssl
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/certs/certutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/Tea"
@@ -133,7 +134,7 @@ func (this *UpdateAction) RunPost(params struct {
 		server.SSL = teaconfigs.NewSSLConfig()
 	}
 	server.SSL.On = params.HttpsOn
-	server.SSL.Listen = params.Listen
+	server.SSL.Listen = teautils.FormatAddressList(params.Listen)
 
 	if lists.ContainsString(teaconfigs.AllTlsVersions, params.MinVersion) {
 		server.SSL.MinVersion = params.MinVersion

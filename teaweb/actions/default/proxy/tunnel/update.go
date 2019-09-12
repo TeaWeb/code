@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 )
@@ -53,7 +54,7 @@ func (this *UpdateAction) RunPost(params struct {
 
 	server.Tunnel = &teaconfigs.TunnelConfig{
 		On:       params.On,
-		Endpoint: params.Endpoint,
+		Endpoint: teautils.FormatAddress(params.Endpoint),
 		Secret:   params.Secret,
 	}
 
