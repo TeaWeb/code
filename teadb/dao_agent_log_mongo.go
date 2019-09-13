@@ -1,9 +1,11 @@
 package teadb
 
 import (
+	"context"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/iwind/TeaGo/logs"
+	"time"
 )
 
 type MongoAgentLogDAO struct {
@@ -66,6 +68,16 @@ func (this *MongoAgentLogDAO) FindLatestTaskLog(agentId string, taskId string) (
 		return nil, err
 	}
 	return one.(*agents.ProcessLog), nil
+}
+
+// 删除Agent相关表
+func (this *MongoAgentLogDAO) DropAgentTable(agentId string) error {
+	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName(agentId))
+	if err != nil {
+		return err
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	return coll.Drop(ctx)
 }
 
 func (this *MongoAgentLogDAO) initTable(agentId string) {

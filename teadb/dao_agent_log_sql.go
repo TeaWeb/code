@@ -62,6 +62,11 @@ func (this *SQLAgentLogDAO) FindLatestTaskLog(agentId string, taskId string) (*a
 	return one.(*agents.ProcessLog), nil
 }
 
+// 删除Agent相关表
+func (this *SQLAgentLogDAO) DropAgentTable(agentId string) error {
+	return this.driver.DropTable(this.TableName(agentId))
+}
+
 func (this *SQLAgentLogDAO) initTable(table string) {
 	if isInitializedTable(table) {
 		return

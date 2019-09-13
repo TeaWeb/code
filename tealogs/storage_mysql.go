@@ -1,7 +1,6 @@
 package tealogs
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
@@ -9,7 +8,6 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // MySQL存储
@@ -62,14 +60,9 @@ func (this *MySQLStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
-
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
-	conn, err := db.Conn(ctx)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	table := this.FormatVariables(this.Table)
 
@@ -88,7 +81,7 @@ func (this *MySQLStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 					"`" + this.LogField + "` text COLLATE utf8mb4_bin, " +
 					"PRIMARY KEY (`id`) " +
 					") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;")
-				if err != nil {
+				if err != nil && !strings.Contains(err.Error(), "Error 1050") {
 					logs.Error(err)
 				} else {
 					// 再次尝试

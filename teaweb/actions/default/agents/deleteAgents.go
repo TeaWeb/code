@@ -32,10 +32,8 @@ func (this *DeleteAgentsAction) Run(params struct {
 		}
 
 		// 删除数值记录
-		err = teadb.AgentValueDAO().DropAgentTable(agent.Id)
-		if err != nil {
-			this.Fail("数值记录删除失败：" + err.Error())
-		}
+		_ = teadb.AgentValueDAO().DropAgentTable(agent.Id)
+		_ = teadb.AgentLogDAO().DropAgentTable(agent.Id)
 
 		// 从列表删除
 		agentList, err := agents.SharedAgentList()

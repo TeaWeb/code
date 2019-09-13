@@ -20,4 +20,7 @@ type AgentLogDAOInterface interface {
 
 	// 获取任务最后一次的执行日志
 	FindLatestTaskLog(agentId string, taskId string) (*agents.ProcessLog, error)
+
+	// 删除Agent相关表
+	DropAgentTable(agentId string) error
 }
