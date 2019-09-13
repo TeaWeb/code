@@ -45,7 +45,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 			if len(query) > 0 {
 				this.uri += "?" + query
 			}
-			err := this.configure(this.server, 0)
+			err := this.configure(this.server, 0, false)
 			if err != nil {
 				logs.Error(err)
 				this.addError(err)
@@ -87,7 +87,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 			if len(query) > 0 {
 				this.uri += "?" + query
 			}
-			err := this.configure(this.server, 0)
+			err := this.configure(this.server, 0, false)
 			if err != nil {
 				logs.Error(err)
 				this.serverError(writer)

@@ -100,6 +100,7 @@ type Request struct {
 	rewriteReplace      string // 经过rewrite之后的URL
 	rewriteRedirectMode string // 跳转方式
 	rewriteIsExternal   bool   // 是否为外部URL
+	rewriteIsPermanent  bool   // 是否Permanent跳转
 
 	redirectToHttps bool
 
@@ -194,6 +195,7 @@ func (this *Request) reset(rawRequest *http.Request) {
 	this.rewriteReplace = ""
 	this.rewriteRedirectMode = ""
 	this.rewriteIsExternal = false
+	this.rewriteIsPermanent = false
 
 	this.redirectToHttps = false
 
@@ -220,7 +222,7 @@ func (this *Request) reset(rawRequest *http.Request) {
 	this.init(rawRequest)
 }
 
-func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) error {
+func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, breakRewrite bool) error {
 	isChanged := this.server != server
 	this.server = server
 
@@ -314,232 +316,235 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		return nil
 	}
 
-	// location的相关配置
-	var locationConfigured = false
-	for _, location := range server.Locations {
-		if !location.On {
-			continue
-		}
-		if locationMatches, ok := location.Match(path, this.Format); ok {
-			this.addVarMapping(locationMatches)
-
-			if len(location.Root) > 0 {
-				this.root = this.Format(location.Root)
-				locationConfigured = true
-			}
-			if len(location.Charset) > 0 {
-				this.charset = this.Format(location.Charset)
-			}
-			if len(location.Index) > 0 {
-				this.index = this.formatAll(location.Index)
-			}
-			if location.MaxBodyBytes() > 0 {
-				this.requestMaxSize = location.MaxBodyBytes()
-			}
-			if len(location.AccessLog) > 0 {
-				this.accessLog = location.AccessLog[0]
-			}
-			if location.DisableStat {
-				this.enableStat = false
-			}
-			if location.GzipLevel >= 0 {
-				this.gzipLevel = uint8(location.GzipLevel)
-			}
-			if location.GzipMinBytes() > 0 {
-				this.gzipMinLength = location.GzipMinBytes()
-			}
-			if len(location.Pages) > 0 {
-				this.pages = append(this.pages, location.Pages...)
-			}
-			if location.ShutdownPageOn {
-				this.shutdownPageOn = true
-				this.shutdownPage = location.ShutdownPage
-			}
-			if location.RedirectToHttps && this.rawScheme == "http" {
-				this.redirectToHttps = true
-				return nil
-			}
-
-			if location.CacheOn {
-				cachePolicy := location.CachePolicyObject()
-				if cachePolicy != nil && cachePolicy.On {
-					this.cachePolicy = cachePolicy
-				}
-			} else {
-				this.cachePolicy = nil
-			}
-
-			if location.WAFOn {
-				waf := location.WAF()
-				if waf != nil && waf.On {
-					this.waf = waf
-				}
-			} else {
-				this.waf = nil
-			}
-
-			if location.HasRequestHeaders() {
-				this.requestHeaders = append(this.requestHeaders, location.RequestHeaders...)
-			}
-
-			if location.HasResponseHeaders() {
-				this.responseHeaders = append(this.responseHeaders, location.Headers...)
-			}
-
-			if location.HasIgnoreHeaders() {
-				this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, location.UppercaseIgnoreHeaders()...)
-			}
-
-			if location.AccessPolicy != nil {
-				this.accessPolicy = location.AccessPolicy
-			}
-
-			this.location = location
-
-			// rewrite相关配置
-			if len(location.Rewrite) > 0 {
-				for _, rule := range location.Rewrite {
-					if !rule.On {
-						continue
-					}
-
-					if replace, varMapping, ok := rule.Match(path, this.Format); ok {
-						this.addVarMapping(varMapping)
-						this.rewriteId = rule.Id
-
-						if rule.HasResponseHeaders() {
-							this.responseHeaders = append(this.responseHeaders, rule.Headers...)
-						}
-
-						if rule.HasIgnoreHeaders() {
-							this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, rule.UppercaseIgnoreHeaders()...)
-						}
-
-						// 外部URL
-						if rule.IsExternalURL(replace) {
-							this.rewriteReplace = replace
-							this.rewriteIsExternal = true
-							this.rewriteRedirectMode = rule.RedirectMode()
-							return nil
-						}
-
-						// 内部URL
-						if rule.RedirectMode() == teaconfigs.RewriteFlagRedirect {
-							this.rewriteReplace = replace
-							this.rewriteIsExternal = false
-							this.rewriteRedirectMode = teaconfigs.RewriteFlagRedirect
-							return nil
-						}
-
-						newURI, err := url.ParseRequestURI(replace)
-						if err != nil {
-							this.uri = replace
-							return nil
-						}
-						if len(newURI.RawQuery) > 0 {
-							this.uri = newURI.Path + "?" + newURI.RawQuery
-							if len(uri.RawQuery) > 0 {
-								this.uri += "&" + uri.RawQuery
-							}
-						} else {
-							this.uri = newURI.Path
-							if len(uri.RawQuery) > 0 {
-								this.uri += "?" + uri.RawQuery
-							}
-						}
-
-						switch rule.TargetType() {
-						case teaconfigs.RewriteTargetURL:
-							return this.configure(server, redirects)
-						case teaconfigs.RewriteTargetProxy:
-							proxyId := rule.TargetProxy()
-							server := SharedManager.FindServer(proxyId)
-							if server == nil {
-								return errors.New("server with '" + proxyId + "' not found")
-							}
-							if !server.On {
-								return errors.New("server with '" + proxyId + "' not available now")
-							}
-							return this.configure(server, redirects)
-						}
-						return nil
-					}
-				}
-			}
-
-			// fastcgi
-			fastcgi := location.NextFastcgi()
-			if fastcgi != nil {
-				this.fastcgi = fastcgi
-				this.backend = nil // 防止冲突
-				locationConfigured = true
-
-				if fastcgi.HasResponseHeaders() {
-					this.responseHeaders = append(this.responseHeaders, fastcgi.Headers...)
-				}
-
-				if fastcgi.HasIgnoreHeaders() {
-					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, fastcgi.UppercaseIgnoreHeaders()...)
-				}
-
+	if !breakRewrite {
+		// location的相关配置
+		var locationConfigured = false
+		for _, location := range server.Locations {
+			if !location.On {
 				continue
 			}
+			if locationMatches, ok := location.Match(path, this.Format); ok {
+				this.addVarMapping(locationMatches)
 
-			// proxy
-			if len(location.Proxy) > 0 {
-				server := SharedManager.FindServer(location.Proxy)
-				if server == nil {
-					return errors.New("server with '" + location.Proxy + "' not found")
+				if len(location.Root) > 0 {
+					this.root = this.Format(location.Root)
+					locationConfigured = true
 				}
-				if !server.On {
-					return errors.New("server with '" + location.Proxy + "' not available now")
+				if len(location.Charset) > 0 {
+					this.charset = this.Format(location.Charset)
 				}
-				return this.configure(server, redirects)
-			}
+				if len(location.Index) > 0 {
+					this.index = this.formatAll(location.Index)
+				}
+				if location.MaxBodyBytes() > 0 {
+					this.requestMaxSize = location.MaxBodyBytes()
+				}
+				if len(location.AccessLog) > 0 {
+					this.accessLog = location.AccessLog[0]
+				}
+				if location.DisableStat {
+					this.enableStat = false
+				}
+				if location.GzipLevel >= 0 {
+					this.gzipLevel = uint8(location.GzipLevel)
+				}
+				if location.GzipMinBytes() > 0 {
+					this.gzipMinLength = location.GzipMinBytes()
+				}
+				if len(location.Pages) > 0 {
+					this.pages = append(this.pages, location.Pages...)
+				}
+				if location.ShutdownPageOn {
+					this.shutdownPageOn = true
+					this.shutdownPage = location.ShutdownPage
+				}
+				if location.RedirectToHttps && this.rawScheme == "http" {
+					this.redirectToHttps = true
+					return nil
+				}
 
-			// backends
-			if len(location.Backends) > 0 {
-				backend := location.NextBackend(this.backendCall)
-				if backend == nil {
-					return errors.New("no backends available")
-				}
-				if len(this.backendCall.ResponseCallbacks) > 0 {
-					this.responseCallback = this.backendCall.CallResponseCallbacks
-				}
-				this.backend = backend
-				locationConfigured = true
-
-				if backend.HasRequestHeaders() {
-					this.requestHeaders = append(this.requestHeaders, backend.RequestHeaders...)
+				if location.CacheOn {
+					cachePolicy := location.CachePolicyObject()
+					if cachePolicy != nil && cachePolicy.On {
+						this.cachePolicy = cachePolicy
+					}
+				} else {
+					this.cachePolicy = nil
 				}
 
-				if backend.HasResponseHeaders() {
-					this.responseHeaders = append(this.responseHeaders, backend.Headers...)
+				if location.WAFOn {
+					waf := location.WAF()
+					if waf != nil && waf.On {
+						this.waf = waf
+					}
+				} else {
+					this.waf = nil
 				}
 
-				if backend.HasIgnoreHeaders() {
-					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, backend.UppercaseIgnoreHeaders()...)
+				if location.HasRequestHeaders() {
+					this.requestHeaders = append(this.requestHeaders, location.RequestHeaders...)
 				}
 
-				continue
-			}
+				if location.HasResponseHeaders() {
+					this.responseHeaders = append(this.responseHeaders, location.Headers...)
+				}
 
-			// websocket
-			if location.Websocket != nil && location.Websocket.On {
-				this.backend = location.Websocket.NextBackend(this.backendCall)
-				this.websocket = location.Websocket
-				return nil
+				if location.HasIgnoreHeaders() {
+					this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, location.UppercaseIgnoreHeaders()...)
+				}
+
+				if location.AccessPolicy != nil {
+					this.accessPolicy = location.AccessPolicy
+				}
+
+				this.location = location
+
+				// rewrite相关配置
+				if len(location.Rewrite) > 0 {
+					for _, rule := range location.Rewrite {
+						if !rule.On {
+							continue
+						}
+
+						if replace, varMapping, ok := rule.Match(path, this.Format); ok {
+							this.addVarMapping(varMapping)
+							this.rewriteId = rule.Id
+							this.rewriteIsPermanent = rule.IsPermanent
+
+							if rule.HasResponseHeaders() {
+								this.responseHeaders = append(this.responseHeaders, rule.Headers...)
+							}
+
+							if rule.HasIgnoreHeaders() {
+								this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, rule.UppercaseIgnoreHeaders()...)
+							}
+
+							// 外部URL
+							if rule.IsExternalURL(replace) {
+								this.rewriteReplace = replace
+								this.rewriteIsExternal = true
+								this.rewriteRedirectMode = rule.RedirectMode()
+								return nil
+							}
+
+							// 内部URL
+							if rule.RedirectMode() == teaconfigs.RewriteFlagRedirect {
+								this.rewriteReplace = replace
+								this.rewriteIsExternal = false
+								this.rewriteRedirectMode = teaconfigs.RewriteFlagRedirect
+								return nil
+							}
+
+							newURI, err := url.ParseRequestURI(replace)
+							if err != nil {
+								this.uri = replace
+								return nil
+							}
+							if len(newURI.RawQuery) > 0 {
+								this.uri = newURI.Path + "?" + newURI.RawQuery
+								if len(uri.RawQuery) > 0 {
+									this.uri += "&" + uri.RawQuery
+								}
+							} else {
+								this.uri = newURI.Path
+								if len(uri.RawQuery) > 0 {
+									this.uri += "?" + uri.RawQuery
+								}
+							}
+
+							switch rule.TargetType() {
+							case teaconfigs.RewriteTargetURL:
+								return this.configure(server, redirects, rule.IsBreak)
+							case teaconfigs.RewriteTargetProxy:
+								proxyId := rule.TargetProxy()
+								server := SharedManager.FindServer(proxyId)
+								if server == nil {
+									return errors.New("server with '" + proxyId + "' not found")
+								}
+								if !server.On {
+									return errors.New("server with '" + proxyId + "' not available now")
+								}
+								return this.configure(server, redirects, rule.IsBreak)
+							}
+							return nil
+						}
+					}
+				}
+
+				// fastcgi
+				fastcgi := location.NextFastcgi()
+				if fastcgi != nil {
+					this.fastcgi = fastcgi
+					this.backend = nil // 防止冲突
+					locationConfigured = true
+
+					if fastcgi.HasResponseHeaders() {
+						this.responseHeaders = append(this.responseHeaders, fastcgi.Headers...)
+					}
+
+					if fastcgi.HasIgnoreHeaders() {
+						this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, fastcgi.UppercaseIgnoreHeaders()...)
+					}
+
+					continue
+				}
+
+				// proxy
+				if len(location.Proxy) > 0 {
+					server := SharedManager.FindServer(location.Proxy)
+					if server == nil {
+						return errors.New("server with '" + location.Proxy + "' not found")
+					}
+					if !server.On {
+						return errors.New("server with '" + location.Proxy + "' not available now")
+					}
+					return this.configure(server, redirects, breakRewrite)
+				}
+
+				// backends
+				if len(location.Backends) > 0 {
+					backend := location.NextBackend(this.backendCall)
+					if backend == nil {
+						return errors.New("no backends available")
+					}
+					if len(this.backendCall.ResponseCallbacks) > 0 {
+						this.responseCallback = this.backendCall.CallResponseCallbacks
+					}
+					this.backend = backend
+					locationConfigured = true
+
+					if backend.HasRequestHeaders() {
+						this.requestHeaders = append(this.requestHeaders, backend.RequestHeaders...)
+					}
+
+					if backend.HasResponseHeaders() {
+						this.responseHeaders = append(this.responseHeaders, backend.Headers...)
+					}
+
+					if backend.HasIgnoreHeaders() {
+						this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, backend.UppercaseIgnoreHeaders()...)
+					}
+
+					continue
+				}
+
+				// websocket
+				if location.Websocket != nil && location.Websocket.On {
+					this.backend = location.Websocket.NextBackend(this.backendCall)
+					this.websocket = location.Websocket
+					return nil
+				}
 			}
 		}
-	}
 
-	// 如果经过location找到了相关配置，就终止
-	if locationConfigured {
-		return nil
+		// 如果经过location找到了相关配置，就终止
+		if locationConfigured {
+			return nil
+		}
 	}
 
 	// server的相关配置
-	if len(server.Rewrite) > 0 {
+	if !breakRewrite && len(server.Rewrite) > 0 {
 		for _, rule := range server.Rewrite {
 			if !rule.On {
 				continue
@@ -549,6 +554,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 			}); ok {
 				this.addVarMapping(varMapping)
 				this.rewriteId = rule.Id
+				this.rewriteIsPermanent = rule.IsPermanent
 
 				if rule.HasRequestHeaders() {
 					this.requestHeaders = append(this.requestHeaders, rule.RequestHeaders...)
@@ -596,7 +602,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 
 				switch rule.TargetType() {
 				case teaconfigs.RewriteTargetURL:
-					return this.configure(server, redirects)
+					return this.configure(server, redirects, rule.IsBreak)
 				case teaconfigs.RewriteTargetProxy:
 					proxyId := rule.TargetProxy()
 					server := SharedManager.FindServer(proxyId)
@@ -606,7 +612,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 					if !server.On {
 						return errors.New("server with '" + proxyId + "' not available now")
 					}
-					return this.configure(server, redirects)
+					return this.configure(server, redirects, rule.IsBreak)
 				}
 				return nil
 			}
@@ -643,7 +649,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int) e
 		if !server.On {
 			return errors.New("server with '" + server.Proxy + "' not available now")
 		}
-		return this.configure(server, redirects)
+		return this.configure(server, redirects, breakRewrite)
 	}
 
 	// 转发到后端
@@ -767,14 +773,14 @@ func (this *Request) call(writer *ResponseWriter) error {
 	if this.accessPolicy != nil {
 		if !this.accessPolicy.AllowAccess(this.requestRemoteAddr()) {
 			writer.WriteHeader(http.StatusForbidden)
-			writer.Write([]byte("Forbidden Request"))
+			_, _ = writer.Write([]byte("Forbidden Request"))
 			return nil
 		}
 
 		reason, allowed := this.accessPolicy.AllowTraffic()
 		if !allowed {
 			writer.WriteHeader(http.StatusTooManyRequests)
-			writer.Write([]byte("[" + reason + "]Request Quota Exceeded"))
+			_, _ = writer.Write([]byte("[" + reason + "]Request Quota Exceeded"))
 			return nil
 		}
 	}
@@ -811,7 +817,7 @@ func (this *Request) notFoundError(writer *ResponseWriter) {
 	msg := "404 page not found: '" + this.requestURI() + "'"
 
 	writer.WriteHeader(http.StatusNotFound)
-	writer.Write([]byte(msg))
+	_, _ = writer.Write([]byte(msg))
 }
 
 func (this *Request) serverError(writer *ResponseWriter) {
@@ -836,7 +842,7 @@ func (this *Request) serverError(writer *ResponseWriter) {
 	}
 
 	writer.WriteHeader(statusCode)
-	writer.Write([]byte(http.StatusText(statusCode)))
+	_, _ = writer.Write([]byte(http.StatusText(statusCode)))
 }
 
 func (this *Request) requestRemoteAddr() string {

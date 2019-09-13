@@ -20,7 +20,11 @@ func (this *Request) callRewrite(writer *ResponseWriter) error {
 
 	if this.rewriteRedirectMode == teaconfigs.RewriteFlagRedirect {
 		// 跳转
-		http.Redirect(writer, this.raw, target, http.StatusTemporaryRedirect)
+		if this.rewriteIsPermanent {
+			http.Redirect(writer, this.raw, target, http.StatusMovedPermanently)
+		} else {
+			http.Redirect(writer, this.raw, target, http.StatusTemporaryRedirect)
+		}
 		return nil
 	}
 

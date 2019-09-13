@@ -44,7 +44,8 @@ type RewriteRule struct {
 	// 语法为：pattern regexp 比如：
 	// - pattern ^/article/(\d+).html
 	Pattern string `yaml:"pattern" json:"pattern"`
-	reg     *regexp.Regexp
+
+	reg *regexp.Regexp
 
 	// 要替换成的URL
 	// 支持反向引用：${0}, ${1}, ...，也支持?P<NAME>语法
@@ -52,8 +53,12 @@ type RewriteRule struct {
 	Replace string `yaml:"replace" json:"replace"`
 
 	// 选项
+	// @TODO 使用具体的语义化的字段代替
 	Flags       []string `yaml:"flags" json:"flags"`
 	FlagOptions maps.Map `yaml:"flagOptions" json:"flagOptions"` // flag => options map
+
+	IsBreak     bool `yaml:"isBreak" json:"isBreak"`         // 终止向下解析
+	IsPermanent bool `yaml:"isPermanent" json:"isPermanent"` // 是否持久性跳转
 
 	targetType  int // RewriteTarget*
 	targetURL   string

@@ -57,6 +57,8 @@ func (this *DataAction) Run(params struct {
 			"targetProxyFilename": targetProxyFilename,
 			"targetURL":           r.TargetURL(),
 			"conds":               r.Cond,
+			"isBreak":             r.IsBreak,
+			"isPermanent":         r.IsPermanent,
 		}
 	})
 

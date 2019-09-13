@@ -428,7 +428,7 @@ func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Re
 	req.charset = server.Charset
 
 	// 配置请求
-	err = req.configure(server, 0)
+	err = req.configure(server, 0, false)
 	if err != nil {
 		req.serverError(req.responseWriter)
 		logs.Error(errors.New(reqHost + rawRequest.URL.String() + ": " + err.Error()))
