@@ -11,7 +11,9 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 	"strings"
+	"time"
 )
 
 type ItemValuesAction actions.Action
@@ -88,13 +90,14 @@ func (this *ItemValuesAction) RunPost(params struct {
 
 		return maps.Map{
 			"id":          value.Id.Hex(),
-			"timestamp":   value.Timestamp,
-			"timeFormat":  value.TimeFormat,
+			"costMs":      value.CostMs,
 			"value":       value.Value,
 			"error":       value.Error,
 			"noticeLevel": notices.FindNoticeLevel(value.NoticeLevel),
 			"threshold":   value.Threshold,
 			"vars":        vars,
+			"beginTime":   timeutil.Format("Y-m-d H:i:s", time.Unix(value.CreatedAt, 0)),
+			"endTime":     timeutil.Format("Y-m-d H:i:s", time.Unix(value.Timestamp, 0)),
 		}
 	})
 	this.Success()

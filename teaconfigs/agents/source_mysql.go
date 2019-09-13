@@ -1,15 +1,12 @@
 package agents
 
 import (
-	"context"
 	"database/sql"
-	"errors"
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/iwind/TeaGo/timers"
-	"time"
+	"strconv"
 )
 
 // MySQL SQL
@@ -22,6 +19,8 @@ type MySQLSource struct {
 	DatabaseName   string `yaml:"databaseName" json:"databaseName"`
 	TimeoutSeconds int    `yaml:"timeoutSeconds" json:"timeoutSeconds"`
 	SQL            string `yaml:"sql" json:"sql"`
+
+	db *sql.DB
 }
 
 // 获取新对象
@@ -46,46 +45,30 @@ func (this *MySQLSource) Description() string {
 
 // 执行
 func (this *MySQLSource) Execute(params map[string]string) (value interface{}, err error) {
-	db, err := sql.Open("mysql", this.Username+":"+this.Password+"@tcp("+this.Addr+")/"+this.DatabaseName)
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
 	if this.TimeoutSeconds <= 0 {
 		this.TimeoutSeconds = 5
 	}
-	var conn *sql.Conn = nil
-	done := make(chan bool)
-	isDone := false
-	timer := timers.Delay(time.Duration(this.TimeoutSeconds)*time.Second, func(timer *time.Timer) {
-		if !isDone {
-			isDone = true
-			err = errors.New("connection timeout")
-			done <- true
-		}
-	})
-	go func() {
-		conn, err = db.Conn(context.Background()) // timeout context对MySQL不起作用，所以要自己实现
-		if !isDone {
-			timer.Stop()
-			isDone = true
-			done <- true
-		}
-	}()
-	<-done
-	isDone = true
-	if err != nil {
-		return nil, err
-	}
 
-	defer conn.Close()
+	var db *sql.DB
+	if this.db != nil {
+		db = this.db
+	} else {
+		// 超时时间使用ms，并除以3，因为会自动尝试3次连接
+		db, err = sql.Open("mysql", this.Username+":"+this.Password+"@tcp("+this.Addr+")/"+this.DatabaseName+"?timeout="+strconv.Itoa(this.TimeoutSeconds*1000/3)+"ms")
+		if err != nil {
+			return nil, err
+		}
+		db.SetMaxIdleConns(1)
+		this.db = db
+	}
 
 	rows, err := db.Query(this.SQL)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	cols, err := rows.Columns()
 	if err != nil {
@@ -99,7 +82,7 @@ func (this *MySQLSource) Execute(params map[string]string) (value interface{}, e
 			var ptr interface{} = nil
 			values = append(values, &ptr)
 		}
-		err = rows.Scan(values ...)
+		err = rows.Scan(values...)
 		if err != nil {
 			return nil, err
 		}
@@ -175,7 +158,7 @@ if (value.length == 0) {
 		}
 
 		{
-			field := forms.NewTextField("超时时间", "Timeout")
+			field := forms.NewTextField("连接超时时间", "Timeout")
 			field.MaxLength = 4
 			field.Attr("style", "width:5em")
 			field.RightLabel = "秒"
@@ -230,7 +213,7 @@ func (this *MySQLSource) Presentation() *forms.Presentation {
 	<td>{{source.databaseName}}</td>
 </tr>
 <tr>
-	<td>超时时间<em>（Timeout）</em></td>
+	<td>连接超时时间<em>（Timeout）</em></td>
 	<td>{{source.timeoutSeconds}}s</td>
 </tr>
 <tr>
@@ -259,4 +242,12 @@ func (this *MySQLSource) Thresholds() []*Threshold {
 func (this *MySQLSource) Charts() []*widgets.Chart {
 	charts := []*widgets.Chart{}
 	return charts
+}
+
+// 停止
+func (this *MySQLSource) Stop() error {
+	if this.db != nil {
+		return this.db.Close()
+	}
+	return nil
 }

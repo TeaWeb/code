@@ -58,11 +58,13 @@ func (this *MonitorAction) RunPost(params struct {
 		latestLevel := notices.NoticeLevelNone
 
 		value, err := teadb.AgentValueDAO().FindLatestItemValue(params.AgentId, params.AppId, item.Id)
+		costMs := float64(0)
 		if err != nil {
 			if err != teadb.ErrorDBUnavailable {
 				logs.Error(err)
 			}
 		} else if value != nil {
+			costMs = value.CostMs
 			data, err := json.MarshalIndent(value.Value, "", "  ")
 			if err != nil {
 				logs.Error(err)
@@ -88,6 +90,7 @@ func (this *MonitorAction) RunPost(params struct {
 			"latestTime":  latestTime,
 			"isWarning":   latestLevel == notices.NoticeLevelWarning,
 			"isError":     latestLevel == notices.NoticeLevelError,
+			"costMs":      costMs,
 		}
 
 		source := item.Source()

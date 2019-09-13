@@ -42,4 +42,7 @@ type SourceInterface interface {
 
 	// 支持的平台
 	Platforms() []string
+
+	// 停止
+	Stop() error
 }

@@ -19,14 +19,16 @@ type Value struct {
 	AppId       string              `bson:"appId" json:"appId"`             // App ID
 	ItemId      string              `bson:"itemId" json:"itemId"`           // 监控项ID
 	Timestamp   int64               `bson:"timestamp" json:"timestamp"`     // Agent时间戳
-	CreatedAt   int64               `bson:"createdAt" json:"createdAt"`     // Master时间戳
+	CreatedAt   int64               `bson:"createdAt" json:"createdAt"`     // 触发时间
+	CostMs      float64             `bson:"costMs" json:"costMs"`           // 耗时ms
 	Value       interface{}         `bson:"value" json:"value"`             // 值，可以是个标量，或者一个组合的值
 	Error       string              `bson:"error" json:"error"`             // 错误信息
 	NoticeLevel notices.NoticeLevel `bson:"noticeLevel" json:"noticeLevel"` // 通知级别
 	IsNotified  bool                `bson:"isNotified" json:"isNotified"`   // 是否已通知
 	ThresholdId string              `bson:"thresholdId" json:"thresholdId"` // 阈值ID
 	Threshold   string              `bson:"threshold" json:"threshold"`     // 阈值描述
-	TimeFormat  struct {
+
+	TimeFormat struct {
 		Year   string `bson:"year" json:"year"`
 		Month  string `bson:"month" json:"month"`
 		Week   string `bson:"week" json:"week"`
@@ -83,6 +85,7 @@ func (this *Value) SetDBColumns(v maps.Map) {
 	this.TimeFormat.Hour = v.GetString("timeFormat_hour")
 	this.TimeFormat.Minute = v.GetString("timeFormat_minute")
 	this.TimeFormat.Second = v.GetString("timeFormat_second")
+	this.CostMs = v.GetFloat64("costMs")
 }
 
 // 获取数据库列值
@@ -119,6 +122,7 @@ func (this *Value) DBColumns() maps.Map {
 		"timeFormat_hour":   this.TimeFormat.Hour,
 		"timeFormat_minute": this.TimeFormat.Minute,
 		"timeFormat_second": this.TimeFormat.Second,
+		"costMs":            this.CostMs,
 	}
 }
 

@@ -54,3 +54,8 @@ func (this *Source) Charts() []*widgets.Chart {
 func (this *Source) Platforms() []string {
 	return []string{"darwin", "linux", "windows"}
 }
+
+// 停止
+func (this *Source) Stop() error {
+	return nil
+}

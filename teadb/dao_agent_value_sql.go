@@ -254,6 +254,7 @@ func (this *SQLAgentValueDAO) initTable(table string) {
 			"`timeFormat_hour` varchar(10) DEFAULT NULL,"+
 			"`timeFormat_minute` varchar(12) DEFAULT NULL,"+
 			"`timeFormat_second` varchar(14) DEFAULT NULL,"+
+			"`costMs` decimal(20,6) unsigned DEFAULT '0.000000',"+
 			"PRIMARY KEY (`id`),"+
 			"UNIQUE KEY `_id` (`_id`),"+
 			"KEY `appId_itemId` (`appId`,`itemId`),"+
@@ -286,7 +287,8 @@ func (this *SQLAgentValueDAO) initTable(table string) {
 			"timeFormat_day" varchar(8),
 			"timeFormat_hour" varchar(10),
 			"timeFormat_minute" varchar(12),
-			"timeFormat_second" varchar(14)
+			"timeFormat_second" varchar(14),
+			"costMs" float8 default 0
 		)
 		;
 

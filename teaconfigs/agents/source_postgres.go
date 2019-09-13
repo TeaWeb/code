@@ -1,13 +1,12 @@
 package agents
 
 import (
-	"context"
 	"database/sql"
 	"github.com/TeaWeb/code/teaconfigs/forms"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/iwind/TeaGo/maps"
 	_ "github.com/lib/pq"
-	"time"
+	"strconv"
 )
 
 // Postgre SQL
@@ -21,6 +20,8 @@ type PostgreSQLSource struct {
 	TimeoutSeconds int    `yaml:"timeoutSeconds" json:"timeoutSeconds"`
 	//SSLMode        string `yaml:"sslMode" json:"sslMode"`
 	SQL string `yaml:"sql" json:"sql"`
+
+	db *sql.DB
 }
 
 // 获取新对象
@@ -45,30 +46,29 @@ func (this *PostgreSQLSource) Description() string {
 
 // 执行
 func (this *PostgreSQLSource) Execute(params map[string]string) (value interface{}, err error) {
-	db, err := sql.Open("postgres", "postgres://"+this.Username+":"+this.Password+"@"+this.Addr+"/"+this.DatabaseName+"?sslmode=disable")
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
 	if this.TimeoutSeconds <= 0 {
 		this.TimeoutSeconds = 5
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Duration(this.TimeoutSeconds)*time.Second)
-
-	conn, err := db.Conn(ctx) // timeout
-	if err != nil {
-		return nil, err
+	var db *sql.DB
+	if this.db != nil {
+		db = this.db
+	} else {
+		db, err = sql.Open("postgres", "postgres://"+this.Username+":"+this.Password+"@"+this.Addr+"/"+this.DatabaseName+"?sslmode=disable&connect_timeout="+strconv.Itoa(this.TimeoutSeconds))
+		if err != nil {
+			return nil, err
+		}
+		db.SetMaxIdleConns(1)
+		this.db = db
 	}
-
-	defer conn.Close()
 
 	rows, err := db.Query(this.SQL)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	cols, err := rows.Columns()
 	if err != nil {
@@ -158,7 +158,7 @@ if (value.length == 0) {
 		}
 
 		{
-			field := forms.NewTextField("超时时间", "Timeout")
+			field := forms.NewTextField("连接超时时间", "Timeout")
 			field.MaxLength = 4
 			field.Attr("style", "width:5em")
 			field.RightLabel = "秒"
@@ -213,7 +213,7 @@ func (this *PostgreSQLSource) Presentation() *forms.Presentation {
 	<td>{{source.databaseName}}</td>
 </tr>
 <tr>
-	<td>超时时间<em>（Timeout）</em></td>
+	<td>连接超时时间<em>（Timeout）</em></td>
 	<td>{{source.timeoutSeconds}}s</td>
 </tr>
 <tr>
@@ -242,4 +242,12 @@ func (this *PostgreSQLSource) Thresholds() []*Threshold {
 func (this *PostgreSQLSource) Charts() []*widgets.Chart {
 	charts := []*widgets.Chart{}
 	return charts
+}
+
+// 停止
+func (this *PostgreSQLSource) Stop() error {
+	if this.db != nil {
+		return this.db.Close()
+	}
+	return nil
 }

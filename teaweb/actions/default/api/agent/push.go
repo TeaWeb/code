@@ -252,6 +252,10 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	if node != nil {
 		nodeId = node.Id
 	}
+	beginAt := m.GetInt64("beginAt")
+	if beginAt == 0 {
+		beginAt = time.Now().Unix()
+	}
 	value := &agents.Value{
 		Id:          shared.NewObjectId(),
 		NodeId:      nodeId,
@@ -261,7 +265,8 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 		Value:       v,
 		Error:       m.GetString("error"),
 		NoticeLevel: level,
-		CreatedAt:   time.Now().Unix(),
+		CreatedAt:   beginAt,
+		CostMs:      m.GetFloat64("costMs"),
 		IsNotified:  isNotified,
 	}
 	if threshold != nil {
