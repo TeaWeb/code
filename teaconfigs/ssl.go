@@ -33,7 +33,8 @@ type SSLConfig struct {
 	MinVersion   TLSVersion       `yaml:"minVersion" json:"minVersion"`     // 支持的最小版本
 	CipherSuites []TLSCipherSuite `yaml:"cipherSuites" json:"cipherSuites"` // 加密算法套件
 
-	HSTS *HSTSConfig `yaml:"hsts2" json:"hsts"` // HSTS配置，yaml之所以使用hsts2，是因为要和以前的版本分开
+	HSTS          *HSTSConfig `yaml:"hsts2" json:"hsts"`                  // HSTS配置，yaml之所以使用hsts2，是因为要和以前的版本分开
+	HTTP2Disabled bool        `yaml:"http2Disabled" json:"http2Disabled"` // 是否禁用HTTP2
 
 	nameMapping map[string]*tls.Certificate // dnsName => cert
 

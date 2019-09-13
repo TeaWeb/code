@@ -101,8 +101,10 @@ func (this *UpdateAction) Run(params struct {
 
 // 提交保存
 func (this *UpdateAction) RunPost(params struct {
-	ServerId         string
-	HttpsOn          bool
+	ServerId     string
+	HttpsOn      bool
+	Http2Enabled bool
+
 	Listen           []string
 	CertIds          []string
 	CertDescriptions []string
@@ -134,6 +136,7 @@ func (this *UpdateAction) RunPost(params struct {
 		server.SSL = teaconfigs.NewSSLConfig()
 	}
 	server.SSL.On = params.HttpsOn
+	server.SSL.HTTP2Disabled = !params.Http2Enabled
 	server.SSL.Listen = teautils.FormatAddressList(params.Listen)
 
 	if lists.ContainsString(teaconfigs.AllTlsVersions, params.MinVersion) {

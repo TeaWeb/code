@@ -601,6 +601,10 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 				cipherSuites = nil
 			}
 
+			nextProto := []string{}
+			if !ssl.HTTP2Disabled {
+				nextProto = []string{http2.NextProtoTLS}
+			}
 			return &tls.Config{
 				Certificates: nil,
 				MinVersion:   ssl.TLSMinVersion(),
@@ -618,7 +622,7 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 				ClientAuth: teaconfigs.GoSSLClientAuthType(ssl.ClientAuthType),
 				ClientCAs:  ssl.CAPool(),
 
-				NextProtos: []string{http2.NextProtoTLS},
+				NextProtos: nextProto,
 			}, nil
 		},
 		GetCertificate: func(info *tls.ClientHelloInfo) (certificate *tls.Certificate, e error) {
