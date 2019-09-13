@@ -101,6 +101,7 @@ type Request struct {
 	rewriteRedirectMode string // 跳转方式
 	rewriteIsExternal   bool   // 是否为外部URL
 	rewriteIsPermanent  bool   // 是否Permanent跳转
+	rewriteProxyHost    string // 重写主机名
 
 	redirectToHttps bool
 
@@ -196,6 +197,7 @@ func (this *Request) reset(rawRequest *http.Request) {
 	this.rewriteRedirectMode = ""
 	this.rewriteIsExternal = false
 	this.rewriteIsPermanent = false
+	this.rewriteProxyHost = ""
 
 	this.redirectToHttps = false
 
@@ -424,6 +426,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 								this.rewriteReplace = replace
 								this.rewriteIsExternal = true
 								this.rewriteRedirectMode = rule.RedirectMode()
+								this.rewriteProxyHost = rule.ProxyHost
 								return nil
 							}
 
@@ -573,6 +576,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 					this.rewriteReplace = replace
 					this.rewriteIsExternal = true
 					this.rewriteRedirectMode = rule.RedirectMode()
+					this.rewriteProxyHost = rule.ProxyHost
 					return nil
 				}
 

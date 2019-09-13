@@ -9,10 +9,15 @@ import (
 	"time"
 )
 
-func (this *Request) callURL(writer *ResponseWriter, method string, url string) error {
+func (this *Request) callURL(writer *ResponseWriter, method string, url string, host string) error {
 	req, err := http.NewRequest(method, url, this.raw.Body)
 	if err != nil {
 		return err
+	}
+
+	// 修改Host
+	if len(host) > 0 {
+		req.Host = host
 	}
 
 	// 添加当前Header
@@ -43,7 +48,9 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string) 
 		this.serverError(writer)
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	// Header
 	this.WriteResponseHeaders(writer, resp.StatusCode)

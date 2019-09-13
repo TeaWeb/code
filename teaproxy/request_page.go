@@ -19,7 +19,7 @@ func (this *Request) callPage(writer *ResponseWriter, status int) (shouldStop bo
 	for _, page := range this.pages {
 		if page.Match(status) {
 			if urlPrefixRegexp.MatchString(page.URL) {
-				err := this.callURL(writer, http.MethodGet, page.URL)
+				err := this.callURL(writer, http.MethodGet, page.URL, "")
 				if err != nil {
 					logs.Error(err)
 				}

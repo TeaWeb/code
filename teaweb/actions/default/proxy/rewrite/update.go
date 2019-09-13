@@ -87,6 +87,7 @@ func (this *UpdateAction) Run(params struct {
 		"redirectMode": rewrite.RedirectMode(),
 		"isBreak":      rewrite.IsBreak,
 		"isPermanent":  rewrite.IsPermanent,
+		"proxyHost":    rewrite.ProxyHost,
 	}
 
 	// 变量
@@ -111,6 +112,7 @@ func (this *UpdateAction) RunPost(params struct {
 	CondValues   []string
 	IsBreak      bool
 	IsPermanent  bool
+	ProxyHost    string
 	Must         *actions.Must
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
@@ -187,6 +189,7 @@ func (this *UpdateAction) RunPost(params struct {
 
 	rewriteRule.IsBreak = params.IsBreak
 	rewriteRule.IsPermanent = params.IsPermanent
+	rewriteRule.ProxyHost = params.ProxyHost
 
 	err = server.Save()
 	if err != nil {

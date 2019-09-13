@@ -11,7 +11,7 @@ import (
 // 调用临时关闭页面
 func (this *Request) callShutdown(writer *ResponseWriter) error {
 	if urlPrefixRegexp.MatchString(this.shutdownPage) {
-		return this.callURL(writer, http.MethodGet, this.shutdownPage)
+		return this.callURL(writer, http.MethodGet, this.shutdownPage, "")
 	} else {
 		file := Tea.Root + Tea.DS + this.shutdownPage
 		fp, err := os.Open(file)

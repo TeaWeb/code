@@ -78,7 +78,7 @@ func (this *MySQLStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 				// try to create table
 				_, err = db.Exec("CREATE TABLE `" + table + "` ( " +
 					"`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT, " +
-					"`" + this.LogField + "` text COLLATE utf8mb4_bin, " +
+					"`" + this.LogField + "` longtext COLLATE utf8mb4_bin, " +
 					"PRIMARY KEY (`id`) " +
 					") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;")
 				if err != nil && !strings.Contains(err.Error(), "Error 1050") {

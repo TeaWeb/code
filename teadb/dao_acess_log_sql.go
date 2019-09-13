@@ -307,9 +307,9 @@ func (this *SQLAccessLogDAO) initTable(table string) {
 			"`serverProtocol` varchar(16) DEFAULT NULL,"+
 			"`backendAddress` varchar(256) DEFAULT NULL,"+
 			"`fastcgiAddress` varchar(256) DEFAULT NULL,"+
-			"`requestData` blob,"+
-			"`responseHeaderData` blob,"+
-			"`responseBodyData` blob,"+
+			"`requestData` longblob,"+
+			"`responseHeaderData` longblob,"+
+			"`responseBodyData` longblob,"+
 			"`errors` json DEFAULT NULL,"+
 			"`hasErrors` tinyint(1) unsigned DEFAULT '0',"+
 			"`extend` json DEFAULT NULL,"+

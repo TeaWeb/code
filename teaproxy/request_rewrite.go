@@ -29,7 +29,7 @@ func (this *Request) callRewrite(writer *ResponseWriter) error {
 	}
 
 	if this.rewriteRedirectMode == teaconfigs.RewriteFlagProxy {
-		return this.callURL(writer, this.raw.Method, target)
+		return this.callURL(writer, this.raw.Method, target, this.rewriteProxyHost)
 	}
 
 	return nil

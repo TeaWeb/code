@@ -86,6 +86,7 @@ func (this *AddAction) RunPost(params struct {
 	CondValues   []string
 	IsBreak      bool
 	IsPermanent  bool
+	ProxyHost    string
 	Must         *actions.Must
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
@@ -155,6 +156,7 @@ func (this *AddAction) RunPost(params struct {
 
 	rewriteRule.IsBreak = params.IsBreak
 	rewriteRule.IsPermanent = params.IsPermanent
+	rewriteRule.ProxyHost = params.ProxyHost
 
 	rewriteList.AddRewriteRule(rewriteRule)
 

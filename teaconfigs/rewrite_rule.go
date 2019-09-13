@@ -57,8 +57,9 @@ type RewriteRule struct {
 	Flags       []string `yaml:"flags" json:"flags"`
 	FlagOptions maps.Map `yaml:"flagOptions" json:"flagOptions"` // flag => options map
 
-	IsBreak     bool `yaml:"isBreak" json:"isBreak"`         // 终止向下解析
-	IsPermanent bool `yaml:"isPermanent" json:"isPermanent"` // 是否持久性跳转
+	IsBreak     bool   `yaml:"isBreak" json:"isBreak"`         // 终止向下解析
+	IsPermanent bool   `yaml:"isPermanent" json:"isPermanent"` // 是否持久性跳转
+	ProxyHost   string `yaml:"host" json:"host"`               // 代理模式下重写后的Host
 
 	targetType  int // RewriteTarget*
 	targetURL   string

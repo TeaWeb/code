@@ -59,6 +59,7 @@ func (this *DataAction) Run(params struct {
 			"conds":               r.Cond,
 			"isBreak":             r.IsBreak,
 			"isPermanent":         r.IsPermanent,
+			"proxyHost":           r.ProxyHost,
 		}
 	})
 
