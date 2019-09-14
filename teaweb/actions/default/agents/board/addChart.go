@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 )
 
 type AddChartAction actions.Action
@@ -47,7 +48,10 @@ func (this *AddChartAction) Run(params struct {
 
 	// 同步
 	if app.IsSharedWithGroup {
-		agentutils.SyncAddChart(agent.Id, agent.GroupIds, app, item.Id, params.ChartId)
+		err := agentutils.SyncAddChart(agent.Id, agent.GroupIds, app, item.Id, params.ChartId)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	this.Success()

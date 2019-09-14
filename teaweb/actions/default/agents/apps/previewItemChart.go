@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/board/scripts"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 )
 
 type PreviewItemChartAction actions.Action
@@ -27,7 +28,8 @@ func (this *PreviewItemChartAction) RunPost(params struct {
 	PieLimit int
 
 	LineParams []string
-	LineLimit  int
+	LineFills  []int
+	LineColors []string
 
 	URL string `alias:"urlURL"`
 
@@ -60,25 +62,49 @@ func (this *PreviewItemChartAction) RunPost(params struct {
 	case "html":
 		options := &widgets.HTMLChart{}
 		options.HTML = params.HTMLCode
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "url":
 		options := &widgets.URLChart{}
 		options.URL = params.URL
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "pie":
 		options := &widgets.PieChart{}
 		options.Param = params.PieParam
 		options.Limit = params.PieLimit
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "line":
 		options := &widgets.LineChart{}
-		options.Params = params.LineParams
-		options.Limit = params.LineLimit
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		for index, param := range params.LineParams {
+			line := widgets.NewLine()
+			line.Param = param
+			if index < len(params.LineFills) {
+				line.IsFilled = params.LineFills[index] > 0
+			}
+			if index < len(params.LineColors) {
+				line.Color = params.LineColors[index]
+			}
+			options.AddLine(line)
+		}
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case "javascript":
 		options := &widgets.JavascriptChart{}
 		options.Code = params.JavascriptCode
-		teautils.ObjectToMapJSON(options, &chart.Options)
+		err := teautils.ObjectToMapJSON(options, &chart.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	c, err := chart.AsObject()

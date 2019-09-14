@@ -6,8 +6,8 @@ import (
 
 // Pie
 type PieChart struct {
-	Param string
-	Limit int
+	Param string `yaml:"param" json:"param"`
+	Limit int    `yaml:"limit" json:"limit"`
 }
 
 func (this *PieChart) AsJavascript(options map[string]interface{}) (code string, err error) {

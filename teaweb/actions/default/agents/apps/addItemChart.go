@@ -61,7 +61,8 @@ func (this *AddItemChartAction) RunPost(params struct {
 	PieLimit int
 
 	LineParams []string
-	LineLimit  int
+	LineFills  []int
+	LineColors []string
 
 	URL string `alias:"urlURL"`
 
@@ -122,8 +123,17 @@ func (this *AddItemChartAction) RunPost(params struct {
 		}
 	case "line":
 		options := &widgets.LineChart{}
-		options.Params = params.LineParams
-		options.Limit = params.LineLimit
+		for index, param := range params.LineParams {
+			line := widgets.NewLine()
+			line.Param = param
+			if index < len(params.LineFills) {
+				line.IsFilled = params.LineFills[index] > 0
+			}
+			if index < len(params.LineColors) {
+				line.Color = params.LineColors[index]
+			}
+			options.AddLine(line)
+		}
 		err := teautils.ObjectToMapJSON(options, &chart.Options)
 		if err != nil {
 			logs.Error(err)
