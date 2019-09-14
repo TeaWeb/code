@@ -81,7 +81,7 @@ func (this *RequestIPPeriodFilter) Start(queue *Queue, code string) {
 	}
 
 	this.timer = timers.Loop(duration, func(looper *timers.Looper) {
-		this.commit()
+		this.Commit()
 	})
 }
 
@@ -92,7 +92,7 @@ func (this *RequestIPPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 	}
 	hour := timeutil.Format("YmdH")
 	if len(this.lastHour) > 0 && hour != this.lastHour {
-		this.commit()
+		this.Commit()
 		this.rank.Reset()
 		this.lastHour = hour
 	} else {
@@ -108,10 +108,10 @@ func (this *RequestIPPeriodFilter) Stop() {
 		this.timer = nil
 	}
 
-	this.commit()
+	this.Commit()
 }
 
-func (this *RequestIPPeriodFilter) commit() {
+func (this *RequestIPPeriodFilter) Commit() {
 	if this.db != nil {
 		prefix := ""
 		switch this.period {

@@ -29,6 +29,7 @@ func init() {
 			Post("/useChart", new(UseChartAction)).
 			Post("/cancelChart", new(CancelChartAction)).
 			Post("/moveChart", new(MoveChartAction)).
+			Post("/refreshData", new(RefreshDataAction)).
 			EndAll()
 
 		// 检查图表更新

@@ -918,7 +918,7 @@ func (this *SQLDriver) asSQL(action SQLAction, query *Query, paramsHolder *SQLPa
 			if strings.IndexAny(field.Name, "( ") == -1 {
 				dotIndex := strings.Index(field.Name, ".")
 				if dotIndex > -1 {
-					field.Name = this.JSONExtract(field.Name[:dotIndex], field.Name[:dotIndex+1])
+					field.Name = this.JSONExtract(field.Name[:dotIndex], field.Name[dotIndex+1:])
 				}
 			}
 			if hasGroups && this.driver == "postgres" && !strings.ContainsAny(field.Name, "({:") {

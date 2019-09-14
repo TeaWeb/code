@@ -21,6 +21,9 @@ type FilterInterface interface {
 	// 筛选某个访问日志
 	Filter(accessLog *accesslogs.AccessLog)
 
+	// 提交数据
+	Commit()
+
 	// 停止
 	Stop()
 }

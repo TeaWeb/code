@@ -58,7 +58,7 @@ func (this *CounterFilter) StartFilter(code string, period stats.ValuePeriod) {
 		this.locker.Lock()
 		defer this.locker.Unlock()
 
-		this.commit()
+		this.Commit()
 	})
 }
 
@@ -125,7 +125,7 @@ func (this *CounterFilter) ApplyFilter(accessLog *accesslogs.AccessLog, params m
 	}
 
 	if len(this.values) > this.valuesSize {
-		this.commit()
+		this.Commit()
 	}
 }
 
@@ -138,7 +138,7 @@ func (this *CounterFilter) StopFilter() {
 
 	this.locker.Lock()
 	defer this.locker.Unlock()
-	this.commit()
+	this.Commit()
 }
 
 // 检查新UV
@@ -267,7 +267,7 @@ func (this *CounterFilter) CheckNewIP(accessLog *accesslogs.AccessLog, attachKey
 }
 
 // 提交
-func (this *CounterFilter) commit() {
+func (this *CounterFilter) Commit() {
 	if len(this.values) > 0 {
 		for _, v := range this.values {
 			if this.IncreaseFunc != nil {
