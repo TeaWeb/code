@@ -17,7 +17,7 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string, 
 
 	// 修改Host
 	if len(host) > 0 {
-		req.Host = host
+		req.Host = this.Format(host)
 	}
 
 	// 添加当前Header

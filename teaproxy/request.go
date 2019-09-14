@@ -176,6 +176,8 @@ func (this *Request) init(rawRequest *http.Request) {
 
 // 重置
 func (this *Request) reset(rawRequest *http.Request) {
+	this.server = nil
+
 	this.requestHeaders = nil
 	this.responseHeaders = nil
 	this.uppercaseIgnoreHeaders = nil
@@ -239,83 +241,84 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 	}
 	path := uri.Path
 
-	// root
+	// 是否切换了内部的代理服务
 	if isChanged {
+		// root
 		this.root = server.Root
 		if len(this.root) > 0 {
 			this.root = this.Format(this.root)
 		}
-	}
 
-	// 字符集
-	if len(server.Charset) > 0 {
-		this.charset = this.Format(server.Charset)
-	}
-
-	// Header
-	if server.HasRequestHeaders() {
-		this.requestHeaders = append(this.requestHeaders, server.RequestHeaders...)
-	}
-
-	if server.HasResponseHeaders() {
-		this.responseHeaders = append(this.responseHeaders, server.Headers...)
-	}
-
-	if server.HasIgnoreHeaders() {
-		this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, server.UppercaseIgnoreHeaders()...)
-	}
-
-	// cache
-	if server.CacheOn {
-		cachePolicy := server.CachePolicyObject()
-		if cachePolicy != nil && cachePolicy.On {
-			this.cachePolicy = cachePolicy
+		// 字符集
+		if len(server.Charset) > 0 {
+			this.charset = this.Format(server.Charset)
 		}
-	} else {
-		this.cachePolicy = nil
-	}
 
-	// waf
-	if server.WAFOn {
-		waf := server.WAF()
-		if waf != nil && waf.On {
-			this.waf = waf
+		// Header
+		if server.HasRequestHeaders() {
+			this.requestHeaders = append(this.requestHeaders, server.RequestHeaders...)
 		}
-	} else {
-		this.waf = nil
-	}
 
-	// tunnel
-	if server.Tunnel != nil && server.Tunnel.On {
-		this.tunnel = server.Tunnel
-		return nil
-	} else {
-		this.tunnel = nil
-	}
+		if server.HasResponseHeaders() {
+			this.responseHeaders = append(this.responseHeaders, server.Headers...)
+		}
 
-	// other
-	if server.MaxBodyBytes() > 0 {
-		this.requestMaxSize = server.MaxBodyBytes()
-	}
-	if len(server.AccessLog) > 0 {
-		this.accessLog = server.AccessLog[0]
-	}
-	if server.DisableStat {
-		this.enableStat = false
-	}
-	if len(server.Pages) > 0 {
-		this.pages = append(this.pages, server.Pages...)
-	}
-	if server.ShutdownPageOn {
-		this.shutdownPageOn = true
-		this.shutdownPage = server.ShutdownPage
-	}
-	this.gzipLevel = server.GzipLevel
-	this.gzipMinLength = server.GzipMinBytes()
+		if server.HasIgnoreHeaders() {
+			this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, server.UppercaseIgnoreHeaders()...)
+		}
 
-	if server.RedirectToHttps && this.rawScheme == "http" {
-		this.redirectToHttps = true
-		return nil
+		// cache
+		if server.CacheOn {
+			cachePolicy := server.CachePolicyObject()
+			if cachePolicy != nil && cachePolicy.On {
+				this.cachePolicy = cachePolicy
+			}
+		} else {
+			this.cachePolicy = nil
+		}
+
+		// waf
+		if server.WAFOn {
+			waf := server.WAF()
+			if waf != nil && waf.On {
+				this.waf = waf
+			}
+		} else {
+			this.waf = nil
+		}
+
+		// tunnel
+		if server.Tunnel != nil && server.Tunnel.On {
+			this.tunnel = server.Tunnel
+			return nil
+		} else {
+			this.tunnel = nil
+		}
+
+		// other
+		if server.MaxBodyBytes() > 0 {
+			this.requestMaxSize = server.MaxBodyBytes()
+		}
+		if len(server.AccessLog) > 0 {
+			this.accessLog = server.AccessLog[0]
+		}
+		if server.DisableStat {
+			this.enableStat = false
+		}
+		if len(server.Pages) > 0 {
+			this.pages = append(this.pages, server.Pages...)
+		}
+		if server.ShutdownPageOn {
+			this.shutdownPageOn = true
+			this.shutdownPage = server.ShutdownPage
+		}
+		this.gzipLevel = server.GzipLevel
+		this.gzipMinLength = server.GzipMinBytes()
+
+		if server.RedirectToHttps && this.rawScheme == "http" {
+			this.redirectToHttps = true
+			return nil
+		}
 	}
 
 	if !breakRewrite {
@@ -344,9 +347,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 				if len(location.AccessLog) > 0 {
 					this.accessLog = location.AccessLog[0]
 				}
-				if location.DisableStat {
-					this.enableStat = false
-				}
+				this.enableStat = !location.DisableStat
 				if location.GzipLevel >= 0 {
 					this.gzipLevel = uint8(location.GzipLevel)
 				}
