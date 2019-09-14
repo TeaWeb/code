@@ -182,6 +182,7 @@ func (this *Engine) init() {
 	this.loadLib("libs/colors.js")
 	this.loadLib("libs/widgets.js")
 	this.loadLib("libs/charts.js")
+	this.loadLib("libs/charts.menu.js")
 	this.loadLib("libs/charts.gauge.js")
 	this.loadLib("libs/charts.html.js")
 	this.loadLib("libs/charts.line.js")
@@ -189,7 +190,6 @@ func (this *Engine) init() {
 	this.loadLib("libs/charts.progress.js")
 	this.loadLib("libs/charts.stackbar.js")
 	this.loadLib("libs/charts.url.js")
-	this.loadLib("libs/charts.menu.js")
 	this.loadLib("libs/charts.table.js")
 	this.loadLib("libs/context.js")
 

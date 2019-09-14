@@ -2,24 +2,9 @@ package scripts
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo/maps"
+	"github.com/robertkrimen/otto"
 	"testing"
 )
-
-func TestEngine_RunJSON(t *testing.T) {
-	engine := NewEngine()
-	engine.SetContext(&Context{
-		Server: &teaconfigs.ServerConfig{
-			Id: "123",
-		},
-	})
-	err := engine.RunConfig(Tea.ConfigFile("board.iONhcceoPPB73vYx.conf"), maps.Map{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(engine.Charts())
-}
 
 func TestEngine_Run(t *testing.T) {
 	engine := NewEngine()
@@ -74,4 +59,44 @@ widget.run = function () {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestEngine_Menu(t *testing.T) {
+	vm := otto.New()
+	_, err := vm.Run(`
+var a = function () {
+	this.menus = [];
+};
+
+var b = function () {
+	this.menus = [];
+
+	this.addMenu = function () {
+		var m = new menu();
+		m.a = this;
+		this.menus.push(m);
+	};
+
+	this.render = function () {
+		console.log(this.menus.length);
+	};
+};
+
+var menu = function () {
+	this.a = null;
+};
+
+a.prototype = new b();
+
+var a1 = new a();
+a1.addMenu();
+a1.render();
+var a2 = new a();
+//a2.addMenu();
+a2.render();
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("ok")
 }
