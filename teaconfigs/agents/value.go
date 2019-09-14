@@ -6,8 +6,11 @@ import (
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/time"
 	"github.com/pquerna/ffjson/ffjson"
+	"reflect"
+	"strconv"
 	"time"
 )
 
@@ -126,6 +129,11 @@ func (this *Value) DBColumns() maps.Map {
 	}
 }
 
+// 将Value扁平化然后获取Key
+func (this *Value) AllFlatKeys() []string {
+	return this.flatKeys(this.Value, "")
+}
+
 func (this *Value) jsonDecode(data interface{}, vPtr interface{}) {
 	if data == nil {
 		return
@@ -138,4 +146,80 @@ func (this *Value) jsonDecode(data interface{}, vPtr interface{}) {
 	if ok {
 		_ = ffjson.Unmarshal([]byte(s), vPtr)
 	}
+}
+
+// 取得扁平化Key
+func (this *Value) flatKeys(value interface{}, prefix string) []string {
+	result := []string{}
+	if this.Value == nil {
+		return result
+	}
+	valueValue := reflect.ValueOf(value)
+	if valueValue.Kind() == reflect.Map {
+		for _, key := range valueValue.MapKeys() {
+			keyString := types.String(key.Interface())
+			itemInterface := valueValue.MapIndex(key).Interface()
+			if itemInterface == nil {
+				if len(prefix) == 0 {
+					result = append(result, keyString)
+				} else {
+					result = append(result, prefix+"."+keyString)
+				}
+				continue
+			}
+
+			item := reflect.ValueOf(itemInterface)
+			if item.Kind() != reflect.Map && item.Kind() != reflect.Slice {
+				if len(prefix) == 0 {
+					result = append(result, keyString)
+				} else {
+					result = append(result, prefix+"."+keyString)
+				}
+			} else {
+				var newPrefix = ""
+				if len(prefix) == 0 {
+					newPrefix = keyString
+				} else {
+					newPrefix = prefix + "." + keyString
+				}
+				for _, r := range this.flatKeys(item.Interface(), newPrefix) {
+					result = append(result, r)
+				}
+			}
+		}
+	} else if valueValue.Kind() == reflect.Slice {
+		count := valueValue.Len()
+		for i := 0; i < count; i++ {
+			key := strconv.Itoa(i)
+			itemInterface := valueValue.Index(i).Interface()
+			if itemInterface == nil {
+				if len(prefix) == 0 {
+					result = append(result, key)
+				} else {
+					result = append(result, prefix+"."+key)
+				}
+				continue
+			}
+
+			item := reflect.ValueOf(itemInterface)
+			if item.Kind() != reflect.Map && item.Kind() != reflect.Slice {
+				if len(prefix) == 0 {
+					result = append(result, key)
+				} else {
+					result = append(result, prefix+"."+key)
+				}
+			} else {
+				var newPrefix = ""
+				if len(prefix) == 0 {
+					newPrefix = key
+				} else {
+					newPrefix = prefix + "." + key
+				}
+				for _, r := range this.flatKeys(item.Interface(), newPrefix) {
+					result = append(result, r)
+				}
+			}
+		}
+	}
+	return result
 }

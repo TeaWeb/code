@@ -41,6 +41,14 @@ func (this *AddItemChartAction) Run(params struct {
 		this.Data["selectedSource"] = nil
 	}
 
+	// 最新一条数据用来展示可用的数据项
+	v, err := teadb.AgentValueDAO().FindLatestItemValue(params.AgentId, params.AppId, params.ItemId)
+	if err == nil && v != nil {
+		this.Data["keys"] = v.AllFlatKeys()
+	} else {
+		this.Data["keys"] = []string{}
+	}
+
 	this.Show()
 }
 

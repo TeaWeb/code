@@ -23,7 +23,7 @@ if (chart.options.limit <= 0) {
 } else {
 	query.limit(chart.options.limit);
 }
-var ones = query.desc().cache(60).findAll();
+var ones = query.desc().findAll();
 chart.values = [];
 chart.labels = [];
 ones.$each(function (k, v) {
