@@ -10,6 +10,7 @@ import (
 type LineChart struct {
 	Params []string `yaml:"params" json:"params"` // deprecated: v0.1.8 使用Lines代替
 	Lines  []*Line  `yaml:"lines" json:"lines"`
+	Max    float64  `yaml:"max" json:"max"` // 最大值
 }
 
 // 添加线
@@ -47,13 +48,18 @@ func (this *LineChart) AsJavascript(options map[string]interface{}) (code string
 	}
 
 	options["lines"] = this.Lines
-	options["allParams"] = this.AllParamNames()
+	options["params"] = this.AllParamNames()
+	options["max"] = this.Max
 	return `
 var chart = new charts.LineChart();
 chart.options = ` + stringutil.JSONEncode(options) + `;
 
+if (chart.options.max != 0) {
+	chart.max = chart.options.max;
+}
+
 var query = NewQuery();
-var ones = query.past(60, time.MINUTE).avg.apply(query, chart.options.allParams);
+var ones = query.past(60, time.MINUTE).avg.apply(query, chart.options.params);
 
 var lines = [];
 

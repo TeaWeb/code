@@ -63,6 +63,7 @@ func (this *AddItemChartAction) RunPost(params struct {
 	LineParams []string
 	LineFills  []int
 	LineColors []string
+	LineMax    float64
 
 	URL string `alias:"urlURL"`
 
@@ -123,6 +124,7 @@ func (this *AddItemChartAction) RunPost(params struct {
 		}
 	case "line":
 		options := &widgets.LineChart{}
+		options.Max = params.LineMax
 		for index, param := range params.LineParams {
 			line := widgets.NewLine()
 			line.Param = param
