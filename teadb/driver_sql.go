@@ -919,9 +919,12 @@ func (this *SQLDriver) asSQL(action SQLAction, query *Query, paramsHolder *SQLPa
 				dotIndex := strings.Index(field.Name, ".")
 				if dotIndex > -1 {
 					field.Name = this.JSONExtract(field.Name[:dotIndex], field.Name[dotIndex+1:])
+					if this.driver == db.DBTypePostgres {
+						field.Name += "::\"float8\""
+					}
 				}
 			}
-			if hasGroups && this.driver == "postgres" && !strings.ContainsAny(field.Name, "({:") {
+			if hasGroups && this.driver == db.DBTypePostgres && !strings.ContainsAny(field.Name, "({:") {
 				b.WriteString("(array_agg(" + this.quoteKeyword(field.Name) + "))[1]")
 			} else {
 				b.WriteString(this.quoteKeyword(field.Name))

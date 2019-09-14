@@ -484,9 +484,7 @@ func (this *Engine) callStatExecuteQuery(call otto.FunctionCall) otto.Value {
 	var v interface{} = nil
 	switch action {
 	case "findAll":
-		v, err = teadb.
-			ServerValueDAO().
-			QueryValues(query)
+		v, err = teadb.ServerValueDAO().QueryValues(query)
 	case "find":
 		result, err1 := teadb.ServerValueDAO().
 			QueryValues(query)
