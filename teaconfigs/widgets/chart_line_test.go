@@ -26,7 +26,7 @@ func TestLineChart_AllParamNames(t *testing.T) {
 
 		{
 			line := NewLine()
-			line.Param = "${param2} * ${param3}"
+			line.Param = "${ param2 } * ${param3}"
 			chart.AddLine(line)
 		}
 

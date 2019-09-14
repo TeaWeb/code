@@ -1,10 +1,13 @@
 package widgets
 
 import (
-	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/utils/string"
+	"regexp"
+	"strings"
 )
+
+var regexpNamedVariable = regexp.MustCompile(`\${([\w.\s-]+)}`)
 
 // 线图
 type LineChart struct {
@@ -22,12 +25,13 @@ func (this *LineChart) AddLine(line *Line) {
 func (this *LineChart) AllParamNames() []string {
 	result := []string{}
 	for _, line := range this.Lines {
-		teautils.ParseVariables(line.Param, func(varName string) (value string) {
-			if !lists.ContainsString(result, varName) {
-				result = append(result, varName)
+		for _, match := range regexpNamedVariable.FindAllStringSubmatch(line.Param, -1) {
+			param := strings.ReplaceAll(match[1], " ", "")
+			param = strings.ReplaceAll(param, "\t", "")
+			if !lists.ContainsString(result, param) {
+				result = append(result, param)
 			}
-			return ""
-		})
+		}
 	}
 	return result
 }
