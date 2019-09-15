@@ -69,6 +69,8 @@ var lines = [];
 
 chart.options.lines.$each(function (k, v) {
 	var line = new charts.Line();
+	line.name = v.name;
+
 	if (v.color == null || v.color.length == 0) {
 		line.color = (k < colors.ARRAY.length) ? colors.ARRAY[k] : null;
 	} else {

@@ -20,7 +20,13 @@ func TestValue_AllFlatKeys(t *testing.T) {
 				"d": 3,
 				"f": []string{"g", "h", "i"},
 			},
-			"e": []int{1, 2, 3},
+			"e":       []int{1, 2, 3},
+			"name":    1,
+			"age":     20,
+			"age_a":   21,
+			"age_ab":  22,
+			"age_231": 23,
+			"age_3":   24,
 		}
 		logs.PrintAsJSON(value.AllFlatKeys(), t)
 	}

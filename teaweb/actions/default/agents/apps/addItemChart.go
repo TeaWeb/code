@@ -71,6 +71,7 @@ func (this *AddItemChartAction) RunPost(params struct {
 	LineParams []string
 	LineFills  []int
 	LineColors []string
+	LineNames  []string
 	LineMax    float64
 
 	URL string `alias:"urlURL"`
@@ -141,6 +142,9 @@ func (this *AddItemChartAction) RunPost(params struct {
 			}
 			if index < len(params.LineColors) {
 				line.Color = params.LineColors[index]
+			}
+			if index < len(params.LineNames) {
+				line.Name = params.LineNames[index]
 			}
 			options.AddLine(line)
 		}
