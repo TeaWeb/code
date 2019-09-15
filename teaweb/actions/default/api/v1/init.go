@@ -9,6 +9,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/api/v1/cluster"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/v1/notice/media"
 	"github.com/TeaWeb/code/teaweb/actions/default/api/v1/proxy"
+	"github.com/TeaWeb/code/teaweb/actions/default/api/v1/proxy/accesslog"
 	"github.com/iwind/TeaGo"
 )
 
@@ -22,6 +23,10 @@ func init() {
 			Get("/stop", new(StopAction)).
 			Get("/proxy/servers", new(proxy.ServersAction)).
 			Get("/proxy/:serverId", new(proxy.ServerAction)).
+			Get("/proxy/:serverId/accesslog/latest", new(accesslog.LatestAction)).
+			Get("/proxy/:serverId/accesslog/next/:lastId", new(accesslog.NextAction)).
+			Get("/proxy/:serverId/accesslog/list/:size", new(accesslog.ListAction)).
+			Get("/proxy/:serverId/accesslog/next/:lastId/list/:size", new(accesslog.NextListAction)).
 			Get("/agents", new(agent.AgentsAction)).
 			Get("/agent/:agentId", new(agent.AgentAction)).
 			Get("/agent/:agentId/start", new(agent.StartAction)).
