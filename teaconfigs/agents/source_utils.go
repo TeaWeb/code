@@ -29,6 +29,7 @@ func RegisterAllDataSources() {
 	RegisterDataSource(NewLoadSource(), SourceCategoryCommon)
 	RegisterDataSource(NewNetworkSource(), SourceCategoryCommon)
 	RegisterDataSource(NewDiskSource(), SourceCategoryCommon)
+	RegisterDataSource(NewIOStatSource(), SourceCategoryCommon)
 	RegisterDataSource(NewConnectionsSource(), SourceCategoryCommon)
 	RegisterDataSource(NewProcessesSource(), SourceCategoryCommon)
 	RegisterDataSource(NewDateSource(), SourceCategoryCommon)
