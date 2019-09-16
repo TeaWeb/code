@@ -721,17 +721,6 @@ func (this *Request) call(writer *ResponseWriter) error {
 		}
 	}
 
-	// 跳转到https
-	if this.redirectToHttps {
-		this.callRedirectToHttps(writer)
-		return nil
-	}
-
-	// 临时关闭页面
-	if this.shutdownPageOn {
-		return this.callShutdown(writer)
-	}
-
 	// hook
 	b := CallRequestBeforeHook(this, writer)
 	if !b {
@@ -788,6 +777,17 @@ func (this *Request) call(writer *ResponseWriter) error {
 			_, _ = writer.Write([]byte("[" + reason + "]Request Quota Exceeded"))
 			return nil
 		}
+	}
+
+	// 临时关闭页面
+	if this.shutdownPageOn {
+		return this.callShutdown(writer)
+	}
+
+	// 跳转到https
+	if this.redirectToHttps {
+		this.callRedirectToHttps(writer)
+		return nil
 	}
 
 	if this.tunnel != nil {
