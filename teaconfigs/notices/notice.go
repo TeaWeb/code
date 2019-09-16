@@ -94,6 +94,7 @@ func (this *Notice) SetDBColumns(v maps.Map) {
 	this.Agent.TaskId = v.GetString("agentTaskId")
 	this.Agent.ItemId = v.GetString("agentItemId")
 	this.Agent.Threshold = v.GetString("agentThreshold")
+	this.Agent.Level = v.GetUint8("level")
 }
 
 // 获取数据库列值
