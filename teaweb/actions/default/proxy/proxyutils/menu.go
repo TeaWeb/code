@@ -100,6 +100,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 			"log.",
 			"servers.",
 			"tunnel.",
+			"notices.",
 		) && !action.Spec.HasClassPrefix("proxy.AddAction", "log.RuntimeAction") {
 			if isTCP { // TCP
 				tabbar := []maps.Map{
@@ -147,7 +148,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 						"subName": "",
 						"url":     "/proxy/detail?serverId=" + serverId,
 						"icon":    "setting",
-						"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "websocket", "access", "servers", "tunnel") && !action.HasPrefix("/proxy/delete"),
+						"active":  action.Spec.HasClassPrefix("proxy", "ssl", "locations", "fastcgi", "rewrite", "headers", "backend", "websocket", "access", "servers", "tunnel", "notices") && !action.HasPrefix("/proxy/delete"),
 					},
 					{
 						"name":    "删除",

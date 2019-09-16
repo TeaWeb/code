@@ -40,6 +40,7 @@ import (
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/websocket"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/log"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/log/policies"
+	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/notices"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/rewrite"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/servers"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/proxy/ssl"

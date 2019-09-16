@@ -35,7 +35,9 @@ func SharedNoticeSetting() *NoticeSetting {
 		logs.Error(err)
 		return config
 	}
-	defer reader.Close()
+	defer func() {
+		_ = reader.Close()
+	}()
 	err = reader.ReadYAML(config)
 	if err != nil {
 		logs.Error(err)
@@ -54,7 +56,9 @@ func (this *NoticeSetting) Save() error {
 	if err != nil {
 		return err
 	}
-	defer writer.Close()
+	defer func() {
+		_ = writer.Close()
+	}()
 	_, err = writer.WriteYAML(this)
 	return err
 }
@@ -98,7 +102,10 @@ func (this *NoticeSetting) RemoveMedia(mediaId string) {
 func (this *NoticeSetting) FindMedia(mediaId string) *NoticeMediaConfig {
 	for _, m := range this.Medias {
 		if m.Id == mediaId {
-			m.Validate()
+			err := m.Validate()
+			if err != nil {
+				logs.Error(err)
+			}
 			return m
 		}
 	}

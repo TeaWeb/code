@@ -3,6 +3,7 @@ package teaconfigs
 import (
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/api"
+	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
@@ -12,6 +13,7 @@ import (
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
 	"strings"
@@ -72,9 +74,9 @@ type ServerConfig struct {
 	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开
 	cachePolicy *shared.CachePolicy
 
-	WAFOn bool   `yaml:"wafOn" json:"wafOn"` // 是否启用
-	WafId string `yaml:"wafId" json:"wafId"` // WAF ID
-	waf   *teawaf.WAF                        // waf object
+	WAFOn bool        `yaml:"wafOn" json:"wafOn"` // 是否启用
+	WafId string      `yaml:"wafId" json:"wafId"` // WAF ID
+	waf   *teawaf.WAF // waf object
 
 	// API相关
 	API *api.APIConfig `yaml:"api" json:"api"` // API配置
@@ -100,6 +102,9 @@ type ServerConfig struct {
 	// 隧道相关
 	Tunnel *TunnelConfig `yaml:"tunnel" json:"tunnel"`
 
+	// 通知设置
+	NoticeSetting map[notices.NoticeLevel][]*notices.NoticeReceiver `yaml:"noticeSetting" json:"noticeSetting"`
+
 	maxBodySize   int64
 	gzipMinLength int64
 }
@@ -119,14 +124,14 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 
 		// sample
 		if configFile.Name() == "server.sample.www.proxy.conf" {
-			reader.Close()
+			_ = reader.Close()
 			continue
 		}
 
 		config := &ServerConfig{}
 		err = reader.ReadYAML(config)
 		if err != nil {
-			reader.Close()
+			_ = reader.Close()
 			continue
 		}
 		config.Filename = configFile.Name()
@@ -137,7 +142,7 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 		}
 
 		servers = append(servers, config)
-		reader.Close()
+		_ = reader.Close()
 	}
 
 	return servers
@@ -163,7 +168,9 @@ func NewServerConfigFromFile(filename string) (*ServerConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	defer func() {
+		_ = reader.Close()
+	}()
 
 	config := &ServerConfig{}
 	err = reader.ReadYAML(config)
@@ -454,7 +461,10 @@ func (this *ServerConfig) LocationAtIndex(index int) *LocationConfig {
 		return nil
 	}
 	location := this.Locations[index]
-	location.Validate()
+	err := location.Validate()
+	if err != nil {
+		logs.Error(err)
+	}
 	return location
 }
 
@@ -475,7 +485,7 @@ func (this *ServerConfig) Save() error {
 		return err
 	}
 	_, err = writer.WriteYAML(this)
-	writer.Close()
+	_ = writer.Close()
 	return err
 }
 
@@ -487,7 +497,10 @@ func (this *ServerConfig) Delete() error {
 
 	// 删除key
 	if this.SSL != nil {
-		this.SSL.DeleteFiles()
+		err := this.SSL.DeleteFiles()
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	return files.NewFile(Tea.ConfigFile(this.Filename)).Delete()
@@ -532,7 +545,10 @@ func (this *ServerConfig) WAF() *teawaf.WAF {
 func (this *ServerConfig) FindLocation(locationId string) *LocationConfig {
 	for _, location := range this.Locations {
 		if location.Id == locationId {
-			location.Validate()
+			err := location.Validate()
+			if err != nil {
+				logs.Error(err)
+			}
 			return location
 		}
 	}
@@ -1055,4 +1071,65 @@ func (this *ServerConfig) MatchKeyword(keyword string) (matched bool, name strin
 	}
 
 	return
+}
+
+// 添加通知接收者
+func (this *ServerConfig) AddNoticeReceiver(level notices.NoticeLevel, receiver *notices.NoticeReceiver) {
+	if this.NoticeSetting == nil {
+		this.NoticeSetting = map[notices.NoticeLevel][]*notices.NoticeReceiver{}
+	}
+	receivers, found := this.NoticeSetting[level]
+	if !found {
+		receivers = []*notices.NoticeReceiver{}
+	}
+	receivers = append(receivers, receiver)
+	this.NoticeSetting[level] = receivers
+}
+
+// 删除通知接收者
+func (this *ServerConfig) RemoveNoticeReceiver(level notices.NoticeLevel, receiverId string) {
+	if this.NoticeSetting == nil {
+		return
+	}
+	receivers, found := this.NoticeSetting[level]
+	if !found {
+		return
+	}
+
+	result := []*notices.NoticeReceiver{}
+	for _, r := range receivers {
+		if r.Id == receiverId {
+			continue
+		}
+		result = append(result, r)
+	}
+	this.NoticeSetting[level] = result
+}
+
+// 查找一个或多个级别对应的接收者，并合并相同的接收者
+func (this *ServerConfig) FindAllNoticeReceivers(level ...notices.NoticeLevel) []*notices.NoticeReceiver {
+	if len(level) == 0 {
+		return []*notices.NoticeReceiver{}
+	}
+
+	m := maps.Map{} // mediaId_user => bool
+	result := []*notices.NoticeReceiver{}
+	for _, l := range level {
+		receivers, ok := this.NoticeSetting[l]
+		if !ok {
+			continue
+		}
+		for _, receiver := range receivers {
+			if !receiver.On {
+				continue
+			}
+			key := receiver.Key()
+			if m.Has(key) {
+				continue
+			}
+			m[key] = true
+			result = append(result, receiver)
+		}
+	}
+	return result
 }
