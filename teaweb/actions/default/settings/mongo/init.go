@@ -7,6 +7,8 @@ import (
 	"github.com/iwind/TeaGo"
 )
 
+var shouldRestart = false
+
 func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
 		server.

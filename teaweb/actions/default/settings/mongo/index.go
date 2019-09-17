@@ -15,6 +15,8 @@ type IndexAction actions.Action
 
 // MongoDB连接信息
 func (this *IndexAction) Run(params struct{}) {
+	this.Data["shouldRestart"] = shouldRestart
+
 	config, err := db.LoadMongoConfig()
 	if err != nil {
 		this.Data["error"] = err.Error()

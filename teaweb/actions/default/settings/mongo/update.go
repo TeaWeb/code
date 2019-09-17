@@ -10,7 +10,12 @@ import (
 type UpdateAction actions.Action
 
 // 修改连接
-func (this *UpdateAction) Run(params struct{}) {
+func (this *UpdateAction) Run(params struct {
+	Action string
+}) {
+	this.Data["action"] = params.Action
+	this.Data["typeIsChanged"] = db.SharedDBConfig().Type != db.DBTypeMongo
+
 	config, err := db.LoadMongoConfig()
 	if err != nil {
 		config = db.DefaultMongoConfig()
@@ -44,6 +49,10 @@ func (this *UpdateAction) RunPost(params struct {
 
 	Must *actions.Must
 }) {
+	// 是否已改变
+	sharedConfig := db.SharedDBConfig()
+	isChanged := sharedConfig.Type != db.DBTypeMongo
+
 	params.Must.
 		Field("host", params.Host).
 		Require("请输入主机地址").
@@ -72,7 +81,17 @@ func (this *UpdateAction) RunPost(params struct {
 	err = config.Save()
 
 	if err != nil {
-		this.Fail("文件写入失败，请检查'configs/mongo.conf'写入权限")
+		this.Fail("保存失败：" + err.Error())
+	}
+
+	if isChanged {
+		shouldRestart = true
+
+		sharedConfig.Type = db.DBTypeMongo
+		err = sharedConfig.Save()
+		if err != nil {
+			this.Fail("保存失败：" + err.Error())
+		}
 	}
 
 	// 重新连接

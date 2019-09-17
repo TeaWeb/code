@@ -39,11 +39,7 @@ func (this *TestAction) Run(params struct {
 		config.Password = oldConfig.Password
 	}
 
-	driver, ok := teadb.SharedDB().(*teadb.MongoDriver)
-	if !ok {
-		this.Fail("当前配置不是MongoDB数据库")
-	}
-
+	driver := new(teadb.MongoDriver)
 	message, ok := driver.TestConfig(config)
 	if !ok {
 		this.Fail(message)
