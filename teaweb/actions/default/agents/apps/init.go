@@ -30,6 +30,8 @@ func init() {
 			Get("/taskDetail", new(TaskDetailAction)).
 			GetPost("/updateTask", new(UpdateTaskAction)).
 			Get("/runTask", new(RunTaskAction)).
+			Post("/taskOn", new(TaskOnAction)).
+			Post("/taskOff", new(TaskOffAction)).
 			GetPost("/taskLogs", new(TaskLogsAction)).
 			GetPost("/monitor", new(MonitorAction)).
 			GetPost("/addItem", new(AddItemAction)).
