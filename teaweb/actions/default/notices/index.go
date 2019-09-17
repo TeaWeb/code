@@ -141,7 +141,7 @@ func (this *IndexAction) Run(params struct {
 							})
 							if notice.Proxy.Websocket {
 								links = append(links, maps.Map{
-									"name": "websocket",
+									"name": "Websocket",
 									"url":  "/proxy/locations/websocket?serverId=" + server.Id + "&locationId=" + notice.Proxy.LocationId,
 								})
 								links = append(links, maps.Map{

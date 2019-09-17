@@ -1,7 +1,7 @@
 package teadb
 
 import (
-	"github.com/TeaWeb/code/teahooks"
+	"github.com/TeaWeb/code/teaevents"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
@@ -18,7 +18,7 @@ func init() {
 	}
 
 	// 重启服务
-	teahooks.On(teahooks.EventReload, func() {
+	teaevents.On(teaevents.EventTypeReload, func(event teaevents.EventInterface) {
 		db := SharedDB()
 		if db != nil {
 			err := db.Shutdown()

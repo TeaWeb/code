@@ -2,8 +2,10 @@ package proxyutils
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaevents"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/logs"
 )
 
 func init() {
@@ -20,5 +22,33 @@ func init() {
 				ReloadServerStats(server.Id)
 			}
 		}()
+
+		// 处理事件
+		teaevents.On(teaconfigs.EventBackendDown, func(event teaevents.EventInterface) {
+			realEvent, ok := event.(*teaconfigs.BackendDownEvent)
+			if !ok {
+				return
+			}
+			if realEvent.Server == nil || !realEvent.Server.On {
+				return
+			}
+			err := NotifyProxyBackendDownMessage(realEvent)
+			if err != nil {
+				logs.Error(err)
+			}
+		})
+		teaevents.On(teaconfigs.EventBackendUp, func(event teaevents.EventInterface) {
+			realEvent, ok := event.(*teaconfigs.BackendUpEvent)
+			if !ok {
+				return
+			}
+			if realEvent.Server == nil || !realEvent.Server.On {
+				return
+			}
+			err := NotifyProxyBackendUpMessage(realEvent)
+			if err != nil {
+				logs.Error(err)
+			}
+		})
 	})
 }

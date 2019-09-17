@@ -2,7 +2,7 @@ package teacluster
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teahooks"
+	"github.com/TeaWeb/code/teaevents"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/logs"
@@ -65,11 +65,14 @@ func init() {
 
 	TeaGo.BeforeStop(func(server *TeaGo.Server) {
 		if SharedManager != nil {
-			SharedManager.Stop()
+			err := SharedManager.Stop()
+			if err != nil {
+				logs.Error(err)
+			}
 		}
 	})
 
-	teahooks.On(teahooks.EventConfigChanged, func() {
+	teaevents.On(teaevents.EventTypeConfigChanged, func(event teaevents.EventInterface) {
 		node := teaconfigs.SharedNodeConfig()
 		if node != nil && node.On {
 			SharedManager.SetIsChanged(true)

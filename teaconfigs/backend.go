@@ -349,13 +349,15 @@ func (this *BackendConfig) RestartChecking() {
 
 	this.checkLooper = timers.Loop(time.Duration(interval)*time.Second, func(looper *timers.Looper) {
 		if this.CheckHealth() {
-			this.CurrentFails = 0
-			this.IsDown = false
+			if this.IsDown {
+				this.CurrentFails = 0
+				this.IsDown = false
 
-			this.OnUp()
+				this.OnUp()
+			}
 		} else {
 			this.CurrentFails++
-			if this.MaxFails > 0 && this.CurrentFails >= this.MaxFails {
+			if this.MaxFails > 0 && this.CurrentFails >= this.MaxFails && !this.IsDown {
 				this.IsDown = true
 				this.DownTime = time.Now()
 

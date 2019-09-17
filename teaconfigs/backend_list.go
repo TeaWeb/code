@@ -29,6 +29,9 @@ type BackendListInterface interface {
 
 	// 设置调度算法
 	SetSchedulingConfig(scheduling *SchedulingConfig)
+
+	// 重新建立调度
+	SetupScheduling(isBackup bool)
 }
 
 // BackendList定义

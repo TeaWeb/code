@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"strings"
 )
 
 // 将Receiver转换为Map
@@ -32,51 +33,99 @@ func ConvertReceiversToMaps(receivers []*notices.NoticeReceiver) (result []maps.
 }
 
 // 发送一个后端下线通知
-func NotifyProxyBackendDownMessage(serverId string, backend *teaconfigs.BackendConfig, location *teaconfigs.LocationConfig, websocket *teaconfigs.WebsocketConfig) error {
-	server := teaconfigs.NewServerConfigFromId(serverId)
-	if server == nil {
+func NotifyProxyBackendDownMessage(event *teaconfigs.BackendDownEvent) error {
+	server := event.Server
+	server.SetupNoticeItems()
+
+	noticeItem := server.NoticeItems.BackendDown
+	if noticeItem == nil || !noticeItem.On {
 		return nil
 	}
-	level := notices.NoticeLevelWarning
 
+	positions := []string{}
 	cond := notices.ProxyCond{
-		ServerId:  serverId,
-		BackendId: backend.Id,
-		Level:     level,
+		ServerId:  server.Id,
+		BackendId: event.Backend.Id,
+		Level:     noticeItem.Level,
 	}
-	if location != nil {
-		cond.LocationId = location.Id
+	positions = append(positions, server.Description)
+	if event.Location != nil {
+		cond.LocationId = event.Location.Id
+		positions = append(positions, "\"" + event.Location.Pattern + "\"")
 	}
-	if websocket != nil {
+	if event.Websocket != nil {
 		cond.Websocket = true
+		positions = append(positions, "Websocket")
 	}
 
-	server.SetupNoticeItems()
 	params := maps.Map{
 		"server.description": server.Description,
-		"backend.address":    backend.Address,
+		"backend.address":    event.Backend.Address,
+		"position":           strings.Join(positions, " / "),
 		"cause":              "错误过多",
 	}
 
 	// 不阻塞
 	go func() {
-		err := teadb.NoticeDAO().NotifyProxyMessage(cond, server.NoticeItems.BackendDown.FormatBody(params))
+		err := teadb.NoticeDAO().NotifyProxyMessage(cond, noticeItem.FormatBody(params))
 		if err != nil {
 			logs.Error(err)
 		}
 	}()
 
-	NotifyServer(serverId, level, server.NoticeItems.BackendDown.FormatSubject(params), server.NoticeItems.BackendDown.FormatBody(params))
+	NotifyServer(server, noticeItem.Level, noticeItem.FormatSubject(params), noticeItem.FormatBody(params))
+
+	return nil
+}
+
+// 发送一个后端上线通知
+func NotifyProxyBackendUpMessage(event *teaconfigs.BackendUpEvent) error {
+	server := event.Server
+	server.SetupNoticeItems()
+
+	noticeItem := server.NoticeItems.BackendUp
+	if noticeItem == nil || !noticeItem.On {
+		return nil
+	}
+
+	positions := []string{}
+	cond := notices.ProxyCond{
+		ServerId:  server.Id,
+		BackendId: event.Backend.Id,
+		Level:     noticeItem.Level,
+	}
+	positions = append(positions, server.Description)
+	if event.Location != nil {
+		cond.LocationId = event.Location.Id
+		positions = append(positions, "\"" + event.Location.Pattern + "\"")
+	}
+	if event.Websocket != nil {
+		cond.Websocket = true
+		positions = append(positions, "Websocket")
+	}
+
+	params := maps.Map{
+		"server.description": server.Description,
+		"backend.address":    event.Backend.Address,
+		"position":           strings.Join(positions, " / "),
+		"cause":              "重新检测成功",
+	}
+
+	// 不阻塞
+	go func() {
+		err := teadb.NoticeDAO().NotifyProxyMessage(cond, noticeItem.FormatBody(params))
+		if err != nil {
+			logs.Error(err)
+		}
+	}()
+
+	NotifyServer(server, noticeItem.Level, noticeItem.FormatSubject(params), noticeItem.FormatBody(params))
 
 	return nil
 }
 
 // 推送代理服务相关通知
-func NotifyServer(serverId string, level notices.NoticeLevel, subject string, message string) {
-	server := teaconfigs.NewServerConfigFromId(serverId)
-	if server == nil {
-		return
-	}
+func NotifyServer(server *teaconfigs.ServerConfig, level notices.NoticeLevel, subject string, message string) {
 	receivers := server.FindAllNoticeReceivers(level)
 	if len(receivers) == 0 {
 		setting := notices.SharedNoticeSetting()

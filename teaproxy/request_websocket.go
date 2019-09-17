@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/TeaWeb/code/teaevents"
 	"github.com/gorilla/websocket"
 	"github.com/iwind/TeaGo/logs"
 	"io/ioutil"
@@ -108,10 +108,12 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 				this.backend.DownTime = time.Now()
 
 				// 下线通知
-				err1 := proxyutils.NotifyProxyBackendDownMessage(this.server.Id, this.backend, this.location, this.websocket)
-				if err1 != nil {
-					logs.Error(err1)
-				}
+				teaevents.Post(&teaconfigs.BackendDownEvent{
+					Server:    this.server,
+					Backend:   this.backend,
+					Location:  this.location,
+					Websocket: this.websocket,
+				})
 
 				this.websocket.SetupScheduling(false)
 			}

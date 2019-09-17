@@ -2,7 +2,7 @@ package teacluster
 
 import (
 	"github.com/TeaWeb/code/teacluster/configs"
-	"github.com/TeaWeb/code/teahooks"
+	"github.com/TeaWeb/code/teaevents"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -35,11 +35,17 @@ func (this *SyncAction) Execute() error {
 					return err
 				}
 			}
-			file.Write(itemAction.Item.Data)
+			err := file.Write(itemAction.Item.Data)
+			if err != nil {
+				logs.Error(err)
+			}
 		case configs.ItemActionRemove:
 			file := files.NewFile(Tea.ConfigFile(itemAction.ItemId))
 			if file.Exists() {
-				file.Delete()
+				err := file.Delete()
+				if err != nil {
+					logs.Error(err)
+				}
 			}
 		}
 	}
@@ -47,7 +53,7 @@ func (this *SyncAction) Execute() error {
 	SharedManager.BuildSum()
 
 	// reload system
-	teahooks.Call(teahooks.EventReload)
+	teaevents.Post(teaevents.NewReloadEvent())
 
 	return nil
 }

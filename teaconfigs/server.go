@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
+	"github.com/TeaWeb/code/teaevents"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf"
 	"github.com/go-yaml/yaml"
@@ -939,37 +940,14 @@ func (this *ServerConfig) AddPage(page *PageConfig) {
 // 装载事件
 func (this *ServerConfig) OnAttach() {
 	// 开启后端健康检查
-	backends := []*BackendConfig{}
-	for _, backend := range this.Backends {
-		if !lists.Contains(backends, backend) {
-			backends = append(backends, backend)
-		}
-	}
+	this.checkBackends(this, nil, nil)
 	for _, location := range this.Locations {
 		location.OnAttach()
+		this.checkBackends(this, location, nil)
 
-		for _, backend := range location.Backends {
-			if !lists.Contains(backends, backend) {
-				backends = append(backends, backend)
-			}
+		if location.Websocket != nil {
+			this.checkBackends(this, location, location.Websocket)
 		}
-	}
-	for _, backend := range backends {
-		backend.OnAttach()
-		backend.DownCallback(func(backend *BackendConfig) {
-			if backend.IsBackup {
-				this.SetupScheduling(true)
-			} else {
-				this.SetupScheduling(false)
-			}
-		})
-		backend.UpCallback(func(backend *BackendConfig) {
-			if backend.IsBackup {
-				this.SetupScheduling(true)
-			} else {
-				this.SetupScheduling(false)
-			}
-		})
 	}
 
 	// 开启WAF
@@ -1149,7 +1127,7 @@ func (this *ServerConfig) SetupNoticeItems() {
 			On:      true,
 			Level:   notices.NoticeLevelWarning,
 			Subject: "后端服务器\"${backend.address}\"自动下线通知",
-			Body:    "后端服务器\"${backend.address}\"已经因\"${cause}\"自动下线\n位置：${server.description}",
+			Body:    "后端服务器\"${backend.address}\"已经因\"${cause}\"自动下线\n位置：${position}",
 		}
 	}
 
@@ -1158,7 +1136,7 @@ func (this *ServerConfig) SetupNoticeItems() {
 			On:      true,
 			Level:   notices.NoticeLevelSuccess,
 			Subject: "后端服务器\"${backend.address}\"自动上线通知",
-			Body:    "后端服务器\"${backend.address}\"已经因\"${cause}\"自动上线\n位置：${server.description}",
+			Body:    "后端服务器\"${backend.address}\"已经因\"${cause}\"自动上线\n位置：${position}",
 		}
 	}
 }
@@ -1170,4 +1148,50 @@ func (this *ServerConfig) SetupNoticeItemsFromRequest(req *http.Request) {
 	}
 	this.NoticeItems.BackendDown = notices.NewItemFromRequest(req, "backendDown")
 	this.NoticeItems.BackendUp = notices.NewItemFromRequest(req, "backendUp")
+}
+
+// 检查后端服务器
+func (this *ServerConfig) checkBackends(server *ServerConfig, location *LocationConfig, websocket *WebsocketConfig) {
+	backends := []*BackendConfig{}
+	var list BackendListInterface
+	if websocket != nil {
+		backends = websocket.Backends
+		list = websocket
+	} else if location != nil {
+		backends = location.Backends
+		list = location
+	} else {
+		backends = server.Backends
+		list = server
+	}
+
+	for _, backend := range backends {
+		backend.OnAttach()
+		backend.DownCallback(func(backend *BackendConfig) {
+			teaevents.Post(&BackendDownEvent{
+				Server:    this,
+				Backend:   backend,
+				Location:  location,
+				Websocket: websocket,
+			})
+			if backend.IsBackup {
+				list.SetupScheduling(true)
+			} else {
+				list.SetupScheduling(false)
+			}
+		})
+		backend.UpCallback(func(backend *BackendConfig) {
+			teaevents.Post(&BackendUpEvent{
+				Server:    this,
+				Backend:   backend,
+				Location:  location,
+				Websocket: websocket,
+			})
+			if backend.IsBackup {
+				list.SetupScheduling(true)
+			} else {
+				list.SetupScheduling(false)
+			}
+		})
+	}
 }

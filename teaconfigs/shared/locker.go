@@ -1,7 +1,7 @@
 package shared
 
 import (
-	"github.com/TeaWeb/code/teahooks"
+	"github.com/TeaWeb/code/teaevents"
 	"sync"
 )
 
@@ -25,7 +25,7 @@ func (this *FileLocker) ReadUnlock() {
 // unlock for write and notify
 func (this *FileLocker) WriteUnlockNotify() {
 	this.locker.Unlock()
-	teahooks.Call(teahooks.EventConfigChanged)
+	teaevents.Post(teaevents.NewConfigChangedEvent())
 }
 
 // unlock for write

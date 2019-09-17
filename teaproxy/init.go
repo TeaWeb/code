@@ -1,7 +1,7 @@
 package teaproxy
 
 import (
-	"github.com/TeaWeb/code/teahooks"
+	"github.com/TeaWeb/code/teaevents"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/logs"
@@ -24,7 +24,7 @@ func init() {
 		})
 	})
 
-	teahooks.On(teahooks.EventReload, func() {
+	teaevents.On(teaevents.EventTypeReload, func(event teaevents.EventInterface) {
 		// 重启服务
 		err := SharedManager.Restart()
 		if err != nil {
