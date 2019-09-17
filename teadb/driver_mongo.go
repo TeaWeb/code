@@ -442,6 +442,14 @@ func (this *MongoDriver) Test() error {
 	_, err = client.Database(this.dbName).
 		Collection("logs").
 		Find(ctx, map[string]interface{}{}, options.Find().SetLimit(1))
+
+	// 重置客户端
+	if err != nil {
+		this.sharedClientLocker.Lock()
+		this.sharedClient = nil
+		this.sharedClientLocker.Unlock()
+	}
+
 	return err
 }
 
@@ -861,7 +869,7 @@ func (this *MongoDriver) cleanAccessLogs() {
 			return
 		}
 
-		compareDay := "logs." + timeutil.Format("Ymd", time.Now().Add(-time.Duration(config.AccessLog.KeepDays * 24)*time.Hour))
+		compareDay := "logs." + timeutil.Format("Ymd", time.Now().Add(-time.Duration(config.AccessLog.KeepDays*24)*time.Hour))
 		logs.Println("[mongo]clean access logs before '" + compareDay + "'")
 
 		currentDB := this.DB()

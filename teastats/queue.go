@@ -53,7 +53,7 @@ func (this *Queue) Start(serverId string) {
 	// 导入数据
 	go func() {
 		// 延时等待数据库准备好
-		time.Sleep(3 * time.Second)
+		time.Sleep(5 * time.Second)
 
 		for {
 			item := <-this.c
@@ -61,6 +61,7 @@ func (this *Queue) Start(serverId string) {
 			if item == nil {
 				break
 			}
+			logs.Println("[stat]dump item '" + item.Item + "' for server '" + this.ServerId + "'")
 
 			// 是否已存在
 			oneValue, err := teadb.ServerValueDAO().FindSameItemValue(serverId, item)
