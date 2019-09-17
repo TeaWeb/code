@@ -105,6 +105,12 @@ type ServerConfig struct {
 	// 通知设置
 	NoticeSetting map[notices.NoticeLevel][]*notices.NoticeReceiver `yaml:"noticeSetting" json:"noticeSetting"`
 
+	// 通知条目设置
+	NoticeItems struct {
+		BackendDown *notices.Item `yaml:"backendDown" json:"backendDown"`
+		BackendUp   *notices.Item `yaml:"backendUp" json:"backendUp"`
+	} `yaml:"noticeItems" json:"noticeItems"`
+
 	maxBodySize   int64
 	gzipMinLength int64
 }
@@ -150,13 +156,15 @@ func LoadServerConfigsFromDir(dirPath string) []*ServerConfig {
 
 // 取得一个新的服务配置
 func NewServerConfig() *ServerConfig {
-	return &ServerConfig{
+	server := &ServerConfig{
 		On:      true,
 		Id:      stringutil.Rand(16),
 		API:     api.NewAPIConfig(),
 		CacheOn: true,
 		WAFOn:   true,
 	}
+	server.SetupNoticeItems()
+	return server
 }
 
 // 从配置文件中读取配置信息
@@ -1132,4 +1140,34 @@ func (this *ServerConfig) FindAllNoticeReceivers(level ...notices.NoticeLevel) [
 		}
 	}
 	return result
+}
+
+// 设置通知
+func (this *ServerConfig) SetupNoticeItems() {
+	if this.NoticeItems.BackendDown == nil {
+		this.NoticeItems.BackendDown = &notices.Item{
+			On:      true,
+			Level:   notices.NoticeLevelWarning,
+			Subject: "后端服务器\"${backend.address}\"自动下线通知",
+			Body:    "后端服务器\"${backend.address}\"已经因\"${cause}\"自动下线\n位置：${server.description}",
+		}
+	}
+
+	if this.NoticeItems.BackendUp == nil {
+		this.NoticeItems.BackendUp = &notices.Item{
+			On:      true,
+			Level:   notices.NoticeLevelSuccess,
+			Subject: "后端服务器\"${backend.address}\"自动上线通知",
+			Body:    "后端服务器\"${backend.address}\"已经因\"${cause}\"自动上线\n位置：${server.description}",
+		}
+	}
+}
+
+// 从请求中构建通知设置
+func (this *ServerConfig) SetupNoticeItemsFromRequest(req *http.Request) {
+	if req == nil {
+		return
+	}
+	this.NoticeItems.BackendDown = notices.NewItemFromRequest(req, "backendDown")
+	this.NoticeItems.BackendUp = notices.NewItemFromRequest(req, "backendUp")
 }

@@ -33,6 +33,10 @@ func ConvertReceiversToMaps(receivers []*notices.NoticeReceiver) (result []maps.
 
 // 发送一个后端下线通知
 func NotifyProxyBackendDownMessage(serverId string, backend *teaconfigs.BackendConfig, location *teaconfigs.LocationConfig, websocket *teaconfigs.WebsocketConfig) error {
+	server := teaconfigs.NewServerConfigFromId(serverId)
+	if server == nil {
+		return nil
+	}
 	level := notices.NoticeLevelWarning
 
 	cond := notices.ProxyCond{
@@ -47,15 +51,22 @@ func NotifyProxyBackendDownMessage(serverId string, backend *teaconfigs.BackendC
 		cond.Websocket = true
 	}
 
+	server.SetupNoticeItems()
+	params := maps.Map{
+		"server.description": server.Description,
+		"backend.address":    backend.Address,
+		"cause":              "错误过多",
+	}
+
 	// 不阻塞
 	go func() {
-		err := teadb.NoticeDAO().NotifyProxyMessage(cond, "后端服务器'"+backend.Address+"'因错误过多已经下线")
+		err := teadb.NoticeDAO().NotifyProxyMessage(cond, server.NoticeItems.BackendDown.FormatBody(params))
 		if err != nil {
 			logs.Error(err)
 		}
 	}()
 
-	NotifyServer(serverId, level, "代理服务通知", "后端服务器'"+backend.Address+"'因错误过多已经下线")
+	NotifyServer(serverId, level, server.NoticeItems.BackendDown.FormatSubject(params), server.NoticeItems.BackendDown.FormatBody(params))
 
 	return nil
 }
@@ -68,7 +79,13 @@ func NotifyServer(serverId string, level notices.NoticeLevel, subject string, me
 	}
 	receivers := server.FindAllNoticeReceivers(level)
 	if len(receivers) == 0 {
-		return
+		setting := notices.SharedNoticeSetting()
+		if setting != nil {
+			receivers = setting.FindAllNoticeReceivers(level)
+		}
+		if len(receivers) == 0 {
+			return
+		}
 	}
-	noticeutils.AddTask(level, receivers, subject, message+"\n位置："+server.Description)
+	noticeutils.AddTask(level, receivers, subject, message)
 }

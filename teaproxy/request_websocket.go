@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/gorilla/websocket"
 	"github.com/iwind/TeaGo/logs"
 	"io/ioutil"
@@ -51,7 +51,9 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 		this.addError(errors.New("upgrade: " + err.Error()))
 		return err
 	}
-	defer client.Close()
+	defer func() {
+		_ = client.Close()
+	}()
 
 	if this.websocket.ForwardMode == teaconfigs.WebsocketForwardModeWebsocket {
 		// 判断最大连接数
@@ -106,13 +108,18 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 				this.backend.DownTime = time.Now()
 
 				// 下线通知
-				noticeutils.NotifyProxyBackendDownMessage(this.server.Id, this.backend, this.location, this.websocket)
+				err1 := proxyutils.NotifyProxyBackendDownMessage(this.server.Id, this.backend, this.location, this.websocket)
+				if err1 != nil {
+					logs.Error(err1)
+				}
 
 				this.websocket.SetupScheduling(false)
 			}
 			return err
 		}
-		defer server.Close()
+		defer func() {
+			_ = server.Close()
+		}()
 
 		// 设置关闭连接的处理函数
 		clientIsClosed := false
@@ -138,7 +145,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 					clientIsClosed = true
 					break
 				}
-				server.WriteMessage(messageType, message)
+				_ = server.WriteMessage(messageType, message)
 			}
 		}()
 
@@ -152,13 +159,13 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 					this.addError(err)
 				}
 				serverIsClosed = true
-				server.Close()
+				_ = server.Close()
 				if !clientIsClosed {
-					client.Close()
+					_ = client.Close()
 				}
 				break
 			}
-			client.WriteMessage(messageType, message)
+			_ = client.WriteMessage(messageType, message)
 		}
 	} else if this.websocket.ForwardMode == teaconfigs.WebsocketForwardModeHttp {
 		messageQueue := make(chan []byte, 1024)
@@ -183,7 +190,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 							this.addError(errors.New(this.requestURI() + ": invalid response from backend: " + fmt.Sprintf("%d", responseWriter.StatusCode()) + " " + http.StatusText(responseWriter.StatusCode())))
 							continue FOR
 						}
-						client.WriteMessage(websocket.TextMessage, responseWriter.Body())
+						_ = client.WriteMessage(websocket.TextMessage, responseWriter.Body())
 					}
 				case <-quit:
 					break FOR

@@ -6,7 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teautils"
-	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/logs"
 	"io"
 	"net"
@@ -303,9 +303,9 @@ func (this *TCPClient) error(server *teaconfigs.ServerConfig, err error) {
 		this.backend.DownTime = time.Now()
 
 		// 下线通知
-		err = noticeutils.NotifyProxyBackendDownMessage(server.Id, this.backend, nil, nil)
-		if err != nil {
-			logs.Error(err)
+		err1 := proxyutils.NotifyProxyBackendDownMessage(server.Id, this.backend, nil, nil)
+		if err1 != nil {
+			logs.Error(err1)
 		}
 
 		server.SetupScheduling(false)

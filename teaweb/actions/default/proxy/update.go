@@ -18,6 +18,7 @@ func (this *UpdateAction) Run(params struct {
 	if server == nil {
 		this.Fail("找不到Server")
 	}
+
 	this.Data["server"] = server
 	this.Data["selectedTab"] = "basic"
 	this.Data["isTCP"] = server.IsTCP()
@@ -26,6 +27,10 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["charsets"] = teautils.AllCharsets
 
 	this.Data["accessLogs"] = proxyutils.FormatAccessLog(server.AccessLog)
+
+	// 通知设置
+	server.SetupNoticeItems()
+	this.Data["noticeItems"] = server.NoticeItems
 
 	this.Show()
 }
@@ -123,6 +128,9 @@ func (this *UpdateAction) RunPost(params struct {
 
 		server.RedirectToHttps = params.RedirectToHttps
 	}
+
+	// 通知设置
+	server.SetupNoticeItemsFromRequest(this.Request)
 
 	err := server.Validate()
 	if err != nil {

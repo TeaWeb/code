@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teaweb/actions/default/notices/noticeutils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/logs"
 	"io"
 	"net/url"
@@ -125,9 +125,9 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 					this.backend.DownTime = time.Now()
 
 					// 下线通知
-					err = noticeutils.NotifyProxyBackendDownMessage(this.server.Id, this.backend, this.location, this.websocket)
-					if err != nil {
-						logs.Error(err)
+					err1 := proxyutils.NotifyProxyBackendDownMessage(this.server.Id, this.backend, this.location, this.websocket)
+					if err1 != nil {
+						logs.Error(err1)
 					}
 
 					if this.websocket != nil {
