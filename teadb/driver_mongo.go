@@ -10,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/processes"
+	"github.com/iwind/TeaGo/types"
 	stringutil "github.com/iwind/TeaGo/utils/string"
 	timeutil "github.com/iwind/TeaGo/utils/time"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -343,23 +344,23 @@ func (this *MongoDriver) Group(query *Query, field string, result map[string]Exp
 		switch e := expr.(type) {
 		case *SumExpr:
 			group[name] = map[string]interface{}{
-				"$sum": "$" + e.Field,
+				"$sum": this.convertArrayElement(e.Field),
 			}
 		case *AvgExpr:
 			group[name] = map[string]interface{}{
-				"$avg": "$" + e.Field,
+				"$avg": this.convertArrayElement(e.Field),
 			}
 		case *MaxExpr:
 			group[name] = map[string]interface{}{
-				"$max": "$" + e.Field,
+				"$max": this.convertArrayElement(e.Field),
 			}
 		case *MinExpr:
 			group[name] = map[string]interface{}{
-				"$min": "$" + e.Field,
+				"$min": this.convertArrayElement(e.Field),
 			}
 		case string:
 			group[name] = map[string]interface{}{
-				"$first": "$" + e,
+				"$first": this.convertArrayElement(e),
 			}
 		}
 	}
@@ -915,4 +916,28 @@ func (this *MongoDriver) cleanAccessLogs() {
 			}
 		}
 	})
+}
+
+// 转换字段中的数字，方便聚合使用
+func (this *MongoDriver) convertArrayElement(field string) (result interface{}) {
+	if len(field) == 0 {
+		return ""
+	}
+	pieces := strings.Split(field, ".")
+	for index, piece := range pieces {
+		if teautils.RegexpDigitNumber.MatchString(piece) {
+			return maps.Map{
+				"$convert": maps.Map{
+					"input": maps.Map{
+						"$arrayElemAt": []interface{}{
+							"$" + strings.Join(pieces[:index], "."),
+							types.Int(piece),
+						},
+					},
+					"to": "double",
+				},
+			}
+		}
+	}
+	return "$" + field
 }

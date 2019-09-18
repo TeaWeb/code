@@ -69,3 +69,10 @@ func TestMongoDriver_Test(t *testing.T) {
 	}
 	t.Log("client:", driver)
 }
+
+func TestMongoDriver_convertArrayElement(t *testing.T) {
+	driver := new(MongoDriver)
+	t.Log(driver.convertArrayElement("value.usage.avg"))
+	t.Log(driver.convertArrayElement("value.usage.all.0"))
+	t.Log(driver.convertArrayElement("value.0"))
+}
