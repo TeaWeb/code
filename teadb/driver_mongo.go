@@ -658,6 +658,8 @@ func (this *MongoDriver) connect() (*mongo.Client, error) {
 		return nil, err
 	}
 
+	this.sharedClient = client
+
 	err = client.Connect(context.Background())
 	if err != nil {
 		return nil, err
