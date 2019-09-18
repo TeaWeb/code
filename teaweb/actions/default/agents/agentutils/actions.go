@@ -3,6 +3,7 @@ package agentutils
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teadb"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -42,6 +43,12 @@ func ActionDeleteAgent(agentId string, onFail func(message string)) (goNext bool
 	if err != nil {
 		onFail("删除失败：" + err.Error())
 		return
+	}
+
+	// 减少分组数据
+	err = agents.SharedGroupList().BuildIndexes()
+	if err != nil {
+		logs.Error(err)
 	}
 
 	// 通知更新

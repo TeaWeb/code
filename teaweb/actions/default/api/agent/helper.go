@@ -28,8 +28,9 @@ func (this *Helper) BeforeAction(action actions.ActionObject) bool {
 	if agent == nil {
 		// 是否自动生成
 		groupKey := action.Header("Tea-Agent-Group-Key")
-		if len(groupKey) > 0 {
-			group := agents.SharedGroupList().FindGroupWithKey(groupKey)
+		if len(groupKey) > 0 && groupKey != "GroupKey" {
+			groupList := agents.SharedGroupList()
+			group := groupList.FindGroupWithKey(groupKey)
 			if group == nil {
 				action.Fail("Authenticate Failed 006: invalid group key")
 			}
@@ -53,6 +54,7 @@ func (this *Helper) BeforeAction(action actions.ActionObject) bool {
 			agent.AllowAll = true
 			agent.AutoUpdates = true
 			agent.CheckDisconnections = true
+			agent.GroupKey = groupKey
 			err := agent.Save()
 			if err != nil {
 				logs.Error(err)
@@ -70,6 +72,12 @@ func (this *Helper) BeforeAction(action actions.ActionObject) bool {
 					logs.Error(err)
 				}
 				action.Fail("Authenticate Failed 007: server error")
+			}
+
+			// 重建索引
+			err = groupList.BuildIndexes()
+			if err != nil {
+				logs.Error(err)
 			}
 
 			action.Context.Set("agent", agent)

@@ -64,5 +64,11 @@ func (this *DeleteAgentsAction) Run(params struct {
 		agentutils.PostAgentEvent(agent.Id, agentutils.NewAgentEvent("REMOVE_AGENT", maps.Map{}))
 	}
 
+	// 重建索引
+	err := agents.SharedGroupList().BuildIndexes()
+	if err != nil {
+		logs.Error(err)
+	}
+
 	this.Success()
 }

@@ -5,27 +5,15 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 )
 
 type IndexAction actions.Action
 
 // 分组管理
 func (this *IndexAction) Run(params struct{}) {
-	agentsList, err := agents.SharedAgentList()
-	if err != nil {
-		this.Fail("ERROR:" + err.Error())
-	}
-	allAgents := agentsList.FindAllAgents()
-
 	groups := []maps.Map{}
 	for _, group := range agents.SharedGroupList().Groups {
-		countAgents := 0
-		for _, agent := range allAgents {
-			if agent.BelongsToGroup(group.Id) {
-				countAgents++
-			}
-		}
-
 		countReceivers := 0
 		for _, receivers := range group.NoticeSetting {
 			countReceivers += len(receivers)
@@ -35,9 +23,13 @@ func (this *IndexAction) Run(params struct{}) {
 			"id":             group.Id,
 			"name":           group.Name,
 			"on":             group.On,
-			"countAgents":    countAgents,
+			"countAgents":    group.CountAgents,
 			"countReceivers": countReceivers,
 			"canDelete":      !group.IsDefault,
+			"maxAgents":      group.MaxAgents,
+			"dayFrom":        group.DayFrom,
+			"dayTo":          group.DayTo,
+			"isExpired":      len(group.DayTo) > 0 && group.DayTo < timeutil.Format("Y-m-d"),
 		})
 	}
 

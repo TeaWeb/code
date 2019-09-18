@@ -166,8 +166,18 @@ func (this *GroupList) FindGroupWithKey(key string) *Group {
 		return nil
 	}
 	for _, g := range this.Groups {
+		if !g.IsAvailable() {
+			continue
+		}
+
 		if g.Key == key {
 			return g
+		}
+
+		for _, k := range g.Keys {
+			if k.Key == key && k.IsAvailable() {
+				return g
+			}
 		}
 	}
 	return nil
@@ -201,4 +211,46 @@ func (this *GroupList) Move(fromIndex int, toIndex int) {
 	}
 
 	this.Groups = newList
+}
+
+// 重建索引
+func (this *GroupList) BuildIndexes() error {
+	agentList, err := SharedAgentList()
+	if err != nil {
+		return err
+	}
+
+	// 重置
+	for _, group := range this.Groups {
+		group.CountAgents = 0
+		for _, key := range group.Keys {
+			key.CountAgents = 0
+		}
+	}
+
+	// 计算
+	for _, agent := range agentList.FindAllAgents() {
+		if agent.IsLocal() {
+			continue
+		}
+		if len(agent.GroupIds) == 0 {
+			agent.GroupIds = []string{"default"}
+		}
+		for _, groupId := range agent.GroupIds {
+			group := this.FindGroup(groupId)
+			if group == nil {
+				continue
+			}
+			group.CountAgents++
+
+			if len(agent.GroupKey) > 0 {
+				for _, key := range group.Keys {
+					if key.Key == agent.GroupKey {
+						key.CountAgents++
+					}
+				}
+			}
+		}
+	}
+	return this.Save()
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/logs"
 	"sync"
 )
 
@@ -25,7 +26,10 @@ func SharedAgentList() (*AgentList, error) {
 		// 创建目录
 		dir := files.NewFile(Tea.ConfigFile("agents"))
 		if !dir.Exists() {
-			dir.MkdirAll()
+			err := dir.MkdirAll()
+			if err != nil {
+				logs.Error(err)
+			}
 		}
 
 		return &AgentList{}, nil
@@ -34,7 +38,9 @@ func SharedAgentList() (*AgentList, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	defer func() {
+		_ = reader.Close()
+	}()
 	agentList := &AgentList{}
 	err = reader.ReadYAML(agentList)
 	if err != nil {
@@ -107,6 +113,20 @@ func (this *AgentList) FindAllAgents() []*AgentConfig {
 	return result
 }
 
+// 计算所有分组中的Agent
+func (this *AgentList) CountAgentsInGroup(groupId string) int {
+	if len(groupId) == 0 {
+		groupId = "default"
+	}
+	count := 0
+	for _, agent := range this.FindAllAgents() {
+		if agent.BelongsToGroup(groupId) {
+			count++
+		}
+	}
+	return count
+}
+
 // 保存
 func (this *AgentList) Save() error {
 	shared.Locker.Lock()
@@ -120,7 +140,9 @@ func (this *AgentList) Save() error {
 	if err != nil {
 		return err
 	}
-	defer writer.Close()
+	defer func() {
+		_ = writer.Close()
+	}()
 	_, err = writer.WriteYAML(this)
 	return err
 }
@@ -151,7 +173,7 @@ func (this *AgentList) MoveAgent(fromId string, toId string) {
 
 	file := this.Files[fromIndex]
 	newList := []string{}
-	for i := 0; i < len(this.Files); i ++ {
+	for i := 0; i < len(this.Files); i++ {
 		if i == fromIndex {
 			continue
 		}

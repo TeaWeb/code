@@ -1,9 +1,11 @@
 package cluster
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"sync"
 )
@@ -25,6 +27,17 @@ func (this *InstallAction) Run(params struct {
 	// 禁止demo
 	if teaconst.DemoEnabled {
 		this.Fail("DEMO版本无法操作")
+	}
+
+	// 检查数量限制
+	group := agents.SharedGroupList().FindGroup(params.GroupId)
+	if group != nil {
+		if group.MaxAgents > 0 && group.CountAgents >= group.MaxAgents {
+			this.Fail("选择的分组不能超过最大Agent数量限制")
+		}
+		if !group.IsDateAvailable() {
+			this.Fail(" 选择的分组不在有效期限内")
+		}
 	}
 
 	if len(params.Hosts) == 0 {
@@ -74,6 +87,12 @@ func (this *InstallAction) Run(params struct {
 	wg.Wait()
 
 	this.Data["states"] = states
-	
+
+	// 重建索引
+	err := agents.SharedGroupList().BuildIndexes()
+	if err != nil {
+		logs.Error(err)
+	}
+
 	this.Success()
 }

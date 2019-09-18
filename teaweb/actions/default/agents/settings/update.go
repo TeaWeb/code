@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -73,6 +74,12 @@ func (this *UpdateAction) RunPost(params struct {
 	err := agent.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
+	}
+
+	// 重建索引
+	err = agents.SharedGroupList().BuildIndexes()
+	if err != nil {
+		logs.Error(err)
 	}
 
 	// 通知更新

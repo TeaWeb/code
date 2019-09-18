@@ -8,6 +8,7 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 	"io/ioutil"
 )
 
@@ -20,6 +21,13 @@ type Group struct {
 	Index         int                                               `yaml:"index" json:"index"`
 	NoticeSetting map[notices.NoticeLevel][]*notices.NoticeReceiver `yaml:"noticeSetting" json:"noticeSetting"`
 	Key           string                                            `yaml:"key" json:"key"` // 密钥
+
+	DayFrom     string `yaml:"dayFrom" json:"dayFrom"`         // 有效开始日期
+	DayTo       string `yaml:"dayTo" json:"dayTo"`             // 有效结束日期
+	MaxAgents   int    `yaml:"maxAgents" json:"maxAgents"`     // 可以容纳的Agents最大数量
+	CountAgents int    `yaml:"countAgents" json:"countAgents"` //
+
+	Keys []*GroupKey `yaml:"keys" json:"keys"` // 临时的Key
 }
 
 // 获取新分组
@@ -147,4 +155,42 @@ func (this *Group) MatchKeyword(keyword string) (matched bool, name string, tags
 		return true, this.Name, nil
 	}
 	return
+}
+
+// 添加密钥
+func (this *Group) AddKey(key *GroupKey) {
+	this.Keys = append(this.Keys, key)
+}
+
+// 查找密钥
+func (this *Group) FindKey(key string) *GroupKey {
+	for _, k := range this.Keys {
+		if k.Key == key {
+			return k
+		}
+	}
+	return nil
+}
+
+// 当前分组日期是否可用
+func (this *Group) IsDateAvailable() bool {
+	today := timeutil.Format("Y-m-d")
+	if len(this.DayFrom) > 0 && this.DayFrom > today {
+		return false
+	}
+	if len(this.DayTo) > 0 && this.DayTo < today {
+		return false
+	}
+	return true
+}
+
+// 是否可用
+func (this *Group) IsAvailable() bool {
+	if !this.On {
+		return false
+	}
+	if this.MaxAgents > 0 && this.CountAgents >= this.MaxAgents {
+		return false
+	}
+	return this.IsDateAvailable()
 }

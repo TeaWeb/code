@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
 )
@@ -41,6 +42,16 @@ func (this *AddAgentAction) RunPost(params struct {
 		this.Fail("保存失败：" + err.Error())
 	}
 
+	group := agents.SharedGroupList().FindGroup(params.GroupId)
+	if group != nil {
+		if group.MaxAgents > 0 && group.CountAgents >= group.MaxAgents {
+			this.Fail("选择的分组不能超过最大Agent数量限制")
+		}
+		if !group.IsDateAvailable() {
+			this.Fail(" 选择的分组不在有效期限内")
+		}
+	}
+
 	agent := agents.NewAgentConfig()
 	agent.On = params.On
 	agent.Name = params.Name
@@ -63,6 +74,12 @@ func (this *AddAgentAction) RunPost(params struct {
 	err = agentList.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
+	}
+
+	// 重建索引
+	err = agents.SharedGroupList().BuildIndexes()
+	if err != nil {
+		logs.Error(err)
 	}
 
 	this.Data["agentId"] = agent.Id

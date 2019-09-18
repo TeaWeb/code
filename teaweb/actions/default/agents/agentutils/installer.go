@@ -117,7 +117,9 @@ func (this *Installer) Start() error {
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer func() {
+		_ = client.Close()
+	}()
 
 	// hostname
 	this.log("get hostname")
@@ -160,7 +162,9 @@ func (this *Installer) Start() error {
 	if err != nil {
 		return err
 	}
-	defer sftpClient.Close()
+	defer func() {
+		_ = sftpClient.Close()
+	}()
 
 	this.log("create installer file on /tmp")
 	writer, err := sftpClient.Create("/tmp/agentinstaller")
@@ -170,11 +174,11 @@ func (this *Installer) Start() error {
 	isInstallerWriterClosed := false
 	defer func() {
 		if !isInstallerWriterClosed {
-			writer.Close()
+			_ = writer.Close()
 		}
 
 		// 删除
-		this.runCmdOnSSH(client, "unlink /tmp/agentinstaller")
+		_, _, _ = this.runCmdOnSSH(client, "unlink /tmp/agentinstaller")
 	}()
 
 	this.log("open installer file")
@@ -182,7 +186,9 @@ func (this *Installer) Start() error {
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer func() {
+		_ = reader.Close()
+	}()
 
 	this.log("copy installer file to host")
 	n, err := io.Copy(writer, reader)
@@ -194,7 +200,7 @@ func (this *Installer) Start() error {
 		return errors.New("copy installer failed")
 	}
 	isInstallerWriterClosed = true
-	writer.Close() // 明确close一次，以便于下面的chmod和运行
+	_ = writer.Close() // 明确close一次，以便于下面的chmod和运行
 
 	// chmod
 	this.log("chmod")
@@ -239,7 +245,7 @@ func (this *Installer) Start() error {
 			}
 		} else {
 			// 保存到列表
-			this.log("add agent to list");
+			this.log("add agent to list")
 			agentList.AddAgent(agent.Filename())
 			err = agentList.Save()
 			if err != nil {
@@ -302,7 +308,9 @@ func (this *Installer) runCmdOnSSH(client *ssh.Client, cmd string) (stdoutBytes 
 	if err != nil {
 		return nil, nil, err
 	}
-	defer session.Close()
+	defer func() {
+		_ = session.Close()
+	}()
 
 	stdout := bytes.NewBuffer([]byte{})
 	stderr := bytes.NewBuffer([]byte{})
@@ -326,7 +334,9 @@ func (this *Installer) installService(sftpClient *sftp.Client, client *ssh.Clien
 	if err != nil {
 		return
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 	_, err = file.Write([]byte(`#! /bin/bash
 #
 # teaweb       TeaWeb agent management
@@ -357,7 +367,7 @@ esac`))
 		return
 	}
 
-	this.runCmdOnSSH(client, "chmod u+x /etc/init.d/teaweb-agent")
-	this.runCmdOnSSH(client, "chkconfig --add teaweb-agent")
-	this.runCmdOnSSH(client, "systemctl daemon-reload")
+	_, _, _ = this.runCmdOnSSH(client, "chmod u+x /etc/init.d/teaweb-agent")
+	_, _, _ = this.runCmdOnSSH(client, "chkconfig --add teaweb-agent")
+	_, _, _ = this.runCmdOnSSH(client, "systemctl daemon-reload")
 }

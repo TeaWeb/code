@@ -32,6 +32,7 @@ type AgentConfig struct {
 	GroupIds            []string     `yaml:"groupIds" json:"groupIds"`                       // 分组IDs
 	AutoUpdates         bool         `yaml:"autoUpdates" json:"autoUpdates"`                 // 是否开启自动更新
 	AppsIsInitialized   bool         `yaml:"appsIsInitialized" json:"appsIsInitialized"`     // 是否已经初始化App
+	GroupKey            string       `yaml:"groupKey" json:"groupKey"`                       // 注册使用的密钥
 
 	NoticeSetting map[notices.NoticeLevel][]*notices.NoticeReceiver `yaml:"noticeSetting" json:"noticeSetting"`
 }
