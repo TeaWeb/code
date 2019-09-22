@@ -488,9 +488,9 @@ chart.render();
 			item.AddThreshold(source.Thresholds()...)
 
 			// 图表
-			item.AddFilterCharts(source.Charts(), "network.usage.received", "network.usage.sent")
-			board.AddChart(app.Id, item.Id, "network.usage.received")
+			item.AddFilterCharts(source.Charts(), "network.usage.sent", "network.usage.received")
 			board.AddChart(app.Id, item.Id, "network.usage.sent")
+			board.AddChart(app.Id, item.Id, "network.usage.received")
 		}
 
 		// disk

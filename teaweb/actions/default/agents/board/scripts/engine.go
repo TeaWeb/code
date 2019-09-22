@@ -522,6 +522,12 @@ func (this *Engine) callExecuteQuery(call otto.FunctionCall) otto.Value {
 	var result interface{} = nil
 	if action == "findAll" {
 		result, err = teadb.AgentValueDAO().QueryValues(query)
+	} else if action == "find" {
+		query.Limit(1)
+		result, err = teadb.AgentValueDAO().QueryValues(query)
+		if len(result.([]*agents.Value)) > 0 {
+			result = result.([]*agents.Value)[0]
+		}
 	} else if action == "avgValues" {
 		resultFields := map[string]teadb.Expr{}
 		for _, s := range aggregationFieldStrings {
