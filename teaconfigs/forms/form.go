@@ -16,12 +16,13 @@ import (
 )
 
 type Form struct {
-	Namespace    string   `yaml:"namespace" json:"namespace"`
-	Groups       []*Group `yaml:"groups" json:"groups"`
-	Javascript   string   `yaml:"javascript" json:"javascript"`
-	CSS          string   `yaml:"css" json:"css"`
-	ValidateCode string   `yaml:"validateCode" json:"validateCode"`
-	vm           *otto.Otto
+	Namespace     string            `yaml:"namespace" json:"namespace"`
+	Groups        []*Group          `yaml:"groups" json:"groups"`
+	Javascript    string            `yaml:"javascript" json:"javascript"`
+	CSS           string            `yaml:"css" json:"css"`
+	ValidateCode  string            `yaml:"validateCode" json:"validateCode"`
+	ComposedAttrs map[string]string `yaml:"composedAttrs" json:"composedAttrs"`
+	vm            *otto.Otto
 }
 
 func FormDecode(data []byte, form *Form) error {
@@ -80,7 +81,7 @@ func FormDecode(data []byte, form *Form) error {
 
 func NewForm(namespace string) *Form {
 	vm := otto.New()
-	vm.Run(`
+	_, err := vm.Run(`
 function FieldError(field, message) {
 	return {
 		"field": field,
@@ -88,6 +89,9 @@ function FieldError(field, message) {
 	};
 }
 `)
+	if err != nil {
+		logs.Error(err)
+	}
 	return &Form{
 		Namespace: namespace,
 		vm:        vm,
@@ -107,6 +111,7 @@ func (this *Form) Compose() {
 	this.Javascript = ""
 
 	for _, g := range this.Groups {
+		g.ComposedAttrs = this.ComposedAttrs
 		g.Compose()
 
 		for _, e := range g.Elements {
@@ -129,9 +134,26 @@ func (this *Form) Init(values map[string]interface{}) {
 		for _, e := range g.Elements {
 			s := e.Super()
 			eMap[s.Code] = e
+
+			// 处理不在values中的元素的init
+			if len(s.InitCode) > 0 {
+				_, ok := values[s.Code]
+				if !ok {
+					newValue, err := this.vm.Run("(function() { var values = " + stringutil.JSONEncode(values) + ";" + s.InitCode + "})()")
+					if err != nil {
+						logs.Error(err)
+					} else if !newValue.IsUndefined() {
+						newValueInterface, err := newValue.Export()
+						if err == nil {
+							s.Value = newValueInterface
+						}
+					}
+				}
+			}
 		}
 	}
 
+	// 处理在values中的元素的init
 	for k, v := range values {
 		e, found := eMap[k]
 		if !found {

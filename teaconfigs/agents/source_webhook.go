@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/forms"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
 	"io"
@@ -19,9 +20,12 @@ import (
 type WebHookSource struct {
 	Source `yaml:",inline"`
 
-	URL     string `yaml:"url" json:"url"`
-	Timeout string `yaml:"timeout" json:"timeout"`
-	Method  string `yaml:"method" json:"method"` // 请求方法
+	URL      string             `yaml:"url" json:"url"`
+	Timeout  string             `yaml:"timeout" json:"timeout"`
+	Method   string             `yaml:"method" json:"method"` // 请求方法
+	Headers  []*shared.Variable `yaml:"headers" json:"headers"`
+	Params   []*shared.Variable `yaml:"params" json:"params"`
+	TextBody string             `yaml:"textBody" json:"textBody"`
 
 	timeoutDuration time.Duration
 }
@@ -70,23 +74,37 @@ func (this *WebHookSource) Execute(params map[string]string) (value interface{},
 
 	client := teautils.SharedHttpClient(this.timeoutDuration)
 
-	query := url.Values{}
-	for name, value := range params {
-		query[name] = []string{value}
-	}
-	rawQuery := query.Encode()
-
 	urlString := this.URL
 	var body io.Reader = nil
-	if len(rawQuery) > 0 {
-		if this.Method == http.MethodGet {
-			if strings.Index(this.URL, "?") > 0 {
-				urlString += "&" + rawQuery
+	if this.Method == "PUT" {
+		body = bytes.NewReader([]byte(this.TextBody))
+	} else {
+		query := url.Values{}
+		for name, value := range params {
+			query[name] = []string{value}
+		}
+		for _, param := range this.Params {
+			_, ok := query[param.Name]
+			if ok {
+				query[param.Name ] = append(query[param.Name], param.Value)
 			} else {
-				urlString += "?" + rawQuery
+				query[param.Name] = []string{param.Value}
 			}
-		} else {
-			body = bytes.NewReader([]byte(rawQuery))
+		}
+		rawQuery := query.Encode()
+
+		if len(query) > 0 {
+			if this.Method == "GET" {
+				if strings.Index(this.URL, "?") > 0 {
+					urlString += "&" + rawQuery
+				} else {
+					urlString += "?" + rawQuery
+				}
+			} else {
+				body = bytes.NewReader([]byte(rawQuery))
+			}
+		} else if this.Method == "POST" {
+			body = bytes.NewReader([]byte(this.TextBody))
 		}
 	}
 
@@ -94,16 +112,33 @@ func (this *WebHookSource) Execute(params map[string]string) (value interface{},
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
+
+	for _, h := range this.Headers {
+		req.Header.Add(h.Name, h.Value)
+	}
+
+	_, ok := this.lookupHeader("User-Agent")
+	if !ok {
+		req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
+	}
+
+	if this.Method == "POST" {
+		_, ok := this.lookupHeader("Content-Type")
+		if !ok {
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		}
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("response status code should be 200, now is " + fmt.Sprintf("%d", resp.StatusCode))
+		return nil, errors.New("response status code should be 200, but is " + fmt.Sprintf("%d", resp.StatusCode))
 	}
 
 	respBytes, err := ioutil.ReadAll(resp.Body)
@@ -117,69 +152,54 @@ func (this *WebHookSource) Execute(params map[string]string) (value interface{},
 // 选项表单
 func (this *WebHookSource) Form() *forms.Form {
 	form := forms.NewForm(this.Code())
-
 	{
 		group := form.NewGroup()
-
 		{
-			field := forms.NewTextField("URL", "")
-			field.Code = "url"
-			field.IsRequired = true
-			field.Placeholder = "http://..."
-			field.MaxLength = 500
-			field.ValidateCode = `
-if (value.length == 0) {
-	throw new Error("请输入URL")
-}
-
-if (!value.match(/^(http|https):\/\//i)) {
-	throw new Error("URL地址必须以http或https开头");
-}
-`
-			group.Add(field)
-		}
-
-		{
-			field := forms.NewOptions("请求方法", "")
-			field.Code = "method"
-			field.IsRequired = true
-			field.AddOption("GET", "GET")
-			field.AddOption("POST", "POST")
-			field.AddOption("PUT", "PUT")
-			field.Attr("style", "width:10em")
-			field.ValidateCode = `
-if (value.length == 0) {
-	throw new Error("请选择请求方法");
-}
-`
-			group.Add(field)
-		}
-	}
-
-	{
-		group := form.NewGroup()
-
-		{
-			field := forms.NewTextField("请求超时", "Timeout")
-			field.Code = "timeout"
-			field.Value = 10
-			field.MaxLength = 10
-			field.RightLabel = "秒"
-			field.Attr("style", "width:5em")
-			field.ValidateCode = `
-var intValue = parseInt(value);
-if (isNaN(intValue)) {
-	throw new Error("超时时间需要是一个整数");
-}
-
-return intValue + "s"
-`
+			field := forms.NewHTTPBox("", "")
+			field.Code = this.Code()
 			field.InitCode = `
-return value.replace("s", "");
+return {
+	"url": values.url,
+	"method": values.method,
+	"params": values.params,
+	"headers": values.headers,
+	"textBody": values.textBody,
+	"timeout": values.timeout
+};
 `
 			group.Add(field)
 		}
 	}
+
+	form.ValidateCode = `
+var url = values.webhook.url;
+if (url.length == 0) {
+	return FieldError("url", "请输入URL")
+}
+
+if (!url.match(/^(http|https):\/\//i)) {
+	return FieldError("url", "URL地址必须以http或https开头");
+}
+
+var method = values.webhook.method;
+if (method.length == 0) {
+	return FieldError("method", "请选择请求方法");
+}
+
+var timeout = values.webhook.timeout;
+if (!timeout.match(/^\d+(s|ms)$/)) {
+	return FieldError("timeout", "超时时间只能是一个整数");
+}
+
+return {
+	"url": values.webhook.url,
+	"method": values.webhook.method,
+	"params": values.webhook.params,
+	"headers": values.webhook.headers,
+	"textBody": values.webhook.textBody,
+	"timeout": values.webhook.timeout
+}
+`
 
 	return form
 }
@@ -188,16 +208,60 @@ func (this *WebHookSource) Presentation() *forms.Presentation {
 	return &forms.Presentation{
 		HTML: `
 <tr>
-	<td>URL</td>
+	<td class="color-border">URL</td>
 	<td>{{source.url}}</td>
 </tr>
 <tr>
-	<td>请求方法</td>
+	<td class="color-border">请求方法</td>
 	<td>{{source.method}}</td>
 </tr>
 <tr>
-	<td>请求超时<em>（Timeout）</em></td>
+	<td class="color-border">自定义Header</td>
+	<td>
+		<span v-if="source.headers == null || source.headers.length == 0" class="disabled">还没有自定义Header。</span>
+		<div v-if="source.headers != null && source.headers.length > 0">
+			<span class="ui label tiny" v-for="header in source.headers">{{header.name}}: {{header.value}}</span>
+		</div>
+	</td>
+</tr>
+<tr v-if="source.method == 'POST' || source.method == 'PUT'">
+	<td class="color-border">自定义请求内容</td>
+	<td>
+		<span v-if="(source.params == null || source.params.length == 0) && (source.textBody == null || source.textBody.length == 0)" class="disabled">还没有自定义请求内容。</span>
+		<div v-if="source.params != null && source.params.length > 0">
+			<span class="ui label tiny" v-for="param in source.params">{{param.name}}: {{param.value}}</span>
+		</div>
+		<div v-if="source.textBody != null && source.textBody.length > 0">
+			<pre class="webhook-block-body">{{source.textBody}}</pre>
+		</div>
+	</td>
+</tr>
+<tr>
+	<td class="color-border">请求超时<em>（Timeout）</em></td>
 	<td>{{source.timeout}}</td>
 </tr>`,
+		CSS: `.webhook-block-body {
+    border: 1px #eee solid;
+    padding: 0.4em;
+    background: rgba(0, 0, 0, 0.01);
+    font-size: 0.9em;
+    max-height: 10em;
+    overflow-y: auto;
+    margin: 0;
+}
+
+.webhook-block-body::-webkit-scrollbar {
+    width: 4px;
+}
+`,
 	}
+}
+
+func (this *WebHookSource) lookupHeader(name string) (value string, ok bool) {
+	for _, h := range this.Headers {
+		if h.Name == name {
+			return h.Value, true
+		}
+	}
+	return "", false
 }

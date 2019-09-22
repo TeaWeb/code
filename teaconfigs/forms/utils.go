@@ -7,4 +7,5 @@ var allElementTypes = map[string]ElementInterface{
 	"ScriptBox": new(ScriptBox),
 	"CheckBox":  new(CheckBox),
 	"EnvBox":    new(EnvBox),
+	"HTTPBox":   new(HTTPBox),
 }

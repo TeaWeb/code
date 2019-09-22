@@ -55,10 +55,14 @@ func (this *AddItemAction) Run(params struct {
 	css := ""
 	javascript := ""
 
-	for _, source := range agents.AllDataSources() {
-		form := source["instance"].(agents.SourceInterface).Form()
+	for _, sourceMap := range agents.AllDataSources() {
+		sourceInstance := sourceMap["instance"].(agents.SourceInterface)
+		form := sourceInstance.Form()
 		if form == nil {
 			continue
+		}
+		form.ComposedAttrs = map[string]string{
+			"v-show": "sourceCode == '" + sourceInstance.Code() + "'",
 		}
 		form.Compose()
 
@@ -72,7 +76,7 @@ func (this *AddItemAction) Run(params struct {
 			groups1 = append(groups1, form.Groups[0])
 		} else {
 			groups1 = append(groups1, form.Groups[0])
-			for i := 1; i < countGroups; i ++ {
+			for i := 1; i < countGroups; i++ {
 				groups2 = append(groups2, form.Groups[i])
 			}
 		}
@@ -210,10 +214,13 @@ func (this *AddItemAction) RunPost(params struct {
 	}))
 
 	if app.IsSharedWithGroup {
-		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("ADD_ITEM", maps.Map{
+		err := agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("ADD_ITEM", maps.Map{
 			"appId":  app.Id,
 			"itemId": item.Id,
 		}), nil)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	this.Success()

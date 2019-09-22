@@ -15,12 +15,12 @@ import (
 
 // Webhook媒介
 type NoticeWebhookMedia struct {
-	URL         string         `yaml:"url" json:"url"` // URL中可以使用${NoticeSubject}, ${NoticeBody}两个变量
-	Method      string         `yaml:"method" json:"method"`
-	ContentType string         `yaml:"contentType" json:"contentType"` // 内容类型：params|body
-	Headers     []*shared.Pair `yaml:"headers" json:"headers"`
-	Params      []*shared.Pair `yaml:"params" json:"params"`
-	Body        string         `yaml:"body" json:"body"`
+	URL         string             `yaml:"url" json:"url"` // URL中可以使用${NoticeSubject}, ${NoticeBody}两个变量
+	Method      string             `yaml:"method" json:"method"`
+	ContentType string             `yaml:"contentType" json:"contentType"` // 内容类型：params|body
+	Headers     []*shared.Variable `yaml:"headers" json:"headers"`
+	Params      []*shared.Variable `yaml:"params" json:"params"`
+	Body        string             `yaml:"body" json:"body"`
 }
 
 // 获取新对象
@@ -101,7 +101,9 @@ func (this *NoticeWebhookMedia) Send(user string, subject string, body string) (
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 	data, err := ioutil.ReadAll(response.Body)
 	return data, err
 }
@@ -113,7 +115,7 @@ func (this *NoticeWebhookMedia) RequireUser() bool {
 
 // 添加Header
 func (this *NoticeWebhookMedia) AddHeader(name string, value string) {
-	this.Headers = append(this.Headers, &shared.Pair{
+	this.Headers = append(this.Headers, &shared.Variable{
 		Name:  name,
 		Value: value,
 	})
@@ -121,7 +123,7 @@ func (this *NoticeWebhookMedia) AddHeader(name string, value string) {
 
 // 添加参数
 func (this *NoticeWebhookMedia) AddParam(name string, value string) {
-	this.Params = append(this.Params, &shared.Pair{
+	this.Params = append(this.Params, &shared.Variable{
 		Name:  name,
 		Value: value,
 	})

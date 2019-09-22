@@ -7,7 +7,7 @@ import (
 )
 
 type Options struct {
-	Element
+	Element `yaml:",inline"`
 
 	Options []*Option
 }

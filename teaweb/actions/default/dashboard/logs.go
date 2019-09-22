@@ -7,7 +7,6 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	timeutil "github.com/iwind/TeaGo/utils/time"
-	"go.mongodb.org/mongo-driver/x/mongo/driver/topology"
 )
 
 type LogsAction actions.Action
@@ -16,7 +15,7 @@ type LogsAction actions.Action
 func (this *LogsAction) Run(params struct{}) {
 	ones, err := teadb.AccessLogDAO().ListTopAccessLogs(timeutil.Format("Ymd"), 10)
 	if err != nil {
-		if err != topology.ErrServerSelectionTimeout && err != teadb.ErrorDBUnavailable {
+		if err != teadb.ErrorDBUnavailable {
 			logs.Error(err)
 		}
 		this.Data["logs"] = []*accesslogs.AccessLog{}

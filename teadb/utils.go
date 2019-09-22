@@ -3,7 +3,6 @@ package teadb
 import (
 	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/timers"
 	"sync"
 	"time"
 )
@@ -29,17 +28,25 @@ func SetupDB() {
 
 	// 测试数据库连接
 	isAvailable := true
-	timers.Loop(30*time.Second, func(looper *timers.Looper) {
-		if sharedDriver == nil {
-			return
+	go func() {
+		for {
+			if sharedDriver == nil {
+				continue
+			}
+			err := sharedDriver.Test()
+			if err != nil && isAvailable {
+				logs.Println("[db]database connection unavailable: " + err.Error())
+			}
+			sharedDriver.SetIsAvailable(err == nil)
+			isAvailable = sharedDriver.IsAvailable()
+
+			if isAvailable {
+				time.Sleep(60 * time.Second)
+			} else {
+				time.Sleep(10 * time.Second)
+			}
 		}
-		err := sharedDriver.Test()
-		if err != nil && isAvailable {
-			logs.Println("[db]database connection unavailable: " + err.Error())
-		}
-		sharedDriver.SetIsAvailable(err == nil)
-		isAvailable = sharedDriver.IsAvailable()
-	})
+	}()
 }
 
 // 切换数据库驱动

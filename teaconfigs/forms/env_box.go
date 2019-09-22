@@ -9,7 +9,7 @@ import (
 
 // 环境变量
 type EnvBox struct {
-	Element
+	Element `yaml:",inline"`
 }
 
 func NewEnvBox(title string, subtitle string) *EnvBox {

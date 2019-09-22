@@ -61,16 +61,23 @@ func (this *IndexAction) RunPost(params struct {
 		this.Fail("无法读取Board配置")
 	}
 
-	dbEnabled := teadb.SharedDB().Test() == nil
-	engine := scripts.NewEngine()
-	engine.SetDBEnabled(dbEnabled)
-
-	if !dbEnabled {
+	if !teadb.SharedDB().IsAvailable() {
 		this.Data["charts" ] = []interface{}{}
 		this.Data["output"] = []string{}
 		this.Data["error"] = "当前数据库不可用，无法展示图表"
 		this.Success()
 	}
+
+	dbEnabled := teadb.SharedDB().Test() == nil
+	if !dbEnabled {
+		this.Data["charts" ] = []interface{}{}
+		this.Data["output"] = []string{}
+		this.Data["error"] = "当前数据库无法连接，无法展示图表"
+		this.Success()
+	}
+
+	engine := scripts.NewEngine()
+	engine.SetDBEnabled(dbEnabled)
 
 	for _, c := range board.Charts {
 		app := agent.FindApp(c.AppId)

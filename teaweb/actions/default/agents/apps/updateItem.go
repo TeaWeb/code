@@ -87,7 +87,7 @@ func (this *UpdateItemAction) Run(params struct {
 			groups1 = append(groups1, form.Groups[0])
 		} else {
 			groups1 = append(groups1, form.Groups[0])
-			for i := 1; i < countGroups; i ++ {
+			for i := 1; i < countGroups; i++ {
 				groups2 = append(groups2, form.Groups[i])
 			}
 		}
@@ -224,10 +224,13 @@ func (this *UpdateItemAction) RunPost(params struct {
 	}))
 
 	if app.IsSharedWithGroup {
-		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("UPDATE_ITEM", maps.Map{
+		err = agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("UPDATE_ITEM", maps.Map{
 			"appId":  app.Id,
 			"itemId": params.ItemId,
 		}), nil)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	this.Success()
