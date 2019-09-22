@@ -72,6 +72,9 @@ func (this *UpdateItemAction) Run(params struct {
 		if form == nil {
 			continue
 		}
+		form.ComposedAttrs = map[string]string{
+			"v-show": "sourceCode == '" + sourceInstance.Code() + "'",
+		}
 		if sourceInstance.Code() == item.SourceCode {
 			form.Init(item.SourceOptions)
 		}
