@@ -1061,6 +1061,11 @@ func (this *Request) SetHost(host string) {
 	this.host = host
 }
 
+// 设置原始的scheme
+func (this *Request) SetRawScheme(scheme string) {
+	this.rawScheme = scheme
+}
+
 // 获取原始的请求
 func (this *Request) Raw() *http.Request {
 	return this.raw

@@ -14,6 +14,7 @@ func init() {
 			Helper(&helpers.UserMustAuth{
 				Grant: configs.AdminGrantProxy,
 			}).
+			Helper(new(Helper)).
 			Helper(new(proxy.Helper)).
 			Get("/data", new(DataAction)).
 			GetPost("/add", new(AddAction)).

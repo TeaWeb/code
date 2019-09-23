@@ -47,10 +47,6 @@ func (this *AddAction) RunPost(params struct {
 
 	Name string
 
-	CondParams []string
-	CondOps    []string
-	CondValues []string
-
 	IPRangeTypeList     []string `alias:"ipRangeTypeList"`
 	IPRangeFromList     []string `alias:"ipRangeFromList"`
 	IPRangeToList       []string `alias:"ipRangeToList"`
@@ -79,21 +75,11 @@ func (this *AddAction) RunPost(params struct {
 	group.Name = params.Name
 
 	// 匹配条件
-	if len(params.CondParams) > 0 {
-		for index, param := range params.CondParams {
-			if index < len(params.CondOps) && index < len(params.CondValues) {
-				cond := teaconfigs.NewRequestCond()
-				cond.Param = param
-				cond.Value = params.CondValues[index]
-				cond.Operator = params.CondOps[index]
-				err := cond.Validate()
-				if err != nil {
-					this.Fail("匹配条件\"" + cond.Param + " " + cond.Value + "\"校验失败：" + err.Error())
-				}
-				group.AddCond(cond)
-			}
-		}
+	conds, breakCond, err := proxyutils.ParseRequestConds(this.Request, "request")
+	if err != nil {
+		this.Fail("匹配条件\"" + breakCond.Param + " " + breakCond.Operator + " " + breakCond.Value + "\"校验失败：" + err.Error())
 	}
+	group.Cond = conds
 
 	// IP范围
 	if len(params.IPRangeTypeList) > 0 {
@@ -151,7 +137,7 @@ func (this *AddAction) RunPost(params struct {
 
 	// 保存
 	server.AddRequestGroup(group)
-	err := server.Save()
+	err = server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

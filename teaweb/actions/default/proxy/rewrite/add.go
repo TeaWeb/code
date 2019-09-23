@@ -2,6 +2,7 @@ package rewrite
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/locationutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
@@ -22,11 +23,17 @@ func (this *AddAction) Run(params struct {
 		this.Fail("找不到Server")
 	}
 
-	this.Data["server"] = maps.Map{
-		"id": params.ServerId,
-	}
+	this.Data["server"] = proxyutils.WrapServerData(server)
 	this.Data["from"] = params.From
 	this.Data["locationId"] = params.LocationId
+	this.Data["location"] = nil
+
+	if len(params.LocationId) > 0 {
+		location := server.FindLocation(params.LocationId)
+		if location != nil {
+			locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "rewrite")
+		}
+	}
 
 	// 已经有的代理服务
 	proxyConfigs := teaconfigs.LoadServerConfigsFromDir(Tea.ConfigDir())
@@ -81,9 +88,6 @@ func (this *AddAction) RunPost(params struct {
 	ProxyId      string
 	TargetType   string
 	RedirectMode string
-	CondParams   []string
-	CondOps      []string
-	CondValues   []string
 	IsBreak      bool
 	IsPermanent  bool
 	ProxyHost    string
@@ -138,21 +142,12 @@ func (this *AddAction) RunPost(params struct {
 		rewriteRule.AddFlag(params.RedirectMode, nil)
 	}
 
-	if len(params.CondParams) > 0 {
-		for index, param := range params.CondParams {
-			if index < len(params.CondOps) && index < len(params.CondValues) {
-				cond := teaconfigs.NewRequestCond()
-				cond.Param = param
-				cond.Value = params.CondValues[index]
-				cond.Operator = params.CondOps[index]
-				err = cond.Validate()
-				if err != nil {
-					this.Fail("匹配条件\"" + cond.Param + " " + cond.Value + "\"校验失败：" + err.Error())
-				}
-				rewriteRule.AddCond(cond)
-			}
-		}
+	// 匹配条件
+	conds, breakCond, err := proxyutils.ParseRequestConds(this.Request, "request")
+	if err != nil {
+		this.Fail("匹配条件\"" + breakCond.Param + " " + breakCond.Operator + " " + breakCond.Value + "\"校验失败：" + err.Error())
 	}
+	rewriteRule.Cond = conds
 
 	rewriteRule.IsBreak = params.IsBreak
 	rewriteRule.IsPermanent = params.IsPermanent

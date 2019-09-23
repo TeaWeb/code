@@ -3,6 +3,7 @@ package rewrite
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaproxy"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"net/http"
 	"regexp"
@@ -17,9 +18,6 @@ func (this *TestAction) Run(params struct {
 	ProxyId      string
 	TargetType   string
 	RedirectMode string
-	CondParams   []string
-	CondOps      []string
-	CondValues   []string
 	TestingPath  string
 	Must         *actions.Must
 }) {
@@ -46,23 +44,14 @@ func (this *TestAction) Run(params struct {
 		rewriteRule.AddFlag(params.RedirectMode, nil)
 	}
 
-	if len(params.CondParams) > 0 {
-		for index, param := range params.CondParams {
-			if index < len(params.CondOps) && index < len(params.CondValues) {
-				cond := teaconfigs.NewRequestCond()
-				cond.Param = param
-				cond.Value = params.CondValues[index]
-				cond.Operator = params.CondOps[index]
-				err := cond.Validate()
-				if err != nil {
-					this.Fail("匹配条件\"" + cond.Param + " " + cond.Value + "\"校验失败：" + err.Error())
-				}
-				rewriteRule.AddCond(cond)
-			}
-		}
+	// 匹配条件
+	conds, breakCond, err := proxyutils.ParseRequestConds(this.Request, "request")
+	if err != nil {
+		this.Fail("匹配条件\"" + breakCond.Param + " " + breakCond.Operator + " " + breakCond.Value + "\"校验失败：" + err.Error())
 	}
+	rewriteRule.Cond = conds
 
-	err := rewriteRule.Validate()
+	err = rewriteRule.Validate()
 	if err != nil {
 		this.Fail("校验失败：" + err.Error())
 	}
@@ -74,6 +63,7 @@ func (this *TestAction) Run(params struct {
 	req := teaproxy.NewRequest(rawReq)
 	req.SetURI(params.TestingPath)
 	req.SetHost(rawReq.Host)
+	req.SetRawScheme(rawReq.URL.Scheme)
 	replace, mapping, ok := rewriteRule.Match(rawReq.URL.Path, func(source string) string {
 		if req == nil {
 			return source

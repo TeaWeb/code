@@ -67,7 +67,7 @@ func (this *AccessLogStoragePolicyList) Save() error {
 // 查找所有的策略列表
 func (this *AccessLogStoragePolicyList) FindAllPolicies() []*AccessLogStoragePolicy {
 	shared.Locker.Lock()
-	defer shared.Locker.WriteUnlockNotify()
+	defer shared.Locker.WriteUnlock()
 
 	result := []*AccessLogStoragePolicy{}
 	for _, id := range this.Ids {

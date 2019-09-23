@@ -31,7 +31,7 @@ func (this *UpdateAction) Run(params struct {
 
 	this.Data["isTCP"] = server.IsTCP()
 	this.Data["isHTTP"] = server.IsHTTP()
-	
+
 	this.Data["locationId"] = params.LocationId
 	this.Data["websocket"] = params.Websocket
 
@@ -55,10 +55,6 @@ func (this *UpdateAction) RunPost(params struct {
 	GroupId  string
 
 	Name string
-
-	CondParams []string
-	CondOps    []string
-	CondValues []string
 
 	IPRangeTypeList     []string `alias:"ipRangeTypeList"`
 	IPRangeFromList     []string `alias:"ipRangeFromList"`
@@ -96,21 +92,11 @@ func (this *UpdateAction) RunPost(params struct {
 	group.ResponseHeaders = []*shared.HeaderConfig{}
 
 	// 匹配条件
-	if len(params.CondParams) > 0 {
-		for index, param := range params.CondParams {
-			if index < len(params.CondOps) && index < len(params.CondValues) {
-				cond := teaconfigs.NewRequestCond()
-				cond.Param = param
-				cond.Value = params.CondValues[index]
-				cond.Operator = params.CondOps[index]
-				err := cond.Validate()
-				if err != nil {
-					this.Fail("匹配条件\"" + cond.Param + " " + cond.Value + "\"校验失败：" + err.Error())
-				}
-				group.AddCond(cond)
-			}
-		}
+	conds, breakCond, err := proxyutils.ParseRequestConds(this.Request, "request")
+	if err != nil {
+		this.Fail("匹配条件\"" + breakCond.Param + " " + breakCond.Operator + " " + breakCond.Value + "\"校验失败：" + err.Error())
 	}
+	group.Cond = conds
 
 	// IP范围
 	if len(params.IPRangeTypeList) > 0 {
@@ -167,7 +153,7 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 
 	// 保存
-	err := server.Save()
+	err = server.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}
