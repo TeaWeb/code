@@ -33,7 +33,7 @@ func (this *AddAction) Run(params struct {
 	this.Data["locationId"] = params.LocationId
 	this.Data["websocket"] = params.Websocket
 
-	this.Data["operators"] = teaconfigs.AllRequestOperators()
+	this.Data["operators"] = shared.AllRequestOperators()
 
 	// 请求变量
 	this.Data["variables"] = proxyutils.DefaultRequestVariables()

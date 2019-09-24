@@ -1,4 +1,4 @@
-package teaconfigs
+package shared
 
 import (
 	"github.com/iwind/TeaGo/types"

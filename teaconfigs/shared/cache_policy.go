@@ -30,6 +30,8 @@ type CachePolicy struct {
 	SkipResponseSetCookie          bool     `yaml:"skipSetCookie" json:"skipSetCookie"`                       // 是否跳过响应的Set-Cookie Header
 	EnableRequestCachePragma       bool     `yaml:"enableRequestCachePragma" json:"enableRequestCachePragma"` // 是否支持客户端的Pragma: no-cache
 
+	Cond []*RequestCond `yaml:"cond" json:"cond"`
+
 	life     time.Duration
 	maxSize  float64
 	capacity float64
@@ -58,7 +60,9 @@ func NewCachePolicyFromFile(file string) *CachePolicy {
 		logs.Error(err)
 		return nil
 	}
-	defer reader.Close()
+	defer func() {
+		_ = reader.Close()
+	}()
 
 	p := NewCachePolicy()
 	err = reader.ReadYAML(p)
@@ -80,6 +84,16 @@ func (this *CachePolicy) Validate() error {
 	this.uppercaseSkipCacheControlValues = []string{}
 	for _, value := range this.SkipResponseCacheControlValues {
 		this.uppercaseSkipCacheControlValues = append(this.uppercaseSkipCacheControlValues, strings.ToUpper(value))
+	}
+
+	// cond
+	if len(this.Cond) > 0 {
+		for _, cond := range this.Cond {
+			err := cond.Validate()
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return err
@@ -113,7 +127,9 @@ func (this *CachePolicy) Save() error {
 	if err != nil {
 		return err
 	}
-	defer writer.Close()
+	defer func() {
+		_ = writer.Close()
+	}()
 	_, err = writer.WriteYAML(this)
 	return err
 }

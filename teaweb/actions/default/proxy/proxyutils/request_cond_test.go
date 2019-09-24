@@ -1,7 +1,7 @@
 package proxyutils
 
 import (
-	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/logs"
 	"net/http"
 	"net/url"
@@ -26,7 +26,7 @@ func TestParseRequestConds(t *testing.T) {
 	}
 	{
 		req.Form.Add("request_condParams", "${arg.name}")
-		req.Form.Add("request_condOperators", teaconfigs.RequestCondOperatorRegexp)
+		req.Form.Add("request_condOperators", shared.RequestCondOperatorRegexp)
 		req.Form.Add("request_condValues", "\\w+")
 	}
 	t.Log(req.Form)

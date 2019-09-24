@@ -41,7 +41,7 @@ func (this *UpdateAction) Run(params struct {
 	}
 
 	this.Data["group"] = group
-	this.Data["operators"] = teaconfigs.AllRequestOperators()
+	this.Data["operators"] = shared.AllRequestOperators()
 
 	// 请求变量
 	this.Data["variables"] = proxyutils.DefaultRequestVariables()
@@ -86,7 +86,7 @@ func (this *UpdateAction) RunPost(params struct {
 		Require("请输入分组名")
 
 	group.Name = params.Name
-	group.Cond = []*teaconfigs.RequestCond{}
+	group.Cond = []*shared.RequestCond{}
 	group.IPRanges = []*teaconfigs.IPRangeConfig{}
 	group.RequestHeaders = []*shared.HeaderConfig{}
 	group.ResponseHeaders = []*shared.HeaderConfig{}

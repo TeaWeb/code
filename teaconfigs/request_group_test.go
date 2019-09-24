@@ -1,6 +1,7 @@
 package teaconfigs
 
 import (
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/iwind/TeaGo/assert"
 	"testing"
 )
@@ -94,9 +95,9 @@ func TestRequestGroup_Match(t *testing.T) {
 	{
 		group := NewRequestGroup()
 		{
-			cond := NewRequestCond()
+			cond := shared.NewRequestCond()
 			cond.Param = "${arg.id}"
-			cond.Operator = RequestCondOperatorGt
+			cond.Operator = shared.RequestCondOperatorGt
 			cond.Value = "19"
 			group.AddCond(cond)
 		}

@@ -24,6 +24,15 @@ func ProcessBeforeRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter
 		return true
 	}
 
+	// 匹配条件
+	if len(cacheConfig.Cond) > 0 {
+		for _, cond := range cacheConfig.Cond {
+			if !cond.Match(req.Format) {
+				return true
+			}
+		}
+	}
+
 	// 支持请求中使用Pragma或Cache-Control
 	if cacheConfig.EnableRequestCachePragma {
 		if req.Raw().Header.Get("Cache-Control") == "no-cache" || req.Raw().Header.Get("Pragma") == "no-cache" {

@@ -2,6 +2,7 @@ package rewrite
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/locations/locationutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/Tea"
@@ -70,7 +71,7 @@ func (this *AddAction) Run(params struct {
 	}
 
 	// 运算符
-	this.Data["operators"] = teaconfigs.AllRequestOperators()
+	this.Data["operators"] = shared.AllRequestOperators()
 
 	// 请求变量
 	this.Data["variables"] = proxyutils.DefaultRequestVariables()

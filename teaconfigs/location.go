@@ -64,7 +64,7 @@ type LocationConfig struct {
 	// - cond ${status} gte 200
 	// - cond ${arg.name} eq lily
 	// - cond ${requestPath} regexp .*\.png
-	Cond []*RequestCond `yaml:"cond" json:"cond"`
+	Cond []*shared.RequestCond `yaml:"cond" json:"cond"`
 
 	Pages          []*PageConfig `yaml:"pages" json:"pages"`                   // 特殊页
 	ShutdownPageOn bool          `yaml:"shutdownPageOn" json:"shutdownPageOn"` // 是否开启临时关闭页面
@@ -494,7 +494,7 @@ func (this *LocationConfig) RefersProxy(proxyId string) bool {
 }
 
 // 添加过滤条件
-func (this *LocationConfig) AddCond(cond *RequestCond) {
+func (this *LocationConfig) AddCond(cond *shared.RequestCond) {
 	this.Cond = append(this.Cond, cond)
 }
 

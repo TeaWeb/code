@@ -1,14 +1,14 @@
 package proxyutils
 
 import (
-	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"net/http"
 	"strings"
 )
 
 // 从请求中分析请求匹配条件
-func ParseRequestConds(req *http.Request, prefix string) (conds []*teaconfigs.RequestCond, breakCond *teaconfigs.RequestCond, err error) {
-	conds = []*teaconfigs.RequestCond{}
+func ParseRequestConds(req *http.Request, prefix string) (conds []*shared.RequestCond, breakCond *shared.RequestCond, err error) {
+	conds = []*shared.RequestCond{}
 
 	params, ok := req.Form[prefix+"_condParams"]
 	if !ok || len(params) == 0 {
@@ -18,7 +18,7 @@ func ParseRequestConds(req *http.Request, prefix string) (conds []*teaconfigs.Re
 	operators, _ := req.Form[prefix+"_condOperators"]
 	values, _ := req.Form[prefix+"_condValues"]
 	for index, param := range params {
-		cond := teaconfigs.NewRequestCond()
+		cond := shared.NewRequestCond()
 		cond.Param = strings.TrimSpace(param)
 
 		if index < len(operators) {

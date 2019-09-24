@@ -2,6 +2,7 @@ package locations
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
@@ -37,7 +38,7 @@ func (this *AddAction) Run(params struct {
 	this.Data["accessLogs"] = proxyutils.FormatAccessLog([]*teaconfigs.AccessLogConfig{accessLog})
 
 	// 运算符
-	this.Data["operators"] = teaconfigs.AllRequestOperators()
+	this.Data["operators"] = shared.AllRequestOperators()
 
 	// 变量
 	this.Data["variables"] = proxyutils.DefaultRequestVariables()

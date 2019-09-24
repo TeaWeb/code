@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/types"
 )
@@ -16,6 +17,10 @@ func (this *CreatePolicyAction) Run(params struct{}) {
 	this.Data["types"] = teacache.AllCacheTypes()
 
 	this.Data["skippedCacheControlValues"] = shared.DefaultSkippedResponseCacheControlValues
+
+	// 匹配条件运算符
+	this.Data["condOperators"] = shared.AllRequestOperators()
+	this.Data["condVariables"] = proxyutils.DefaultRequestVariables()
 
 	this.Show()
 }
@@ -107,7 +112,14 @@ func (this *CreatePolicyAction) RunPost(params struct {
 		}
 	}
 
-	err := policy.Save()
+	// 匹配条件
+	conds, breakCond, err := proxyutils.ParseRequestConds(this.Request, "request")
+	if err != nil {
+		this.Fail("匹配条件\"" + breakCond.Param + " " + breakCond.Operator + " " + breakCond.Value + "\"校验失败：" + err.Error())
+	}
+	policy.Cond = conds
+
+	err = policy.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}
