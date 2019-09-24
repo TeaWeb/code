@@ -280,7 +280,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 		// waf
 		if server.WAFOn {
 			waf := server.WAF()
-			if waf != nil && waf.On {
+			if waf != nil && waf.On && waf.MatchConds(this.Format) {
 				this.waf = waf
 			}
 		} else {
@@ -377,7 +377,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 
 				if location.WAFOn {
 					waf := location.WAF()
-					if waf != nil && waf.On {
+					if waf != nil && waf.On && waf.MatchConds(this.Format) {
 						this.waf = waf
 					}
 				} else {

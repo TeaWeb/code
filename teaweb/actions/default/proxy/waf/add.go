@@ -2,9 +2,11 @@ package waf
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teawaf"
 	actions2 "github.com/TeaWeb/code/teawaf/actions"
 	"github.com/TeaWeb/code/teawaf/rules"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/files"
@@ -28,6 +30,10 @@ func (this *AddAction) RunGet(params struct{}) {
 			"isChecked": g.On,
 		}
 	})
+
+	// 匹配条件运算符
+	this.Data["condOperators"] = shared.AllRequestOperators()
+	this.Data["condVariables"] = proxyutils.DefaultRequestVariables()
 
 	this.Show()
 }
@@ -63,6 +69,13 @@ func (this *AddAction) RunPost(params struct {
 		URL:        params.BlockURL,
 	}
 
+	// 匹配条件
+	conds, breakCond, err := proxyutils.ParseRequestConds(this.Request, "request")
+	if err != nil {
+		this.Fail("匹配条件\"" + breakCond.Param + " " + breakCond.Operator + " " + breakCond.Value + "\"校验失败：" + err.Error())
+	}
+	waf.Cond = conds
+
 	template := teawaf.Template()
 
 	for _, g := range template.Inbound {
@@ -78,7 +91,7 @@ func (this *AddAction) RunPost(params struct {
 	}
 
 	filename := "waf." + waf.Id + ".conf"
-	err := waf.Save(Tea.ConfigFile(filename))
+	err = waf.Save(Tea.ConfigFile(filename))
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}

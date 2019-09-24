@@ -2,6 +2,7 @@ package teawaf
 
 import (
 	"errors"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf/actions"
@@ -17,12 +18,13 @@ import (
 )
 
 type WAF struct {
-	Id             string             `yaml:"id" json:"id"`
-	On             bool               `yaml:"on" json:"on"`
-	Name           string             `yaml:"name" json:"name"`
-	Inbound        []*rules.RuleGroup `yaml:"inbound" json:"inbound"`
-	Outbound       []*rules.RuleGroup `yaml:"outbound" json:"outbound"`
-	CreatedVersion string             `yaml:"createdVersion" json:"createdVersion"`
+	Id             string                `yaml:"id" json:"id"`
+	On             bool                  `yaml:"on" json:"on"`
+	Name           string                `yaml:"name" json:"name"`
+	Inbound        []*rules.RuleGroup    `yaml:"inbound" json:"inbound"`
+	Outbound       []*rules.RuleGroup    `yaml:"outbound" json:"outbound"`
+	CreatedVersion string                `yaml:"createdVersion" json:"createdVersion"`
+	Cond           []*shared.RequestCond `yaml:"cond" json:"cond"`
 
 	ActionBlock *actions.BlockAction `yaml:"actionBlock" json:"actionBlock"` // action block config
 
@@ -102,6 +104,16 @@ func (this *WAF) Init() error {
 			}
 
 			err := group.Init()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// validate conds
+	if len(this.Cond) > 0 {
+		for _, cond := range this.Cond {
+			err := cond.Validate()
 			if err != nil {
 				return err
 			}
@@ -436,4 +448,17 @@ func (this *WAF) MatchKeyword(keyword string) (matched bool, name string, tags [
 		name = this.Name
 	}
 	return
+}
+
+// match cond
+func (this *WAF) MatchConds(formatter func(string) string) bool {
+	if len(this.Cond) == 0 {
+		return true
+	}
+	for _, cond := range this.Cond {
+		if !cond.Match(formatter) {
+			return false
+		}
+	}
+	return true
 }

@@ -27,6 +27,7 @@ func (this *DetailAction) RunGet(params struct {
 		"countOutbound": waf.CountOutboundRuleSets(),
 		"on":            waf.On,
 		"actionBlock":   waf.ActionBlock,
+		"cond":          waf.Cond,
 	}
 
 	this.Data["groups"] = lists.Map(teawaf.Template().Inbound, func(k int, v interface{}) interface{} {
