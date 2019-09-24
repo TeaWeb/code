@@ -8,6 +8,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	shared2 "github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teadb"
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
@@ -129,7 +130,7 @@ func (this *PushAction) processItemEvent(agent *agents.AgentConfig, m maps.Map, 
 	}
 
 	// 处理消息中的变量
-	message = teaconfigs.RegexpNamedVariable.ReplaceAllStringFunc(message, func(s string) string {
+	message = shared2.RegexpNamedVariable.ReplaceAllStringFunc(message, func(s string) string {
 		result, err := agents.EvalParam(s, v, oldValue, maps.Map{
 			"AGENT": maps.Map{
 				"name": agent.Name,

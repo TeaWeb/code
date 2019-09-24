@@ -1,8 +1,13 @@
 package shared
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	"net"
 	"regexp"
 	"strings"
 )
@@ -22,8 +27,14 @@ type RequestCond struct {
 	// 对比
 	Value string `yaml:"value" json:"value"`
 
+	isInt   bool
+	isFloat bool
+	isIP    bool
+
 	regValue   *regexp.Regexp
 	floatValue float64
+	ipValue    net.IP
+	arrayValue []string
 }
 
 // 取得新对象
@@ -35,14 +46,78 @@ func NewRequestCond() *RequestCond {
 
 // 校验配置
 func (this *RequestCond) Validate() error {
-	if this.Operator == RequestCondOperatorRegexp || this.Operator == RequestCondOperatorNotRegexp {
+	this.isInt = RegexpDigitNumber.MatchString(this.Value)
+	this.isFloat = RegexpFloatNumber.MatchString(this.Value)
+
+	if lists.ContainsString([]string{
+		RequestCondOperatorRegexp,
+		RequestCondOperatorNotRegexp,
+	}, this.Operator) {
 		reg, err := regexp.Compile(this.Value)
 		if err != nil {
 			return err
 		}
 		this.regValue = reg
-	} else if this.Operator == RequestCondOperatorGt || this.Operator == RequestCondOperatorGte || this.Operator == RequestCondOperatorLt || this.Operator == RequestCondOperatorLte {
+	} else if lists.ContainsString([]string{
+		RequestCondOperatorEqFloat,
+		RequestCondOperatorGtFloat,
+		RequestCondOperatorGteFloat,
+		RequestCondOperatorLtFloat,
+		RequestCondOperatorLteFloat,
+	}, this.Operator) {
 		this.floatValue = types.Float64(this.Value)
+	} else if lists.ContainsString([]string{
+		RequestCondOperatorEqIP,
+		RequestCondOperatorGtIP,
+		RequestCondOperatorGteIP,
+		RequestCondOperatorLtIP,
+		RequestCondOperatorLteIP,
+	}, this.Operator) {
+		this.ipValue = net.ParseIP(this.Value)
+		this.isIP = this.ipValue != nil
+
+		if !this.isIP {
+			return errors.New("value should be a valid ip")
+		}
+	} else if lists.ContainsString([]string{
+		RequestCondOperatorIPInRange,
+	}, this.Operator) {
+		if strings.Contains(this.Value, ",") {
+			ipList := strings.SplitN(this.Value, ",", 2)
+			ipString1 := strings.TrimSpace(ipList[0])
+			ipString2 := strings.TrimSpace(ipList[1])
+
+			if len(ipString1) > 0 {
+				ip1 := net.ParseIP(ipString1)
+				if ip1 == nil {
+					return errors.New("start ip is invalid")
+				}
+			}
+
+			if len(ipString2) > 0 {
+				ip2 := net.ParseIP(ipString2)
+				if ip2 == nil {
+					return errors.New("end ip is invalid")
+				}
+			}
+		} else if strings.Contains(this.Value, "/") {
+			_, _, err := net.ParseCIDR(this.Value)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New("invalid ip range")
+		}
+	} else if lists.ContainsString([]string{
+		RequestCondOperatorIn,
+		RequestCondOperatorNotIn,
+	}, this.Operator) {
+		stringsValue := []string{}
+		err := json.Unmarshal([]byte(this.Value), &stringsValue)
+		if err != nil {
+			return err
+		}
+		this.arrayValue = stringsValue
 	}
 	return nil
 }
@@ -61,26 +136,108 @@ func (this *RequestCond) Match(formatter func(source string) string) bool {
 			return false
 		}
 		return !this.regValue.MatchString(paramValue)
-	case RequestCondOperatorGt:
-		return types.Float64(paramValue) > this.floatValue
-	case RequestCondOperatorGte:
-		return types.Float64(paramValue) >= this.floatValue
-	case RequestCondOperatorLt:
-		return types.Float64(paramValue) < this.floatValue
-	case RequestCondOperatorLte:
-		return types.Float64(paramValue) <= this.floatValue
-	case RequestCondOperatorEq:
+	case RequestCondOperatorEqInt:
+		return this.isInt && paramValue == this.Value
+	case RequestCondOperatorEqFloat:
+		return this.isFloat && types.Float64(paramValue) == this.floatValue
+	case RequestCondOperatorGtFloat:
+		return this.isFloat && types.Float64(paramValue) > this.floatValue
+	case RequestCondOperatorGteFloat:
+		return this.isFloat && types.Float64(paramValue) >= this.floatValue
+	case RequestCondOperatorLtFloat:
+		return this.isFloat && types.Float64(paramValue) < this.floatValue
+	case RequestCondOperatorLteFloat:
+		return this.isFloat && types.Float64(paramValue) <= this.floatValue
+	case RequestCondOperatorEqString:
 		return paramValue == this.Value
-	case RequestCondOperatorNot:
+	case RequestCondOperatorNeqString:
 		return paramValue != this.Value
-	case RequestCondOperatorPrefix:
+	case RequestCondOperatorHasPrefix:
 		return strings.HasPrefix(paramValue, this.Value)
-	case RequestCondOperatorSuffix:
+	case RequestCondOperatorHasSuffix:
 		return strings.HasSuffix(paramValue, this.Value)
-	case RequestCondOperatorContains:
+	case RequestCondOperatorContainsString:
 		return strings.Contains(paramValue, this.Value)
-	case RequestCondOperatorNotContains:
+	case RequestCondOperatorNotContainsString:
 		return !strings.Contains(paramValue, this.Value)
+	case RequestCondOperatorEqIP:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false
+		}
+		return this.isIP && bytes.Compare(this.ipValue, ip) == 0
+	case RequestCondOperatorGtIP:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) > 0
+	case RequestCondOperatorGteIP:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) >= 0
+	case RequestCondOperatorLtIP:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) < 0
+	case RequestCondOperatorLteIP:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) <= 0
+	case RequestCondOperatorIPInRange:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false
+		}
+
+		// 检查IP范围格式
+		if strings.Contains(this.Value, ",") {
+			ipList := strings.SplitN(this.Value, ",", 2)
+			ipString1 := strings.TrimSpace(ipList[0])
+			ipString2 := strings.TrimSpace(ipList[1])
+
+			if len(ipString1) > 0 {
+				ip1 := net.ParseIP(ipString1)
+				if ip1 == nil {
+					return false
+				}
+
+				if bytes.Compare(ip, ip1) < 0 {
+					return false
+				}
+			}
+
+			if len(ipString2) > 0 {
+				ip2 := net.ParseIP(ipString2)
+				if ip2 == nil {
+					return false
+				}
+
+				if bytes.Compare(ip, ip2) > 0 {
+					return false
+				}
+			}
+
+			return true
+		} else if strings.Contains(this.Value, "/") {
+			_, ipNet, err := net.ParseCIDR(this.Value)
+			if err != nil {
+				return false
+			}
+			return ipNet.Contains(ip)
+		} else {
+			return false
+		}
+	case RequestCondOperatorIn:
+		return lists.ContainsString(this.arrayValue, paramValue)
+	case RequestCondOperatorNotIn:
+		return !lists.ContainsString(this.arrayValue, paramValue)
 	}
 	return false
 }

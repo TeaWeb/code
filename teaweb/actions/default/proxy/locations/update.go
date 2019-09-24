@@ -133,6 +133,7 @@ func (this *UpdateAction) RunPost(params struct {
 	if err != nil {
 		this.Fail("匹配条件\"" + breakCond.Param + " " + breakCond.Operator + " " + breakCond.Value + "\"校验失败：" + err.Error())
 	}
+
 	location.Cond = conds
 
 	location.SetPattern(params.Pattern, params.PatternType, params.IsCaseInsensitive, params.IsReverse)

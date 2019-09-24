@@ -6,18 +6,28 @@ import "github.com/iwind/TeaGo/maps"
 type RequestCondOperator = string
 
 const (
-	RequestCondOperatorRegexp      = "regexp"
-	RequestCondOperatorNotRegexp   = "not regexp"
-	RequestCondOperatorGt          = "gt"
-	RequestCondOperatorGte         = "gte"
-	RequestCondOperatorLt          = "lt"
-	RequestCondOperatorLte         = "lte"
-	RequestCondOperatorEq          = "eq"
-	RequestCondOperatorNot         = "not"
-	RequestCondOperatorPrefix      = "prefix"
-	RequestCondOperatorSuffix      = "suffix"
-	RequestCondOperatorContains    = "contains"
-	RequestCondOperatorNotContains = "not contains"
+	RequestCondOperatorRegexp            RequestCondOperator = "regexp"
+	RequestCondOperatorNotRegexp         RequestCondOperator = "not regexp"
+	RequestCondOperatorEqInt             RequestCondOperator = "eq int"   // 整数等于
+	RequestCondOperatorEqFloat           RequestCondOperator = "eq float" // 浮点数等于
+	RequestCondOperatorGtFloat           RequestCondOperator = "gt"
+	RequestCondOperatorGteFloat          RequestCondOperator = "gte"
+	RequestCondOperatorLtFloat           RequestCondOperator = "lt"
+	RequestCondOperatorLteFloat          RequestCondOperator = "lte"
+	RequestCondOperatorEqString          RequestCondOperator = "eq"
+	RequestCondOperatorNeqString         RequestCondOperator = "not"
+	RequestCondOperatorHasPrefix         RequestCondOperator = "prefix"
+	RequestCondOperatorHasSuffix         RequestCondOperator = "suffix"
+	RequestCondOperatorContainsString    RequestCondOperator = "contains"
+	RequestCondOperatorNotContainsString RequestCondOperator = "not contains"
+	RequestCondOperatorIn                RequestCondOperator = "in"
+	RequestCondOperatorNotIn             RequestCondOperator = "not in"
+	RequestCondOperatorEqIP              RequestCondOperator = "eq ip"
+	RequestCondOperatorGtIP              RequestCondOperator = "gt ip"
+	RequestCondOperatorGteIP             RequestCondOperator = "gte ip"
+	RequestCondOperatorLtIP              RequestCondOperator = "lt ip"
+	RequestCondOperatorLteIP             RequestCondOperator = "lte ip"
+	RequestCondOperatorIPInRange         RequestCondOperator = "ip range"
 )
 
 // 所有的运算符
@@ -34,64 +44,104 @@ func AllRequestOperators() []maps.Map {
 			"description": "判断是否正则表达式不匹配",
 		},
 		{
-			"name":        "等于",
-			"op":          RequestCondOperatorEq,
+			"name":        "字符串等于",
+			"op":          RequestCondOperatorEqString,
 			"description": "使用字符串对比参数值是否相等于某个值",
 		},
 		{
-			"name":        "前缀",
-			"op":          RequestCondOperatorPrefix,
+			"name":        "字符串前缀",
+			"op":          RequestCondOperatorHasPrefix,
 			"description": "参数值包含某个前缀",
 		},
 		{
-			"name":        "后缀",
-			"op":          RequestCondOperatorSuffix,
+			"name":        "字符串后缀",
+			"op":          RequestCondOperatorHasSuffix,
 			"description": "参数值包含某个后缀",
 		},
 		{
-			"name":        "包含",
-			"op":          RequestCondOperatorContains,
+			"name":        "字符串包含",
+			"op":          RequestCondOperatorContainsString,
 			"description": "参数值包含另外一个字符串",
 		},
 		{
-			"name":        "不包含",
-			"op":          RequestCondOperatorNotContains,
+			"name":        "字符串不包含",
+			"op":          RequestCondOperatorNotContainsString,
 			"description": "参数值不包含另外一个字符串",
 		},
 		{
-			"name":        "不等于",
-			"op":          RequestCondOperatorNot,
+			"name":        "字符串不等于",
+			"op":          RequestCondOperatorNeqString,
 			"description": "使用字符串对比参数值是否不相等于某个值",
 		},
 		{
-			"name":        "大于",
-			"op":          RequestCondOperatorGt,
+			"name":        "在列表中",
+			"op":          RequestCondOperatorIn,
+			"description": "判断参数值在某个列表中",
+		},
+		{
+			"name":        "不在列表中",
+			"op":          RequestCondOperatorNotIn,
+			"description": "判断参数值不在某个列表中",
+		},
+		{
+			"name":        "整数等于",
+			"op":          RequestCondOperatorEqInt,
+			"description": "将参数转换为整数数字后进行对比",
+		},
+		{
+			"name":        "浮点数等于",
+			"op":          RequestCondOperatorEqFloat,
+			"description": "将参数转换为可以有小数的浮点数字进行对比",
+		},
+		{
+			"name":        "数字大于",
+			"op":          RequestCondOperatorGtFloat,
 			"description": "将参数转换为数字进行对比",
 		},
 		{
-			"name":        "大于等于",
-			"op":          RequestCondOperatorGte,
+			"name":        "数字大于等于",
+			"op":          RequestCondOperatorGteFloat,
 			"description": "将参数转换为数字进行对比",
 		},
 		{
-			"name":        "小于",
-			"op":          RequestCondOperatorLt,
+			"name":        "数字小于",
+			"op":          RequestCondOperatorLtFloat,
 			"description": "将参数转换为数字进行对比",
 		},
 		{
-			"name":        "小于等于",
-			"op":          RequestCondOperatorLte,
+			"name":        "数字小于等于",
+			"op":          RequestCondOperatorLteFloat,
 			"description": "将参数转换为数字进行对比",
+		},
+		{
+			"name":        "IP等于",
+			"op":          RequestCondOperatorEqIP,
+			"description": "将参数转换为IP进行对比",
+		},
+		{
+			"name":        "IP大于",
+			"op":          RequestCondOperatorGtIP,
+			"description": "将参数转换为IP进行对比",
+		},
+		{
+			"name":        "IP大于等于",
+			"op":          RequestCondOperatorGteIP,
+			"description": "将参数转换为IP进行对比",
+		},
+		{
+			"name":        "IP小于",
+			"op":          RequestCondOperatorLtIP,
+			"description": "将参数转换为IP进行对比",
+		},
+		{
+			"name":        "IP小于等于",
+			"op":          RequestCondOperatorLteIP,
+			"description": "将参数转换为IP进行对比",
+		},
+		{
+			"name":        "IP范围",
+			"op":          RequestCondOperatorIPInRange,
+			"description": "IP在某个范围之内，范围格式可以是英文逗号分隔的ip1,ip2，或者CIDR格式的ip/bits",
 		},
 	}
-}
-
-// 查找某个运算符信息
-func FindRequestCondOperator(op string) maps.Map {
-	for _, o := range AllRequestOperators() {
-		if o["op"] == op {
-			return o
-		}
-	}
-	return nil
 }

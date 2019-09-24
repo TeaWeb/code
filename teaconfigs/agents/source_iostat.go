@@ -54,7 +54,10 @@ func (this *IOStatSource) Execute(params map[string]string) (value interface{}, 
 		Name: "ALL",
 	}
 
-	seconds := uint64(time.Since(this.lastTime).Seconds())
+	seconds := uint64(time.Now().Unix() - this.lastTime.Unix())
+	if seconds == 0 {
+		seconds = 1
+	}
 
 	for name, stat := range statMap {
 		lastStat, ok := this.lastStatMap[name]

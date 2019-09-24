@@ -2,6 +2,7 @@ package teaproxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
@@ -132,7 +133,7 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 		if server.Http {
 			for _, address := range server.Listen {
 				// 是否有端口
-				if teaconfigs.RegexpDigitNumber.MatchString(address) {
+				if shared.RegexpDigitNumber.MatchString(address) {
 					address = ":" + address
 				} else if _, _, err := net.SplitHostPort(address); err != nil {
 					address += ":80"
@@ -149,7 +150,7 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 			server.SSL.Validate()
 			for _, address := range server.SSL.Listen {
 				// 是否有端口
-				if teaconfigs.RegexpDigitNumber.MatchString(address) {
+				if shared.RegexpDigitNumber.MatchString(address) {
 					address = ":" + address
 				} else if _, _, err := net.SplitHostPort(address); err != nil {
 					address += ":443"
@@ -165,7 +166,7 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 		if server.TCP.TCPOn {
 			for _, address := range server.Listen {
 				// 是否有端口
-				if teaconfigs.RegexpDigitNumber.MatchString(address) {
+				if shared.RegexpDigitNumber.MatchString(address) {
 					address = ":" + address
 				} else if _, _, err := net.SplitHostPort(address); err != nil {
 					logs.Println("[proxy]invalid tcp address: '" + address + "'")
@@ -183,7 +184,7 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 			server.SSL.Validate()
 			for _, address := range server.SSL.Listen {
 				// 是否有端口
-				if teaconfigs.RegexpDigitNumber.MatchString(address) {
+				if shared.RegexpDigitNumber.MatchString(address) {
 					address = ":" + address
 				} else if _, _, err := net.SplitHostPort(address); err != nil {
 					logs.Println("[proxy]invalid tcp+tls address: '" + address + "'")

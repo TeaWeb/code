@@ -174,7 +174,7 @@ func (this *RewriteRule) TargetURL() string {
 
 // 判断是否是外部URL
 func (this *RewriteRule) IsExternalURL(url string) bool {
-	return RegexpExternalURL.MatchString(url)
+	return shared.RegexpExternalURL.MatchString(url)
 }
 
 // 添加Flag
