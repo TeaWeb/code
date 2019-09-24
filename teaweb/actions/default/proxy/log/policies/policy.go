@@ -32,6 +32,7 @@ func (this *PolicyAction) RunGet(params struct {
 		"typeName":     tealogs.FindStorageTypeName(policy.Type),
 		"templateCode": types.String(template),
 		"options":      policy.Options,
+		"cond":         policy.Cond,
 	}
 
 	this.Data["configItems"] = FindAllUsingPolicy(policy.Id)

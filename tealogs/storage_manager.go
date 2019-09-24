@@ -8,9 +8,33 @@ import (
 )
 
 // 存储策略相关
-var storageMap = map[string]StorageInterface{} // policyId => StorageInterface
-var storageNamesMap = map[string]string{}      // policyId => policy name
-var storageLocker = sync.Mutex{}
+var (
+	policyMap       = map[string]*teaconfigs.AccessLogStoragePolicy{} // policyId => policy
+	storageMap      = map[string]StorageInterface{}                   // policyId => StorageInterface
+	storageNamesMap = map[string]string{}                             // policyId => policy name
+	storageLocker   = sync.Mutex{}
+)
+
+// 通过策略ID查找策略
+func FindPolicy(policyId string) *teaconfigs.AccessLogStoragePolicy {
+	storageLocker.Lock()
+	defer storageLocker.Unlock()
+
+	policy, ok := policyMap[policyId]
+	if ok {
+		return policy
+	}
+
+	policy = teaconfigs.NewAccessLogStoragePolicyFromId(policyId)
+	if policy != nil {
+		err := policy.Validate()
+		if err != nil {
+			logs.Error(err)
+		}
+	}
+	policyMap[policyId] = policy
+	return policy
+}
 
 // 通过策略ID查找存储
 func FindPolicyStorage(policyId string) StorageInterface {
@@ -48,14 +72,24 @@ func ResetPolicyStorage(policyId string) {
 	storageLocker.Lock()
 	storage, ok := storageMap[policyId]
 	if ok {
+		delete(policyMap, policyId)
 		delete(storageMap, policyId)
 		delete(storageNamesMap, policyId)
 	}
 	storageLocker.Unlock()
 
 	if storage != nil {
-		storage.Close()
+		_ = storage.Close()
 	}
+}
+
+// 清除所有策略相关信息
+func ResetAllPolicies() {
+	storageLocker.Lock()
+	policyMap = map[string]*teaconfigs.AccessLogStoragePolicy{}
+	storageMap = map[string]StorageInterface{}
+	storageNamesMap = map[string]string{}
+	storageLocker.Unlock()
 }
 
 // 解析策略中的存储对象
@@ -81,7 +115,10 @@ func DecodePolicyStorage(policy *teaconfigs.AccessLogStoragePolicy) StorageInter
 		return nil
 	}
 
-	teautils.MapToObjectJSON(policy.Options, instance)
+	err := teautils.MapToObjectJSON(policy.Options, instance)
+	if err != nil {
+		logs.Error(err)
+	}
 
 	return instance
 }

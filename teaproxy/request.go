@@ -1324,7 +1324,21 @@ func (this *Request) log() {
 	if this.accessLog != nil {
 		accessLog.SetWritingFields(this.accessLog.Fields)
 		accessLog.StorageOnly = this.accessLog.StorageOnly
-		accessLog.StoragePolicyIds = this.accessLog.StoragePolicies
+
+		// 筛选策略
+		policyIds := this.accessLog.StoragePolicies
+		if len(policyIds) > 0 {
+			resultPolicyIds := []string{}
+			for _, policyId := range policyIds {
+				policy := tealogs.FindPolicy(policyId)
+				if policy == nil || !policy.On || !policy.MatchConds(this.Format) {
+					continue
+				}
+				resultPolicyIds = append(resultPolicyIds, policyId)
+			}
+			policyIds = resultPolicyIds
+		}
+		accessLog.StoragePolicyIds = policyIds
 	}
 
 	if this.server != nil {

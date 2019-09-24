@@ -17,8 +17,9 @@ type AccessLogStoragePolicy struct {
 	Id      string                 `yaml:"id" json:"id"`
 	Name    string                 `yaml:"name" json:"name"`
 	On      bool                   `yaml:"bool" json:"on"`
-	Type    string                 `yaml:"type" json:"type"`
+	Type    string                 `yaml:"type" json:"type"`       // 存储类型
 	Options map[string]interface{} `yaml:"options" json:"options"` // 存储选项
+	Cond    []*shared.RequestCond  `yaml:"cond" json:"cond"`       // 请求条件
 }
 
 // 创建新策略
@@ -44,6 +45,21 @@ func NewAccessLogStoragePolicyFromId(id string) *AccessLogStoragePolicy {
 		return nil
 	}
 	return policy
+}
+
+// 校验
+func (this *AccessLogStoragePolicy) Validate() error {
+	// cond
+	if len(this.Cond) > 0 {
+		for _, cond := range this.Cond {
+			err := cond.Validate()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // 保存
@@ -76,4 +92,17 @@ func (this *AccessLogStoragePolicy) MatchKeyword(keyword string) (matched bool, 
 		}
 	}
 	return
+}
+
+// 匹配条件
+func (this *AccessLogStoragePolicy) MatchConds(formatter func(string) string) bool {
+	if len(this.Cond) == 0 {
+		return true
+	}
+	for _, cond := range this.Cond {
+		if !cond.Match(formatter) {
+			return false
+		}
+	}
+	return true
 }

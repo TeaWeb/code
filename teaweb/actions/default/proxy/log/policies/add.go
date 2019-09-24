@@ -2,8 +2,10 @@ package policies
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/tealogs"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/cmd"
 )
@@ -16,6 +18,10 @@ func (this *AddAction) RunGet(params struct{}) {
 
 	this.Data["storages"] = tealogs.AllStorages()
 	this.Data["formats"] = tealogs.AllStorageFormats()
+
+	// 匹配条件运算符
+	this.Data["condOperators"] = shared.AllRequestOperators()
+	this.Data["condVariables"] = proxyutils.DefaultRequestVariables()
 
 	this.Show()
 }
@@ -151,10 +157,20 @@ func (this *AddAction) RunPost(params struct {
 	policy.On = params.On
 
 	options := map[string]interface{}{}
-	teautils.ObjectToMapJSON(instance, &options)
+	err := teautils.ObjectToMapJSON(instance, &options)
+	if err != nil {
+		this.Fail("保存失败：" + err.Error())
+	}
 	policy.Options = options
 
-	err := policy.Save()
+	// 匹配条件
+	conds, breakCond, err := proxyutils.ParseRequestConds(this.Request, "request")
+	if err != nil {
+		this.Fail("匹配条件\"" + breakCond.Param + " " + breakCond.Operator + " " + breakCond.Value + "\"校验失败：" + err.Error())
+	}
+	policy.Cond = conds
+
+	err = policy.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
 	}
