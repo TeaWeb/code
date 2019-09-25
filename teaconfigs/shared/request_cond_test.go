@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/iwind/TeaGo/assert"
 	"net"
+	"regexp"
 	"testing"
 )
 
@@ -437,7 +438,7 @@ func TestRequestCond_IP(t *testing.T) {
 	{
 		cond := RequestCond{
 			Param:    "192.168.0.100",
-			Operator: RequestCondOperatorIPInRange,
+			Operator: RequestCondOperatorIPRange,
 			Value:    "192.168.0.90,",
 		}
 		a.IsNil(cond.Validate())
@@ -449,7 +450,7 @@ func TestRequestCond_IP(t *testing.T) {
 	{
 		cond := RequestCond{
 			Param:    "192.168.0.100",
-			Operator: RequestCondOperatorIPInRange,
+			Operator: RequestCondOperatorIPRange,
 			Value:    "192.168.0.90,192.168.1.100",
 		}
 		a.IsNil(cond.Validate())
@@ -461,7 +462,7 @@ func TestRequestCond_IP(t *testing.T) {
 	{
 		cond := RequestCond{
 			Param:    "192.168.0.100",
-			Operator: RequestCondOperatorIPInRange,
+			Operator: RequestCondOperatorIPRange,
 			Value:    ",192.168.1.100",
 		}
 		a.IsNil(cond.Validate())
@@ -473,7 +474,7 @@ func TestRequestCond_IP(t *testing.T) {
 	{
 		cond := RequestCond{
 			Param:    "192.168.1.100",
-			Operator: RequestCondOperatorIPInRange,
+			Operator: RequestCondOperatorIPRange,
 			Value:    "192.168.0.90,192.168.1.99",
 		}
 		a.IsNil(cond.Validate())
@@ -485,7 +486,7 @@ func TestRequestCond_IP(t *testing.T) {
 	{
 		cond := RequestCond{
 			Param:    "192.168.1.100",
-			Operator: RequestCondOperatorIPInRange,
+			Operator: RequestCondOperatorIPRange,
 			Value:    "192.168.0.90/24",
 		}
 		a.IsNil(cond.Validate())
@@ -497,7 +498,7 @@ func TestRequestCond_IP(t *testing.T) {
 	{
 		cond := RequestCond{
 			Param:    "192.168.1.100",
-			Operator: RequestCondOperatorIPInRange,
+			Operator: RequestCondOperatorIPRange,
 			Value:    "192.168.0.90/18",
 		}
 		a.IsNil(cond.Validate())
@@ -509,7 +510,7 @@ func TestRequestCond_IP(t *testing.T) {
 	{
 		cond := RequestCond{
 			Param:    "192.168.1.100",
-			Operator: RequestCondOperatorIPInRange,
+			Operator: RequestCondOperatorIPRange,
 			Value:    "a/18",
 		}
 		a.IsNotNil(cond.Validate())
@@ -596,4 +597,178 @@ func TestRequestCond_In(t *testing.T) {
 			return source
 		}))
 	}
+}
+
+func TestRequestCond_File(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	{
+		cond := RequestCond{
+			Param:    "a",
+			Operator: RequestCondOperatorFileExt,
+			Value:    `["jpeg", "jpg", "png"]`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "a.gif",
+			Operator: RequestCondOperatorFileExt,
+			Value:    `["jpeg", "jpg", "png"]`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "a.png",
+			Operator: RequestCondOperatorFileExt,
+			Value:    `["jpeg", "jpg", "png"]`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+}
+
+func TestRequestCond_MimeType(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	{
+		cond := RequestCond{
+			Param:    "text/html; charset=utf-8",
+			Operator: RequestCondOperatorFileMimeType,
+			Value:    `["text/html"]`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "text/html; charset=utf-8",
+			Operator: RequestCondOperatorFileMimeType,
+			Value:    `["text/*"]`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "text/html; charset=utf-8",
+			Operator: RequestCondOperatorFileMimeType,
+			Value:    `["image/*"]`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "text/plain; charset=utf-8",
+			Operator: RequestCondOperatorFileMimeType,
+			Value:    `["text/html", "image/jpeg", "image/png"]`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+}
+
+func TestRequestCond_Version(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	{
+		cond := RequestCond{
+			Param:    "1.0",
+			Operator: RequestCondOperatorVersionRange,
+			Value:    `1.0,1.1`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "1.0",
+			Operator: RequestCondOperatorVersionRange,
+			Value:    `1.0,`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "1.0",
+			Operator: RequestCondOperatorVersionRange,
+			Value:    `,1.1`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "0.9",
+			Operator: RequestCondOperatorVersionRange,
+			Value:    `1.0,1.1`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "0.9",
+			Operator: RequestCondOperatorVersionRange,
+			Value:    `1.0`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "1.1",
+			Operator: RequestCondOperatorVersionRange,
+			Value:    `1.0`,
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+}
+
+func TestRequestCond_RegexpQuote(t *testing.T) {
+	t.Log(regexp.QuoteMeta("a"))
+	t.Log(regexp.QuoteMeta("*"))
+	t.Log(regexp.QuoteMeta("([\\d]).*"))
 }

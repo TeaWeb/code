@@ -8,6 +8,7 @@ import (
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"net"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -80,7 +81,7 @@ func (this *RequestCond) Validate() error {
 			return errors.New("value should be a valid ip")
 		}
 	} else if lists.ContainsString([]string{
-		RequestCondOperatorIPInRange,
+		RequestCondOperatorIPRange,
 	}, this.Operator) {
 		if strings.Contains(this.Value, ",") {
 			ipList := strings.SplitN(this.Value, ",", 2)
@@ -111,11 +112,28 @@ func (this *RequestCond) Validate() error {
 	} else if lists.ContainsString([]string{
 		RequestCondOperatorIn,
 		RequestCondOperatorNotIn,
+		RequestCondOperatorFileExt,
 	}, this.Operator) {
 		stringsValue := []string{}
 		err := json.Unmarshal([]byte(this.Value), &stringsValue)
 		if err != nil {
 			return err
+		}
+		this.arrayValue = stringsValue
+	} else if lists.ContainsString([]string{
+		RequestCondOperatorFileMimeType,
+	}, this.Operator) {
+		stringsValue := []string{}
+		err := json.Unmarshal([]byte(this.Value), &stringsValue)
+		if err != nil {
+			return err
+		}
+		for k, v := range stringsValue {
+			if strings.Contains(v, "*") {
+				v = regexp.QuoteMeta(v)
+				v = strings.ReplaceAll(v, `\*`, ".*")
+				stringsValue[k] = v
+			}
 		}
 		this.arrayValue = stringsValue
 	}
@@ -190,7 +208,7 @@ func (this *RequestCond) Match(formatter func(source string) string) bool {
 			return false
 		}
 		return this.isIP && bytes.Compare(ip, this.ipValue) <= 0
-	case RequestCondOperatorIPInRange:
+	case RequestCondOperatorIPRange:
 		ip := net.ParseIP(paramValue)
 		if ip == nil {
 			return false
@@ -238,6 +256,45 @@ func (this *RequestCond) Match(formatter func(source string) string) bool {
 		return lists.ContainsString(this.arrayValue, paramValue)
 	case RequestCondOperatorNotIn:
 		return !lists.ContainsString(this.arrayValue, paramValue)
+	case RequestCondOperatorFileExt:
+		ext := filepath.Ext(paramValue)
+		if len(ext) > 0 {
+			ext = ext[1:] // remove dot
+		}
+		return lists.ContainsString(this.arrayValue, strings.ToLower(ext))
+	case RequestCondOperatorFileMimeType:
+		index := strings.Index(paramValue, ";")
+		if index > 0 {
+			paramValue = strings.TrimSpace(paramValue[:index])
+		}
+		if len(this.arrayValue) == 0 {
+			return false
+		}
+		for _, v := range this.arrayValue {
+			if strings.Contains(v, "*") {
+				reg, err := stringutil.RegexpCompile(v)
+				if err == nil && reg.MatchString(paramValue) {
+					return true
+				}
+			} else if paramValue == v {
+				return true
+			}
+		}
+	case RequestCondOperatorVersionRange:
+		if strings.Contains(this.Value, ",") {
+			versions := strings.SplitN(this.Value, ",", 2)
+			version1 := strings.TrimSpace(versions[0])
+			version2 := strings.TrimSpace(versions[1])
+			if len(version1) > 0 && stringutil.VersionCompare(paramValue, version1) < 0 {
+				return false
+			}
+			if len(version2) > 0 && stringutil.VersionCompare(paramValue, version2) > 0 {
+				return false
+			}
+			return true
+		} else {
+			return stringutil.VersionCompare(paramValue, this.Value) >= 0
+		}
 	}
 	return false
 }

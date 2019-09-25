@@ -22,12 +22,15 @@ const (
 	RequestCondOperatorNotContainsString RequestCondOperator = "not contains"
 	RequestCondOperatorIn                RequestCondOperator = "in"
 	RequestCondOperatorNotIn             RequestCondOperator = "not in"
+	RequestCondOperatorFileExt           RequestCondOperator = "file ext"
+	RequestCondOperatorFileMimeType      RequestCondOperator = "mime type"
+	RequestCondOperatorVersionRange      RequestCondOperator = "version range"
 	RequestCondOperatorEqIP              RequestCondOperator = "eq ip"
 	RequestCondOperatorGtIP              RequestCondOperator = "gt ip"
 	RequestCondOperatorGteIP             RequestCondOperator = "gte ip"
 	RequestCondOperatorLtIP              RequestCondOperator = "lt ip"
 	RequestCondOperatorLteIP             RequestCondOperator = "lte ip"
-	RequestCondOperatorIPInRange         RequestCondOperator = "ip range"
+	RequestCondOperatorIPRange           RequestCondOperator = "ip range"
 )
 
 // 所有的运算符
@@ -82,6 +85,21 @@ func AllRequestOperators() []maps.Map {
 			"name":        "不在列表中",
 			"op":          RequestCondOperatorNotIn,
 			"description": "判断参数值不在某个列表中",
+		},
+		{
+			"name":        "扩展名",
+			"op":          RequestCondOperatorFileExt,
+			"description": "判断小写的扩展名（不带点）在某个列表中",
+		},
+		{
+			"name":        "MimeType",
+			"op":          RequestCondOperatorFileMimeType,
+			"description": "判断MimeType在某个列表中，支持类似于image/*的语法",
+		},
+		{
+			"name":        "版本号范围",
+			"op":          RequestCondOperatorVersionRange,
+			"description": "判断版本号在某个范围内，格式为version1,version2",
 		},
 		{
 			"name":        "整数等于",
@@ -140,7 +158,7 @@ func AllRequestOperators() []maps.Map {
 		},
 		{
 			"name":        "IP范围",
-			"op":          RequestCondOperatorIPInRange,
+			"op":          RequestCondOperatorIPRange,
 			"description": "IP在某个范围之内，范围格式可以是英文逗号分隔的ip1,ip2，或者CIDR格式的ip/bits",
 		},
 	}
