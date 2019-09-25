@@ -126,9 +126,8 @@ type Request struct {
 	enableStat bool
 	accessLog  *teaconfigs.AccessLogConfig
 
-	gzipLevel     uint8
-	gzipMinLength int64
-	debug         bool
+	gzip  *teaconfigs.GzipConfig
+	debug bool
 
 	hasForwardHeader bool
 }
@@ -219,8 +218,7 @@ func (this *Request) reset(rawRequest *http.Request) {
 
 	this.accessLog = nil
 
-	this.gzipLevel = 0
-	this.gzipMinLength = 0
+	this.gzip = nil
 	this.debug = false
 
 	this.init(rawRequest)
@@ -312,8 +310,9 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 			this.shutdownPageOn = true
 			this.shutdownPage = server.ShutdownPage
 		}
-		this.gzipLevel = server.GzipLevel
-		this.gzipMinLength = server.GzipMinBytes()
+		if server.Gzip != nil {
+			this.gzip = server.Gzip
+		}
 
 		if server.RedirectToHttps && this.rawScheme == "http" {
 			this.redirectToHttps = true
@@ -348,11 +347,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 					this.accessLog = location.AccessLog[0]
 				}
 				this.enableStat = !location.DisableStat
-				if location.GzipLevel >= 0 {
-					this.gzipLevel = uint8(location.GzipLevel)
-				}
-				if location.GzipMinBytes() > 0 {
-					this.gzipMinLength = location.GzipMinBytes()
+				if location.Gzip != nil {
+					this.gzip = location.Gzip
 				}
 				if len(location.Pages) > 0 {
 					this.pages = append(this.pages, location.Pages...)
@@ -728,8 +724,8 @@ func (this *Request) call(writer *ResponseWriter) error {
 	}
 
 	// gzip压缩
-	if this.gzipLevel > 0 && this.allowGzip() {
-		writer.Gzip(this.gzipLevel, this.gzipMinLength)
+	if this.gzip != nil && this.gzip.Level > 0 && this.acceptGzipEncoding() {
+		writer.Gzip(this.gzip)
 		defer writer.Close()
 	}
 
@@ -1010,7 +1006,7 @@ func (this *Request) requestHeader(key string) string {
 	return strings.Join(v, ";")
 }
 
-func (this *Request) allowGzip() bool {
+func (this *Request) acceptGzipEncoding() bool {
 	encodingList := this.raw.Header.Get("Accept-Encoding")
 	if len(encodingList) == 0 {
 		return false

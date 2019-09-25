@@ -97,7 +97,7 @@ func TestRequestGroup_Match(t *testing.T) {
 		{
 			cond := shared.NewRequestCond()
 			cond.Param = "${arg.id}"
-			cond.Operator = shared.RequestCondOperatorGt
+			cond.Operator = shared.RequestCondOperatorGtFloat
 			cond.Value = "19"
 			group.AddCond(cond)
 		}

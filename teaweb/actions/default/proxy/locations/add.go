@@ -38,10 +38,17 @@ func (this *AddAction) Run(params struct {
 	this.Data["accessLogs"] = proxyutils.FormatAccessLog([]*teaconfigs.AccessLogConfig{accessLog})
 
 	// 运算符
-	this.Data["operators"] = shared.AllRequestOperators()
+	this.Data["condOperators"] = shared.AllRequestOperators()
 
 	// 变量
-	this.Data["variables"] = proxyutils.DefaultRequestVariables()
+	this.Data["condVariables"] = proxyutils.DefaultRequestVariables()
+
+	//gzip
+	this.Data["gzip"] = &teaconfigs.GzipConfig{
+		Level:     -1,
+		MinLength: "",
+		MimeTypes: teaconfigs.DefaultGzipMimeTypes,
+	}
 
 	this.Show()
 }
@@ -59,13 +66,17 @@ func (this *AddAction) RunPost(params struct {
 	MaxBodyUnit          string
 	AccessLogIsInherited bool
 	EnableStat           bool
-	GzipLevel            int8
-	GzipMinLength        float64
-	GzipMinUnit          string
-	RedirectToHttps      bool
-	On                   bool
-	IsReverse            bool
-	IsCaseInsensitive    bool
+
+	// gzip
+	GzipLevel          int8
+	GzipMinLength      float64
+	GzipMinUnit        string
+	GzipMimeTypeValues []string
+
+	RedirectToHttps   bool
+	On                bool
+	IsReverse         bool
+	IsCaseInsensitive bool
 
 	PageStatus []string
 	PageURL    []string
@@ -108,9 +119,21 @@ func (this *AddAction) RunPost(params struct {
 		location.AccessLog = proxyutils.ParseAccessLogForm(this.Request)
 	}
 	location.DisableStat = !params.EnableStat
-	location.GzipLevel = params.GzipLevel
-	location.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
 	location.RedirectToHttps = params.RedirectToHttps
+
+	// gzip
+	// 这里gzipLevel包括0，因为要指定不压缩
+	if params.GzipLevel >= 0 && params.GzipLevel <= 9 {
+		minLength := strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
+		gzip := &teaconfigs.GzipConfig{
+			Level:     params.GzipLevel,
+			MinLength: minLength,
+			MimeTypes: params.GzipMimeTypeValues,
+		}
+		location.Gzip = gzip
+	} else {
+		location.Gzip = nil
+	}
 
 	// 特殊页面
 	location.Pages = []*teaconfigs.PageConfig{}

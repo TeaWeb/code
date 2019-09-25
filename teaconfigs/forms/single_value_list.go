@@ -36,14 +36,14 @@ this.` + model + ` = ` + stringutil.JSONEncode(this.Value) + `;`
 	attrs := this.ComposeAttrs(map[string]string{
 		"value-name": this.ValueName,
 		"prefix":     this.Code,
-		":values":     model,
+		":values":    model,
 	})
 	return `<single-value-list ` + attrs + `></single-value-list>`
 }
 
 // 获取值
 func (this *SingleValueList) ApplyRequest(req *http.Request) (value interface{}, skip bool, err error) {
-	values, ok := req.Form[this.Code+"_values"]
+	values, ok := req.Form[this.Code+"Values"]
 	if !ok {
 		value = []string{}
 		return

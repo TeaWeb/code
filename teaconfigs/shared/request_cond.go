@@ -264,7 +264,7 @@ func (this *RequestCond) Match(formatter func(source string) string) bool {
 		return lists.ContainsString(this.arrayValue, strings.ToLower(ext))
 	case RequestCondOperatorFileMimeType:
 		index := strings.Index(paramValue, ";")
-		if index > 0 {
+		if index >= 0 {
 			paramValue = strings.TrimSpace(paramValue[:index])
 		}
 		if len(this.arrayValue) == 0 {
@@ -272,7 +272,7 @@ func (this *RequestCond) Match(formatter func(source string) string) bool {
 		}
 		for _, v := range this.arrayValue {
 			if strings.Contains(v, "*") {
-				reg, err := stringutil.RegexpCompile(v)
+				reg, err := stringutil.RegexpCompile("^" + v + "$")
 				if err == nil && reg.MatchString(paramValue) {
 					return true
 				}

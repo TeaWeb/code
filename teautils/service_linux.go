@@ -107,8 +107,17 @@ func (this *ServiceManager) installInitService(exePath string, args []string) er
 
 // install systemd service
 func (this *ServiceManager) installSystemdService(systemd, exePath string, args []string) error {
-	desc := `[Unit]
+	desc := `# Provides:          teaweb
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: TeaWeb Service
+### END INIT INFO
+
+[Unit]
 Description=TeaWeb Service
+Before=shutdown.target
 
 [Service]
 Type=forking

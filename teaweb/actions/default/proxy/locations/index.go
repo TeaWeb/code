@@ -37,11 +37,11 @@ func (this *IndexAction) Run(params struct {
 			"fastcgi":           location.Fastcgi,
 			"root":              location.Root,
 			"index":             location.Index,
-			"gzipLevel":         location.GzipLevel,
-			"cachePolicy":       location.CachePolicyObject(),
-			"websocket":         location.Websocket != nil && location.Websocket.On,
-			"backends":          location.Backends,
-			"hasWAF":            len(location.WafId) > 0 && location.WAFOn,
+			//"gzipLevel":         location.GzipLevel,
+			"cachePolicy": location.CachePolicyObject(),
+			"websocket":   location.Websocket != nil && location.Websocket.On,
+			"backends":    location.Backends,
+			"hasWAF":      len(location.WafId) > 0 && location.WAFOn,
 		})
 	}
 

@@ -3,6 +3,7 @@ package teaproxy
 import (
 	"bytes"
 	"compress/gzip"
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/iwind/TeaGo/logs"
 	"net/http"
 )
@@ -11,9 +12,8 @@ import (
 type ResponseWriter struct {
 	writer http.ResponseWriter
 
-	gzipLevel     uint8
-	gzipMinLength int64
-	gzipWriter    *gzip.Writer
+	gzipConfig *teaconfigs.GzipConfig
+	gzipWriter *gzip.Writer
 
 	statusCode    int
 	sentBodyBytes int64
@@ -35,8 +35,7 @@ func NewResponseWriter(httpResponseWriter http.ResponseWriter) *ResponseWriter {
 func (this *ResponseWriter) Reset(httpResponseWriter http.ResponseWriter) {
 	this.writer = httpResponseWriter
 
-	this.gzipLevel = 0
-	this.gzipMinLength = 0
+	this.gzipConfig = nil
 	this.gzipWriter = nil
 
 	this.statusCode = 0
@@ -49,47 +48,53 @@ func (this *ResponseWriter) Reset(httpResponseWriter http.ResponseWriter) {
 }
 
 // 设置Gzip
-func (this *ResponseWriter) Gzip(level uint8, minLength int64) {
-	this.gzipLevel = level
-	this.gzipMinLength = minLength
+func (this *ResponseWriter) Gzip(config *teaconfigs.GzipConfig) {
+	this.gzipConfig = config
 }
 
 // 准备输出
 func (this *ResponseWriter) Prepare(size int64) {
-	if this.gzipLevel > 0 {
-		// 尺寸
-		if size <= this.gzipMinLength {
-			return
-		}
+	if this.gzipConfig == nil || this.gzipConfig.Level <= 0 {
+		return
+	}
 
-		// 如果已经有编码则不处理
-		if len(this.writer.Header().Get("Content-Encoding")) > 0 {
-			return
-		}
+	// 尺寸和类型
+	if size < this.gzipConfig.MinBytes() {
+		return
+	}
 
-		// gzip writer
-		var err error = nil
-		this.gzipWriter, err = gzip.NewWriterLevel(this.writer, int(this.gzipLevel))
+	contentType := this.Header().Get("Content-Type")
+	if !this.gzipConfig.MatchContentType(contentType) {
+		return
+	}
+
+	// 如果已经有编码则不处理
+	if len(this.writer.Header().Get("Content-Encoding")) > 0 {
+		return
+	}
+
+	// gzip writer
+	var err error = nil
+	this.gzipWriter, err = gzip.NewWriterLevel(this.writer, int(this.gzipConfig.Level))
+	if err != nil {
+		logs.Error(err)
+		return
+	}
+
+	// body copy
+	if this.bodyCopying {
+		this.gzipBodyBuffer = bytes.NewBuffer([]byte{})
+		this.gzipBodyWriter, err = gzip.NewWriterLevel(this.gzipBodyBuffer, int(this.gzipConfig.Level))
 		if err != nil {
 			logs.Error(err)
-			return
 		}
-
-		// body copy
-		if this.bodyCopying {
-			this.gzipBodyBuffer = bytes.NewBuffer([]byte{})
-			this.gzipBodyWriter, err = gzip.NewWriterLevel(this.gzipBodyBuffer, int(this.gzipLevel))
-			if err != nil {
-				logs.Error(err)
-			}
-		}
-
-		header := this.writer.Header()
-		header.Set("Content-Encoding", "gzip")
-		header.Set("Transfer-Encoding", "chunked")
-		header.Set("Vary", "Accept-Encoding")
-		header.Del("Content-Length")
 	}
+
+	header := this.writer.Header()
+	header.Set("Content-Encoding", "gzip")
+	header.Set("Transfer-Encoding", "chunked")
+	header.Set("Vary", "Accept-Encoding")
+	header.Del("Content-Length")
 }
 
 // 包装前的原始的Writer
@@ -140,7 +145,7 @@ func (this *ResponseWriter) Write(data []byte) (n int, err error) {
 				logs.Error(err)
 			}
 		} else {
-			this.body = append(this.body, data ...)
+			this.body = append(this.body, data...)
 		}
 	}
 	return
@@ -205,7 +210,7 @@ func (this *ResponseWriter) HeaderData() []byte {
 	resp.ContentLength = 1 // Trick：这样可以屏蔽Content-Length
 
 	writer := bytes.NewBuffer([]byte{})
-	resp.Write(writer)
+	_ = resp.Write(writer)
 	return writer.Bytes()
 }
 
@@ -213,10 +218,10 @@ func (this *ResponseWriter) HeaderData() []byte {
 func (this *ResponseWriter) Close() {
 	if this.gzipWriter != nil {
 		if this.bodyCopying && this.gzipBodyWriter != nil {
-			this.gzipBodyWriter.Close()
+			_ = this.gzipBodyWriter.Close()
 			this.body = this.gzipBodyBuffer.Bytes()
 		}
-		this.gzipWriter.Close()
+		_ = this.gzipWriter.Close()
 		this.gzipWriter = nil
 	}
 }

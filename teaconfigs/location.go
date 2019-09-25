@@ -23,15 +23,18 @@ type LocationConfig struct {
 	Name    string `yaml:"name" json:"name"`       // 名称
 	Pattern string `yaml:"pattern" json:"pattern"` // 匹配规则
 
-	Async           bool                 `yaml:"async" json:"async"`                     // 是否异步请求 @TODO
-	Notify          []interface{}        `yaml:"notify" json:"notify"`                   // 转发请求，可以配置转发策略 @TODO
-	LogOnly         bool                 `yaml:"logOnly" json:"logOnly"`                 // 是否只记录日志 @TODO
-	Root            string               `yaml:"root" json:"root"`                       // 资源根目录
-	Index           []string             `yaml:"index" json:"index"`                     // 默认文件
-	Charset         string               `yaml:"charset" json:"charset"`                 // 字符集设置
-	MaxBodySize     string               `yaml:"maxBodySize" json:"maxBodySize"`         // 请求body最大尺寸
-	GzipLevel       int8                 `yaml:"gzipLevel" json:"gzipLevel"`             // Gzip压缩级别
-	GzipMinLength   string               `yaml:"gzipMinLength" json:"gzipMinLength"`     // 需要压缩的最小内容尺寸
+	Async       bool          `yaml:"async" json:"async"`             // 是否异步请求 @TODO
+	Notify      []interface{} `yaml:"notify" json:"notify"`           // 转发请求，可以配置转发策略 @TODO
+	LogOnly     bool          `yaml:"logOnly" json:"logOnly"`         // 是否只记录日志 @TODO
+	Root        string        `yaml:"root" json:"root"`               // 资源根目录
+	Index       []string      `yaml:"index" json:"index"`             // 默认文件
+	Charset     string        `yaml:"charset" json:"charset"`         // 字符集设置
+	MaxBodySize string        `yaml:"maxBodySize" json:"maxBodySize"` // 请求body最大尺寸
+
+	GzipLevel1     int8        `yaml:"gzipLevel" json:"gzipLevel"`         // deprecated v0.1.8 Gzip压缩级别
+	GzipMinLength1 string      `yaml:"gzipMinLength" json:"gzipMinLength"` // deprecated v0.1.8 需要压缩的最小内容尺寸
+	Gzip           *GzipConfig `yaml:"gzip" json:"gzip"`
+
 	AccessPolicy    *shared.AccessPolicy `yaml:"accessPolicy" json:"accessPolicy"`       // 访问控制
 	RedirectToHttps bool                 `yaml:"redirectToHttps" json:"redirectToHttps"` // 是否自动跳转到Https
 
@@ -52,9 +55,9 @@ type LocationConfig struct {
 	CacheOn     bool   `yaml:"cacheOn" json:"cacheOn"`         // 缓存是否打开
 	cachePolicy *shared.CachePolicy
 
-	WAFOn bool   `yaml:"wafOn" json:"wafOn"` // 是否启用
-	WafId string `yaml:"wafId" json:"wafId"` // WAF ID
-	waf   *teawaf.WAF                        // waf object
+	WAFOn bool        `yaml:"wafOn" json:"wafOn"` // 是否启用
+	WafId string      `yaml:"wafId" json:"wafId"` // WAF ID
+	waf   *teawaf.WAF // waf object
 
 	// websocket设置
 	Websocket *WebsocketConfig `yaml:"websocket" json:"websocket"`
@@ -75,8 +78,7 @@ type LocationConfig struct {
 	defaultRequestGroup    *RequestGroup
 	hasRequestGroupFilters bool
 
-	maxBodySize   int64
-	gzipMinLength int64
+	maxBodySize int64
 
 	patternType LocationPatternType // 规则类型：LocationPattern*
 	prefix      string              // 前缀
@@ -103,8 +105,13 @@ func (this *LocationConfig) Validate() error {
 	maxBodySize, _ := stringutil.ParseFileSize(this.MaxBodySize)
 	this.maxBodySize = int64(maxBodySize)
 
-	gzipMinLength, _ := stringutil.ParseFileSize(this.GzipMinLength)
-	this.gzipMinLength = int64(gzipMinLength)
+	// gzip
+	if this.Gzip != nil {
+		err := this.Gzip.Validate()
+		if err != nil {
+			return err
+		}
+	}
 
 	// 分析pattern
 	this.reverse = false
@@ -324,17 +331,20 @@ func (this *LocationConfig) Compatible(version string) {
 				},
 			}
 		}
+	} else if stringutil.VersionCompare(version, "0.1.8") < 0 {
+		if this.GzipLevel1 >= 0 {
+			this.Gzip = &GzipConfig{
+				Level:     this.GzipLevel1,
+				MinLength: this.GzipMinLength1,
+			}
+			this.GzipLevel1 = 0
+		}
 	}
 }
 
 // 最大Body尺寸
 func (this *LocationConfig) MaxBodyBytes() int64 {
 	return this.maxBodySize
-}
-
-// 可压缩最小尺寸
-func (this *LocationConfig) GzipMinBytes() int64 {
-	return this.gzipMinLength
 }
 
 // 模式类型

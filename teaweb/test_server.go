@@ -163,5 +163,17 @@ func startTestServer() {
 				}
 			}
 		}).
+		Get("/html", func(req *http.Request, resp http.ResponseWriter) {
+			_, _ = resp.Write([]byte(`<!DOCTYPE html>
+<html>
+<head>
+	<title>HTML Page</title>
+</head>
+<body>
+<strong>THIS IS HTML BODY</strong>
+</body>
+</html>
+`))
+		}).
 		StartOn("127.0.0.1:9991")
 }

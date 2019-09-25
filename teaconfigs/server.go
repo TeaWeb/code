@@ -40,13 +40,15 @@ type ServerConfig struct {
 	// 监听地址
 	Listen []string `yaml:"listen" json:"listen"`
 
-	Root          string            `yaml:"root" json:"root"`                   // 资源根目录
-	Index         []string          `yaml:"index" json:"index"`                 // 默认文件
-	Charset       string            `yaml:"charset" json:"charset"`             // 字符集
-	Locations     []*LocationConfig `yaml:"locations" json:"locations"`         // 地址配置
-	MaxBodySize   string            `yaml:"maxBodySize" json:"maxBodySize"`     // 请求body最大尺寸
-	GzipLevel     uint8             `yaml:"gzipLevel" json:"gzipLevel"`         // Gzip压缩级别
-	GzipMinLength string            `yaml:"gzipMinLength" json:"gzipMinLength"` // 需要压缩的最小内容尺寸
+	Root        string            `yaml:"root" json:"root"`               // 资源根目录
+	Index       []string          `yaml:"index" json:"index"`             // 默认文件
+	Charset     string            `yaml:"charset" json:"charset"`         // 字符集
+	Locations   []*LocationConfig `yaml:"locations" json:"locations"`     // 地址配置
+	MaxBodySize string            `yaml:"maxBodySize" json:"maxBodySize"` // 请求body最大尺寸
+
+	GzipLevel1     uint8       `yaml:"gzipLevel" json:"gzipLevel"`         // deprecated in v0.1.8: Gzip压缩级别
+	GzipMinLength1 string      `yaml:"gzipMinLength" json:"gzipMinLength"` // deprecated in v0.1.8: 需要压缩的最小内容尺寸
+	Gzip           *GzipConfig `yaml:"gzip" json:"gzip"`
 
 	// 访问日志
 	AccessLog []*AccessLogConfig `yaml:"accessLog" json:"accessLog"` // 访问日志配置
@@ -112,8 +114,7 @@ type ServerConfig struct {
 		BackendUp   *notices.Item `yaml:"backendUp" json:"backendUp"`
 	} `yaml:"noticeItems" json:"noticeItems"`
 
-	maxBodySize   int64
-	gzipMinLength int64
+	maxBodySize int64
 }
 
 // 从目录中加载配置
@@ -253,8 +254,13 @@ func (this *ServerConfig) Validate() error {
 	maxBodySize, _ := stringutil.ParseFileSize(this.MaxBodySize)
 	this.maxBodySize = int64(maxBodySize)
 
-	gzipMinLength, _ := stringutil.ParseFileSize(this.GzipMinLength)
-	this.gzipMinLength = int64(gzipMinLength)
+	// gzip
+	if this.Gzip != nil {
+		err := this.Gzip.Validate()
+		if err != nil {
+			return err
+		}
+	}
 
 	// ssl
 	if this.SSL != nil {
@@ -436,6 +442,17 @@ func (this *ServerConfig) compatible() {
 		}
 	}
 
+	// v0.1.8
+	if stringutil.VersionCompare(this.TeaVersion, "0.1.8") < 0 {
+		if this.GzipLevel1 > 0 {
+			this.Gzip = &GzipConfig{
+				Level:     int8(this.GzipLevel1),
+				MinLength: this.GzipMinLength1,
+			}
+			this.GzipLevel1 = 0
+		}
+	}
+
 	for _, location := range this.Locations {
 		location.Compatible(this.TeaVersion)
 	}
@@ -444,11 +461,6 @@ func (this *ServerConfig) compatible() {
 // 最大Body尺寸
 func (this *ServerConfig) MaxBodyBytes() int64 {
 	return this.maxBodySize
-}
-
-// 可压缩最小尺寸
-func (this *ServerConfig) GzipMinBytes() int64 {
-	return this.gzipMinLength
 }
 
 // 添加域名

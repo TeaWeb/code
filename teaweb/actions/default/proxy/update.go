@@ -23,6 +23,14 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["selectedTab"] = "basic"
 	this.Data["isTCP"] = server.IsTCP()
 
+	if server.Gzip == nil {
+		server.Gzip = &teaconfigs.GzipConfig{
+			Level:     0,
+			MinLength: "",
+			MimeTypes: nil,
+		}
+	}
+
 	this.Data["usualCharsets"] = teautils.UsualCharsets
 	this.Data["charsets"] = teautils.AllCharsets
 
@@ -51,11 +59,15 @@ func (this *UpdateAction) RunPost(params struct {
 	MaxBodySize float64
 	MaxBodyUnit string
 
-	EnableStat    bool
-	GzipLevel     uint8
-	GzipMinLength float64
-	GzipMinUnit   string
-	CacheStatic   bool
+	EnableStat bool
+
+	// gzip
+	GzipLevel          uint8
+	GzipMinLength      float64
+	GzipMinUnit        string
+	GzipMimeTypeValues []string
+
+	CacheStatic bool
 
 	PageStatus []string
 	PageURL    []string
@@ -104,11 +116,20 @@ func (this *UpdateAction) RunPost(params struct {
 		server.AccessLog = proxyutils.ParseAccessLogForm(this.Request)
 
 		server.DisableStat = !params.EnableStat
-		if params.GzipLevel <= 9 {
-			server.GzipLevel = params.GzipLevel
-		}
-		server.GzipMinLength = strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
 		server.CacheStatic = params.CacheStatic
+
+		// gzip
+		if params.GzipLevel > 0 && params.GzipLevel <= 9 {
+			minLength := strconv.FormatFloat(params.GzipMinLength, 'f', -1, 64) + params.GzipMinUnit
+			gzip := &teaconfigs.GzipConfig{
+				Level:     int8(params.GzipLevel),
+				MinLength: minLength,
+				MimeTypes: params.GzipMimeTypeValues,
+			}
+			server.Gzip = gzip
+		} else {
+			server.Gzip = nil
+		}
 
 		server.Pages = []*teaconfigs.PageConfig{}
 		for index, status := range params.PageStatus {
