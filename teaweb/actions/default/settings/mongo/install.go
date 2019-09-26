@@ -23,12 +23,14 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 )
 
 var downloader = nets.NewDownloader()
 var isInstalling = false
-var installStatus = "" // 状态
-var installPercent = 0 // 百分比
+var installStatus = ""   // 安装状态
+var installPercent = 0   // 安装百分比
+var installStartAt int64 // 安装开始时间
 
 type InstallAction actions.Action
 
@@ -163,6 +165,7 @@ func (this *InstallAction) RunPost(params struct{}) {
 
 		wg.Add(-1)
 	})
+	installStartAt = time.Now().Unix()
 	downloader.Start()
 	wg.Wait()
 	tmpFile := files.NewFile(target + ".tmp")
