@@ -52,8 +52,8 @@ func NewItemFromRequest(req *http.Request, name string) *Item {
 func (this *Item) FormatSubject(vars maps.Map) string {
 	return paramNamedVariable.ReplaceAllStringFunc(this.Subject, func(s string) string {
 		varName := s[2 : len(s)-1]
-		varName = strings.ReplaceAll(varName, " ", "")
-		varName = strings.ReplaceAll(varName, "\t", "")
+		varName = strings.Replace(varName, " ", "", -1)
+		varName = strings.Replace(varName, "\t", "", -1)
 		if vars != nil {
 			v, ok := vars[varName]
 			if ok {
@@ -68,8 +68,8 @@ func (this *Item) FormatSubject(vars maps.Map) string {
 func (this *Item) FormatBody(vars maps.Map) string {
 	return paramNamedVariable.ReplaceAllStringFunc(this.Body, func(s string) string {
 		varName := s[2 : len(s)-1]
-		varName = strings.ReplaceAll(varName, " ", "")
-		varName = strings.ReplaceAll(varName, "\t", "")
+		varName = strings.Replace(varName, " ", "", -1)
+		varName = strings.Replace(varName, "\t", "", -1)
 		if vars != nil {
 			v, ok := vars[varName]
 			if ok {

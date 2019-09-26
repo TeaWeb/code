@@ -776,7 +776,7 @@ func (this *SQLDriver) JSONExtract(field string, path string) string {
 	case "mysql":
 		return "JSON_EXTRACT(" + this.quoteKeyword(field) + ", \"$." + jsonArrayIndexReg.ReplaceAllString(path, "[$1]") + "\")"
 	case "postgres":
-		return "JSON_EXTRACT_PATH_TEXT(" + this.quoteKeyword(field) + ", '" + strings.ReplaceAll(path, ".", "', '") + "')"
+		return "JSON_EXTRACT_PATH_TEXT(" + this.quoteKeyword(field) + ", '" + strings.Replace(path, ".", "', '", -1) + "')"
 	}
 	return ""
 }
@@ -787,7 +787,7 @@ func (this *SQLDriver) JSONExtractNumeric(field string, path string) string {
 	case "mysql":
 		return "JSON_EXTRACT(" + this.quoteKeyword(field) + ", \"$." + jsonArrayIndexReg.ReplaceAllString(path, "[$1]") + "\")"
 	case "postgres":
-		return "JSON_EXTRACT_PATH_TEXT(" + this.quoteKeyword(field) + ", '" + strings.ReplaceAll(path, ".", "', '") + "')::\"float8\""
+		return "JSON_EXTRACT_PATH_TEXT(" + this.quoteKeyword(field) + ", '" + strings.Replace(path, ".", "', '", -1) + "')::\"float8\""
 	}
 	return ""
 }

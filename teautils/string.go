@@ -15,9 +15,9 @@ func FormatAddress(addr string) string {
 	if strings.HasSuffix(addr, "unix:") {
 		return addr
 	}
-	addr = strings.ReplaceAll(addr, " ", "")
-	addr = strings.ReplaceAll(addr, "\t", "")
-	addr = strings.ReplaceAll(addr, "：", ":")
+	addr = strings.Replace(addr, " ", "", -1)
+	addr = strings.Replace(addr, "\t", "", -1)
+	addr = strings.Replace(addr, "：", ":", -1)
 	addr = strings.TrimSpace(addr)
 	return addr
 }

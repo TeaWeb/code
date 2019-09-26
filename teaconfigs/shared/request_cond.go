@@ -131,7 +131,7 @@ func (this *RequestCond) Validate() error {
 		for k, v := range stringsValue {
 			if strings.Contains(v, "*") {
 				v = regexp.QuoteMeta(v)
-				v = strings.ReplaceAll(v, `\*`, ".*")
+				v = strings.Replace(v, `\*`, ".*", -1)
 				stringsValue[k] = v
 			}
 		}

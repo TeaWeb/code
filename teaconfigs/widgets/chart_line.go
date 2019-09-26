@@ -26,8 +26,8 @@ func (this *LineChart) AllParamNames() []string {
 	result := []string{}
 	for _, line := range this.Lines {
 		for _, match := range regexpNamedVariable.FindAllStringSubmatch(line.Param, -1) {
-			param := strings.ReplaceAll(match[1], " ", "")
-			param = strings.ReplaceAll(param, "\t", "")
+			param := strings.Replace(match[1], " ", "", -1)
+			param = strings.Replace(param, "\t", "", -1)
 			if !lists.ContainsString(result, param) {
 				result = append(result, param)
 			}

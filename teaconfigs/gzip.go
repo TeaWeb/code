@@ -33,7 +33,7 @@ func (this *GzipConfig) Validate() error {
 	for _, mimeType := range this.MimeTypes {
 		if strings.Contains(mimeType, "*") {
 			mimeType = regexp.QuoteMeta(mimeType)
-			mimeType = strings.ReplaceAll(mimeType, "\\*", ".*")
+			mimeType = strings.Replace(mimeType, "\\*", ".*", -1)
 			reg, err := regexp.Compile("^" + mimeType + "$")
 			if err != nil {
 				return err
