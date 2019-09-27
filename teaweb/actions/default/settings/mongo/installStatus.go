@@ -20,7 +20,7 @@ func (this *InstallStatusAction) Run(params struct{}) {
 			leftSeconds := int(float64(100-installPercent) * float64(seconds) / float64(installPercent))
 			if leftSeconds > 60 {
 				timeLeft = fmt.Sprintf("%dm%ds", leftSeconds/60, leftSeconds%60)
-			} else {
+			} else if leftSeconds > 0 {
 				timeLeft = fmt.Sprintf("%ds", leftSeconds)
 			}
 		}
