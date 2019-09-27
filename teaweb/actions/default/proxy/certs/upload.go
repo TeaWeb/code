@@ -76,11 +76,11 @@ func (this *UploadAction) RunPostPair(params struct {
 			Field("keyPath", params.KeyPath).
 			Require("请输入私钥文件路径")
 
-		if !files.NewFile(params.CertPath).Exists() {
+		if !files.NewFile(params.CertPath).Exists() && !files.NewFile(Tea.ConfigFile(params.CertPath)).Exists() {
 			this.FailField("certPath", "证书文件路径不存在")
 		}
 
-		if !files.NewFile(params.KeyPath).Exists() {
+		if !files.NewFile(params.KeyPath).Exists() && !files.NewFile(Tea.ConfigFile(params.KeyPath)).Exists() {
 			this.FailField("keyPath", "私钥文件路径不存在")
 		}
 
