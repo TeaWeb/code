@@ -17,7 +17,10 @@ func RangeFiles(f func(file *files.File, relativePath string)) {
 	}
 	files.NewFile(configAbs).Range(func(file *files.File) {
 		// *.conf & ssl.*
-		if !strings.HasSuffix(file.Name(), ".conf") && !strings.HasPrefix(file.Name(), "ssl.") {
+		if strings.HasSuffix(file.Name(), ".sum") ||
+			strings.HasSuffix(file.Name(), ".script") ||
+			strings.HasSuffix(file.Name(), ".bat") ||
+			strings.HasPrefix(file.Name(), ".") {
 			return
 		}
 		if lists.ContainsString([]string{"node.conf", "server.conf", "agent.local.conf"}, file.Name()) {

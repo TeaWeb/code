@@ -105,14 +105,23 @@ func (this *Manager) Start() error {
 				switch action.Name() {
 				case "success":
 					this.error = ""
-					this.prevAction.OnSuccess(action.(*SuccessAction))
+					err = this.prevAction.OnSuccess(action.(*SuccessAction))
+					if err != nil {
+						logs.Error(err)
+					}
 				case "fail":
 					this.error = action.(*FailAction).Message
-					this.prevAction.OnFail(action.(*FailAction))
+					err = this.prevAction.OnFail(action.(*FailAction))
+					if err != nil {
+						logs.Error(err)
+					}
 				}
 			}
 		}
-		action.Execute()
+		err = action.Execute()
+		if err != nil {
+			logs.Error(err)
+		}
 	})
 
 	return nil
@@ -185,7 +194,10 @@ func (this *Manager) Error() string {
 }
 
 func (this *Manager) Restart() {
-	this.Stop()
+	err := this.Stop()
+	if err != nil {
+		logs.Error(err)
+	}
 	this.RestartChan <- true
 }
 
@@ -231,6 +243,8 @@ func (this *Manager) PushItems() {
 	err := SharedManager.Write(action)
 	if err != nil {
 		logs.Error(err)
+	} else {
+		this.isChanged = false
 	}
 }
 
@@ -246,10 +260,12 @@ func (this *Manager) PullItems() {
 	err := SharedManager.Write(action)
 	if err != nil {
 		logs.Error(err)
+	} else {
+		this.isChanged = false
 	}
 }
 
-func (this *Manager) BuildSum() {
+func (this *Manager) BuildSum() []byte {
 	sumList := []string{}
 	RangeFiles(func(file *files.File, relativePath string) {
 		sum, err := file.Md5()
@@ -260,11 +276,13 @@ func (this *Manager) BuildSum() {
 		sumList = append(sumList, relativePath+"|"+sum)
 	})
 
+	sumData := []byte(strings.Join(sumList, "\n"))
 	sumFile := files.NewFile(Tea.ConfigFile("node.sum"))
-	err := sumFile.WriteString(strings.Join(sumList, "\n"))
+	err := sumFile.Write(sumData)
 	if err != nil {
 		logs.Error(err)
 	}
+	return sumData
 }
 
 // determine cluster data changes

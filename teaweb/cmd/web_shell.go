@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/TeaWeb/code/teacluster"
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaproxy"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
@@ -38,11 +40,6 @@ func NewWebShell() *WebShell {
 	return sharedShell
 }
 
-// 获取共享的对象
-func SharedShell() *WebShell {
-	return sharedShell
-}
-
 // 启动
 func (this *WebShell) Start(server *TeaGo.Server) {
 	// 重置ROOT
@@ -62,20 +59,36 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 	}
 
 	// 信号
-	signalsChannel := make(chan os.Signal, 1024)
-	signal.Notify(signalsChannel, syscall.SIGINT, syscall.SIGHUP, syscall.Signal(0x1e) /**syscall.SIGUSR1**/, syscall.SIGTERM)
+	signalsChannel := make(chan os.Signal, 16)
+	signal.Notify(signalsChannel, syscall.SIGINT, syscall.SIGHUP, syscall.Signal(0x1e /**syscall.SIGUSR1**/), syscall.Signal(0x1f /**syscall.SIGUSR2**/), syscall.SIGTERM)
 	go func() {
 		for {
 			sig := <-signalsChannel
 
 			if sig == syscall.SIGHUP { // 重置
 				configs.SharedAdminConfig().Reset()
-			} else if sig == syscall.Signal(0x1e) /**syscall.SIGUSR1**/ { // 刷新代理状态
+			} else if sig == syscall.Signal(0x1e /**syscall.SIGUSR1**/) { // 刷新代理状态
 				err := teaproxy.SharedManager.Restart()
 				if err != nil {
 					logs.Println("[error]" + err.Error())
 				} else {
 					proxyutils.FinishChange()
+				}
+			} else if sig == syscall.Signal(0x1f /**syscall.SIGUSR2**/) { // 同步
+				node := teaconfigs.SharedNodeConfig()
+				if node == nil {
+					logs.Println("[cluster]not a node yet")
+					return
+				}
+
+				if node.IsMaster() {
+					logs.Println("[cluster]push items")
+					teacluster.SharedManager.BuildSum()
+					teacluster.SharedManager.PushItems()
+				} else {
+					logs.Println("[cluster]pull items")
+					teacluster.SharedManager.BuildSum()
+					teacluster.SharedManager.PullItems()
 				}
 			} else {
 				if sig == syscall.SIGINT { // 终止进程
@@ -152,6 +165,8 @@ func (this *WebShell) execArgs(writer io.Writer) bool {
 		return this.ExecReset(writer)
 	} else if this.hasArg(arg0, "status") { // 状态
 		return this.ExecStatus(writer)
+	} else if this.hasArg(arg0, "sync") { // 同步
+		return this.ExecSync(writer)
 	} else if this.hasArg(arg0, "service") && runtime.GOOS == "windows" { // Windows服务
 		return this.ExecService(writer)
 	} else if this.hasArg(arg0, "pprof") {
@@ -179,6 +194,7 @@ func (this *WebShell) ExecHelp(writer io.Writer) bool {
 	this.write(writer, "  restart", "\n     restart the server")
 	this.write(writer, "  reset", "\n     reset the server locker status")
 	this.write(writer, "  status", "\n     print server status")
+	this.write(writer, "  sync", "\n     sync config files with cluster")
 	this.write(writer, "  pprof [address]", "\n     start pprof server")
 	this.write(writer, "")
 	this.write(writer, "To run the server in foreground:", "\n   ./bin/teaweb")
@@ -225,8 +241,12 @@ func (this *WebShell) ExecStop(writer io.Writer) bool {
 		return true
 	}
 
-	files.NewFile(Tea.Root + "/bin/pid").Delete()
+	err = files.NewFile(Tea.Root + "/bin/pid").Delete()
 	this.write(writer, "TeaWeb stopped ok, pid:", proc.Pid)
+
+	if err != nil {
+		this.write(writer, "ERROR:", err.Error())
+	}
 
 	return true
 }
@@ -249,7 +269,7 @@ func (this *WebShell) ExecReload(writer io.Writer) bool {
 		this.write(writer, "can not find process")
 		return true
 	}
-	err = proc.Signal(syscall.Signal(0x1e) /**syscall.SIGUSR1**/)
+	err = proc.Signal(syscall.Signal(0x1e /**syscall.SIGUSR1**/))
 	if err != nil {
 		logs.Error(err)
 		return true
@@ -317,6 +337,22 @@ func (this *WebShell) ExecStatus(writer io.Writer) bool {
 		this.write(writer, "TeaWeb not started yet")
 	} else {
 		this.write(writer, "TeaWeb is running, pid:"+fmt.Sprintf("%d", proc.Pid))
+	}
+	return true
+}
+
+// 同步
+func (this *WebShell) ExecSync(writer io.Writer) bool {
+	proc := this.checkPid()
+	if proc == nil {
+		this.write(writer, "TeaWeb not started yet")
+	} else {
+		err := proc.Signal(syscall.Signal(0x1f /**syscall.SIGUSR2**/))
+		if err != nil {
+			logs.Error(err)
+			return true
+		}
+		this.write(writer, "signal sent successfully")
 	}
 	return true
 }
@@ -408,7 +444,7 @@ func (this *WebShell) checkPid() *os.Process {
 
 // 写入string到writer
 func (this *WebShell) write(writer io.Writer, args ...interface{}) {
-	fmt.Fprintln(writer, args...)
+	_, _ = fmt.Fprintln(writer, args...)
 }
 
 // 判断命令

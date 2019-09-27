@@ -50,7 +50,14 @@ func (this *SyncAction) Execute() error {
 		}
 	}
 
-	SharedManager.BuildSum()
+	sumData := SharedManager.BuildSum()
+
+	// write to local file
+	file := files.NewFile(Tea.ConfigFile("cluster.sum"))
+	err := file.Write(sumData)
+	if err != nil {
+		logs.Error(err)
+	}
 
 	// reload system
 	teaevents.Post(teaevents.NewReloadEvent())

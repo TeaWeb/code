@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"strings"
@@ -36,7 +37,10 @@ func (this *SumAction) OnSuccess(success *SuccessAction) error {
 
 	// write to local file
 	file := files.NewFile(Tea.ConfigFile("cluster.sum"))
-	file.WriteString(strings.Join(sumList, "\n"))
+	err := file.WriteString(strings.Join(sumList, "\n"))
+	if err != nil {
+		logs.Error(err)
+	}
 
 	// push or pull
 	node := teaconfigs.SharedNodeConfig()
