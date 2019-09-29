@@ -1,13 +1,14 @@
 package accesslogs
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/teageo"
 	"github.com/TeaWeb/uaparser"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
-	"github.com/pquerna/ffjson/ffjson"
+	"github.com/mailru/easyjson"
 	"log"
 	"runtime"
 	"strconv"
@@ -232,7 +233,7 @@ func TestAccessLogger_DB(t *testing.T) {
 		BodyBytesSent: 1048,
 		Request:       "GET / HTTP/1.1",
 	}
-	data, err := ffjson.Marshal(accessLog)
+	data, err := easyjson.Marshal(accessLog)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -321,29 +322,44 @@ func TestAccessLog_CleanFields(t *testing.T) {
 func TestAccessLog_JSON(t *testing.T) {
 	accessLog := NewAccessLog()
 	accessLog.Request = "GET /hello"
-	data, err := ffjson.Marshal(accessLog)
+	data, err := easyjson.Marshal(accessLog)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(string(data))
 }
 
-func BenchmarkAccessLog_JSON_ffjson(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		accessLog := NewAccessLog()
-		accessLog.Request = "GET /hello"
-		accessLog.Host = "teaos.cn"
-		_, _ = ffjson.Marshal(accessLog)
+func TestAccessLog_JSON_compare(t *testing.T) {
+	accessLog := &AccessLog{
+		RequestPath:     "/hello",
+		RequestURI:      "/hello?name=lu&age=20",
+		RequestMethod:   "POST",
+		RequestFilename: "/hello.html",
+		Header: map[string][]string{
+			"UserAgent": {"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36"},
+		},
 	}
+	data, _ := easyjson.Marshal(accessLog)
+	t.Log(string(data))
+
+	data1, _ := json.Marshal(accessLog)
+	t.Log(string(data1))
+
+	t.Log(bytes.Compare(data, data1))
 }
 
-func BenchmarkAccessLog_JSON_ffjson_pool(b *testing.B) {
+func BenchmarkAccessLog_JSON_easyjson(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		accessLog := NewAccessLog()
-		accessLog.Request = "GET /hello"
-		accessLog.Host = "teaos.cn"
-		data, _ := ffjson.Marshal(accessLog)
-		ffjson.Pool(data)
+		accessLog := &AccessLog{
+			RequestPath:     "/hello",
+			RequestURI:      "/hello?name=lu&age=20",
+			RequestMethod:   "POST",
+			RequestFilename: "/hello.html",
+			Header: map[string][]string{
+				"UserAgent": {"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36"},
+			},
+		}
+		_, _ = easyjson.Marshal(accessLog)
 	}
 }
 

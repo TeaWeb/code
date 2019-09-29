@@ -101,13 +101,17 @@ func (this *ESStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 		return err
 	}
 	client := teautils.SharedHttpClient(10 * time.Second)
-	defer req.Body.Close()
+	defer func() {
+		_ = req.Body.Close()
+	}()
 
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		bodyData, _ := ioutil.ReadAll(resp.Body)

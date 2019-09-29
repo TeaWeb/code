@@ -6,7 +6,7 @@ import (
 	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/pquerna/ffjson/ffjson"
+	"github.com/mailru/easyjson"
 	"github.com/syndtr/goleveldb/leveldb"
 	"strconv"
 	"sync"
@@ -56,7 +56,7 @@ func (this *AccessLogQueue) Receive(ch chan *accesslogs.AccessLog) {
 					// 保存到文件
 					if log.ShouldWrite() {
 						log.CleanFields()
-						data, err := ffjson.Marshal(log)
+						data, err := easyjson.Marshal(log)
 						if err != nil {
 							logs.Error(err)
 							continue
@@ -145,7 +145,7 @@ func (this *AccessLogQueue) dumpInterval() {
 			continue
 		}
 		accessLog := new(accesslogs.AccessLog)
-		err = ffjson.Unmarshal(value, accessLog)
+		err = easyjson.Unmarshal(value, accessLog)
 		if err != nil {
 			logs.Error(err)
 			err = this.db.Delete(key, nil)

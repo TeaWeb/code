@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/TeaWeb/code/teautils"
-	"github.com/pquerna/ffjson/ffjson"
+	"github.com/mailru/easyjson"
 	"strconv"
 	"time"
 )
@@ -32,10 +32,10 @@ func (this *Storage) FormatAccessLogBytes(accessLog *accesslogs.AccessLog) ([]by
 	if this.Format == StorageFormatTemplate {
 		return []byte(accessLog.Format(this.Template)), nil
 	} else if this.Format == StorageFormatJSON {
-		return ffjson.Marshal(accessLog)
+		return easyjson.Marshal(accessLog)
 	}
 
-	return ffjson.Marshal(accessLog)
+	return easyjson.Marshal(accessLog)
 }
 
 // 格式化访问日志成字符串
@@ -43,7 +43,7 @@ func (this *Storage) FormatAccessLogString(accessLog *accesslogs.AccessLog) (str
 	if this.Format == StorageFormatTemplate {
 		return accessLog.Format(this.Template), nil
 	} else if this.Format == StorageFormatJSON {
-		data, err := ffjson.Marshal(accessLog)
+		data, err := easyjson.Marshal(accessLog)
 		if err != nil {
 			return "", err
 		}
@@ -52,7 +52,7 @@ func (this *Storage) FormatAccessLogString(accessLog *accesslogs.AccessLog) (str
 	}
 
 	// 默认
-	data, err := ffjson.Marshal(accessLog)
+	data, err := easyjson.Marshal(accessLog)
 	if err != nil {
 		return "", err
 	}

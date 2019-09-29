@@ -5,7 +5,7 @@ import (
 	"github.com/TeaWeb/code/teautils"
 	"github.com/go-acme/lego/log"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/pquerna/ffjson/ffjson"
+	"github.com/mailru/easyjson"
 	"os"
 	"testing"
 	"time"
@@ -61,7 +61,7 @@ func writeAccessLogToBuffer(buf *teautils.FileBuffer, path string) {
 	accessLog := &AccessLog{
 		RequestPath: path,
 	}
-	data, err := ffjson.Marshal(accessLog)
+	data, err := easyjson.Marshal(accessLog)
 	if err != nil {
 		logs.Error(err)
 		return

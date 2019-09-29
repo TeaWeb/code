@@ -10,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/mailru/easyjson"
 	"github.com/pquerna/ffjson/ffjson"
 	"path/filepath"
 	"reflect"
@@ -189,7 +190,7 @@ func (this *AccessLog) Format(format string) string {
 
 		// json log
 		if varName == "log" {
-			data, _ := ffjson.Marshal(this)
+			data, _ := easyjson.Marshal(this)
 			return string(data)
 		}
 
