@@ -11,11 +11,12 @@ type TestAction actions.Action
 
 // 测试数据库
 func (this *TestAction) RunPost(params struct {
-	DBType   string `alias:"dbType"`
-	Addr     string
-	Username string
-	Password string
-	DBName   string `alias:"dbName"`
+	DBType     string `alias:"dbType"`
+	Addr       string
+	Username   string
+	Password   string
+	DBName     string `alias:"dbName"`
+	AutoCreate bool
 }) {
 	params.Addr = teautils.FormatAddress(params.Addr)
 
@@ -34,7 +35,7 @@ func (this *TestAction) RunPost(params struct {
 	config.DBName = params.DBName
 	dsn := config.ComposeDSN()
 	driver := new(teadb.PostgresDriver)
-	message, ok := driver.TestDSN(dsn)
+	message, ok := driver.TestDSN(dsn, params.AutoCreate)
 	if ok {
 		this.Success()
 	}

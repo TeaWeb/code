@@ -81,15 +81,23 @@ func TestPostgresDriver_CreateTable(t *testing.T) {
 func TestPostgresDriver_TestDSN(t *testing.T) {
 	driver := new(PostgresDriver)
 	{
-		message, ok := driver.TestDSN("postgres://postgres:@127.0.0.1:5432/teaweb?sslmode=disable")
+		message, ok := driver.TestDSN("postgres://postgres:@127.0.0.1:5432/teaweb?sslmode=disable", false)
 		t.Log(message, ok)
 	}
 	{
-		message, ok := driver.TestDSN("postgres://postgres:123456@127.0.0.1:5432/teaweb123?sslmode=disable")
+		message, ok := driver.TestDSN("postgres://postgres:123456@127.0.0.1:5432/teaweb123?sslmode=disable", false)
 		t.Log(message, ok)
 	}
 	{
-		message, ok := driver.TestDSN("postgres://postgres:123456@127.0.0.1:5432/teaweb?sslmode=disable")
+		message, ok := driver.TestDSN("postgres://postgres:123456@127.0.0.1:5432/teaweb?sslmode=disable", false)
+		t.Log(message, ok)
+	}
+}
+
+func TestPostgresDriver_TestDSN_Create(t *testing.T) {
+	driver := new(PostgresDriver)
+	{
+		message, ok := driver.TestDSN("postgres://postgres:123456@127.0.0.1:5432/teaweb?sslmode=disable", true)
 		t.Log(message, ok)
 	}
 }

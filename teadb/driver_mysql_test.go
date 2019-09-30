@@ -182,17 +182,24 @@ func TestMySQLDriver_asSQL_Update(t *testing.T) {
 func TestMySQLDriver_TestDSN(t *testing.T) {
 	driver := new(MySQLDriver)
 	{
-		message, ok := driver.TestDSN("root:abcdef@tcp(127.0.0.1:3306)/teaweb123?charset=utf8mb4&timeout=30s")
+		message, ok := driver.TestDSN("root:abcdef@tcp(127.0.0.1:3306)/teaweb123?charset=utf8mb4&timeout=30s", false)
 		t.Log(message, ok)
 	}
 	{
-		message, ok := driver.TestDSN("root:123456@tcp(127.0.0.1:3306)/teaweb123?charset=utf8mb4&timeout=30s")
+		message, ok := driver.TestDSN("root:123456@tcp(127.0.0.1:3306)/teaweb123?charset=utf8mb4&timeout=30s", false)
 		t.Log(message, ok)
 	}
+
 	{
-		message, ok := driver.TestDSN("root:123456@tcp(127.0.0.1:3306)/teaweb?charset=utf8mb4&timeout=30s")
+		message, ok := driver.TestDSN("root:123456@tcp(127.0.0.1:3306)/teaweb?charset=utf8mb4&timeout=30s", false)
 		t.Log(message, ok)
 	}
+}
+
+func TestMySQLDriver_TestDSN_Create(t *testing.T) {
+	driver := new(MySQLDriver)
+	message, ok := driver.TestDSN("root:123456@tcp(127.0.0.1:3306)/teaweb?charset=utf8mb4&timeout=30s", true)
+	t.Log(message, ok)
 }
 
 func TestMySQLDriver_Ping(t *testing.T) {

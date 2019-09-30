@@ -8,6 +8,8 @@ import (
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/iwind/TeaGo/logs"
 	_ "github.com/lib/pq"
+	"net/url"
+	"strings"
 )
 
 type PostgresDriver struct {
@@ -109,7 +111,7 @@ func (this *PostgresDriver) CreateTable(table string, definitionSQL string) erro
 }
 
 // 测试DSN
-func (this *PostgresDriver) TestDSN(dsn string) (message string, ok bool) {
+func (this *PostgresDriver) TestDSN(dsn string, autoCreateDB bool) (message string, ok bool) {
 	dbInstance, err := sql.Open("postgres", dsn)
 	if err != nil {
 		message = "DSN解析错误：" + err.Error()
@@ -119,27 +121,57 @@ func (this *PostgresDriver) TestDSN(dsn string) (message string, ok bool) {
 		_ = dbInstance.Close()
 	}()
 
+	if autoCreateDB {
+		u, err := url.Parse(dsn)
+		if err != nil {
+			message = err.Error()
+			return
+		}
+		if len(u.Path) <= 1 {
+			message = "database name should not be empty"
+			return
+		}
+		database := u.Path[1:]
+		u.Path = "/"
+
+		newDBInstance, err := sql.Open("postgres", u.String())
+		if err != nil {
+			message = err.Error()
+			return
+		}
+		_, err = newDBInstance.ExecContext(context.Background(), `CREATE DATABASE "`+database+`"`)
+		if err != nil {
+			if !strings.Contains(err.Error(), "exists") {
+				message = err.Error()
+				_ = newDBInstance.Close()
+				return
+			}
+		}
+
+		_ = newDBInstance.Close()
+	}
+
 	// 测试创建数据表
-	_, err = dbInstance.ExecContext(context.Background(), `CREATE TABLE "public"."teaweb.test" (
+	_, err = dbInstance.ExecContext(context.Background(), `CREATE TABLE "public"."teaweb_test" (
 		"id" serial8 primary key,
 		"_id" varchar(24)
 		);
 		
-		CREATE UNIQUE INDEX "teaweb.test_id" ON "public"."teaweb.test" ("_id");`)
+		CREATE UNIQUE INDEX "teaweb_test_id" ON "public"."teaweb_test" ("_id");`)
 	if err != nil {
 		message = "尝试创建数据表失败：" + err.Error()
 		return
 	}
 
 	// 测试写入数据表
-	_, err = dbInstance.ExecContext(context.Background(), "INSERT INTO \"teaweb.test\" (\"_id\") VALUES ('"+shared.NewObjectId().Hex()+"')")
+	_, err = dbInstance.ExecContext(context.Background(), "INSERT INTO \"teaweb_test\" (\"_id\") VALUES ('"+shared.NewObjectId().Hex()+"')")
 	if err != nil {
 		message = "尝试写入数据表失败：" + err.Error()
 		return
 	}
 
 	// 测试删除数据表
-	_, err = dbInstance.ExecContext(context.Background(), "DROP TABLE \"teaweb.test\"")
+	_, err = dbInstance.ExecContext(context.Background(), "DROP TABLE \"teaweb_test\"")
 	if err != nil {
 		message = "尝试删除数据表失败：" + err.Error()
 		return
