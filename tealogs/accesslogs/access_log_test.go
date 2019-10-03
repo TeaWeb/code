@@ -320,12 +320,14 @@ func TestAccessLog_CleanFields(t *testing.T) {
 }
 
 func TestAccessLog_JSON(t *testing.T) {
+	before := time.Now()
 	accessLog := NewAccessLog()
 	accessLog.Request = "GET /hello"
 	data, err := easyjson.Marshal(accessLog)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(time.Since(before).Seconds()*1000, "ms")
 	t.Log(string(data))
 }
 

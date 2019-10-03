@@ -5,11 +5,9 @@ import (
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teautils/logbuffer"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/mailru/easyjson"
-	"github.com/syndtr/goleveldb/leveldb"
-	"strconv"
-	"sync"
 	"time"
 )
 
@@ -21,77 +19,43 @@ const (
 // 访问日志队列
 type AccessLogQueue struct {
 	index  int
-	db     *leveldb.DB
-	locker sync.Mutex
-	logIds []string
+	buffer *logbuffer.Buffer
 }
 
 // 创建队列对象
-func NewAccessLogQueue(db *leveldb.DB, index int) *AccessLogQueue {
+func NewAccessLogQueue(buffer *logbuffer.Buffer, index int) *AccessLogQueue {
 	return &AccessLogQueue{
-		db:    db,
-		index: index,
+		buffer: buffer,
+		index:  index,
 	}
 }
 
 // 从队列中接收日志
 func (this *AccessLogQueue) Receive(ch chan *accesslogs.AccessLog) {
-	ticker := teautils.NewTicker(1 * time.Second)
-	batch := new(leveldb.Batch)
-	logIds := []string{}
-	id := uint64(time.Now().UnixNano() * int64(this.index+1))
+	for log := range ch {
+		if log == nil {
+			continue
+		}
+		if log.ShouldStat() || log.ShouldWrite() {
+			log.Parse()
 
-	for {
-		select {
-		case log := <-ch:
-			if log != nil {
-				if log.ShouldStat() || log.ShouldWrite() {
-					log.Parse()
-
-					// 统计
-					if log.ShouldStat() {
-						CallAccessLogHooks(log)
-					}
-
-					// 保存到文件
-					if log.ShouldWrite() {
-						log.CleanFields()
-						data, err := easyjson.Marshal(log)
-						if err != nil {
-							logs.Error(err)
-							continue
-						}
-						id++
-						idString := strconv.FormatUint(id, 10)
-						logIds = append(logIds, idString)
-						batch.Put([]byte("accesslog_"+idString), data)
-					}
-				}
-
-				// 批量写入
-				if batch.Len() > 2048 {
-					err := this.db.Write(batch, nil)
-					if err != nil {
-						logs.Error(err)
-					}
-					batch.Reset()
-					this.locker.Lock()
-					this.logIds = append(this.logIds, logIds...)
-					this.locker.Unlock()
-					logIds = []string{}
-				}
+			// 统计
+			if log.ShouldStat() {
+				CallAccessLogHooks(log)
 			}
-		case <-ticker.C:
-			if batch.Len() > 0 {
-				err := this.db.Write(batch, nil)
+
+			// 保存到文件
+			if log.ShouldWrite() {
+				log.CleanFields()
+				data, err := easyjson.Marshal(log)
+				if err != nil {
+					logs.Error(err)
+					continue
+				}
+				_, err = this.buffer.Write(data)
 				if err != nil {
 					logs.Error(err)
 				}
-				batch.Reset()
-				this.locker.Lock()
-				this.logIds = append(this.logIds, logIds...)
-				this.locker.Unlock()
-				logIds = []string{}
 			}
 		}
 	}
@@ -107,51 +71,22 @@ func (this *AccessLogQueue) Dump() {
 
 // 导出日志定时内容
 func (this *AccessLogQueue) dumpInterval() {
-	size := 4096
-	var logIds = []string{}
-	this.locker.Lock()
-
-	// 超出一定数值，则清空，防止占用内存过大
-	if len(this.logIds) > 100*10000 {
-		this.logIds = []string{}
-	} else if len(this.logIds) > size {
-		logIds = this.logIds[:size]
-		this.logIds = this.logIds[size:]
-	} else {
-		logIds = this.logIds
-		this.logIds = []string{}
-	}
-	this.locker.Unlock()
-
-	if len(logIds) == 0 {
-		return
-	}
-
 	accessLogsList := []interface{}{}
-	batch := new(leveldb.Batch)
 
 	storageLogs := map[string][]*accesslogs.AccessLog{} // policyId => accessLogs
-	for _, logId := range logIds {
-		key := []byte("accesslog_" + logId)
-		value, err := this.db.Get(key, nil)
-		if err != nil {
-			if err != leveldb.ErrNotFound {
-				logs.Error(err)
-				err = this.db.Delete(key, nil)
-				if err != nil {
-					logs.Error(err)
-				}
-			}
-			continue
-		}
-		accessLog := new(accesslogs.AccessLog)
-		err = easyjson.Unmarshal(value, accessLog)
+	for i := 0; i < 4096; i++ {
+		data, err := this.buffer.Read()
 		if err != nil {
 			logs.Error(err)
-			err = this.db.Delete(key, nil)
-			if err != nil {
-				logs.Error(err)
-			}
+			break
+		}
+		if len(data) == 0 {
+			break
+		}
+		accessLog := new(accesslogs.AccessLog)
+		err = easyjson.Unmarshal(data, accessLog)
+		if err != nil {
+			logs.Error(err)
 			continue
 		}
 
@@ -171,8 +106,6 @@ func (this *AccessLogQueue) dumpInterval() {
 				storageLogs[policyId] = append(storageLogs[policyId], accessLog)
 			}
 		}
-
-		batch.Delete(key)
 	}
 
 	if len(storageLogs) > 0 {
@@ -185,13 +118,6 @@ func (this *AccessLogQueue) dumpInterval() {
 			if err != nil {
 				logs.Println("access log storage policy '"+policyId+"/"+FindPolicyName(policyId)+"'", err.Error())
 			}
-		}
-	}
-
-	if batch.Len() > 0 {
-		err := this.db.Write(batch, nil)
-		if err != nil {
-			logs.Error(err)
 		}
 	}
 
