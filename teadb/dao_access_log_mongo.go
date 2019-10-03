@@ -23,7 +23,14 @@ func (this *MongoAccessLogDAO) Init() {
 }
 
 func (this *MongoAccessLogDAO) TableName(day string) string {
-	return "logs." + day
+	table := "logs." + day
+	return table
+}
+
+func (this *MongoAccessLogDAO) InsertingTableName(day string) string {
+	table := "logs." + day
+	this.initTable(table)
+	return table
 }
 
 // 写入一条日志
@@ -31,14 +38,14 @@ func (this *MongoAccessLogDAO) InsertOne(accessLog *accesslogs.AccessLog) error 
 	if accessLog.Id.IsZero() {
 		accessLog.Id = shared.NewObjectId()
 	}
-	return NewQuery(this.TableName(timeutil.Format("Ymd"))).
+	return NewQuery(this.InsertingTableName(timeutil.Format("Ymd"))).
 		InsertOne(accessLog)
 }
 
 // 写入一组日志
 func (this *MongoAccessLogDAO) InsertAccessLogs(accessLogList []interface{}) error {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName(timeutil.Format("Ymd")))
+	coll, err := this.driver.(*MongoDriver).SelectColl(this.InsertingTableName(timeutil.Format("Ymd")))
 	if err != nil {
 		return err
 	}
@@ -243,8 +250,7 @@ func (this *MongoAccessLogDAO) QueryAccessLogs(day string, serverId string, quer
 	return result, nil
 }
 
-func (this *MongoAccessLogDAO) initTable(day string) {
-	table := this.TableName(day)
+func (this *MongoAccessLogDAO) initTable(table string) {
 	if isInitializedTable(table) {
 		return
 	}
@@ -265,19 +271,19 @@ func (this *MongoAccessLogDAO) initTable(day string) {
 			shared.NewIndexField("serverId", true),
 		},
 	} {
-		err := this.createIndex(day, fields)
+		err := this.createIndex(table, fields)
 		if err != nil {
 			logs.Error(err)
 		}
 	}
 }
 
-func (this *MongoAccessLogDAO) createIndex(day string, fields []*shared.IndexField) error {
+func (this *MongoAccessLogDAO) createIndex(table string, fields []*shared.IndexField) error {
 	if len(fields) == 0 {
 		return nil
 	}
 
-	coll, err := this.driver.(*MongoDriver).SelectColl(this.TableName(day))
+	coll, err := this.driver.(*MongoDriver).SelectColl(table)
 	if err != nil {
 		return err
 	}

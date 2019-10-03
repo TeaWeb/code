@@ -278,7 +278,7 @@ func (this *MongoDriver) InsertOnes(table string, modelPtrSlice interface{}) err
 		s = append(s, t.Index(i).Interface())
 	}
 
-	_, err := this.DB().Collection(table).InsertMany(this.timeoutContext(5*time.Second), s)
+	_, err := this.DB().Collection(table).InsertMany(this.timeoutContext(10*time.Second), s)
 	return err
 }
 
