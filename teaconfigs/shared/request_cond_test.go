@@ -519,6 +519,42 @@ func TestRequestCond_IP(t *testing.T) {
 			return source
 		}))
 	}
+
+	{
+		cond := RequestCond{
+			Param:    "192.168.1.100",
+			Operator: RequestCondOperatorIPMod10,
+			Value:    "6",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "192.168.1.100",
+			Operator: RequestCondOperatorIPMod100,
+			Value:    "76",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "192.168.1.100",
+			Operator: RequestCondOperatorIPMod,
+			Value:    "10,6",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
 }
 
 func TestRequestCondIPCompare(t *testing.T) {
@@ -545,6 +581,17 @@ func TestRequestCondIPCompare(t *testing.T) {
 		ip2 := net.ParseIP("a")
 		t.Log(ip1 == nil)
 		t.Log(bytes.Compare(ip1, ip2))
+	}
+
+	{
+		cond := RequestCond{}
+		t.Log(cond.ipToInt64(net.ParseIP("192.168.1.100")))
+		t.Log(cond.ipToInt64(net.ParseIP("192.168.1.99")))
+		t.Log(cond.ipToInt64(net.ParseIP("0.0.0.0")))
+		t.Log(cond.ipToInt64(net.ParseIP("127.0.0.1")))
+		t.Log(cond.ipToInt64(net.ParseIP("abc")))
+		t.Log(cond.ipToInt64(net.ParseIP("192.168")))
+		t.Log(cond.ipToInt64(net.ParseIP("2001:0db8:0000:0000:0000:ff00:0042:8329")))
 	}
 }
 

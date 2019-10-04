@@ -14,9 +14,9 @@ const (
 	RequestCondOperatorGteFloat          RequestCondOperator = "gte"
 	RequestCondOperatorLtFloat           RequestCondOperator = "lt"
 	RequestCondOperatorLteFloat          RequestCondOperator = "lte"
-	RequestCondOperatorMod               RequestCondOperator = "mod"
 	RequestCondOperatorMod10             RequestCondOperator = "mod 10"
 	RequestCondOperatorMod100            RequestCondOperator = "mod 100"
+	RequestCondOperatorMod               RequestCondOperator = "mod"
 	RequestCondOperatorEqString          RequestCondOperator = "eq"
 	RequestCondOperatorNeqString         RequestCondOperator = "not"
 	RequestCondOperatorHasPrefix         RequestCondOperator = "prefix"
@@ -34,6 +34,9 @@ const (
 	RequestCondOperatorLtIP              RequestCondOperator = "lt ip"
 	RequestCondOperatorLteIP             RequestCondOperator = "lte ip"
 	RequestCondOperatorIPRange           RequestCondOperator = "ip range"
+	RequestCondOperatorIPMod10           RequestCondOperator = "ip mod 10"
+	RequestCondOperatorIPMod100          RequestCondOperator = "ip mod 100"
+	RequestCondOperatorIPMod             RequestCondOperator = "ip mod"
 )
 
 // 所有的运算符
@@ -178,6 +181,21 @@ func AllRequestOperators() []maps.Map {
 			"name":        "IP范围",
 			"op":          RequestCondOperatorIPRange,
 			"description": "IP在某个范围之内，范围格式可以是英文逗号分隔的ip1,ip2，或者CIDR格式的ip/bits",
+		},
+		{
+			"name":        "IP取模10",
+			"op":          RequestCondOperatorIPMod10,
+			"description": "对IP参数值取模，除数为10，对比值为余数",
+		},
+		{
+			"name":        "IP取模100",
+			"op":          RequestCondOperatorIPMod100,
+			"description": "对IP参数值取模，除数为100，对比值为余数",
+		},
+		{
+			"name":        "IP取模",
+			"op":          RequestCondOperatorIPMod,
+			"description": "对IP参数值取模，对比值格式为：除数,余数，比如10,1",
 		},
 	}
 }

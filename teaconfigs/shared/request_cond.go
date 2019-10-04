@@ -2,6 +2,7 @@ package shared
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"github.com/iwind/TeaGo/lists"
@@ -311,6 +312,33 @@ func (this *RequestCond) Match(formatter func(source string) string) bool {
 		} else {
 			return stringutil.VersionCompare(paramValue, this.Value) >= 0
 		}
+	case RequestCondOperatorIPMod:
+		pieces := strings.SplitN(this.Value, ",", 2)
+		if len(pieces) == 1 {
+			rem := types.Int64(pieces[0])
+			return this.ipToInt64(net.ParseIP(paramValue))%10 == rem
+		}
+		div := types.Int64(pieces[0])
+		if div == 0 {
+			return false
+		}
+		rem := types.Int64(pieces[1])
+		return this.ipToInt64(net.ParseIP(paramValue))%div == rem
+	case RequestCondOperatorIPMod10:
+		return this.ipToInt64(net.ParseIP(paramValue))%10 == types.Int64(this.Value)
+	case RequestCondOperatorIPMod100:
+		return this.ipToInt64(net.ParseIP(paramValue))%100 == types.Int64(this.Value)
 	}
+
 	return false
+}
+
+func (this *RequestCond) ipToInt64(ip net.IP) int64 {
+	if len(ip) == 0 {
+		return 0
+	}
+	if len(ip) == 16 {
+		return int64(binary.BigEndian.Uint32(ip[12:16]))
+	}
+	return int64(binary.BigEndian.Uint32(ip))
 }
