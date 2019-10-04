@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 )
 
+// 单个日志文件
 type File struct {
 	name   string
 	writer *os.File
@@ -16,12 +17,14 @@ type File struct {
 	isWriting int32
 }
 
+// 获取新对象
 func NewFile(name string) *File {
 	return &File{
 		name: name,
 	}
 }
 
+// 写入数据
 func (this *File) Write(data []byte) (int, error) {
 	atomic.StoreInt32(&this.isWriting, 1)
 	if this.writer == nil {
@@ -41,6 +44,7 @@ func (this *File) Write(data []byte) (int, error) {
 	return n + n1, err
 }
 
+// 读取单行
 func (this *File) Read() (data []byte, err error) {
 	v := atomic.LoadInt32(&this.isWriting)
 	if v == 1 {
@@ -75,14 +79,17 @@ func (this *File) Read() (data []byte, err error) {
 	return line, err
 }
 
+// 同步数据
 func (this *File) Sync() error {
 	return this.writer.Sync()
 }
 
+// 文件尺寸
 func (this *File) Size() int {
 	return this.size
 }
 
+// 关闭文件句柄
 func (this *File) Close() error {
 	var err error = nil
 	if this.writer != nil {
@@ -101,6 +108,7 @@ func (this *File) Close() error {
 	return err
 }
 
+// 删除文件
 func (this *File) Delete() error {
 	return os.Remove(this.name)
 }

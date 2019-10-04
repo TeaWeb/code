@@ -31,6 +31,7 @@ func NewBuffer(prefix string) *Buffer {
 	return buf
 }
 
+// 初始化
 func (this *Buffer) init() {
 	matches, err := filepath.Glob(this.prefix + ".*.log")
 	if err != nil {
@@ -96,6 +97,7 @@ func (this *Buffer) Read() (data []byte, err error) {
 	return
 }
 
+// 文件名
 func (this *Buffer) filename(index int) string {
 	return this.prefix + "." + strconv.Itoa(index) + ".log"
 }
