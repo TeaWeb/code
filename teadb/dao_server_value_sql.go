@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/stats"
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/iwind/TeaGo/logs"
+	"strings"
 	"time"
 )
 
@@ -233,5 +234,11 @@ func (this *SQLServerValueDAO) mapField(field string) string {
 	case "timeFormat.second":
 		return "timeFormat_second"
 	}
+
+	// params
+	if strings.HasPrefix(field, "params.") {
+		return this.driver.(SQLDriverInterface).JSONExtract("params", field[len("params."):])
+	}
+
 	return field
 }
