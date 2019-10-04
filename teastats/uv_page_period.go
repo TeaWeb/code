@@ -16,6 +16,10 @@ func (this *UVPagePeriodFilter) Name() string {
 	return "URL UV统计"
 }
 
+func (this *UVPagePeriodFilter) Description() string {
+	return "单个URL UV统计"
+}
+
 func (this *UVPagePeriodFilter) Codes() []string {
 	return []string{
 		"uv.page.second",
@@ -25,6 +29,20 @@ func (this *UVPagePeriodFilter) Codes() []string {
 		"uv.page.week",
 		"uv.page.month",
 		"uv.page.year",
+	}
+}
+
+// 参数说明
+func (this *UVPagePeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("page", "请求URL"),
+	}
+}
+
+// 统计数据说明
+func (this *UVPagePeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "UV数量"),
 	}
 }
 

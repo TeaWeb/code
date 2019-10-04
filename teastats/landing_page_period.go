@@ -16,6 +16,10 @@ func (this *LandingPagePeriodFilter) Name() string {
 	return "登陆页统计"
 }
 
+func (this *LandingPagePeriodFilter) Description() string {
+	return "登陆页统计"
+}
+
 func (this *LandingPagePeriodFilter) Codes() []string {
 	return []string{
 		"landing.page.second",
@@ -28,8 +32,22 @@ func (this *LandingPagePeriodFilter) Codes() []string {
 	}
 }
 
+// 参数说明
+func (this *LandingPagePeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("page", "请求URL"),
+	}
+}
+
+// 统计数据说明
+func (this *LandingPagePeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
+	}
+}
+
 func (this *LandingPagePeriodFilter) Indexes() []string {
-	return []string{"path"}
+	return []string{"page"}
 }
 
 func (this *LandingPagePeriodFilter) Start(queue *Queue, code string) {
@@ -52,7 +70,7 @@ func (this *LandingPagePeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 		return
 	}
 	this.ApplyFilter(accessLog, map[string]string{
-		"path": accessLog.RequestPath,
+		"page": accessLog.RequestPath,
 	}, maps.Map{
 		"count": 1,
 	})

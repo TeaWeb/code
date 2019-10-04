@@ -16,6 +16,10 @@ func (this *CostAllPeriodFilter) Name() string {
 	return "耗时统计"
 }
 
+func (this *CostAllPeriodFilter) Description() string {
+	return "所有请求的耗时统计"
+}
+
 func (this *CostAllPeriodFilter) Codes() []string {
 	return []string{
 		"cost.all.second",
@@ -25,6 +29,19 @@ func (this *CostAllPeriodFilter) Codes() []string {
 		"cost.all.week",
 		"cost.all.month",
 		"cost.all.year",
+	}
+}
+
+// 参数说明
+func (this *CostAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{}
+}
+
+// 统计数据说明
+func (this *CostAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("countReq", "请求数"),
+		NewVariable("cost", "耗时（秒）"),
 	}
 }
 

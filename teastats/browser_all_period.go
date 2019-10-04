@@ -16,6 +16,10 @@ func (this *BrowserAllPeriodFilter) Name() string {
 	return "浏览器统计"
 }
 
+func (this *BrowserAllPeriodFilter) Description() string {
+	return "所有请求的浏览器统计"
+}
+
 func (this *BrowserAllPeriodFilter) Codes() []string {
 	return []string{
 		"browser.all.second",
@@ -25,6 +29,24 @@ func (this *BrowserAllPeriodFilter) Codes() []string {
 		"browser.all.week",
 		"browser.all.month",
 		"browser.all.year",
+	}
+}
+
+// 参数说明
+func (this *BrowserAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("family", "浏览器名称"),
+		NewVariable("major", "浏览器主版本"),
+	}
+}
+
+// 统计数据说明
+func (this *BrowserAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("countReq", "请求数"),
+		NewVariable("countPV", "PV数量"),
+		NewVariable("countUV", "UV数量"),
+		NewVariable("countIP", "IP数量"),
 	}
 }
 

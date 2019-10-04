@@ -16,6 +16,10 @@ func (this *DeviceAllPeriodFilter) Name() string {
 	return "设备统计"
 }
 
+func (this *DeviceAllPeriodFilter) Description() string {
+	return "所有请求的设备统计"
+}
+
 func (this *DeviceAllPeriodFilter) Codes() []string {
 	return []string{
 		"device.all.second",
@@ -25,6 +29,24 @@ func (this *DeviceAllPeriodFilter) Codes() []string {
 		"device.all.week",
 		"device.all.month",
 		"device.all.year",
+	}
+}
+
+// 参数说明
+func (this *DeviceAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("family", "设备名"),
+		NewVariable("model", "型号"),
+	}
+}
+
+// 统计数据说明
+func (this *DeviceAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("countReq", "请求数"),
+		NewVariable("countPV", "PV数量"),
+		NewVariable("countUV", "UV数量"),
+		NewVariable("countIP", "IP数量"),
 	}
 }
 

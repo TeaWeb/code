@@ -16,6 +16,10 @@ func (this *PVPagePeriodFilter) Name() string {
 	return "URL PV统计"
 }
 
+func (this *PVPagePeriodFilter) Description() string {
+	return "单个URL PV统计"
+}
+
 func (this *PVPagePeriodFilter) Codes() []string {
 	return []string{
 		"pv.page.second",
@@ -28,8 +32,22 @@ func (this *PVPagePeriodFilter) Codes() []string {
 	}
 }
 
+// 参数说明
+func (this *PVPagePeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("page", "请求URL"),
+	}
+}
+
+// 统计数据说明
+func (this *PVPagePeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "PV数"),
+	}
+}
+
 func (this *PVPagePeriodFilter) Indexes() []string {
-	return []string{"path"}
+	return []string{"page"}
 }
 
 func (this *PVPagePeriodFilter) Start(queue *Queue, code string) {
@@ -48,7 +66,7 @@ func (this *PVPagePeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 		return
 	}
 	this.ApplyFilter(accessLog, map[string]string{
-		"path": accessLog.RequestPath,
+		"page": accessLog.RequestPath,
 	}, maps.Map{
 		"count": 1,
 	})

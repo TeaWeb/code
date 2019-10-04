@@ -16,6 +16,10 @@ func (this *LocationAllPeriodFilter) Name() string {
 	return "路径规则请求统计"
 }
 
+func (this *LocationAllPeriodFilter) Description() string {
+	return "路径规则请求统计"
+}
+
 func (this *LocationAllPeriodFilter) Codes() []string {
 	return []string{
 		"location.all.second",
@@ -25,6 +29,20 @@ func (this *LocationAllPeriodFilter) Codes() []string {
 		"location.all.week",
 		"location.all.month",
 		"location.all.year",
+	}
+}
+
+// 参数说明
+func (this *LocationAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("location", "路径规则ID"),
+	}
+}
+
+// 统计数据说明
+func (this *LocationAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

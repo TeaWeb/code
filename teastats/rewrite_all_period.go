@@ -16,6 +16,10 @@ func (this *RewriteAllPeriodFilter) Name() string {
 	return "重写规则请求统计"
 }
 
+func (this *RewriteAllPeriodFilter) Description() string {
+	return "重写规则请求统计"
+}
+
 func (this *RewriteAllPeriodFilter) Codes() []string {
 	return []string{
 		"rewrite.all.second",
@@ -25,6 +29,20 @@ func (this *RewriteAllPeriodFilter) Codes() []string {
 		"rewrite.all.week",
 		"rewrite.all.month",
 		"rewrite.all.year",
+	}
+}
+
+// 参数说明
+func (this *RewriteAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("rewrite", "重写规则ID"),
+	}
+}
+
+// 统计数据说明
+func (this *RewriteAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

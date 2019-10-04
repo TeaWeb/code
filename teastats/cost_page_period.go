@@ -16,6 +16,10 @@ func (this *CostPagePeriodFilter) Name() string {
 	return "URL耗时统计"
 }
 
+func (this *CostPagePeriodFilter) Description() string {
+	return "单个URL耗时统计"
+}
+
 func (this *CostPagePeriodFilter) Codes() []string {
 	return []string{
 		"cost.page.second",
@@ -25,6 +29,21 @@ func (this *CostPagePeriodFilter) Codes() []string {
 		"cost.page.week",
 		"cost.page.month",
 		"cost.page.year",
+	}
+}
+
+// 参数说明
+func (this *CostPagePeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("page", "请求URL"),
+	}
+}
+
+// 统计数据说明
+func (this *CostPagePeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("countReq", "请求数"),
+		NewVariable("cost", "耗时"),
 	}
 }
 

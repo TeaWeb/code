@@ -16,6 +16,10 @@ func (this *BackendAllPeriodFilter) Name() string {
 	return "后端请求统计"
 }
 
+func (this *BackendAllPeriodFilter) Description() string {
+	return "计算某个后端服务器请求次数"
+}
+
 func (this *BackendAllPeriodFilter) Codes() []string {
 	return []string{
 		"backend.all.second",
@@ -25,6 +29,20 @@ func (this *BackendAllPeriodFilter) Codes() []string {
 		"backend.all.week",
 		"backend.all.month",
 		"backend.all.year",
+	}
+}
+
+// 参数说明
+func (this *BackendAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("backend", "后端服务器ID"),
+	}
+}
+
+// 统计数据说明
+func (this *BackendAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

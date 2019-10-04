@@ -9,8 +9,17 @@ type FilterInterface interface {
 	// 名称
 	Name() string
 
+	// 描述
+	Description() string
+
 	// 代号
 	Codes() []string
+
+	// 参数说明
+	ParamVariables() []*Variable
+
+	// 统计数据说明
+	ValueVariables() []*Variable
 
 	// 索引参数
 	Indexes() []string

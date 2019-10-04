@@ -16,6 +16,10 @@ func (this *ProvinceAllPeriodFilter) Name() string {
 	return "省份统计"
 }
 
+func (this *ProvinceAllPeriodFilter) Description() string {
+	return "所有请求的省份统计"
+}
+
 func (this *ProvinceAllPeriodFilter) Codes() []string {
 	return []string{
 		"province.all.second",
@@ -25,6 +29,24 @@ func (this *ProvinceAllPeriodFilter) Codes() []string {
 		"province.all.week",
 		"province.all.month",
 		"province.all.year",
+	}
+}
+
+// 参数说明
+func (this *ProvinceAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("region", "国家或地区"),
+		NewVariable("province", "省份或州"),
+	}
+}
+
+// 统计数据说明
+func (this *ProvinceAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("countReq", "请求数"),
+		NewVariable("countPV", "PV数量"),
+		NewVariable("countUV", "UV数量"),
+		NewVariable("countIP", "IP数量"),
 	}
 }
 

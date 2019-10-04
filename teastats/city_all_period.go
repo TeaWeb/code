@@ -16,6 +16,10 @@ func (this *CityAllPeriodFilter) Name() string {
 	return "城市统计"
 }
 
+func (this *CityAllPeriodFilter) Description() string {
+	return "所有请求的城市统计"
+}
+
 func (this *CityAllPeriodFilter) Codes() []string {
 	return []string{
 		"city.all.second",
@@ -25,6 +29,25 @@ func (this *CityAllPeriodFilter) Codes() []string {
 		"city.all.week",
 		"city.all.month",
 		"city.all.year",
+	}
+}
+
+// 参数说明
+func (this *CityAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("region", "国家或地区"),
+		NewVariable("province", "省份、州"),
+		NewVariable("city", "城市"),
+	}
+}
+
+// 统计数据说明
+func (this *CityAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("countReq", "请求数"),
+		NewVariable("countPV", "PV数量"),
+		NewVariable("countUV", "UV数量"),
+		NewVariable("countIP", "IP数量"),
 	}
 }
 

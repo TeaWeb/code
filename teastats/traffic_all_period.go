@@ -16,6 +16,22 @@ func (this *TrafficAllPeriodFilter) Name() string {
 	return "流量统计"
 }
 
+func (this *TrafficAllPeriodFilter) Description() string {
+	return "所有请求的流量统计"
+}
+
+// 参数说明
+func (this *TrafficAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{}
+}
+
+// 统计数据说明
+func (this *TrafficAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("bytes", "流量（字节）"),
+	}
+}
+
 func (this *TrafficAllPeriodFilter) Codes() []string {
 	return []string{
 		"traffic.all.second",

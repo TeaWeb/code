@@ -16,6 +16,10 @@ func (this *OSAllPeriodFilter) Name() string {
 	return "操作系统统计"
 }
 
+func (this *OSAllPeriodFilter) Description() string {
+	return "所有请求的操作系统统计"
+}
+
 func (this *OSAllPeriodFilter) Codes() []string {
 	return []string{
 		"os.all.second",
@@ -25,6 +29,24 @@ func (this *OSAllPeriodFilter) Codes() []string {
 		"os.all.week",
 		"os.all.month",
 		"os.all.year",
+	}
+}
+
+// 参数说明
+func (this *OSAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("family", "操作系统名称"),
+		NewVariable("major", "操作系统主版本"),
+	}
+}
+
+// 统计数据说明
+func (this *OSAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("countReq", "请求数"),
+		NewVariable("countPV", "PV数量"),
+		NewVariable("countUV", "UV数量"),
+		NewVariable("countIP", "IP数量"),
 	}
 }
 

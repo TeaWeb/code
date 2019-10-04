@@ -17,6 +17,25 @@ func (this *StatusPagePeriodFilter) Name() string {
 	return "URL状态码统计"
 }
 
+func (this *StatusPagePeriodFilter) Description() string {
+	return "单个URL响应状态码统计"
+}
+
+// 参数说明
+func (this *StatusPagePeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("status", "HTTP状态码"),
+		NewVariable("page", "请求URL"),
+	}
+}
+
+// 统计数据说明
+func (this *StatusPagePeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数量"),
+	}
+}
+
 // 提供的代码
 func (this *StatusPagePeriodFilter) Codes() []string {
 	return []string{

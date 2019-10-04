@@ -16,6 +16,10 @@ func (this *UVAllPeriodFilter) Name() string {
 	return "UV统计"
 }
 
+func (this *UVAllPeriodFilter) Description() string {
+	return "所有请求的UV统计"
+}
+
 func (this *UVAllPeriodFilter) Codes() []string {
 	return []string{
 		"uv.all.second",
@@ -25,6 +29,18 @@ func (this *UVAllPeriodFilter) Codes() []string {
 		"uv.all.week",
 		"uv.all.month",
 		"uv.all.year",
+	}
+}
+
+// 参数说明
+func (this *UVAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{}
+}
+
+// 统计数据说明
+func (this *UVAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "UV数"),
 	}
 }
 

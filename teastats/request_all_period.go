@@ -16,6 +16,10 @@ func (this *RequestAllPeriodFilter) Name() string {
 	return "请求数统计"
 }
 
+func (this *RequestAllPeriodFilter) Description() string {
+	return "所有请求的请求数统计"
+}
+
 func (this *RequestAllPeriodFilter) Codes() []string {
 	return []string{
 		"request.all.second",
@@ -25,6 +29,18 @@ func (this *RequestAllPeriodFilter) Codes() []string {
 		"request.all.week",
 		"request.all.month",
 		"request.all.year",
+	}
+}
+
+// 参数说明
+func (this *RequestAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{}
+}
+
+// 统计数据说明
+func (this *RequestAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

@@ -16,6 +16,10 @@ func (this *RequestPagePeriodFilter) Name() string {
 	return "URL请求数统计"
 }
 
+func (this *RequestPagePeriodFilter) Description() string {
+	return "单个URL请求数统计"
+}
+
 func (this *RequestPagePeriodFilter) Codes() []string {
 	return []string{
 		"request.page.second",
@@ -25,6 +29,20 @@ func (this *RequestPagePeriodFilter) Codes() []string {
 		"request.page.week",
 		"request.page.month",
 		"request.page.year",
+	}
+}
+
+// 参数说明
+func (this *RequestPagePeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("page", "请求URL"),
+	}
+}
+
+// 统计数据说明
+func (this *RequestPagePeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

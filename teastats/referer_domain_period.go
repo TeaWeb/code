@@ -17,6 +17,10 @@ func (this *RefererDomainPeriodFilter) Name() string {
 	return "来源域名统计"
 }
 
+func (this *RefererDomainPeriodFilter) Description() string {
+	return "所有请求的来源域名统计"
+}
+
 func (this *RefererDomainPeriodFilter) Codes() []string {
 	return []string{
 		"referer.domain.second",
@@ -26,6 +30,20 @@ func (this *RefererDomainPeriodFilter) Codes() []string {
 		"referer.domain.week",
 		"referer.domain.month",
 		"referer.domain.year",
+	}
+}
+
+// 参数说明
+func (this *RefererDomainPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("domain", "域名"),
+	}
+}
+
+// 统计数据说明
+func (this *RefererDomainPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

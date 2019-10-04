@@ -17,6 +17,24 @@ func (this *StatusAllPeriodFilter) Name() string {
 	return "状态码统计"
 }
 
+func (this *StatusAllPeriodFilter) Description() string {
+	return "所有请求的响应状态码统计"
+}
+
+// 参数说明
+func (this *StatusAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("status", "HTTP状态码"),
+	}
+}
+
+// 统计数据说明
+func (this *StatusAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数量"),
+	}
+}
+
 func (this *StatusAllPeriodFilter) Codes() []string {
 	return []string{
 		"status.all.second",

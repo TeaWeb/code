@@ -43,10 +43,11 @@ func RegisterFilter(filters ...FilterInterface) {
 				}
 			}
 			m := maps.Map{
-				"name":     filter.Name(),
-				"code":     code,
-				"period":   periodName,
-				"instance": filter,
+				"name":        filter.Name(),
+				"description": filter.Description(),
+				"code":        code,
+				"period":      periodName,
+				"instance":    filter,
 			}
 			AllStatFilters = append(AllStatFilters, m)
 		}

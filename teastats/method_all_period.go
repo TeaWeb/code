@@ -16,6 +16,10 @@ func (this *MethodAllPeriodFilter) Name() string {
 	return "请求方法统计"
 }
 
+func (this *MethodAllPeriodFilter) Description() string {
+	return "所有请求的请求方法统计"
+}
+
 func (this *MethodAllPeriodFilter) Codes() []string {
 	return []string{
 		"method.all.second",
@@ -25,6 +29,20 @@ func (this *MethodAllPeriodFilter) Codes() []string {
 		"method.all.week",
 		"method.all.month",
 		"method.all.year",
+	}
+}
+
+// 参数说明
+func (this *MethodAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("method", "请求方法（大写）"),
+	}
+}
+
+// 统计数据说明
+func (this *MethodAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

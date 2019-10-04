@@ -13,7 +13,11 @@ type IPAllPeriodFilter struct {
 }
 
 func (this *IPAllPeriodFilter) Name() string {
-	return "IP统计"
+	return "IP数统计"
+}
+
+func (this *IPAllPeriodFilter) Description() string {
+	return "所有请求的IP数统计"
 }
 
 func (this *IPAllPeriodFilter) Codes() []string {
@@ -25,6 +29,18 @@ func (this *IPAllPeriodFilter) Codes() []string {
 		"ip.all.week",
 		"ip.all.month",
 		"ip.all.year",
+	}
+}
+
+// 参数说明
+func (this *IPAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{}
+}
+
+// 统计数据说明
+func (this *IPAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

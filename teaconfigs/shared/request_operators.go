@@ -6,17 +6,24 @@ import "github.com/iwind/TeaGo/maps"
 type RequestCondOperator = string
 
 const (
-	RequestCondOperatorRegexp            RequestCondOperator = "regexp"
-	RequestCondOperatorNotRegexp         RequestCondOperator = "not regexp"
-	RequestCondOperatorEqInt             RequestCondOperator = "eq int"   // 整数等于
-	RequestCondOperatorEqFloat           RequestCondOperator = "eq float" // 浮点数等于
-	RequestCondOperatorGtFloat           RequestCondOperator = "gt"
-	RequestCondOperatorGteFloat          RequestCondOperator = "gte"
-	RequestCondOperatorLtFloat           RequestCondOperator = "lt"
-	RequestCondOperatorLteFloat          RequestCondOperator = "lte"
-	RequestCondOperatorMod10             RequestCondOperator = "mod 10"
-	RequestCondOperatorMod100            RequestCondOperator = "mod 100"
-	RequestCondOperatorMod               RequestCondOperator = "mod"
+	// 正则
+	RequestCondOperatorRegexp    RequestCondOperator = "regexp"
+	RequestCondOperatorNotRegexp RequestCondOperator = "not regexp"
+
+	// 数字相关
+	RequestCondOperatorEqInt    RequestCondOperator = "eq int"   // 整数等于
+	RequestCondOperatorEqFloat  RequestCondOperator = "eq float" // 浮点数等于
+	RequestCondOperatorGtFloat  RequestCondOperator = "gt"
+	RequestCondOperatorGteFloat RequestCondOperator = "gte"
+	RequestCondOperatorLtFloat  RequestCondOperator = "lt"
+	RequestCondOperatorLteFloat RequestCondOperator = "lte"
+
+	// 取模
+	RequestCondOperatorMod10  RequestCondOperator = "mod 10"
+	RequestCondOperatorMod100 RequestCondOperator = "mod 100"
+	RequestCondOperatorMod    RequestCondOperator = "mod"
+
+	// 字符串相关
 	RequestCondOperatorEqString          RequestCondOperator = "eq"
 	RequestCondOperatorNeqString         RequestCondOperator = "not"
 	RequestCondOperatorHasPrefix         RequestCondOperator = "prefix"
@@ -28,15 +35,17 @@ const (
 	RequestCondOperatorFileExt           RequestCondOperator = "file ext"
 	RequestCondOperatorFileMimeType      RequestCondOperator = "mime type"
 	RequestCondOperatorVersionRange      RequestCondOperator = "version range"
-	RequestCondOperatorEqIP              RequestCondOperator = "eq ip"
-	RequestCondOperatorGtIP              RequestCondOperator = "gt ip"
-	RequestCondOperatorGteIP             RequestCondOperator = "gte ip"
-	RequestCondOperatorLtIP              RequestCondOperator = "lt ip"
-	RequestCondOperatorLteIP             RequestCondOperator = "lte ip"
-	RequestCondOperatorIPRange           RequestCondOperator = "ip range"
-	RequestCondOperatorIPMod10           RequestCondOperator = "ip mod 10"
-	RequestCondOperatorIPMod100          RequestCondOperator = "ip mod 100"
-	RequestCondOperatorIPMod             RequestCondOperator = "ip mod"
+
+	// IP相关
+	RequestCondOperatorEqIP     RequestCondOperator = "eq ip"
+	RequestCondOperatorGtIP     RequestCondOperator = "gt ip"
+	RequestCondOperatorGteIP    RequestCondOperator = "gte ip"
+	RequestCondOperatorLtIP     RequestCondOperator = "lt ip"
+	RequestCondOperatorLteIP    RequestCondOperator = "lte ip"
+	RequestCondOperatorIPRange  RequestCondOperator = "ip range"
+	RequestCondOperatorIPMod10  RequestCondOperator = "ip mod 10"
+	RequestCondOperatorIPMod100 RequestCondOperator = "ip mod 100"
+	RequestCondOperatorIPMod    RequestCondOperator = "ip mod"
 )
 
 // 所有的运算符

@@ -16,6 +16,10 @@ func (this *IPPagePeriodFilter) Name() string {
 	return "URL IP统计"
 }
 
+func (this *IPPagePeriodFilter) Description() string {
+	return "单个URL IP统计"
+}
+
 func (this *IPPagePeriodFilter) Codes() []string {
 	return []string{
 		"ip.page.second",
@@ -25,6 +29,20 @@ func (this *IPPagePeriodFilter) Codes() []string {
 		"ip.page.week",
 		"ip.page.month",
 		"ip.page.year",
+	}
+}
+
+// 参数说明
+func (this *IPPagePeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("page", "请求URL"),
+	}
+}
+
+// 统计数据说明
+func (this *IPPagePeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

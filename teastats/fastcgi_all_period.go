@@ -16,6 +16,10 @@ func (this *FastcgiAllPeriodFilter) Name() string {
 	return "Fastcgi请求统计"
 }
 
+func (this *FastcgiAllPeriodFilter) Description() string {
+	return "Fastcgi请求统计"
+}
+
 func (this *FastcgiAllPeriodFilter) Codes() []string {
 	return []string{
 		"fastcgi.all.second",
@@ -25,6 +29,20 @@ func (this *FastcgiAllPeriodFilter) Codes() []string {
 		"fastcgi.all.week",
 		"fastcgi.all.month",
 		"fastcgi.all.year",
+	}
+}
+
+// 参数说明
+func (this *FastcgiAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("fastcgi", "Fastcgi ID"),
+	}
+}
+
+// 统计数据说明
+func (this *FastcgiAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

@@ -16,6 +16,10 @@ func (this *RegionAllPeriodFilter) Name() string {
 	return "区域统计"
 }
 
+func (this *RegionAllPeriodFilter) Description() string {
+	return "所有请求的区域统计"
+}
+
 func (this *RegionAllPeriodFilter) Codes() []string {
 	return []string{
 		"region.all.second",
@@ -25,6 +29,23 @@ func (this *RegionAllPeriodFilter) Codes() []string {
 		"region.all.week",
 		"region.all.month",
 		"region.all.year",
+	}
+}
+
+// 参数说明
+func (this *RegionAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("region", "国家或地区"),
+	}
+}
+
+// 统计数据说明
+func (this *RegionAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("countReq", "请求数"),
+		NewVariable("countPV", "PV数量"),
+		NewVariable("countUV", "UV数量"),
+		NewVariable("countIP", "IP数量"),
 	}
 }
 

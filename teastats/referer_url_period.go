@@ -16,6 +16,10 @@ func (this *RefererURLPeriodFilter) Name() string {
 	return "来源URL统计"
 }
 
+func (this *RefererURLPeriodFilter) Description() string {
+	return "所有请求的来源URL统计"
+}
+
 func (this *RefererURLPeriodFilter) Codes() []string {
 	return []string{
 		"referer.url.second",
@@ -25,6 +29,20 @@ func (this *RefererURLPeriodFilter) Codes() []string {
 		"referer.url.week",
 		"referer.url.month",
 		"referer.url.year",
+	}
+}
+
+// 参数说明
+func (this *RefererURLPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("url", "来源URL"),
+	}
+}
+
+// 统计数据说明
+func (this *RefererURLPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "请求数"),
 	}
 }
 

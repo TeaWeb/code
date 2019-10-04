@@ -16,6 +16,24 @@ func (this *TrafficPagePeriodFilter) Name() string {
 	return "URL流量统计"
 }
 
+func (this *TrafficPagePeriodFilter) Description() string {
+	return "单个URL流量统计"
+}
+
+// 参数说明
+func (this *TrafficPagePeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{
+		NewVariable("page", "请求URL"),
+	}
+}
+
+// 统计数据说明
+func (this *TrafficPagePeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("bytes", "流量（字节）"),
+	}
+}
+
 func (this *TrafficPagePeriodFilter) Codes() []string {
 	return []string{
 		"traffic.page.second",

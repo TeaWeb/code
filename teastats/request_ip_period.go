@@ -32,10 +32,26 @@ func (this *RequestIPPeriodFilter) Name() string {
 	return "IP请求数排行"
 }
 
+func (this *RequestIPPeriodFilter) Description() string {
+	return "所有请求的IP请求数排行"
+}
+
 func (this *RequestIPPeriodFilter) Codes() []string {
 	return []string{
 		"request.ip.hour",
 		"request.ip.day",
+	}
+}
+
+// 参数说明
+func (this *RequestIPPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{}
+}
+
+// 统计数据说明
+func (this *RequestIPPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("top", "IP及请求数列表"),
 	}
 }
 

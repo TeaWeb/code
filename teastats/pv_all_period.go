@@ -16,6 +16,10 @@ func (this *PVAllPeriodFilter) Name() string {
 	return "PV统计"
 }
 
+func (this *PVAllPeriodFilter) Description() string {
+	return "所有请求的PV统计"
+}
+
 func (this *PVAllPeriodFilter) Codes() []string {
 	return []string{
 		"pv.all.second",
@@ -25,6 +29,18 @@ func (this *PVAllPeriodFilter) Codes() []string {
 		"pv.all.week",
 		"pv.all.month",
 		"pv.all.year",
+	}
+}
+
+// 参数说明
+func (this *PVAllPeriodFilter) ParamVariables() []*Variable {
+	return []*Variable{}
+}
+
+// 统计数据说明
+func (this *PVAllPeriodFilter) ValueVariables() []*Variable {
+	return []*Variable{
+		NewVariable("count", "PV数"),
 	}
 }
 
