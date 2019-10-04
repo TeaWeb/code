@@ -2,6 +2,7 @@ package shared
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/iwind/TeaGo/assert"
 	"net"
 	"regexp"
@@ -771,4 +772,104 @@ func TestRequestCond_RegexpQuote(t *testing.T) {
 	t.Log(regexp.QuoteMeta("a"))
 	t.Log(regexp.QuoteMeta("*"))
 	t.Log(regexp.QuoteMeta("([\\d]).*"))
+}
+
+func TestRequestCond_Mod(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	{
+		cond := RequestCond{
+			Param:    "1",
+			Operator: RequestCondOperatorMod,
+			Value:    "1",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "1",
+			Operator: RequestCondOperatorMod,
+			Value:    "2",
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "3",
+			Operator: RequestCondOperatorMod,
+			Value:    "3",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "1",
+			Operator: RequestCondOperatorMod,
+			Value:    "11,1",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "3",
+			Operator: RequestCondOperatorMod,
+			Value:    "11,3",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "4",
+			Operator: RequestCondOperatorMod,
+			Value:    "2,0",
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	for i := 0; i < 100; i++ {
+		cond := RequestCond{
+			Param:    fmt.Sprintf("%d", i),
+			Operator: RequestCondOperatorMod10,
+			Value:    fmt.Sprintf("%d", i%10),
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	for i := 0; i < 2000; i++ {
+		cond := RequestCond{
+			Param:    fmt.Sprintf("%d", i),
+			Operator: RequestCondOperatorMod100,
+			Value:    fmt.Sprintf("%d", i%100),
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
 }

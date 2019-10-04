@@ -166,6 +166,22 @@ func (this *RequestCond) Match(formatter func(source string) string) bool {
 		return this.isFloat && types.Float64(paramValue) < this.floatValue
 	case RequestCondOperatorLteFloat:
 		return this.isFloat && types.Float64(paramValue) <= this.floatValue
+	case RequestCondOperatorMod:
+		pieces := strings.SplitN(this.Value, ",", 2)
+		if len(pieces) == 1 {
+			rem := types.Int64(pieces[0])
+			return types.Int64(paramValue)%10 == rem
+		}
+		div := types.Int64(pieces[0])
+		if div == 0 {
+			return false
+		}
+		rem := types.Int64(pieces[1])
+		return types.Int64(paramValue)%div == rem
+	case RequestCondOperatorMod10:
+		return types.Int64(paramValue)%10 == types.Int64(this.Value)
+	case RequestCondOperatorMod100:
+		return types.Int64(paramValue)%100 == types.Int64(this.Value)
 	case RequestCondOperatorEqString:
 		return paramValue == this.Value
 	case RequestCondOperatorNeqString:

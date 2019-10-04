@@ -14,6 +14,9 @@ const (
 	RequestCondOperatorGteFloat          RequestCondOperator = "gte"
 	RequestCondOperatorLtFloat           RequestCondOperator = "lt"
 	RequestCondOperatorLteFloat          RequestCondOperator = "lte"
+	RequestCondOperatorMod               RequestCondOperator = "mod"
+	RequestCondOperatorMod10             RequestCondOperator = "mod 10"
+	RequestCondOperatorMod100            RequestCondOperator = "mod 100"
 	RequestCondOperatorEqString          RequestCondOperator = "eq"
 	RequestCondOperatorNeqString         RequestCondOperator = "not"
 	RequestCondOperatorHasPrefix         RequestCondOperator = "prefix"
@@ -130,6 +133,21 @@ func AllRequestOperators() []maps.Map {
 			"name":        "数字小于等于",
 			"op":          RequestCondOperatorLteFloat,
 			"description": "将参数转换为数字进行对比",
+		},
+		{
+			"name":        "整数取模10",
+			"op":          RequestCondOperatorMod10,
+			"description": "对整数参数值取模，除数为10，对比值为余数",
+		},
+		{
+			"name":        "整数取模100",
+			"op":          RequestCondOperatorMod100,
+			"description": "对整数参数值取模，除数为100，对比值为余数",
+		},
+		{
+			"name":        "整数取模",
+			"op":          RequestCondOperatorMod,
+			"description": "对整数参数值取模，对比值格式为：除数,余数，比如10,1",
 		},
 		{
 			"name":        "IP等于",
