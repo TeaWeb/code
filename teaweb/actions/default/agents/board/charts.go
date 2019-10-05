@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/widgets"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -62,6 +63,7 @@ func (this *ChartsAction) Run(params struct {
 						"name": item.Name,
 					},
 					"isUsing": isUsing,
+					"columns": chart.Columns,
 				}
 				chartMapping[chart.Id] = info
 				charts = append(charts, info)
@@ -93,7 +95,10 @@ func (this *ChartsAction) Run(params struct {
 				}
 			}
 			board.Charts = leftCharts
-			board.Save()
+			err := board.Save()
+			if err != nil {
+				logs.Error(err)
+			}
 		}
 	}
 	this.Data["usingCharts"] = usingCharts
