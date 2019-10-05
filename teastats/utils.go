@@ -25,22 +25,7 @@ func RegisterFilter(filters ...FilterInterface) {
 			periodName := ""
 			dotIndex := strings.LastIndex(code, ".")
 			if dotIndex > 0 {
-				switch code[dotIndex+1:] {
-				case stats.ValuePeriodSecond:
-					periodName = "秒"
-				case stats.ValuePeriodMinute:
-					periodName = "分钟"
-				case stats.ValuePeriodHour:
-					periodName = "小时"
-				case stats.ValuePeriodDay:
-					periodName = "天"
-				case stats.ValuePeriodWeek:
-					periodName = "周"
-				case stats.ValuePeriodMonth:
-					periodName = "月"
-				case stats.ValuePeriodYear:
-					periodName = "年"
-				}
+				periodName = FindPeriodName(code[dotIndex+1:])
 			}
 			m := maps.Map{
 				"name":        filter.Name(),
@@ -59,9 +44,10 @@ func FindAllStatFilters() []maps.Map {
 	result := []maps.Map{}
 	for _, f := range AllStatFilters {
 		result = append(result, maps.Map{
-			"name":   f["name"],
-			"code":   f["code"],
-			"period": f["period"],
+			"name":        f["name"],
+			"code":        f["code"],
+			"period":      f["period"],
+			"description": f["description"],
 		})
 	}
 	return result
@@ -109,7 +95,7 @@ func FindServerQueue(serverId string) *ServerQueue {
 }
 
 // 查找单个Filter
-func FindFilter(code string) FilterInterface {
+func FindNewFilter(code string) FilterInterface {
 	registerFilterLocker.Lock()
 	defer registerFilterLocker.Unlock()
 	for _, m := range AllStatFilters {
@@ -119,4 +105,38 @@ func FindFilter(code string) FilterInterface {
 		}
 	}
 	return nil
+}
+
+// 查找单个Filter信息
+func FindSharedFilter(code string) FilterInterface {
+	registerFilterLocker.Lock()
+	defer registerFilterLocker.Unlock()
+	for _, m := range AllStatFilters {
+		instance := m["instance"]
+		if lists.ContainsString(instance.(FilterInterface).Codes(), code) {
+			return instance.(FilterInterface)
+		}
+	}
+	return nil
+}
+
+// 获取时间period对应的名称
+func FindPeriodName(period string) string {
+	switch period {
+	case stats.ValuePeriodSecond:
+		return "秒"
+	case stats.ValuePeriodMinute:
+		return "分钟"
+	case stats.ValuePeriodHour:
+		return "小时"
+	case stats.ValuePeriodDay:
+		return "天"
+	case stats.ValuePeriodWeek:
+		return "周"
+	case stats.ValuePeriodMonth:
+		return "月"
+	case stats.ValuePeriodYear:
+		return "年"
+	}
+	return ""
 }

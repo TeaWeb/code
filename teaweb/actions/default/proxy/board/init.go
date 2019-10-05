@@ -30,6 +30,9 @@ func init() {
 			Post("/cancelChart", new(CancelChartAction)).
 			Post("/moveChart", new(MoveChartAction)).
 			Post("/refreshData", new(RefreshDataAction)).
+			Get("/items", new(ItemsAction)).
+			Post("/addItem", new(AddItemAction)).
+			Post("/deleteItem", new(DeleteItemAction)).
 			EndAll()
 
 		// 检查图表更新

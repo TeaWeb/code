@@ -85,8 +85,9 @@ type ServerConfig struct {
 	API *api.APIConfig `yaml:"api" json:"api"` // API配置
 
 	// 看板
-	RealtimeBoard *Board `yaml:"realtimeBoard" json:"realtimeBoard"` // 即时看板
-	StatBoard     *Board `yaml:"statBoard" json:"statBoard"`         // 统计看板
+	RealtimeBoard *Board   `yaml:"realtimeBoard" json:"realtimeBoard"` // 即时看板
+	StatBoard     *Board   `yaml:"statBoard" json:"statBoard"`         // 统计看板
+	StatItems     []string `yaml:"statItems" json:"statItems"`         // 统计指标
 
 	// 是否开启静态文件加速
 	CacheStatic bool `yaml:"cacheStatic" json:"cacheStatic"`
@@ -1206,4 +1207,24 @@ func (this *ServerConfig) checkBackends(server *ServerConfig, location *Location
 			}
 		})
 	}
+}
+
+// 统计指标
+func (this *ServerConfig) AddStatItem(item string) {
+	if lists.ContainsString(this.StatItems, item) {
+		return
+	}
+	this.StatItems = append(this.StatItems, item)
+}
+
+// 删除统计指标
+func (this *ServerConfig) RemoveStatItem(item string) {
+	result := []string{}
+	for _, i := range this.StatItems {
+		if i == item {
+			continue
+		}
+		result = append(result, i)
+	}
+	this.StatItems = result
 }

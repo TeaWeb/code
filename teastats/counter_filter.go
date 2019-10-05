@@ -1,7 +1,6 @@
 package teastats
 
 import (
-	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/stats"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
@@ -11,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/utils/time"
 	"net"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -27,6 +27,8 @@ type CounterFilter struct {
 	locker     sync.Mutex
 
 	IncreaseFunc func(value maps.Map, inc maps.Map) maps.Map
+
+	sortedKeys []string
 }
 
 // 启动筛选器
@@ -64,35 +66,43 @@ func (this *CounterFilter) StartFilter(code string, period stats.ValuePeriod) {
 
 // 应用筛选器
 func (this *CounterFilter) ApplyFilter(accessLog *accesslogs.AccessLog, params map[string]string, incrValue map[string]interface{}) {
+	this.locker.Lock()
+	defer this.locker.Unlock()
+
 	key := this.encodeParams(params)
 	key.WriteString("@")
 
 	switch this.Period {
 	case stats.ValuePeriodSecond:
-		key.WriteString(fmt.Sprintf("%d", accessLog.Timestamp))
+		key.WriteString(strconv.FormatInt(accessLog.Timestamp, 10))
 	case stats.ValuePeriodMinute:
-		key.WriteString(fmt.Sprintf("%d", accessLog.Timestamp/60))
+		key.WriteString(strconv.Itoa(int(accessLog.Timestamp / 60)))
 	case stats.ValuePeriodHour:
-		key.WriteString(fmt.Sprintf("%d", accessLog.Timestamp/3600))
+		key.WriteString(strconv.Itoa(int(accessLog.Timestamp / 3600)))
 	case stats.ValuePeriodDay:
 		t := accessLog.Time()
-		key.WriteString(fmt.Sprintf("%d_%d_%d", t.Year(), t.Month(), t.Day()))
+		key.WriteString(strconv.Itoa(t.Year()))
+		key.WriteByte('_')
+		key.WriteString(strconv.Itoa(int(t.Month())))
+		key.WriteByte('_')
+		key.WriteString(strconv.Itoa(t.Day()))
 	case stats.ValuePeriodWeek:
 		t := accessLog.Time()
 		year, week := t.ISOWeek()
-		key.WriteString(fmt.Sprintf("%d_%d", year, week))
+		key.WriteString(strconv.Itoa(year))
+		key.WriteByte('_')
+		key.WriteString(strconv.Itoa(week))
 	case stats.ValuePeriodMonth:
 		t := accessLog.Time()
-		key.WriteString(fmt.Sprintf("%d_%d", t.Year(), t.Month()))
+		key.WriteString(strconv.Itoa(t.Year()))
+		key.WriteByte('_')
+		key.WriteString(strconv.Itoa(int(t.Month())))
 	case stats.ValuePeriodYear:
 		t := accessLog.Time()
-		key.WriteString(fmt.Sprintf("%d", t.Year()))
+		key.WriteString(strconv.Itoa(t.Year()))
 	}
 
 	keyString := key.String()
-
-	this.locker.Lock()
-	defer this.locker.Unlock()
 
 	value, found := this.values[keyString]
 	if found {
@@ -273,7 +283,9 @@ func (this *CounterFilter) Commit() {
 			if this.IncreaseFunc != nil {
 				v.Value["$increase"] = this.IncreaseFunc
 			}
-			this.queue.Add(this.code, time.Unix(v.Timestamp, 0), this.Period, v.Params, v.Value)
+			if this.queue != nil {
+				this.queue.Add(this.code, time.Unix(v.Timestamp, 0), this.Period, v.Params, v.Value)
+			}
 		}
 		this.values = map[string]*CounterValue{}
 	}
@@ -301,17 +313,25 @@ func (this *CounterFilter) equalParams(params1 map[string]string, params2 map[st
 
 // 对参数进行编码
 func (this *CounterFilter) encodeParams(params map[string]string) *strings.Builder {
-	keys := []string{}
-	for key := range params {
-		keys = append(keys, key)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-
 	result := &strings.Builder{}
-	for _, k := range keys {
-		result.WriteString(k + ":" + params[k])
+
+	if len(params) == 0 {
+		return result
+	}
+
+	if len(this.sortedKeys) == 0 {
+		for key := range params {
+			this.sortedKeys = append(this.sortedKeys, key)
+		}
+		sort.Slice(this.sortedKeys, func(i, j int) bool {
+			return this.sortedKeys[i] < this.sortedKeys[j]
+		})
+	}
+
+	for _, k := range this.sortedKeys {
+		result.WriteString(k)
+		result.WriteByte(':')
+		result.WriteString(params[k])
 		result.WriteRune('|')
 	}
 	return result

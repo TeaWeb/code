@@ -45,7 +45,7 @@ func (this *ChartAction) Run(params struct {
 
 	items := []maps.Map{}
 	for _, r := range chart.Requirements {
-		filter := teastats.FindFilter(r)
+		filter := teastats.FindSharedFilter(r)
 		if filter != nil {
 			items = append(items, maps.Map{
 				"name": filter.Name(),

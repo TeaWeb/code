@@ -29,7 +29,7 @@ func (this *ServerQueue) StartFilter(code string) {
 		return
 	}
 
-	instance := FindFilter(code)
+	instance := FindNewFilter(code)
 	if instance == nil {
 		return
 	}

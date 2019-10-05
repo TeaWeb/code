@@ -19,7 +19,7 @@ func ReloadServerStats(serverId string) {
 		return
 	}
 
-	codes := []string{}
+	codes := server.StatItems
 	for _, board := range []*teaconfigs.Board{server.RealtimeBoard, server.StatBoard} {
 		if board == nil {
 			continue

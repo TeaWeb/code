@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestFindFilter(t *testing.T) {
-	t.Log(FindFilter("request.all.second"))
+func TestFindNewFilter(t *testing.T) {
+	t.Log(FindNewFilter("request.all.second"))
 }
 
 func TestRestartServerFilters(t *testing.T) {

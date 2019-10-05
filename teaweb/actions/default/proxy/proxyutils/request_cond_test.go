@@ -32,7 +32,7 @@ func TestParseRequestConds(t *testing.T) {
 
 	{
 		req.Form.Add("request_condParams", "${arg.name}")
-		req.Form.Add("request_condOperators", shared.RequestCondOperatorIPInRange)
+		req.Form.Add("request_condOperators", shared.RequestCondOperatorIPRange)
 		req.Form.Add("request_condValues", "192.168.1.100,192.168.1.200")
 	}
 	t.Log(req.Form)

@@ -39,7 +39,7 @@ func (this *TestAction) Run(params struct {
 			queue := teastats.NewQueue()
 			queue.Start(server.Id)
 			for _, item := range params.Items {
-				instance := teastats.FindFilter(item)
+				instance := teastats.FindNewFilter(item)
 				if instance == nil {
 					continue
 				}
