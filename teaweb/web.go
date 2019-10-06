@@ -125,6 +125,18 @@ func Start() {
 		Get("/js/vue.min.js", func(req *http.Request, writer http.ResponseWriter) {
 			compressResource(writer, Tea.PublicDir()+"/js/vue.min.js", "text/javascript; charset=utf-8")
 		}).
+		Get("/js/vue.tea.js", func(req *http.Request, writer http.ResponseWriter) {
+			compressResource(writer, Tea.PublicDir()+"/js/vue.tea.js", "text/javascript; charset=utf-8")
+		}).
+		Get("/js/vue.components.js", func(req *http.Request, writer http.ResponseWriter) {
+			compressResource(writer, Tea.PublicDir()+"/js/vue.components.js", "text/javascript; charset=utf-8")
+		}).
+		Get("/js/vue.js", func(req *http.Request, writer http.ResponseWriter) {
+			compressResource(writer, Tea.PublicDir()+"/js/vue.js", "text/javascript; charset=utf-8")
+		}).
+		Get("/js/sortable.min.js", func(req *http.Request, writer http.ResponseWriter) {
+			compressResource(writer, Tea.PublicDir()+"/js/sortable.min.js", "text/javascript; charset=utf-8")
+		}).
 
 		EndAll().
 
@@ -143,7 +155,7 @@ func compressResource(writer http.ResponseWriter, path string, mimeType string) 
 		return
 	}
 
-	gzipWriter, err := gzip.NewWriterLevel(writer, gzip.BestSpeed)
+	gzipWriter, err := gzip.NewWriterLevel(writer, 5)
 	if err != nil {
 		_, err := writer.Write(data)
 		if err != nil {

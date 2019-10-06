@@ -2,11 +2,11 @@ package teaconfigs
 
 // 特殊页面配置
 type PageConfig struct {
-	On     bool     `yaml:"on" json:"on"`         // TODO
-	Status []string `yaml:"status" json:"status"` // 支持40x, 50x, 3x2
-	URL    string   `yaml:"url" json:"url"`
+	On        bool     `yaml:"on" json:"on"`               // TODO
+	Status    []string `yaml:"status" json:"status"`       // 响应支持40x, 50x, 3x2
+	URL       string   `yaml:"url" json:"url"`             // URL
+	NewStatus int      `yaml:"newStatus" json:"newStatus"` // 新状态码
 
-	hasMethods    bool
 	statusList    []*WildcardStatus
 	hasStatusList bool
 }

@@ -39,11 +39,15 @@ func (this *Request) callPage(writer *ResponseWriter, status int) (shouldStop bo
 					return true
 				}
 
-				// 自定义响应Headers
-				this.WriteResponseHeaders(writer, http.StatusOK)
-
-				// 状态码改成200
-				writer.WriteHeader(http.StatusOK)
+				// 修改状态码
+				if page.NewStatus > 0 {
+					// 自定义响应Headers
+					this.WriteResponseHeaders(writer, page.NewStatus)
+					writer.WriteHeader(page.NewStatus)
+				} else {
+					this.WriteResponseHeaders(writer, status)
+					writer.WriteHeader(status)
+				}
 				buf := bytePool1k.Get()
 				_, err = io.CopyBuffer(writer, fp, buf)
 				bytePool1k.Put(buf)

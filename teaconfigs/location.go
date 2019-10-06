@@ -332,12 +332,18 @@ func (this *LocationConfig) Compatible(version string) {
 			}
 		}
 	} else if stringutil.VersionCompare(version, "0.1.8") < 0 {
+		// gzip
 		if this.GzipLevel1 >= 0 {
 			this.Gzip = &GzipConfig{
 				Level:     this.GzipLevel1,
 				MinLength: this.GzipMinLength1,
 			}
 			this.GzipLevel1 = 0
+		}
+
+		// pages
+		for _, page := range this.Pages {
+			page.NewStatus = 200
 		}
 	}
 }

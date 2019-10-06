@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/types"
 	"strconv"
 )
 
@@ -69,8 +70,9 @@ func (this *UpdateAction) RunPost(params struct {
 
 	CacheStatic bool
 
-	PageStatus []string
-	PageURL    []string
+	PageStatusList    []string
+	PageURLList       []string
+	PageNewStatusList []string
 
 	ShutdownPageOn bool
 	ShutdownPage   string
@@ -132,13 +134,19 @@ func (this *UpdateAction) RunPost(params struct {
 		}
 
 		server.Pages = []*teaconfigs.PageConfig{}
-		for index, status := range params.PageStatus {
-			if index < len(params.PageURL) {
-				page := teaconfigs.NewPageConfig()
-				page.Status = []string{status}
-				page.URL = params.PageURL[index]
-				server.AddPage(page)
+		for index, status := range params.PageStatusList {
+			page := teaconfigs.NewPageConfig()
+			page.Status = []string{status}
+			if index < len(params.PageURLList) {
+				page.URL = params.PageURLList[index]
 			}
+			if index < len(params.PageNewStatusList) {
+				page.NewStatus = types.Int(params.PageNewStatusList[index])
+				if page.NewStatus < 0 {
+					page.NewStatus = 0
+				}
+			}
+			server.AddPage(page)
 		}
 
 		server.ShutdownPageOn = params.ShutdownPageOn

@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"regexp"
 	"strconv"
 )
@@ -116,8 +117,9 @@ func (this *UpdateAction) RunPost(params struct {
 	IsReverse         bool
 	IsCaseInsensitive bool
 
-	PageStatus []string
-	PageURL    []string
+	PageStatusList    []string
+	PageURLList       []string
+	PageNewStatusList []string
 
 	ShutdownPageOn bool
 	ShutdownPage   string
@@ -178,13 +180,19 @@ func (this *UpdateAction) RunPost(params struct {
 
 	// 特殊页面
 	location.Pages = []*teaconfigs.PageConfig{}
-	for index, status := range params.PageStatus {
-		if index < len(params.PageURL) {
-			page := teaconfigs.NewPageConfig()
-			page.Status = []string{status}
-			page.URL = params.PageURL[index]
-			location.AddPage(page)
+	for index, status := range params.PageStatusList {
+		page := teaconfigs.NewPageConfig()
+		page.Status = []string{status}
+		if index < len(params.PageURLList) {
+			page.URL = params.PageURLList[index]
 		}
+		if index < len(params.PageNewStatusList) {
+			page.NewStatus = types.Int(params.PageNewStatusList[index])
+			if page.NewStatus < 0 {
+				page.NewStatus = 0
+			}
+		}
+		location.AddPage(page)
 	}
 
 	location.ShutdownPageOn = params.ShutdownPageOn
