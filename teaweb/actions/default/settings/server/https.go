@@ -1,10 +1,9 @@
 package server
 
 import (
+	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaweb/actions/default/proxy/certs/certutils"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo"
 )
 
 type HttpsAction actions.Action
@@ -12,23 +11,16 @@ type HttpsAction actions.Action
 func (this *HttpsAction) Run(params struct{}) {
 	this.Data["error"] = ""
 
-	reader, err := files.NewReader(Tea.ConfigFile("server.conf"))
+	server, err := teaconfigs.LoadWebConfig()
 	if err != nil {
-		this.Data["error"] = "无法读取配置文件（'configs/server.conf'），请检查文件是否存在，或者是否有权限读取"
+		this.Data["error"] = "读取配置错误：" + err.Error()
 		this.Show()
 		return
 	}
-	defer reader.Close()
 
-	server := &TeaGo.ServerConfig{}
-	err = reader.ReadYAML(server)
-	if err != nil {
-		this.Data["error"] = "配置文件（'configs/server.conf'）格式错误"
-		this.Show()
-		return
-	}
+	// 公共可以使用的证书
+	this.Data["sharedCerts"] = certutils.ListPairCertsMap()
 
 	this.Data["server"] = server
-
 	this.Show()
 }

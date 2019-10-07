@@ -1,12 +1,11 @@
 package server
 
 import (
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaweb/actions/default/settings"
-	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/utils/string"
+	stringutil "github.com/iwind/TeaGo/utils/string"
 	"net"
 	"strings"
 )
@@ -16,24 +15,21 @@ type HttpsUpdateAction actions.Action
 func (this *HttpsUpdateAction) Run(params struct {
 	On        bool
 	Addresses string
-	CertFile  *actions.File
-	KeyFile   *actions.File
-	Must      *actions.Must
+
+	CertType string
+	CertFile *actions.File
+	KeyFile  *actions.File
+	CertId   string
+
+	Must *actions.Must
 }) {
 	params.Must.
 		Field("addresses", params.Addresses).
 		Require("请输入绑定地址")
 
-	reader, err := files.NewReader(Tea.ConfigFile("server.conf"))
+	server, err := teaconfigs.LoadWebConfig()
 	if err != nil {
-		this.Fail("无法读取配置文件（'configs/server.conf'），请检查文件是否存在，或者是否有权限读取")
-	}
-	defer reader.Close()
-
-	server := &TeaGo.ServerConfig{}
-	err = reader.ReadYAML(server)
-	if err != nil {
-		this.Fail("配置文件（'configs/server.conf'）格式错误")
+		this.Fail("保存失败：" + err.Error())
 	}
 
 	server.Https.On = params.On
@@ -51,35 +47,64 @@ func (this *HttpsUpdateAction) Run(params struct {
 	}
 	server.Https.Listen = listen
 
-	// cert file
-	if params.CertFile != nil {
-		certFilename := "ssl." + stringutil.Rand(16) + params.CertFile.Ext
-		_, err := params.CertFile.WriteToPath(Tea.ConfigFile(certFilename))
-		if err != nil {
-			this.Fail("证书文件上传失败，请检查configs/目录权限")
+	if params.CertType == "shared" {
+		if len(params.CertId) == 0 {
+			this.Fail("请选择证书文件")
 		}
-		server.Https.Cert = "configs/" + certFilename
+
+		cert := teaconfigs.SharedSSLCertList().FindCert(params.CertId)
+		if cert == nil {
+			this.Fail("找不到选择的证书")
+		}
+		server.CertId = params.CertId
+
+		if !strings.ContainsAny(cert.CertFile, "/\\") {
+			server.Https.Cert = "configs/" + cert.CertFile
+		} else {
+			server.Https.Cert = cert.CertFile
+		}
+
+		if !strings.ContainsAny(cert.KeyFile, "/\\") {
+			server.Https.Key = "configs/" + cert.KeyFile
+		} else {
+			server.Https.Key = cert.KeyFile
+		}
+	} else {
+		if params.CertFile == nil {
+			this.Fail("请上传证书文件")
+		}
+		if params.KeyFile == nil {
+			this.Fail("请上传私钥文件")
+		}
+
+		// cert file
+		if params.CertFile != nil {
+			certFilename := "ssl." + stringutil.Rand(16) + params.CertFile.Ext
+			_, err := params.CertFile.WriteToPath(Tea.ConfigFile(certFilename))
+			if err != nil {
+				this.Fail("证书文件上传失败，请检查configs/目录权限")
+			}
+			server.Https.Cert = "configs/" + certFilename
+		}
+
+		// key file
+		if params.KeyFile != nil {
+			keyFilename := "ssl." + stringutil.Rand(16) + params.KeyFile.Ext
+			_, err := params.KeyFile.WriteToPath(Tea.ConfigFile(keyFilename))
+			if err != nil {
+				this.Fail("证书文件上传失败，请检查configs/目录权限")
+			}
+			server.Https.Key = "configs/" + keyFilename
+		}
 	}
 
-	// key file
-	if params.KeyFile != nil {
-		keyFilename := "ssl." + stringutil.Rand(16) + params.KeyFile.Ext
-		_, err := params.KeyFile.WriteToPath(Tea.ConfigFile(keyFilename))
-		if err != nil {
-			this.Fail("证书文件上传失败，请检查configs/目录权限")
-		}
-		server.Https.Key = "configs/" + keyFilename
-	}
-
-	writer, err := files.NewWriter(Tea.ConfigFile("server.conf"))
+	err = server.Save()
 	if err != nil {
-		this.Fail("配置文件（'configs/server.conf'）打开失败")
+		this.Fail("保存失败：" + err.Error())
 	}
-	defer writer.Close()
-
-	writer.WriteYAML(server)
 
 	settings.NotifyServerChange()
 
-	this.Next("/settings", nil).Success("保存成功，重启服务后生效")
+	this.Next("/settings", nil).
+		Success("保存成功，重启服务后生效")
 }
