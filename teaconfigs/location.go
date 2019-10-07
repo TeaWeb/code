@@ -69,9 +69,10 @@ type LocationConfig struct {
 	// - cond ${requestPath} regexp .*\.png
 	Cond []*shared.RequestCond `yaml:"cond" json:"cond"`
 
-	Pages          []*PageConfig `yaml:"pages" json:"pages"`                   // 特殊页
-	ShutdownPageOn bool          `yaml:"shutdownPageOn" json:"shutdownPageOn"` // 是否开启临时关闭页面
-	ShutdownPage   string        `yaml:"shutdownPage" json:"shutdownPage"`     // 临时关闭页面
+	Pages           []*PageConfig   `yaml:"pages" json:"pages"`                   // 特殊页
+	Shutdown        *ShutdownConfig `yaml:"shutdown" json:"shutdown"`             // 关闭页
+	ShutdownPageOn1 bool            `yaml:"shutdownPageOn" json:"shutdownPageOn"` // deprecated: v0.1.8, 是否开启临时关闭页面
+	ShutdownPage1   string          `yaml:"shutdownPage" json:"shutdownPage"`     // deprecated: v0.1.8, 临时关闭页面
 
 	// 请求分组（从server复制而来）
 	requestGroups          []*RequestGroup
@@ -305,6 +306,14 @@ func (this *LocationConfig) Validate() error {
 		}
 	}
 
+	// shutdown
+	if this.Shutdown != nil {
+		err = this.Shutdown.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -344,6 +353,15 @@ func (this *LocationConfig) Compatible(version string) {
 		// pages
 		for _, page := range this.Pages {
 			page.NewStatus = 200
+		}
+
+		// shutdown
+		if this.ShutdownPageOn1 {
+			shutdown := NewShutdownConfig()
+			shutdown.On = true
+			shutdown.URL = this.ShutdownPage1
+			shutdown.Status = 200
+			this.Shutdown = shutdown
 		}
 	}
 }

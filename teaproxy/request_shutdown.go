@@ -10,14 +10,19 @@ import (
 
 // 调用临时关闭页面
 func (this *Request) callShutdown(writer *ResponseWriter) error {
-	if urlPrefixRegexp.MatchString(this.shutdownPage) {
-		return this.callURL(writer, http.MethodGet, this.shutdownPage, "")
+	shutdown := this.shutdown
+	if shutdown == nil {
+		return nil
+	}
+
+	if urlPrefixRegexp.MatchString(shutdown.URL) {
+		return this.callURL(writer, http.MethodGet, shutdown.URL, "")
 	} else {
-		file := Tea.Root + Tea.DS + this.shutdownPage
+		file := Tea.Root + Tea.DS + shutdown.URL
 		fp, err := os.Open(file)
 		if err != nil {
 			logs.Error(err)
-			msg := "404 page not found: '" + this.shutdownPage + "'"
+			msg := "404 page not found: '" + shutdown.URL + "'"
 
 			writer.WriteHeader(http.StatusNotFound)
 			_, err = writer.Write([]byte(msg))
@@ -28,9 +33,13 @@ func (this *Request) callShutdown(writer *ResponseWriter) error {
 		}
 
 		// 自定义响应Headers
-		this.WriteResponseHeaders(writer, http.StatusOK)
-
-		writer.WriteHeader(http.StatusOK)
+		if shutdown.Status > 0 {
+			this.WriteResponseHeaders(writer, shutdown.Status)
+			writer.WriteHeader(shutdown.Status)
+		} else {
+			this.WriteResponseHeaders(writer, http.StatusOK)
+			writer.WriteHeader(http.StatusOK)
+		}
 		buf := bytePool1k.Get()
 		_, err = io.CopyBuffer(writer, fp, buf)
 		bytePool1k.Put(buf)

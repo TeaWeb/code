@@ -78,9 +78,8 @@ func (this *UpdateAction) Run(params struct {
 		"wafOn":       location.WAFOn,
 		"wafId":       location.WafId,
 
-		"shutdownPage":   location.ShutdownPage,
-		"shutdownPageOn": location.ShutdownPageOn,
-		"pages":          location.Pages,
+		"shutdown": location.Shutdown,
+		"pages":    location.Pages,
 	}
 
 	// 运算符
@@ -121,8 +120,9 @@ func (this *UpdateAction) RunPost(params struct {
 	PageURLList       []string
 	PageNewStatusList []string
 
-	ShutdownPageOn bool
-	ShutdownPage   string
+	ShutdownPageOn     bool
+	ShutdownPageURL    string
+	ShutdownPageStatus int
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
 	if server == nil {
@@ -195,11 +195,19 @@ func (this *UpdateAction) RunPost(params struct {
 		location.AddPage(page)
 	}
 
-	location.ShutdownPageOn = params.ShutdownPageOn
-	if location.ShutdownPageOn && len(params.ShutdownPage) == 0 {
-		this.FailField("shutdownPage", "请输入临时关闭页面文件路径")
+	if location.Shutdown != nil {
+		location.Shutdown.On = params.ShutdownPageOn
+		location.Shutdown.URL = params.ShutdownPageURL
+		location.Shutdown.Status = params.ShutdownPageStatus
+	} else if params.ShutdownPageOn {
+		location.Shutdown = teaconfigs.NewShutdownConfig()
+		location.Shutdown.On = params.ShutdownPageOn
+		location.Shutdown.URL = params.ShutdownPageURL
+		location.Shutdown.Status = params.ShutdownPageStatus
 	}
-	location.ShutdownPage = params.ShutdownPage
+	if location.Shutdown != nil && location.Shutdown.On && len(location.Shutdown.URL) == 0 {
+		this.FailField("shutdownPageURL", "请输入临时关闭页面文件路径")
+	}
 
 	// 首页
 	index := []string{}

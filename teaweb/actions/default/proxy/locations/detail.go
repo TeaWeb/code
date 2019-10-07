@@ -47,9 +47,8 @@ func (this *DetailAction) Run(params struct {
 		"backends":    location.Backends,
 		"wafId":       location.WafId,
 
-		"shutdownPage":   location.ShutdownPage,
-		"shutdownPageOn": location.ShutdownPageOn,
-		"pages":          location.Pages,
+		"shutdown": location.Shutdown,
+		"pages":    location.Pages,
 	}
 	this.Data["server"] = server
 

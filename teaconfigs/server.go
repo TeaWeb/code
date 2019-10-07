@@ -97,9 +97,10 @@ type ServerConfig struct {
 	defaultRequestGroup    *RequestGroup
 	hasRequestGroupFilters bool
 
-	Pages          []*PageConfig `yaml:"pages" json:"pages"`                   // 特殊页，更高级的需求应该通过Location来设置
-	ShutdownPageOn bool          `yaml:"shutdownPageOn" json:"shutdownPageOn"` // 是否开启临时关闭页面
-	ShutdownPage   string        `yaml:"shutdownPage" json:"shutdownPage"`     // 临时关闭页面
+	Pages           []*PageConfig   `yaml:"pages" json:"pages"`                   // 特殊页，更高级的需求应该通过Location来设置
+	Shutdown        *ShutdownConfig `yaml:"shutdown" json:"shutdown"`             // 关闭页
+	ShutdownPageOn1 bool            `yaml:"shutdownPageOn" json:"shutdownPageOn"` // deprecated: v0.1.8, 是否开启临时关闭页面
+	ShutdownPage1   string          `yaml:"shutdownPage" json:"shutdownPage"`     // deprecated: v0.1.8, 临时关闭页面
 
 	Version int `yaml:"version" json:"version"` // 版本
 
@@ -379,6 +380,14 @@ func (this *ServerConfig) Validate() error {
 		}
 	}
 
+	// shutdown
+	if this.Shutdown != nil {
+		err = this.Shutdown.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	// tunnel
 	if this.Tunnel != nil {
 		err = this.Tunnel.Validate()
@@ -457,6 +466,15 @@ func (this *ServerConfig) compatible() {
 		// pages
 		for _, page := range this.Pages {
 			page.NewStatus = 200
+		}
+
+		// shutdown
+		if this.ShutdownPageOn1 {
+			shutdown := NewShutdownConfig()
+			shutdown.On = true
+			shutdown.URL = this.ShutdownPage1
+			shutdown.Status = 200
+			this.Shutdown = shutdown
 		}
 	}
 

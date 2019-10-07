@@ -68,14 +68,17 @@ func (this *UpdateAction) RunPost(params struct {
 	GzipMinUnit        string
 	GzipMimeTypeValues []string
 
+	// cache
 	CacheStatic bool
 
+	// pages
 	PageStatusList    []string
 	PageURLList       []string
 	PageNewStatusList []string
 
-	ShutdownPageOn bool
-	ShutdownPage   string
+	ShutdownPageOn     bool
+	ShutdownPageURL    string
+	ShutdownPageStatus int
 
 	RedirectToHttps bool
 
@@ -149,11 +152,20 @@ func (this *UpdateAction) RunPost(params struct {
 			server.AddPage(page)
 		}
 
-		server.ShutdownPageOn = params.ShutdownPageOn
-		if server.ShutdownPageOn && len(params.ShutdownPage) == 0 {
-			this.FailField("shutdownPage", "请输入临时关闭页面文件路径")
+		// shutdown page
+		if server.Shutdown != nil {
+			server.Shutdown.On = params.ShutdownPageOn
+			server.Shutdown.URL = params.ShutdownPageURL
+			server.Shutdown.Status = params.ShutdownPageStatus
+		} else if params.ShutdownPageOn {
+			server.Shutdown = teaconfigs.NewShutdownConfig()
+			server.Shutdown.On = params.ShutdownPageOn
+			server.Shutdown.URL = params.ShutdownPageURL
+			server.Shutdown.Status = params.ShutdownPageStatus
 		}
-		server.ShutdownPage = params.ShutdownPage
+		if server.Shutdown != nil && server.Shutdown.On && len(server.Shutdown.URL) == 0 {
+			this.FailField("shutdownPageURL", "请输入临时关闭页面文件路径")
+		}
 
 		server.RedirectToHttps = params.RedirectToHttps
 	}

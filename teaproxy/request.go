@@ -92,9 +92,8 @@ type Request struct {
 
 	waf *teawaf.WAF
 
-	pages          []*teaconfigs.PageConfig
-	shutdownPageOn bool
-	shutdownPage   string
+	pages    []*teaconfigs.PageConfig
+	shutdown *teaconfigs.ShutdownConfig
 
 	rewriteId           string // 匹配的rewrite id
 	rewriteReplace      string // 经过rewrite之后的URL
@@ -190,8 +189,7 @@ func (this *Request) reset(rawRequest *http.Request) {
 	this.cacheEnabled = false
 	this.waf = nil
 	this.pages = nil
-	this.shutdownPageOn = false
-	this.shutdownPage = ""
+	this.shutdown = nil
 
 	this.rewriteId = ""
 	this.rewriteReplace = ""
@@ -306,9 +304,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 		if len(server.Pages) > 0 {
 			this.pages = append(this.pages, server.Pages...)
 		}
-		if server.ShutdownPageOn {
-			this.shutdownPageOn = true
-			this.shutdownPage = server.ShutdownPage
+		if server.Shutdown != nil && server.Shutdown.On {
+			this.shutdown = server.Shutdown
 		}
 		if server.Gzip != nil {
 			this.gzip = server.Gzip
@@ -353,9 +350,8 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 				if len(location.Pages) > 0 {
 					this.pages = append(this.pages, location.Pages...)
 				}
-				if location.ShutdownPageOn {
-					this.shutdownPageOn = true
-					this.shutdownPage = location.ShutdownPage
+				if location.Shutdown != nil && location.Shutdown.On {
+					this.shutdown = location.Shutdown
 				}
 				if location.RedirectToHttps && this.rawScheme == "http" {
 					this.redirectToHttps = true
@@ -776,7 +772,7 @@ func (this *Request) call(writer *ResponseWriter) error {
 	}
 
 	// 临时关闭页面
-	if this.shutdownPageOn {
+	if this.shutdown != nil {
 		return this.callShutdown(writer)
 	}
 
