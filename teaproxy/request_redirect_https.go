@@ -22,22 +22,22 @@ func (this *Request) callRedirectToHttps(writer *ResponseWriter) {
 			if err == nil {
 				if port == "443" {
 					u := "https://" + host + this.raw.RequestURI
-					http.Redirect(writer, this.raw, u, http.StatusTemporaryRedirect)
+					http.Redirect(writer, this.raw, u, http.StatusMovedPermanently)
 					return
 				} else {
 					u := "https://" + host + ":" + port + this.raw.RequestURI
-					http.Redirect(writer, this.raw, u, http.StatusTemporaryRedirect)
+					http.Redirect(writer, this.raw, u, http.StatusMovedPermanently)
 					return
 				}
 			} else {
 				u := "https://" + host + this.raw.RequestURI
-				http.Redirect(writer, this.raw, u, http.StatusTemporaryRedirect)
+				http.Redirect(writer, this.raw, u, http.StatusMovedPermanently)
 				return
 			}
 		}
 
 		u := "https://" + host + this.raw.RequestURI
-		http.Redirect(writer, this.raw, u, http.StatusTemporaryRedirect)
+		http.Redirect(writer, this.raw, u, http.StatusMovedPermanently)
 		return
 	}
 }
