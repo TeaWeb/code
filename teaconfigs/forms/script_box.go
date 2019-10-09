@@ -221,7 +221,7 @@ func (this *ScriptBox) Compose() string {
 						<a class="item" :class="{active:scriptTab == 'code'}" @click.prevent="selectScriptTab('code')" v-if="!teaDemoEnabled">脚本代码</a>
 					</div>
 					<div class="ui bottom segment attached" v-show="scriptTab == 'path'">
-                    	<input type="text" name="` + this.Namespace + `_scriptPath" v-model="scriptPath" maxlength="100"/>
+                    	<input type="text" name="` + this.Namespace + `_scriptPath" v-model="scriptPath"/>
 						<p class="comment">如果是Shell脚本，请不要忘记在头部添加 <em>#!脚本解释工具</em>，比如 <em>#!/bin/bash</em></p>
 					</div>
 					<div class="ui bottom segment attached" v-show="scriptTab == 'code'" style="padding-top:0">
