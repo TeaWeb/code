@@ -1,13 +1,18 @@
 package teacache
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"io/ioutil"
 	"net/http"
 	"testing"
 )
 
 func TestPurgeCache(t *testing.T) {
-	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8882/webhook", nil)
+	if !teatesting.RequireHTTPServer() {
+		return
+	}
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:9991/webhook", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -17,7 +22,9 @@ func TestPurgeCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

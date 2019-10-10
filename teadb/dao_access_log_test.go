@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	stringutil "github.com/iwind/TeaGo/utils/string"
 	timeutil "github.com/iwind/TeaGo/utils/time"
@@ -13,6 +14,10 @@ import (
 )
 
 func TestAccessLogDAO_InsertOne(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	accessLog := newAccessLog()
 	id, _ := shared.ObjectIdFromHex("5cfbbecd79c023a965148da9")
 	accessLog.Id = id
@@ -24,6 +29,10 @@ func TestAccessLogDAO_InsertOne(t *testing.T) {
 }
 
 func TestAccessLogDAO_InsertAccessLogs(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	list := []interface{}{}
 	for i := 0; i < 5; i++ {
 		list = append(list, newAccessLog())
@@ -36,6 +45,10 @@ func TestAccessLogDAO_InsertAccessLogs(t *testing.T) {
 }
 
 func TestAccessLogDAO_FindAccessLogCookie(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := AccessLogDAO()
 	accessLog, err := dao.FindAccessLogCookie(timeutil.Format("Ymd"), "5cfbbecd79c023a965148da9")
 	if err != nil {
@@ -49,6 +62,10 @@ func TestAccessLogDAO_FindAccessLogCookie(t *testing.T) {
 }
 
 func TestAccessLogDAO_FindRequestHeaderAndBody(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := AccessLogDAO()
 	accessLog, err := dao.FindRequestHeaderAndBody(timeutil.Format("Ymd"), "5cfbbecd79c023a965148da9")
 	if err != nil {
@@ -119,6 +136,10 @@ func TestAccessLogDAO_ListAccessLogs_PastDays(t *testing.T) {
 }
 
 func TestAccessLogDAO_HasNextAccessLog(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := AccessLogDAO()
 	ones, err := dao.ListTopAccessLogs(timeutil.Format("Ymd"), 1)
 	if err != nil {
@@ -210,6 +231,10 @@ func TestAccessLogDAO_ListTopAccessLogs(t *testing.T) {
 }
 
 func TestAccessLogDAO_QueryAccessLogs(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := AccessLogDAO()
 
 	query := NewQuery("")

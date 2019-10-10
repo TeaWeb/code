@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/TeaWeb/code/teaconfigs/shared"
-	"github.com/iwind/TeaGo/Tea"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/utils/string"
@@ -46,9 +46,9 @@ func (this *NoticeScriptMedia) FormattedScript() string {
 // 保存到本地
 func (this *NoticeScriptMedia) Generate(id string) (path string, err error) {
 	if runtime.GOOS == "windows" {
-		path = Tea.TmpFile("notice." + id + ".bat")
+		path = teautils.TmpFile("notice." + id + ".bat")
 	} else {
-		path = Tea.TmpFile("notice." + id + ".script")
+		path = teautils.TmpFile("notice." + id + ".script")
 	}
 	shFile := files.NewFile(path)
 	if !shFile.Exists() {

@@ -3,6 +3,7 @@ package teadb
 import (
 	"github.com/TeaWeb/code/teaconfigs/stats"
 	"github.com/TeaWeb/code/teadb/shared"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/assert"
 	"github.com/iwind/TeaGo/logs"
 	stringutil "github.com/iwind/TeaGo/utils/string"
@@ -11,6 +12,10 @@ import (
 )
 
 func TestServerValueDAO_InsertOne(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	{
 		v := stats.NewItemValue()
 		v.Timestamp = time.Now().Unix() - 10
@@ -69,6 +74,10 @@ func TestServerValueDAO_InsertOne(t *testing.T) {
 }
 
 func TestServerValueDAO_DeleteExpiredValues(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := ServerValueDAO()
 	err := dao.DeleteExpiredValues("test", stats.ValuePeriodSecond, 10)
 	if err != nil {
@@ -78,6 +87,10 @@ func TestServerValueDAO_DeleteExpiredValues(t *testing.T) {
 }
 
 func TestServerValueDAO_FindSameItemValue(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	a := assert.NewAssertion(t)
 
 	dao := ServerValueDAO()
@@ -104,6 +117,10 @@ func TestServerValueDAO_FindSameItemValue(t *testing.T) {
 }
 
 func TestServerValueDAO_FindSameItemValue2(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	a := assert.NewAssertion(t)
 
 	dao := ServerValueDAO()
@@ -133,6 +150,10 @@ func TestServerValueDAO_FindSameItemValue2(t *testing.T) {
 }
 
 func TestServerValueDAO_UpdateItemValueAndTimestamp(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := ServerValueDAO()
 	ones, err := dao.QueryValues(NewQuery(dao.TableName("test")).Limit(1).Desc("_id"))
 	if err != nil {
@@ -153,6 +174,10 @@ func TestServerValueDAO_UpdateItemValueAndTimestamp(t *testing.T) {
 }
 
 func TestServerValueDAO_CreateIndex(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := ServerValueDAO()
 
 	fields := []*shared.IndexField{
@@ -167,6 +192,10 @@ func TestServerValueDAO_CreateIndex(t *testing.T) {
 }
 
 func TestServerValueDAO_QueryValues(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := ServerValueDAO()
 
 	q := NewQuery(dao.TableName("test"))
@@ -181,6 +210,10 @@ func TestServerValueDAO_QueryValues(t *testing.T) {
 }
 
 func TestServerValueDAO_FindOneWithItem(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := ServerValueDAO()
 
 	{
@@ -201,6 +234,10 @@ func TestServerValueDAO_FindOneWithItem(t *testing.T) {
 }
 
 func TestServerValueDAO_DropServerTable(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	err := ServerValueDAO().DropServerTable("test")
 	if err != nil {
 		t.Fatal(err)

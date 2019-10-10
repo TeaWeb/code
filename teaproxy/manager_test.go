@@ -2,18 +2,30 @@ package teaproxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"testing"
 	"time"
 )
 
 func TestManager_Start(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	manager := NewManager()
-	manager.Start()
+	err := manager.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
 	manager.Wait()
 }
 
 func TestManager_AddServer(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	manager := NewManager()
 	{
 		server := teaconfigs.NewServerConfig()

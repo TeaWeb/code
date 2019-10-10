@@ -2,11 +2,16 @@ package agents
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teatesting"
 	"net/http"
 	"testing"
 )
 
 func TestWebHookSource_ExecuteGet(t *testing.T) {
+	if !teatesting.RequireHTTPServer() {
+		return
+	}
+
 	webHook := NewWebHookSource()
 	webHook.Method = http.MethodGet
 	webHook.URL = "http://127.0.0.1:9991/webhook?hell=world"
@@ -27,6 +32,10 @@ func TestWebHookSource_ExecuteGet(t *testing.T) {
 }
 
 func TestWebHookSource_ExecutePost(t *testing.T) {
+	if !teatesting.RequireHTTPServer() {
+		return
+	}
+
 	webHook := NewWebHookSource()
 	webHook.Method = http.MethodPost
 	webHook.URL = "http://127.0.0.1:9991/webhook?hell=world"
@@ -64,6 +73,10 @@ func TestWebHookSource_ExecutePost(t *testing.T) {
 }
 
 func TestWebHookSource_ExecutePost2(t *testing.T) {
+	if !teatesting.RequireHTTPServer() {
+		return
+	}
+
 	webHook := NewWebHookSource()
 	webHook.Method = http.MethodPost
 	webHook.URL = "http://127.0.0.1:9991/webhook?hell=world"
@@ -91,6 +104,10 @@ func TestWebHookSource_ExecutePost2(t *testing.T) {
 }
 
 func TestWebHookSource_ExecutePut(t *testing.T) {
+	if !teatesting.RequireHTTPServer() {
+		return
+	}
+
 	webHook := NewWebHookSource()
 	webHook.URL = "http://127.0.0.1:9991/webhook"
 	webHook.Method = http.MethodPut

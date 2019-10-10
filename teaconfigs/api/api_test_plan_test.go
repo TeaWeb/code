@@ -1,12 +1,17 @@
 package api
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/assert"
 	"testing"
 	"time"
 )
 
 func TestAPITestPlan(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	a := assert.NewAssertion(t).Quiet()
 
 	plan := NewAPITestPlan()

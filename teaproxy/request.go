@@ -882,7 +882,7 @@ func (this *Request) requestRemoteAddr() string {
 func (this *Request) requestRemotePort() int {
 	_, port, err := net.SplitHostPort(this.raw.RemoteAddr)
 	if err == nil {
-		types.Int(port)
+		return types.Int(port)
 	}
 	return 0
 }
@@ -1364,7 +1364,10 @@ func (this *Request) log() {
 		accessLog.ResponseBodyData = this.responseWriter.Body()
 	}
 
-	tealogs.SharedLogger().Push(accessLog)
+	logger := tealogs.SharedLogger()
+	if logger != nil {
+		logger.Push(accessLog)
+	}
 }
 
 func (this *Request) findIndexFile(dir string) string {

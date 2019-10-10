@@ -2,12 +2,17 @@ package backup
 
 import (
 	"archive/zip"
+	"github.com/TeaWeb/code/teatesting"
 	"os"
 	"testing"
 	"time"
 )
 
 func TestBackupZip(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	tmp := "/tmp/backup.test.zip"
 	fp, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
@@ -44,6 +49,10 @@ func TestBackupZip(t *testing.T) {
 }
 
 func TestBackup(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	err := backupTask()
 	if err != nil {
 		t.Fatal(err)

@@ -1,6 +1,7 @@
 package tealogs
 
 import (
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/Tea"
 	"testing"
 	"time"
@@ -18,7 +19,7 @@ func TestFileStorage_Write(t *testing.T) {
 	}
 
 	{
-		err = storage.Write([]*AccessLog{
+		err = storage.Write([]*accesslogs.AccessLog{
 			{
 				RequestPath: "/hello",
 			},
@@ -32,7 +33,7 @@ func TestFileStorage_Write(t *testing.T) {
 	}
 
 	{
-		err = storage.Write([]*AccessLog{
+		err = storage.Write([]*accesslogs.AccessLog{
 			{
 				RequestPath: "/1",
 			},
@@ -48,7 +49,7 @@ func TestFileStorage_Write(t *testing.T) {
 	{
 		storage.Format = StorageFormatTemplate
 		storage.Template = `${timeLocal} "${requestMethod} ${requestPath}" ${log}`
-		err = storage.Write([]*AccessLog{
+		err = storage.Write([]*accesslogs.AccessLog{
 			{
 				RequestMethod: "POST",
 				RequestPath:   "/1",

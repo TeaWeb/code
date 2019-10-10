@@ -1,11 +1,16 @@
 package teacache
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"testing"
 	"time"
 )
 
 func TestRedisManager(t *testing.T) {
+	if !teatesting.RequireRedis() {
+		return
+	}
+
 	manager := NewRedisManager()
 	manager.Life = 30 * time.Second
 	manager.SetOptions(map[string]interface{}{
@@ -22,6 +27,10 @@ func TestRedisManager(t *testing.T) {
 }
 
 func TestRedisManager_Stat(t *testing.T) {
+	if !teatesting.RequireRedis() {
+		return
+	}
+
 	manager := NewRedisManager()
 	manager.SetId("abc")
 	manager.Life = 1800 * time.Second
@@ -37,6 +46,10 @@ func TestRedisManager_Stat(t *testing.T) {
 }
 
 func TestRedisManager_Clean(t *testing.T) {
+	if !teatesting.RequireRedis() {
+		return
+	}
+
 	manager := NewRedisManager()
 	manager.SetId("abc")
 	manager.Life = 1800 * time.Second

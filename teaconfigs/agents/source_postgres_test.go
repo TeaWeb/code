@@ -1,11 +1,16 @@
 package agents
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"testing"
 )
 
 func TestSourcePostgres(t *testing.T) {
+	if !teatesting.RequirePostgres() {
+		return
+	}
+
 	source := NewPostgreSQLSource()
 	source.Username = "postgres"
 	source.Password = "123456"

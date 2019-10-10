@@ -2,6 +2,7 @@ package teadb
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/assert"
 	stringutil "github.com/iwind/TeaGo/utils/string"
 	"testing"
@@ -9,6 +10,10 @@ import (
 )
 
 func TestAgentLogDAO_InsertOne(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	{
 		log := new(agents.ProcessLog)
 		log.AgentId = "test"
@@ -57,6 +62,10 @@ func TestAgentLogDAO_InsertOne(t *testing.T) {
 }
 
 func TestAgentLogDAO_ListTaskLogs(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	a := assert.NewAssertion(t)
 
 	taskId := "abc"
@@ -85,6 +94,10 @@ func TestAgentLogDAO_ListTaskLogs(t *testing.T) {
 }
 
 func TestAgentLogDAO_FindLatestTaskLog(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	a := assert.NewAssertion(t)
 
 	taskId := "abc"

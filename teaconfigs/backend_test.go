@@ -22,10 +22,10 @@ func TestBackendConfig_IncreaseConn(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(count)
 	before := time.Now()
-	for i := 0; i < count; i ++ {
+	for i := 0; i < count; i++ {
 		go func() {
 			defer wg.Done()
-			for j := 0; j < 1000; j ++ {
+			for j := 0; j < 1000; j++ {
 				backend.IncreaseConn()
 			}
 		}()
@@ -43,10 +43,10 @@ func TestBackendConfig_DecreaseConn(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(count)
 	before := time.Now()
-	for i := 0; i < count; i ++ {
+	for i := 0; i < count; i++ {
 		go func() {
 			defer wg.Done()
-			for j := 0; j < 1000; j ++ {
+			for j := 0; j < 1000; j++ {
 				backend.DecreaseConn()
 			}
 		}()
@@ -60,21 +60,24 @@ func TestBackendConfig_RequestPath(t *testing.T) {
 	a := assert.NewAssertion(t)
 	{
 		backend := NewBackendConfig()
-		backend.Validate()
+		err := backend.Validate()
+		a.IsNil(err)
 		a.IsFalse(backend.HasRequestURI())
 	}
 
 	{
 		backend := NewBackendConfig()
 		backend.RequestURI = "${requestURI}"
-		backend.Validate()
+		err := backend.Validate()
+		a.IsNil(err)
 		a.IsFalse(backend.HasRequestURI())
 	}
 
 	{
 		backend := NewBackendConfig()
 		backend.RequestURI = "/hello${requestURI}"
-		backend.Validate()
+		err := backend.Validate()
+		a.IsNil(err)
 		a.IsTrue(backend.HasRequestURI())
 		a.IsTrue(backend.RequestPath() == "/hello${requestURI}")
 		a.IsTrue(backend.RequestArgs() == "")
@@ -83,7 +86,8 @@ func TestBackendConfig_RequestPath(t *testing.T) {
 	{
 		backend := NewBackendConfig()
 		backend.RequestURI = "/hello${requestURI}?name=value"
-		backend.Validate()
+		err := backend.Validate()
+		a.IsNil(err)
 		a.IsTrue(backend.HasRequestURI())
 		a.IsTrue(backend.RequestPath() == "/hello${requestURI}")
 		a.IsTrue(backend.RequestArgs() == "name=value")
@@ -94,28 +98,34 @@ func TestBackendConfig_CheckHealth(t *testing.T) {
 	a := assert.NewAssertion(t)
 	{
 		backend := NewBackendConfig()
-		backend.Validate()
+		err := backend.Validate()
+		a.IsNil(err)
 		a.IsTrue(backend.CheckHealth())
 	}
 
 	{
 		backend := NewBackendConfig()
 		backend.CheckURL = "htt111"
-		backend.Validate()
+		backend.CheckOn = true
+		err := backend.Validate()
+		a.IsNil(err)
 		a.IsFalse(backend.CheckHealth())
 	}
 
 	{
 		backend := NewBackendConfig()
 		backend.CheckURL = "http://127.0.0.1:9991/webhook"
-		backend.Validate()
+		err := backend.Validate()
+		a.IsNil(err)
 		a.IsTrue(backend.CheckHealth())
 	}
 
 	{
 		backend := NewBackendConfig()
 		backend.CheckURL = "http://127.0.0.1:9991/webhook2"
-		backend.Validate()
+		backend.CheckOn = true
+		err := backend.Validate()
+		a.IsNil(err)
 		a.IsFalse(backend.CheckHealth())
 	}
 }

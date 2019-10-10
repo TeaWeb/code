@@ -1,8 +1,14 @@
 package notices
 
-import "testing"
+import (
+	"github.com/TeaWeb/code/teatesting"
+	"testing"
+)
 
 func TestNoticeQyWeixinRobotMedia_Send(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
 	media := NewNoticeQyWeixinRobotMedia()
 	media.WebhookURL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=123456" //需要换成你自己的webhook
 	media.TextFormat = FormatText

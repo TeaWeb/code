@@ -1,12 +1,18 @@
 package tealogs
 
 import (
+	"github.com/TeaWeb/code/tealogs/accesslogs"
+	"github.com/TeaWeb/code/teatesting"
 	"net"
 	"testing"
 	"time"
 )
 
 func TestTCPStorage_Write(t *testing.T) {
+	if !teatesting.RequirePort(9981) {
+		return
+	}
+
 	go func() {
 		server, err := net.Listen("tcp", "127.0.0.1:9981")
 		if err != nil {
@@ -30,7 +36,7 @@ func TestTCPStorage_Write(t *testing.T) {
 			}
 			break
 		}
-		server.Close()
+		_ = server.Close()
 	}()
 
 	storage := &TCPStorage{
@@ -47,7 +53,7 @@ func TestTCPStorage_Write(t *testing.T) {
 	{
 		storage.Format = StorageFormatTemplate
 		storage.Template = `${timeLocal} "${requestMethod} ${requestPath}"`
-		err = storage.Write([]*AccessLog{
+		err = storage.Write([]*accesslogs.AccessLog{
 			{
 				RequestMethod: "POST",
 				RequestPath:   "/1",

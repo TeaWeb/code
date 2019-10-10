@@ -1,11 +1,16 @@
 package agentutils
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"testing"
 	"time"
 )
 
 func TestInstaller_Start(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	installer := NewInstaller()
 	installer.Host = "192.168.2.33"
 	installer.Port = 22

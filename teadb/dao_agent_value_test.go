@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	timeutil "github.com/iwind/TeaGo/utils/time"
 	"testing"
@@ -140,6 +141,10 @@ func TestAgentValuedAO_FindLatestItemValueNoError(t *testing.T) {
 }
 
 func TestAgentValueDAO_FindLatestItemValues(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	{
 		dao := AgentValueDAO()
 		values, err := dao.FindLatestItemValues("local", "system", "cpu.load", 0, "", 10)

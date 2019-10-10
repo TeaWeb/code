@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/utils/time"
 	"sync"
 	"testing"
@@ -8,6 +9,10 @@ import (
 )
 
 func TestAPILimit(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	limit := NewAPILimit()
 	limit.Concurrent = 3
 	limit.Validate()
@@ -15,7 +20,7 @@ func TestAPILimit(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(10)
 
-	for i := 0; i < 10; i ++ {
+	for i := 0; i < 10; i++ {
 		go func(i int) {
 			limit.Begin()
 			t.Log("process", i, timeutil.Format("H:i:s"))

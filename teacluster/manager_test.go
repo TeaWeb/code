@@ -3,7 +3,10 @@ package teacluster
 import "testing"
 
 func TestManager_Start(t *testing.T) {
-	t.Fatal(SharedManager.Start())
+	err := SharedManager.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestManager_PullItems(t *testing.T) {

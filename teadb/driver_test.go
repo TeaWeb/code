@@ -2,12 +2,17 @@ package teadb
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/audits"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"testing"
 	"time"
 )
 
 func TestDriver_Test(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	err := SharedDB().Test()
 	if err != nil {
 		t.Log("error:", err.Error())
@@ -17,6 +22,10 @@ func TestDriver_Test(t *testing.T) {
 }
 
 func TestDriver_FindOne(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	{
 		query := NewQuery("teaweb.logs.audit")
 		query.Attr("id", 1)
@@ -39,6 +48,10 @@ func TestDriver_FindOne(t *testing.T) {
 }
 
 func TestDriver_FindOnes(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	query := NewQuery("teaweb.logs.audit")
 	query.Attr("id", []int{1, 2})
 	ones, err := SharedDB().FindOnes(query, new(audits.Log))
@@ -49,6 +62,10 @@ func TestDriver_FindOnes(t *testing.T) {
 }
 
 func TestDriver_InsertOne(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	{
 		log := new(audits.Log)
 		log.Timestamp = time.Now().Unix()
@@ -85,6 +102,10 @@ func TestDriver_InsertOne(t *testing.T) {
 }
 
 func TestDriver_InsertOnes(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	ones := []*audits.Log{
 		{
 			Action:      "LOGIN",
@@ -165,6 +186,10 @@ func TestDriver_Min(t *testing.T) {
 }
 
 func TestDriver_Max(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	q := NewQuery("teaweb.logs.audit")
 	count, err := SharedDB().Max(q, "id")
 	if err != nil {
@@ -174,6 +199,10 @@ func TestDriver_Max(t *testing.T) {
 }
 
 func TestDriver_Group(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	q := NewQuery("teaweb.logs.audit")
 	q.Gt("id", 0)
 	q.Desc("_id")

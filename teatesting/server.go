@@ -1,9 +1,11 @@
-package teaweb
+package teatesting
 
 import (
+	"compress/gzip"
 	"fmt"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
+	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -15,8 +17,8 @@ import (
 	"time"
 )
 
-// 测试服务器
-func startTestServer() {
+// 启动测试服务器
+func StartTestServer() {
 	TeaGo.NewServer(false).
 		AccessLog(false).
 		Get("/", func(resp http.ResponseWriter) {
@@ -102,8 +104,8 @@ func startTestServer() {
 			}
 
 			_, _ = resp.Write([]byte("files:\n"))
-			for field, files := range req.MultipartForm.File {
-				for _, f := range files {
+			for field, formFiles := range req.MultipartForm.File {
+				for _, f := range formFiles {
 					_, _ = resp.Write([]byte(field + ":" + f.Filename + ", " + fmt.Sprintf("%d", f.Size) + "bytes\n"))
 				}
 			}
@@ -176,4 +178,41 @@ func startTestServer() {
 `))
 		}).
 		StartOn("127.0.0.1:9991")
+}
+
+// 压缩Javascript、CSS等静态资源
+func compressResource(writer http.ResponseWriter, path string, mimeType string) {
+	cssFile := files.NewFile(path)
+	data, err := cssFile.ReadAll()
+	if err != nil {
+		return
+	}
+
+	gzipWriter, err := gzip.NewWriterLevel(writer, 5)
+	if err != nil {
+		_, err := writer.Write(data)
+		if err != nil {
+			logs.Error(err)
+		}
+		return
+	}
+	defer func() {
+		err = gzipWriter.Close()
+		if err != nil {
+			logs.Error(err)
+		}
+	}()
+
+	header := writer.Header()
+	header.Set("Content-Encoding", "gzip")
+	header.Set("Transfer-Encoding", "chunked")
+	header.Set("Vary", "Accept-Encoding")
+	header.Set("Accept-encoding", "gzip, deflate, br")
+	header.Set("Content-Type", mimeType)
+	header.Set("Last-Modified", "Sat, 02 Mar 2015 09:31:16 GMT")
+
+	_, err = gzipWriter.Write(data)
+	if err != nil {
+		logs.Error(err)
+	}
 }

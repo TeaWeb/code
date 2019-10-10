@@ -1,8 +1,14 @@
 package notices
 
-import "testing"
+import (
+	"github.com/TeaWeb/code/teatesting"
+	"testing"
+)
 
 func TestNewNoticeQyWeixinMedia(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
 	m := NewNoticeQyWeixinMedia()
 	m.CorporateId = "xxx"
 	m.AppSecret = "xxx"

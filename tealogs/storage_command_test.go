@@ -1,6 +1,7 @@
 package tealogs
 
 import (
+	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"os"
 	"os/exec"
 	"testing"
@@ -34,7 +35,7 @@ func TestCommandStorage_Write(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = storage.Write([]*AccessLog{
+	err = storage.Write([]*accesslogs.AccessLog{
 		{
 			RequestMethod: "GET",
 			RequestPath:   "/hello",

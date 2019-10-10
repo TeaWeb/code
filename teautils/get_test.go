@@ -37,8 +37,8 @@ func TestGetStruct(t *testing.T) {
 		t.Fatal("[ERROR]Age != 20")
 	}
 
-	if Get(object, []string{"Books", "0"}) != nil {
-		t.Fatal("[ERROR]books.0 != nil")
+	if Get(object, []string{"Books", "0"}) != "Golang" {
+		t.Fatal("[ERROR]books.0 != Golang")
 	}
 
 	t.Log("Extend.Location:", Get(object, []string{"Extend", "Location"}))

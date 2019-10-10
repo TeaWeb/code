@@ -1,6 +1,7 @@
 package teadb
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"golang.org/x/net/context"
 	"testing"
@@ -35,6 +36,10 @@ func TestPostgresDriver_CheckTableExists(t *testing.T) {
 }
 
 func TestPostgresDriver_CreateTable(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	driver := new(PostgresDriver)
 	err := driver.initDB()
 	if err != nil {
@@ -79,6 +84,10 @@ func TestPostgresDriver_CreateTable(t *testing.T) {
 }
 
 func TestPostgresDriver_TestDSN(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	driver := new(PostgresDriver)
 	{
 		message, ok := driver.TestDSN("postgres://postgres:@127.0.0.1:5432/teaweb?sslmode=disable", false)
@@ -95,6 +104,10 @@ func TestPostgresDriver_TestDSN(t *testing.T) {
 }
 
 func TestPostgresDriver_TestDSN_Create(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	driver := new(PostgresDriver)
 	{
 		message, ok := driver.TestDSN("postgres://postgres:123456@127.0.0.1:5432/teaweb?sslmode=disable", true)

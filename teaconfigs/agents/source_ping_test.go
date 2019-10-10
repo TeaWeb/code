@@ -1,11 +1,16 @@
 package agents
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"testing"
 )
 
 func TestPingSource_Execute(t *testing.T) {
+	if !teatesting.RequireDNS() {
+		return
+	}
+
 	source := NewPingSource()
 	source.Host = "teaos.cn"
 	value, err := source.Execute(nil)

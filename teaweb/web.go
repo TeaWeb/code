@@ -5,6 +5,7 @@ import (
 	_ "github.com/TeaWeb/code/teacache"
 	_ "github.com/TeaWeb/code/teacluster"
 	"github.com/TeaWeb/code/teaproxy"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/TeaWeb/code/teautils"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents"
 	_ "github.com/TeaWeb/code/teaweb/actions/default/agents/apps"
@@ -106,7 +107,7 @@ func Start() {
 		go func() {
 			time.Sleep(1 * time.Second)
 
-			startTestServer()
+			teatesting.StartTestServer()
 		}()
 	}
 

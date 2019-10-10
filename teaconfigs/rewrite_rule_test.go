@@ -56,7 +56,7 @@ func TestRewriteRule_NamedMatch(t *testing.T) {
 
 	before := time.Now()
 	count := 100
-	for i := 0; i < count; i ++ {
+	for i := 0; i < count; i++ {
 		s, _, b := r.Match("/hello/world/ni", func(source string) string {
 			return source
 		})
@@ -83,9 +83,9 @@ func TestRewriteRule_NamedMatchConcurrent(t *testing.T) {
 	wg.Add(threads * count)
 	fails := 0
 	var locker sync.Mutex
-	for i := 0; i < threads; i ++ {
+	for i := 0; i < threads; i++ {
 		go func() {
-			for j := 0; j < count; j ++ {
+			for j := 0; j < count; j++ {
 				func() {
 					defer wg.Done()
 
@@ -96,11 +96,11 @@ func TestRewriteRule_NamedMatchConcurrent(t *testing.T) {
 					})
 					if !b {
 						locker.Lock()
-						fails ++
+						fails++
 						locker.Unlock()
 					} else if replace != "http://127.0.0.1/hello/world/"+randomString {
 						locker.Lock()
-						fails ++
+						fails++
 						locker.Unlock()
 					}
 				}()
@@ -156,10 +156,10 @@ func TestRewriteRuleProxy(t *testing.T) {
 	}
 	a.IsNil(rule.Validate())
 
-	_, _, b := rule.Match("/hello/world", func(source string) string {
+	replace, _, b := rule.Match("/hello/world", func(source string) string {
 		return source
 	})
 	a.IsTrue(b)
 	a.IsTrue(rule.TargetProxy() == "lb001")
-	a.IsTrue(rule.TargetURL() == "/hello/world")
+	a.IsTrue(replace == "/hello/world")
 }

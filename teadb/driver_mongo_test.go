@@ -1,6 +1,7 @@
 package teadb
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"testing"
@@ -51,6 +52,10 @@ func TestMongoDriver_setMapValue(t *testing.T) {
 }
 
 func TestMongoDriver_connect(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	driver := new(MongoDriver)
 	client, err := driver.connect()
 	if err != nil {
@@ -61,6 +66,10 @@ func TestMongoDriver_connect(t *testing.T) {
 }
 
 func TestMongoDriver_Test(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	driver := new(MongoDriver)
 	err := driver.Test()
 	if err != nil {

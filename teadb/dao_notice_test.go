@@ -2,12 +2,17 @@ package teadb
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/notices"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/assert"
 	"testing"
 	"time"
 )
 
 func TestNoticeDAO_InsertOne(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	{
 		notice := notices.NewNotice()
 		notice.Message = "this is test"
@@ -65,6 +70,10 @@ func TestNoticeDAO_InsertOne(t *testing.T) {
 }
 
 func TestNoticeDAO_NotifyProxyMessage(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	err := dao.NotifyProxyMessage(notices.ProxyCond{
 		ServerId: "test",
@@ -76,6 +85,10 @@ func TestNoticeDAO_NotifyProxyMessage(t *testing.T) {
 }
 
 func TestNoticeDAO_NotifyProxyServerMessage(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	err := dao.NotifyProxyServerMessage("test2", notices.NoticeLevelWarning, "Hello")
 	if err != nil {
@@ -85,6 +98,10 @@ func TestNoticeDAO_NotifyProxyServerMessage(t *testing.T) {
 }
 
 func TestNoticeDAO_CountAllCountUnreadNotices(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	count, err := dao.CountAllUnreadNotices()
 	if err != nil {
@@ -94,6 +111,10 @@ func TestNoticeDAO_CountAllCountUnreadNotices(t *testing.T) {
 }
 
 func TestNoticeDAO_CountAllCountReadNotices(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	count, err := dao.CountAllReadNotices()
 	if err != nil {
@@ -103,6 +124,10 @@ func TestNoticeDAO_CountAllCountReadNotices(t *testing.T) {
 }
 
 func TestNoticeDAO_CountUnreadNoticesForAgent(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	count, err := dao.CountUnreadNoticesForAgent("local")
 	if err != nil {
@@ -112,6 +137,10 @@ func TestNoticeDAO_CountUnreadNoticesForAgent(t *testing.T) {
 }
 
 func TestNoticeDAO_CountReadNoticesForAgent(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	count, err := dao.CountReadNoticesForAgent("local")
 	if err != nil {
@@ -121,6 +150,10 @@ func TestNoticeDAO_CountReadNoticesForAgent(t *testing.T) {
 }
 
 func TestNoticeDAO_CountReceivedNotices(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	count, err := dao.CountReceivedNotices("EpBqPQMqpRlvFh9Q", map[string]interface{}{
 		"agent.agentId": "local",
@@ -132,6 +165,10 @@ func TestNoticeDAO_CountReceivedNotices(t *testing.T) {
 }
 
 func TestNoticeDAO_ExistNoticesWithHash(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	{
 		b, err := dao.ExistNoticesWithHash("4604200", map[string]interface{}{
@@ -163,6 +200,10 @@ func TestNoticeDAO_ExistNoticesWithHash(t *testing.T) {
 }
 
 func TestNoticeDAO_ListNotices(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	t.Log("===read===")
 	{
 		result, err := NoticeDAO().ListNotices(true, 0, 5)
@@ -189,6 +230,10 @@ func TestNoticeDAO_ListNotices(t *testing.T) {
 }
 
 func TestNoticeDAO_ListNotices_Unread(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	result, err := NoticeDAO().ListNotices(false, 0, 5)
 	if err != nil {
 		t.Fatal(err)
@@ -200,6 +245,10 @@ func TestNoticeDAO_ListNotices_Unread(t *testing.T) {
 }
 
 func TestNoticeDAO_ListAgentNotices(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	result, err := NoticeDAO().ListAgentNotices("local", true, 0, 5)
 	if err != nil {
 		t.Fatal(err)
@@ -211,6 +260,10 @@ func TestNoticeDAO_ListAgentNotices(t *testing.T) {
 }
 
 func TestNoticeDAO_ListAgentNotices_Notfound(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	a := assert.NewAssertion(t)
 	result, err := NoticeDAO().ListAgentNotices("local123", true, 0, 5)
 	if err != nil {
@@ -220,6 +273,10 @@ func TestNoticeDAO_ListAgentNotices_Notfound(t *testing.T) {
 }
 
 func TestNoticeDAO_DeleteNoticesForAgent(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	err := dao.DeleteNoticesForAgent("1TABzdF0uAIFPGkr")
 	if err != nil {
@@ -229,6 +286,10 @@ func TestNoticeDAO_DeleteNoticesForAgent(t *testing.T) {
 }
 
 func TestNoticeDAO_UpdateNoticeReceivers(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	ones, err := dao.ListNotices(false, 0, 1)
 	if err != nil {
@@ -253,6 +314,10 @@ func TestNoticeDAO_UpdateNoticeReceivers(t *testing.T) {
 }
 
 func TestNoticeDAO_UpdateAllNoticesRead(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	err := dao.UpdateAllNoticesRead()
 	if err != nil {
@@ -262,6 +327,10 @@ func TestNoticeDAO_UpdateAllNoticesRead(t *testing.T) {
 }
 
 func TestNoticeDAO_UpdateNoticesRead(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	ones, err := dao.ListNotices(false, 0, 2)
 	if err != nil {
@@ -284,6 +353,10 @@ func TestNoticeDAO_UpdateNoticesRead(t *testing.T) {
 }
 
 func TestNoticeDAO_UpdateAgentNoticesRead(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := NoticeDAO()
 	ones, err := dao.ListAgentNotices("local", false, 0, 2)
 	if err != nil {
@@ -306,6 +379,10 @@ func TestNoticeDAO_UpdateAgentNoticesRead(t *testing.T) {
 }
 
 func TestNoticeDAO_UpdateAllAgentNoticesRead(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	err := NoticeDAO().UpdateAllAgentNoticesRead("local")
 	if err != nil {
 		t.Fatal(err)

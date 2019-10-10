@@ -6,7 +6,6 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"sync"
 	"testing"
-	"time"
 )
 
 func TestFileManager(t *testing.T) {
@@ -17,7 +16,8 @@ func TestFileManager(t *testing.T) {
 	t.Log(err)
 	a.IsNotNil(err)
 
-	m.dir = Tea.TmpDir() + "/cache"
+	m.dir = Tea.Root + "/cache"
+	logs.Println(m.dir)
 
 	err = m.Write("123456", []byte("abcd"))
 	a.IsNil(err)
@@ -33,8 +33,6 @@ func TestFileManager(t *testing.T) {
 		return "data:" + string(data)
 	})
 	t.Log(string(data))
-
-	time.Sleep(3 * time.Second)
 }
 
 func TestFileManagerConcurrent(t *testing.T) {
@@ -43,7 +41,7 @@ func TestFileManagerConcurrent(t *testing.T) {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1000)
-	for i := 0; i < 1000; i ++ {
+	for i := 0; i < 1000; i++ {
 		go func(i int) {
 			_, err := m.Read("123456")
 			if err != nil {

@@ -2,6 +2,7 @@ package teadb
 
 import (
 	"database/sql"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"testing"
 )
@@ -180,6 +181,10 @@ func TestMySQLDriver_asSQL_Update(t *testing.T) {
 }
 
 func TestMySQLDriver_TestDSN(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	driver := new(MySQLDriver)
 	{
 		message, ok := driver.TestDSN("root:abcdef@tcp(127.0.0.1:3306)/teaweb123?charset=utf8mb4&timeout=30s", false)
@@ -197,12 +202,20 @@ func TestMySQLDriver_TestDSN(t *testing.T) {
 }
 
 func TestMySQLDriver_TestDSN_Create(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	driver := new(MySQLDriver)
 	message, ok := driver.TestDSN("root:123456@tcp(127.0.0.1:3306)/teaweb?charset=utf8mb4&timeout=30s", true)
 	t.Log(message, ok)
 }
 
 func TestMySQLDriver_Ping(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	driver := new(MySQLDriver)
 	driver.driver = "mysql"
 	err := driver.initDB()

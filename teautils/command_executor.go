@@ -32,7 +32,7 @@ func (this *CommandExecutor) Run() (output string, err error) {
 	var lastCmd *exec.Cmd = nil
 	var lastData []byte = nil
 	for _, command := range this.commands {
-		cmd := exec.Command(command.Name, command.Args ...)
+		cmd := exec.Command(command.Name, command.Args...)
 		stdout := bytes.NewBuffer([]byte{})
 		cmd.Stdout = stdout
 		if lastCmd != nil {
@@ -45,6 +45,11 @@ func (this *CommandExecutor) Run() (output string, err error) {
 
 		err = cmd.Wait()
 		if err != nil {
+			_, ok := err.(*exec.ExitError)
+			if ok {
+				return "", nil
+			}
+
 			return "", err
 		}
 		lastData = stdout.Bytes()

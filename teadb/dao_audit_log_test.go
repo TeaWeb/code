@@ -3,12 +3,17 @@ package teadb
 import (
 	"github.com/TeaWeb/code/teaconfigs/audits"
 	"github.com/TeaWeb/code/teadb/shared"
+	"github.com/TeaWeb/code/teatesting"
 	timeutil "github.com/iwind/TeaGo/utils/time"
 	"testing"
 	"time"
 )
 
 func TestAuditLogDAO_CountAllAuditLogs(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := AuditLogDAO()
 	count, err := dao.CountAllAuditLogs()
 	if err != nil {
@@ -18,6 +23,10 @@ func TestAuditLogDAO_CountAllAuditLogs(t *testing.T) {
 }
 
 func TestAuditLogDAO_ListAuditLogs(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := AuditLogDAO()
 	result, err := dao.ListAuditLogs(0, 5)
 	if err != nil {
@@ -30,6 +39,10 @@ func TestAuditLogDAO_ListAuditLogs(t *testing.T) {
 }
 
 func TestAuditLogDAO_InsertOne(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := AuditLogDAO()
 	err := dao.InsertOne(&audits.Log{
 		Id:          shared.NewObjectId(),
@@ -47,6 +60,10 @@ func TestAuditLogDAO_InsertOne(t *testing.T) {
 }
 
 func TestAuditLogDAO_InsertOne2(t *testing.T) {
+	if !teatesting.RequireDBAvailable() {
+		return
+	}
+
 	dao := AuditLogDAO()
 	err := dao.InsertOne(&audits.Log{
 		Id:          shared.NewObjectId(),

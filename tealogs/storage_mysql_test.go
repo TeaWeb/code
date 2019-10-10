@@ -1,11 +1,17 @@
 package tealogs
 
 import (
+	"github.com/TeaWeb/code/tealogs/accesslogs"
+	"github.com/TeaWeb/code/teatesting"
 	"testing"
 	"time"
 )
 
 func TestMySQLStorage_Write(t *testing.T) {
+	if !teatesting.RequireMySQL() {
+		return
+	}
+
 	before := time.Now()
 	defer func() {
 		t.Log("cost:", time.Since(before).Seconds(), "seconds")
@@ -17,7 +23,7 @@ func TestMySQLStorage_Write(t *testing.T) {
 		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
-		Password: "",
+		Password: "123456",
 		Database: "teaweb",
 		Table:    "accessLogs${date}",
 		LogField: "log",
@@ -31,7 +37,7 @@ func TestMySQLStorage_Write(t *testing.T) {
 	{
 		storage.Format = StorageFormatJSON
 		storage.Template = `${timeLocal} "${requestMethod} ${requestPath}"`
-		err := storage.Write([]*AccessLog{
+		err := storage.Write([]*accesslogs.AccessLog{
 			{
 				RequestMethod: "POST",
 				RequestPath:   "/1",

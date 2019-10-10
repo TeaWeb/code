@@ -139,10 +139,13 @@ func (this *LevelDBManager) CleanExpired() error {
 
 // 统计
 func (this *LevelDBManager) Stat() (size int64, countKeys int, err error) {
+	if this.db == nil {
+		return
+	}
 	it := this.db.NewIterator(util.BytesPrefix([]byte("KEY")), nil)
 	for it.Next() {
 		data := it.Value()
-		countKeys ++
+		countKeys++
 		size += int64(len(data) + len(it.Key()))
 	}
 	it.Release()

@@ -1,10 +1,14 @@
 package notices
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"testing"
 )
 
 func TestNoticeEmailMedia_Send(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
 	media := NewNoticeEmailMedia()
 	media.SMTP = "smtp.qq.com:587"
 	media.Username = "19644627@qq.com"
@@ -17,6 +21,9 @@ func TestNoticeEmailMedia_Send(t *testing.T) {
 }
 
 func TestNoticeEmailMedia_Send_163(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
 	media := NewNoticeEmailMedia()
 	media.SMTP = "smtp.163.com:465"
 	media.Username = "iwind_php@163.com"

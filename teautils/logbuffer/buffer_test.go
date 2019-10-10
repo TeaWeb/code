@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/iwind/TeaGo/Tea"
+	"io"
 	"runtime"
 	"strings"
 	"sync"
@@ -123,6 +124,9 @@ func TestBuffer_Read_Full(t *testing.T) {
 				continue
 			}
 			if err != nil {
+				if err == io.EOF {
+					return
+				}
 				t.Fatal(err)
 			}
 		}

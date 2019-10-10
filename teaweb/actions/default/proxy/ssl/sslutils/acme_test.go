@@ -3,11 +3,16 @@ package sslutils
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaproxy"
+	"github.com/TeaWeb/code/teatesting"
 	"strings"
 	"testing"
 )
 
 func TestReloadACMECert(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	server := &teaconfigs.ServerConfig{
 		Id: "abc",
 	}
@@ -31,5 +36,9 @@ func TestReloadACMECert(t *testing.T) {
 }
 
 func TestRenewACMECerts(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	RenewACMECerts()
 }

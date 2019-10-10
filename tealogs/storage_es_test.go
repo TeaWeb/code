@@ -1,11 +1,17 @@
 package tealogs
 
 import (
+	"github.com/TeaWeb/code/tealogs/accesslogs"
+	"github.com/TeaWeb/code/teatesting"
 	"testing"
 	"time"
 )
 
 func TestESStorage_Write(t *testing.T) {
+	if !teatesting.RequireElasticSearch() {
+		return
+	}
+
 	storage := &ESStorage{
 		Storage: Storage{
 		},
@@ -21,7 +27,7 @@ func TestESStorage_Write(t *testing.T) {
 	{
 		storage.Format = StorageFormatJSON
 		storage.Template = `${timeLocal} "${requestMethod} ${requestPath}"`
-		err = storage.Write([]*AccessLog{
+		err = storage.Write([]*accesslogs.AccessLog{
 			{
 				RequestMethod: "POST",
 				RequestPath:   "/1",

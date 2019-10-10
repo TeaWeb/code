@@ -2,6 +2,7 @@ package agents
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"net/http"
 	"testing"
@@ -18,6 +19,10 @@ func TestURLConnectivitySource_Execute(t *testing.T) {
 }
 
 func TestURLConnectivitySource_ExecutePost(t *testing.T) {
+	if !teatesting.RequireHTTPServer() {
+		return
+	}
+
 	source := NewURLConnectivitySource()
 	source.Method = http.MethodPost
 	source.URL = "http://127.0.0.1:9991/webhook?hell=world"
@@ -55,6 +60,10 @@ func TestURLConnectivitySource_ExecutePost(t *testing.T) {
 }
 
 func TestURLConnectivitySource_ExecutePut(t *testing.T) {
+	if !teatesting.RequireHTTPServer() {
+		return
+	}
+
 	source := NewURLConnectivitySource()
 	source.URL = "http://127.0.0.1:9991/webhook"
 	source.Method = http.MethodPut

@@ -1,6 +1,7 @@
 package notices
 
 import (
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"testing"
 )
@@ -12,13 +13,15 @@ echo  "subject:${NoticeSubject}"
 echo "body:${NoticeBody}"
 `
 
-	tmp := files.NewTmpFile("media_test.sh")
+	tmp := files.NewFile(Tea.Root + "/web/tmp/media_test.sh")
 	err := tmp.WriteString(script)
 	if err != nil {
 		t.Fatal(err)
 	}
-	tmp.Chmod(0777)
-	defer tmp.Delete()
+	_ = tmp.Chmod(0777)
+	defer func() {
+		_ = tmp.Delete()
+	}()
 
 	media := NewNoticeScriptMedia()
 	media.Path = tmp.Path()

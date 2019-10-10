@@ -21,6 +21,6 @@ func TestResponseWriterHeader(t *testing.T) {
 	//resp.Body = ioutil.NopCloser(bytes.NewReader([]byte("hello, world")))
 
 	writer := bytes.NewBuffer([]byte{})
-	resp.Write(writer)
+	_ = resp.Write(writer)
 	t.Log(string(writer.Bytes()))
 }

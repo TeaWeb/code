@@ -34,6 +34,9 @@ func SharedLogger() *AccessLogger {
 
 // 推送日志
 func (this *AccessLogger) Push(log *accesslogs.AccessLog) {
+	if this.queue == nil {
+		return
+	}
 	this.queue <- log
 }
 

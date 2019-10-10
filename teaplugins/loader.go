@@ -61,7 +61,7 @@ func (this *Loader) pipe(reader PipeInterface, writer PipeInterface) {
 		n, err := reader.Read(buf)
 
 		if n > 0 {
-			msgData = append(msgData, buf[:n] ...)
+			msgData = append(msgData, buf[:n]...)
 
 			if this.debug {
 				logs.Println("[plugin]["+this.shortFileName()+"]len:", len(msgData), ",", "read msg data:", string(msgData))
@@ -205,6 +205,9 @@ func (this *Loader) Write(action messages.ActionInterface) error {
 		return err
 	}
 	action.SetMessageId(msg.Id)
+	if this.writer == nil {
+		return nil
+	}
 	_, err = this.writer.Write(data)
 	return err
 }

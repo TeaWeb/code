@@ -1,12 +1,17 @@
 package agent
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"io/ioutil"
 	"net/http"
 	"testing"
 )
 
 func TestUpgradeAction_Run(t *testing.T) {
+	if !teatesting.RequireTeaWebServer() {
+		return
+	}
+
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:7777/api/agent/upgrade", nil)
 	if err != nil {
 		t.Fatal(err)

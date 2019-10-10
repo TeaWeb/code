@@ -41,6 +41,10 @@ func (this *RedisManager) SetOptions(options map[string]interface{}) {
 	this.Password = m.GetString("password")
 	this.Sock = m.GetString("sock")
 
+	if len(this.Network) == 0 {
+		this.Network = "tcp"
+	}
+
 	addr := ""
 	if this.Network == "tcp" {
 		if this.Port > 0 {
@@ -53,7 +57,7 @@ func (this *RedisManager) SetOptions(options map[string]interface{}) {
 	}
 
 	if this.client != nil {
-		this.client.Close()
+		_ = this.client.Close()
 	}
 
 	this.client = redis.NewClient(&redis.Options{
@@ -111,7 +115,7 @@ func (this *RedisManager) Stat() (size int64, countKeys int, err error) {
 		if err != nil {
 			continue
 		}
-		countKeys ++
+		countKeys++
 		size += int64(len(b) + len(key))
 	}
 	return

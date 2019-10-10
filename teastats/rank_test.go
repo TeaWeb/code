@@ -10,7 +10,7 @@ func TestRank_Top(t *testing.T) {
 	rank := NewRank(10, 1000000)
 
 	j := 0
-	for i := 0; i < 500*10000; i ++ {
+	for i := 0; i < 500*10000; i++ {
 		if i%12 == 0 {
 			rank.Add("192.168.1.a")
 		} else if i%11 == 0 {
@@ -35,7 +35,7 @@ func TestRank_Top(t *testing.T) {
 			rank.Add("192.168.1.k")
 		} else {
 			rank.Add(fmt.Sprintf("192.168.1.%d", j))
-			j ++
+			j++
 		}
 	}
 
@@ -49,7 +49,14 @@ func TestRank_Top(t *testing.T) {
 }
 
 func TestRank_Load(t *testing.T) {
-	db := NewKVStorage("test.leveldb").db
+	kv := NewKVStorage("test.leveldb")
+	if kv == nil {
+		return
+	}
+	defer func() {
+		_ = kv.Close()
+	}()
+	db := kv.db
 
 	rank := NewRank(10, 1000000)
 	rank.Load(db, "hello")

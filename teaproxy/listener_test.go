@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"testing"
@@ -93,7 +94,10 @@ func TestListener_Start(t *testing.T) {
 			Address: "127.0.0.1:9991",
 			Weight:  10,
 		})
-		server.Validate()
+		err := server.Validate()
+		if err != nil {
+			t.Fatal(err)
+		}
 		listener.ApplyServer(server)
 	}
 	go func() {
@@ -132,7 +136,10 @@ func TestListener_Reload_RemoveServer(t *testing.T) {
 			Value:  "${backend.id}",
 			Always: true,
 		})
-		server.Validate()
+		err := server.Validate()
+		if err != nil {
+			t.Fatal(err)
+		}
 		listener.ApplyServer(server)
 	}
 	{
@@ -153,7 +160,10 @@ func TestListener_Reload_RemoveServer(t *testing.T) {
 			Value:  "${backend.id}",
 			Always: true,
 		})
-		server.Validate()
+		err := server.Validate()
+		if err != nil {
+			t.Fatal(err)
+		}
 		listener.ApplyServer(server)
 	}
 	go func() {
@@ -166,6 +176,10 @@ func TestListener_Reload_RemoveServer(t *testing.T) {
 			t.Log(err)
 		}
 		logs.Println("reload")
+
+		if teatesting.IsGlobal() {
+			_ = listener.Shutdown()
+		}
 	}()
 	err := listener.Start()
 	if err != nil {
@@ -244,7 +258,10 @@ func TestListener_Reload_ChangeServer(t *testing.T) {
 				Value:  "${backend.id}",
 				Always: true,
 			})
-			server.Validate()
+			err := server.Validate()
+			if err != nil {
+				t.Fatal(err)
+			}
 			listener.ApplyServer(server)
 		}
 
@@ -253,6 +270,14 @@ func TestListener_Reload_ChangeServer(t *testing.T) {
 			t.Log(err)
 		}
 		logs.Println("reload")
+
+		// shutdown
+		if teatesting.IsGlobal() {
+			err = listener.Shutdown()
+			if err != nil {
+				t.Log(err)
+			}
+		}
 	}()
 	err := listener.Start()
 	if err != nil {

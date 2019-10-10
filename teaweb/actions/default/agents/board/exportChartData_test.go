@@ -6,7 +6,7 @@ import (
 )
 
 func TestExportChartDataAction_extractTitles(t *testing.T) {
-	a := new(ChartAction)
+	a := new(ExportChartDataAction)
 
 	{
 		m := map[string]interface{}{}
@@ -38,6 +38,6 @@ func TestExportChartDataAction_extractTitles(t *testing.T) {
 }
 
 func TestExportChartDataAction_formatTime(t *testing.T) {
-	a := new(ChartAction)
+	a := new(ExportChartDataAction)
 	t.Log(a.formatTime("20191011010203"))
 }

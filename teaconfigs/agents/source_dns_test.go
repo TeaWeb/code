@@ -1,11 +1,16 @@
 package agents
 
 import (
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"testing"
 )
 
 func TestDNSSource_Execute(t *testing.T) {
+	if !teatesting.RequireDNS() {
+		return
+	}
+	
 	source := NewDNSSource()
 	source.Domain = "teaos.cn"
 	source.Type = "A"
@@ -18,6 +23,10 @@ func TestDNSSource_Execute(t *testing.T) {
 }
 
 func TestDNSSource_Execute_AAAA(t *testing.T) {
+	if !teatesting.RequireDNS() {
+		return
+	}
+
 	source := NewDNSSource()
 	source.Domain = "ipv6.teaos.cn"
 	source.Type = "AAAA"
@@ -30,6 +39,10 @@ func TestDNSSource_Execute_AAAA(t *testing.T) {
 }
 
 func TestDNSSource_Execute_CHANGE(t *testing.T) {
+	if !teatesting.RequireDNS() {
+		return
+	}
+
 	source := NewDNSSource()
 	source.Domain = "teaos.cn"
 	source.Type = "CHANGE"
@@ -42,6 +55,10 @@ func TestDNSSource_Execute_CHANGE(t *testing.T) {
 }
 
 func TestDNSSource_Execute_MX(t *testing.T) {
+	if !teatesting.RequireDNS() {
+		return
+	}
+
 	source := NewDNSSource()
 	source.Domain = "teaos.cn"
 	source.Type = "MX"
@@ -54,6 +71,10 @@ func TestDNSSource_Execute_MX(t *testing.T) {
 }
 
 func TestDNSSource_Execute_NS(t *testing.T) {
+	if !teatesting.RequireDNS() {
+		return
+	}
+
 	source := NewDNSSource()
 	source.Domain = "teaos.cn"
 	source.Type = "NS"
@@ -66,6 +87,10 @@ func TestDNSSource_Execute_NS(t *testing.T) {
 }
 
 func TestDNSSource_Execute_TXT(t *testing.T) {
+	if !teatesting.RequireDNS() {
+		return
+	}
+
 	source := NewDNSSource()
 	source.Domain = "teaos.cn"
 	source.Type = "TXT"

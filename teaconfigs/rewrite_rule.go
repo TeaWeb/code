@@ -90,7 +90,7 @@ func (this *RewriteRule) Validate() error {
 		index := strings.Index(url, "/")
 		if index >= 0 {
 			this.targetProxy = url[:index]
-			this.targetURL = url[index+1:]
+			this.targetURL = url[index:]
 		}
 	} else {
 		this.targetType = RewriteTargetURL

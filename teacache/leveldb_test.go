@@ -1,6 +1,7 @@
 package teacache
 
 import (
+	"github.com/iwind/TeaGo/Tea"
 	"testing"
 	"time"
 )
@@ -8,47 +9,58 @@ import (
 func TestLevelDBManager_Write(t *testing.T) {
 	m := NewLevelDBManager()
 	m.SetOptions(map[string]interface{}{
-		"dir": "cache",
+		"dir": Tea.Root + "/cache",
 	})
 	m.Life = 30 * time.Second
 	t.Log(m.Write("hello", []byte("world123")))
+	_ = m.Close()
 }
 
 func TestLevelDBManager_Read(t *testing.T) {
 	m := NewLevelDBManager()
 	m.SetOptions(map[string]interface{}{
-		"dir": "cache",
+		"dir": Tea.Root + "/cache",
 	})
 	data, err := m.Read("hello")
-	if err != nil {
+	if err != nil && err != ErrNotFound {
 		t.Fatal(err)
 	}
 
 	t.Log(string(data))
+	_ = m.Close()
 }
 
 func TestLevelDBManager_Stat(t *testing.T) {
 	m := NewLevelDBManager()
 	m.SetOptions(map[string]interface{}{
-		"dir": "cache",
+		"dir": Tea.Root + "/cache",
 	})
 	t.Log(m.Stat())
+	_ = m.Close()
 }
 
 func TestLevelDBManager_CleanExpired(t *testing.T) {
 	m := NewLevelDBManager()
 	m.SetOptions(map[string]interface{}{
-		"dir": "cache",
+		"dir": Tea.Root + "/cache",
 	})
 	m.Life = 30 * time.Second
-	m.CleanExpired()
+	err := m.CleanExpired()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = m.Close()
 }
 
 func TestLevelDBManager_Clean(t *testing.T) {
 	m := NewLevelDBManager()
 	m.SetOptions(map[string]interface{}{
-		"dir": "cache",
+		"dir": Tea.Root + "/cache",
 	})
 	m.Life = 30 * time.Second
-	m.Clean()
+	err := m.Clean()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = m.Close()
 }

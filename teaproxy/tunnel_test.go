@@ -2,6 +2,7 @@ package teaproxy
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/logs"
 	"io"
 	"io/ioutil"
@@ -41,7 +42,7 @@ func TestTunnel_Start(t *testing.T) {
 				} else {
 					logs.Println(string(data))
 				}
-				resp.Body.Close()
+				_ = resp.Body.Close()
 			}
 
 			time.Sleep(5 * time.Second)
@@ -49,8 +50,15 @@ func TestTunnel_Start(t *testing.T) {
 	}()
 
 	go func() {
-		time.Sleep(10 * time.Second)
-		tunnel.Close()
+		if teatesting.IsGlobal() {
+			time.Sleep(1 * time.Second)
+		} else {
+			time.Sleep(10 * time.Second)
+		}
+		err := tunnel.Close()
+		if err != nil {
+			logs.Error(err)
+		}
 	}()
 
 	t.Log(tunnel.Start())

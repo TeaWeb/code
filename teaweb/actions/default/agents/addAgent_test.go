@@ -3,13 +3,18 @@ package agents
 import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/agents"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/utils/string"
 	"testing"
 )
 
 func TestAddManyAgents(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	count := 1000
-	for i := 0; i < count; i ++ {
+	for i := 0; i < count; i++ {
 		agentList, err := agents.SharedAgentList()
 		if err != nil {
 			t.Fatal(err)

@@ -1,13 +1,16 @@
 package tealogs
 
-import "testing"
+import (
+	"github.com/TeaWeb/code/tealogs/accesslogs"
+	"testing"
+)
 
 func TestStorage_FormatAccessLogString(t *testing.T) {
 	{
 		storage := &Storage{
 			Format: StorageFormatJSON,
 		}
-		t.Log(storage.FormatAccessLogString(&AccessLog{
+		t.Log(storage.FormatAccessLogString(&accesslogs.AccessLog{
 			ServerName:  "hello.com",
 			RequestPath: "/webhook",
 			Args:        "a=1&b=2",
@@ -19,7 +22,7 @@ func TestStorage_FormatAccessLogString(t *testing.T) {
 			Format:   StorageFormatTemplate,
 			Template: "${serverName} - ${requestPath} - ${args}",
 		}
-		t.Log(storage.FormatAccessLogString(&AccessLog{
+		t.Log(storage.FormatAccessLogString(&accesslogs.AccessLog{
 			ServerName:  "hello.com",
 			RequestPath: "/webhook",
 			Args:        "a=1&b=2",
@@ -32,7 +35,7 @@ func TestStorage_FormatAccessLogBytes(t *testing.T) {
 		storage := &Storage{
 			Format: StorageFormatJSON,
 		}
-		data, err := storage.FormatAccessLogBytes(&AccessLog{
+		data, err := storage.FormatAccessLogBytes(&accesslogs.AccessLog{
 			ServerName:  "hello.com",
 			RequestPath: "/webhook",
 			Args:        "a=1&b=2",
@@ -49,7 +52,7 @@ func TestStorage_FormatAccessLogBytes(t *testing.T) {
 			Template: "${serverName} - ${requestPath} - ${args}",
 		}
 
-		data, err := storage.FormatAccessLogBytes(&AccessLog{
+		data, err := storage.FormatAccessLogBytes(&accesslogs.AccessLog{
 			ServerName:  "hello.com",
 			RequestPath: "/webhook",
 			Args:        "a=1&b=2",

@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"encoding/json"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
@@ -9,6 +10,10 @@ import (
 )
 
 func TestConnAction_Run(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+
 	t1 := actions.NewTesting(new(ConnAction))
 	t1.Params(actions.Params{
 		"hosts": []string{"192.168.2.33", "127.0.0.1", "teaos.cn"},

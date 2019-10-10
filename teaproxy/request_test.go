@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teatesting"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
 	"net/http"
@@ -29,7 +30,7 @@ func (this *testResponseWriter) Header() http.Header {
 }
 
 func (this *testResponseWriter) Write(data []byte) (int, error) {
-	this.data = append(this.data, data ...)
+	this.data = append(this.data, data...)
 	return len(data), nil
 }
 
@@ -40,23 +41,13 @@ func (this *testResponseWriter) Close() {
 	this.a.Log(string(this.data))
 }
 
-func TestRequest_Call(t *testing.T) {
-	a := assert.NewAssertion(t).Quiet()
-	writer := testNewResponseWriter(a)
-
-	request := NewRequest(nil)
-	err := request.call(writer)
-	a.IsNotNil(err)
-	if err != nil {
-		a.Log(err.Error())
-	}
-}
-
 func TestRequest_CallRoot(t *testing.T) {
 	a := assert.NewAssertion(t).Quiet()
 	writer := testNewResponseWriter(a)
 
-	request := NewRequest(nil)
+	req, _ := http.NewRequest(http.MethodGet, "http://teaos.cn/layout.css", nil)
+
+	request := NewRequest(req)
 	request.root = Tea.ViewsDir() + "/@default"
 	request.uri = "/layout.css"
 	err := request.call(writer)
@@ -82,7 +73,10 @@ func TestRequest_CallBackend(t *testing.T) {
 	request.backend = &teaconfigs.BackendConfig{
 		Address: "127.0.0.1",
 	}
-	request.backend.Validate()
+	err = request.backend.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = request.call(writer)
 	a.IsNil(err)
 
@@ -92,10 +86,14 @@ func TestRequest_CallBackend(t *testing.T) {
 }
 
 func TestRequest_CallProxy(t *testing.T) {
+	if !teatesting.RequireHTTPServer() {
+		return
+	}
+
 	a := assert.NewAssertion(t).Quiet()
 	writer := testNewResponseWriter(a)
 
-	req, err := http.NewRequest("GET", "/index.php?__ACTION__=/@wx", nil)
+	req, err := http.NewRequest("GET", "/webhook", nil)
 	if err != nil {
 		a.Fatal(err)
 	}
@@ -106,11 +104,18 @@ func TestRequest_CallProxy(t *testing.T) {
 
 	proxy := teaconfigs.NewServerConfig()
 	proxy.AddBackend(&teaconfigs.BackendConfig{
-		Address: "127.0.0.1:80",
+		On:      true,
+		Address: "127.0.0.1:9991",
 	})
-	/**proxy.AddBackend(&teaconfigs.ServerBackendConfig{
-		Address: "127.0.0.1:81",
-	})**/
+	//proxy.AddBackend(&teaconfigs.BackendConfig{
+	//	On:      true,
+	//	Address: "127.0.0.1:81",
+	//})
+	err = proxy.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	request.proxy = proxy
 
 	err = request.call(writer)
@@ -122,6 +127,10 @@ func TestRequest_CallProxy(t *testing.T) {
 }
 
 func TestRequest_CallFastcgi(t *testing.T) {
+	if !teatesting.RequireFascgi() {
+		return
+	}
+
 	a := assert.NewAssertion(t).Quiet()
 	writer := testNewResponseWriter(a)
 
@@ -145,7 +154,10 @@ func TestRequest_CallFastcgi(t *testing.T) {
 		},
 		Pass: "127.0.0.1:9000",
 	}
-	request.fastcgi.Validate()
+	err = request.fastcgi.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = request.call(writer)
 	a.IsNil(err)
 
@@ -155,6 +167,10 @@ func TestRequest_CallFastcgi(t *testing.T) {
 }
 
 func TestRequest_CallFastcgiPerformance(t *testing.T) {
+	if !teatesting.RequireFascgi() {
+		return
+	}
+
 	a := assert.NewAssertion(t).Quiet()
 	writer := testNewResponseWriter(a)
 
@@ -178,7 +194,10 @@ func TestRequest_CallFastcgiPerformance(t *testing.T) {
 		},
 		Pass: "127.0.0.1:9000",
 	}
-	request.fastcgi.Validate()
+	err = request.fastcgi.Validate()
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = request.call(writer)
 	a.IsNil(err)
 
@@ -204,6 +223,7 @@ func TestRequest_Format(t *testing.T) {
 	req.scheme = "http"
 
 	a.IsTrue(req.requestRemoteAddr() == "127.0.0.1")
+	t.Log(req.requestRemotePort())
 	a.IsTrue(req.requestRemotePort() == 1234)
 	a.IsTrue(req.requestURI() == req.uri)
 	a.IsTrue(req.requestPath() == "/hello/world")
@@ -321,7 +341,7 @@ func TestRequest_LocationVariables(t *testing.T) {
 	req.uri = "/hello/world?charset=utf-8"
 	req.host = "www.example.com"
 
-	err = req.configure(server, 0)
+	err = req.configure(server, 0, false)
 	if err != nil {
 		t.Log(err.Error())
 	}
@@ -376,7 +396,7 @@ func TestRequest_RewriteVariables(t *testing.T) {
 	req.uri = "/hello/world?charset=utf-8"
 	req.host = "www.example.com"
 
-	err = req.configure(server, 0)
+	err = req.configure(server, 0, false)
 	if err != nil {
 		t.Log(err.Error())
 	}
@@ -443,7 +463,7 @@ func TestPerformanceConfigure(t *testing.T) {
 		req.host = "www.example.com"
 		req.responseHeaders = []*shared.HeaderConfig{}
 
-		err = req.configure(server, 0)
+		err = req.configure(server, 0, false)
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -535,6 +555,6 @@ func BenchmarkNewRequest(b *testing.B) {
 
 func BenchmarkParseURI(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		url.ParseRequestURI("http://teaos.cn/hello?name=liu")
+		_, _ = url.ParseRequestURI("http://teaos.cn/hello?name=liu")
 	}
 }
