@@ -14,6 +14,7 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/nets"
 	"github.com/iwind/TeaGo/processes"
+	"github.com/shirou/gopsutil/mem"
 	"io"
 	"io/ioutil"
 	"math"
@@ -272,12 +273,23 @@ func (this *InstallAction) start(mongodbDir string) {
 	}
 
 	// 启动
-	p := processes.NewProcess(mongodbDir+"/bin/mongod", "--dbpath="+mongodbDir+"/data", "--fork", "--logpath="+mongodbDir+"/data/fork.log")
+	args := []string{"--dbpath=" + mongodbDir + "/data", "--fork", "--logpath=" + mongodbDir + "/data/fork.log"}
+
+	// 控制内存不能超过1G
+	stat, err := mem.VirtualMemory()
+	if err == nil && stat.Total > 0 {
+		count := stat.Total / 1024 / 1024 / 1024
+		if count >= 3 {
+			args = append(args, "--wiredTigerCacheSizeGB=1")
+		}
+	}
+
+	p := processes.NewProcess(mongodbDir+"/bin/mongod", args...)
 	p.SetPwd(mongodbDir)
 
-	logs.Println("start mongo:", mongodbDir+"/bin/mongod", "--dbpath="+mongodbDir+"/data", "--fork", "--logpath="+mongodbDir+"/data/fork.log")
+	logs.Println("start mongo:", mongodbDir+"/bin/mongod", strings.Join(args, " "))
 
-	err := p.StartBackground()
+	err = p.StartBackground()
 	if err != nil {
 		this.Fail("试图启动失败：", err.Error())
 	}

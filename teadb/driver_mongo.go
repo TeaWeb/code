@@ -13,6 +13,7 @@ import (
 	"github.com/iwind/TeaGo/types"
 	stringutil "github.com/iwind/TeaGo/utils/string"
 	timeutil "github.com/iwind/TeaGo/utils/time"
+	"github.com/shirou/gopsutil/mem"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
@@ -838,12 +839,23 @@ func (this *MongoDriver) startInstalledMongo() {
 		}
 
 		// 启动
-		p := processes.NewProcess(mongodbDir+"/bin/mongod", "--dbpath="+mongodbDir+"/data", "--fork", "--logpath="+mongodbDir+"/data/fork.log")
+		args := []string{"--dbpath=" + mongodbDir + "/data", "--fork", "--logpath=" + mongodbDir + "/data/fork.log"}
+
+		// 控制内存不能超过1G
+		stat, err := mem.VirtualMemory()
+		if err == nil && stat.Total > 0 {
+			count := stat.Total / 1024 / 1024 / 1024
+			if count >= 3 {
+				args = append(args, "--wiredTigerCacheSizeGB=1")
+			}
+		}
+
+		p := processes.NewProcess(mongodbDir+"/bin/mongod", args...)
 		p.SetPwd(mongodbDir)
 
-		logs.Println("[mongo]start mongo: ", mongodbDir+"/bin/mongod", "--dbpath="+mongodbDir+"/data", "--fork", "--logpath="+mongodbDir+"/data/fork.log")
+		logs.Println("start mongo:", mongodbDir+"/bin/mongod", strings.Join(args, " "))
 
-		err := p.StartBackground()
+		err = p.StartBackground()
 		if err != nil {
 			logs.Println("[mongo]start error: " + err.Error())
 		}
