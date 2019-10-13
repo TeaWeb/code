@@ -117,6 +117,7 @@ func (this *MongoConfig) Save() error {
 	shared.Locker.Lock()
 	defer shared.Locker.WriteUnlockNotify()
 
+	this.URI = this.ComposeURI()
 	this.TeaVersion = teaconst.TeaVersion
 	data, err := yaml.Marshal(this)
 	if err != nil {

@@ -644,7 +644,7 @@ func (this *MongoDriver) connect() (*mongo.Client, error) {
 		return nil, err
 	}
 
-	if sharedConfig != nil && len(sharedConfig.AuthMechanism) > 0 {
+	if sharedConfig != nil && sharedConfig.AuthEnabled && len(sharedConfig.AuthMechanism) > 0 {
 		opts.SetAuth(options.Credential{
 			Username:                sharedConfig.Username,
 			Password:                sharedConfig.Password,
