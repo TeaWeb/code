@@ -10,14 +10,16 @@ type RequestAllCheckpoint struct {
 }
 
 func (this *RequestAllCheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {
-	valueString := ""
+	valueBytes := []byte{}
 	if len(req.RequestURI) > 0 {
-		valueString = req.RequestURI
+		valueBytes = append(valueBytes, req.RequestURI...)
 	} else if req.URL != nil {
-		valueString = req.URL.RequestURI()
+		valueBytes = append(valueBytes, req.URL.RequestURI()...)
 	}
 
 	if req.Body != nil {
+		valueBytes = append(valueBytes, ' ')
+
 		if len(req.BodyData) == 0 {
 			data, err := req.ReadBody(int64(32 * 1024 * 1024)) // read 32m bytes
 			if err != nil {
@@ -27,10 +29,10 @@ func (this *RequestAllCheckpoint) RequestValue(req *requests.Request, param stri
 			req.BodyData = data
 			req.RestoreBody(data)
 		}
-		valueString += " " + string(req.BodyData)
+		valueBytes = append(valueBytes, req.BodyData...)
 	}
 
-	value = valueString
+	value = valueBytes
 
 	return
 }

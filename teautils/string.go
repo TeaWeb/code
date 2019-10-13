@@ -6,8 +6,13 @@ import (
 )
 
 // convert bytes to string
-func BytesToString(bs []byte) string {
+func UnsafeBytesToString(bs []byte) string {
 	return *(*string)(unsafe.Pointer(&bs))
+}
+
+// convert string to bytes
+func UnsafeStringToBytes(s string) []byte {
+	return *(*[]byte)(unsafe.Pointer(&s))
 }
 
 // format address

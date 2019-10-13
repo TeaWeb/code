@@ -2,6 +2,7 @@ package checkpoints
 
 import (
 	"github.com/TeaWeb/code/teawaf/requests"
+	"sort"
 	"strings"
 )
 
@@ -16,6 +17,7 @@ func (this *RequestHeadersCheckpoint) RequestValue(req *requests.Request, param 
 			headers = append(headers, k+": "+subV)
 		}
 	}
+	sort.Strings(headers)
 	value = strings.Join(headers, "\n")
 	return
 }

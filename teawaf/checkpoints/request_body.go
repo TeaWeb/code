@@ -25,7 +25,7 @@ func (this *RequestBodyCheckpoint) RequestValue(req *requests.Request, param str
 		req.RestoreBody(data)
 	}
 
-	return string(req.BodyData), nil, nil
+	return req.BodyData, nil, nil
 }
 
 func (this *RequestBodyCheckpoint) ResponseValue(req *requests.Request, resp *requests.Response, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {

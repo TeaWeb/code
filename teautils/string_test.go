@@ -1,9 +1,16 @@
 package teautils
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestBytesToString(t *testing.T) {
 	t.Log(BytesToString([]byte("Hello,World")))
+}
+
+func TestStringToBytes(t *testing.T) {
+	t.Log(string(StringToBytes("Hello,World")))
 }
 
 func BenchmarkBytesToString(b *testing.B) {
@@ -17,6 +24,20 @@ func BenchmarkBytesToString2(b *testing.B) {
 	data := []byte("Hello,World")
 	for i := 0; i < b.N; i++ {
 		_ = string(data)
+	}
+}
+
+func BenchmarkStringToBytes(b *testing.B) {
+	s := strings.Repeat("Hello,World", 1024)
+	for i := 0; i < b.N; i++ {
+		_ = StringToBytes(s)
+	}
+}
+
+func BenchmarkStringToBytes2(b *testing.B) {
+	s := strings.Repeat("Hello,World", 1024)
+	for i := 0; i < b.N; i++ {
+		_ = []byte(s)
 	}
 }
 

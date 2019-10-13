@@ -72,7 +72,7 @@ func (this *ESStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 
 		if this.Format != StorageFormatJSON {
 			m := map[string]interface{}{
-				"log": teautils.BytesToString(data),
+				"log": teautils.UnsafeBytesToString(data),
 			}
 			mData, err := ffjson.Marshal(m)
 			if err != nil {

@@ -5,10 +5,13 @@ import (
 	"github.com/TeaWeb/code/teawaf/actions"
 	"github.com/iwind/TeaGo/assert"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
+	"time"
 )
 
 func Test_Template(t *testing.T) {
@@ -33,6 +36,52 @@ func Test_Template(t *testing.T) {
 	testTemplate5001(a, t, template)
 	testTemplate6001(a, t, template)
 	testTemplate7001(a, t, template)
+}
+
+func Test_Template2(t *testing.T) {
+	reader := bytes.NewReader([]byte(strings.Repeat("HELLO", 1024)))
+	req, err := http.NewRequest(http.MethodGet, "http://example.com/index.php?id=123", reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	waf := Template()
+	err = waf.Init()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Now()
+	goNext, set, err := waf.MatchRequest(req, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(time.Since(now).Seconds()*1000, "ms")
+
+	if goNext {
+		t.Log("ok")
+		return
+	}
+
+	logs.PrintAsJSON(set, t)
+}
+
+func BenchmarkTemplate(b *testing.B) {
+	waf := Template()
+	err := waf.Init()
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		reader := bytes.NewReader([]byte(strings.Repeat("Hello", 1024)))
+		req, err := http.NewRequest(http.MethodGet, "http://example.com/index.php?id=123", reader)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		_, _, _ = waf.MatchRequest(req, nil)
+	}
 }
 
 func testTemplate1001(a *assert.Assertion, t *testing.T, template *WAF) {
@@ -88,46 +137,46 @@ func testTemplate2001(a *assert.Assertion, t *testing.T, template *WAF) {
 	{
 		part, err := writer.CreateFormField("name")
 		if err == nil {
-			part.Write([]byte("lu"))
+			_, _ = part.Write([]byte("lu"))
 		}
 	}
 
 	{
 		part, err := writer.CreateFormField("age")
 		if err == nil {
-			part.Write([]byte("20"))
+			_, _ = part.Write([]byte("20"))
 		}
 	}
 
 	{
 		part, err := writer.CreateFormFile("myFile", "hello.txt")
 		if err == nil {
-			part.Write([]byte("Hello, World!"))
+			_, _ = part.Write([]byte("Hello, World!"))
 		}
 	}
 
 	{
 		part, err := writer.CreateFormFile("myFile2", "hello.PHP")
 		if err == nil {
-			part.Write([]byte("Hello, World, PHP!"))
+			_, _ = part.Write([]byte("Hello, World, PHP!"))
 		}
 	}
 
 	{
 		part, err := writer.CreateFormFile("myFile3", "hello.asp")
 		if err == nil {
-			part.Write([]byte("Hello, World, ASP Pages!"))
+			_, _ = part.Write([]byte("Hello, World, ASP Pages!"))
 		}
 	}
 
 	{
 		part, err := writer.CreateFormFile("myFile4", "hello.asp")
 		if err == nil {
-			part.Write([]byte("Hello, World, ASP Pages!"))
+			_, _ = part.Write([]byte("Hello, World, ASP Pages!"))
 		}
 	}
 
-	writer.Close()
+	_ = writer.Close()
 
 	req, err := http.NewRequest(http.MethodPost, "http://teaos.cn/", body)
 	if err != nil {

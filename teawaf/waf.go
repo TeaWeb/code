@@ -10,6 +10,7 @@ import (
 	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/go-yaml/yaml"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/utils/string"
 	"io/ioutil"
@@ -410,7 +411,7 @@ func (this *WAF) MergeTemplate() (changedItems []string) {
 	changedItems = []string{}
 
 	// compare versions
-	if this.CreatedVersion == teaconst.TeaVersion {
+	if !Tea.IsTesting() && this.CreatedVersion == teaconst.TeaVersion {
 		return
 	}
 	this.CreatedVersion = teaconst.TeaVersion

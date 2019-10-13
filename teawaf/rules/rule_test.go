@@ -219,6 +219,18 @@ func TestRule_Test(t *testing.T) {
 
 	{
 		rule := NewRule()
+		rule.Operator = RuleOperatorMatch
+		rule.Value = "^\\d+"
+		err := rule.Init()
+		if err != nil {
+			t.Fatal(err)
+		}
+		a.IsTrue(rule.Test([]string{"123", "456", "abc"}))
+		a.IsFalse(rule.Test([]string{"abc123"}))
+	}
+
+	{
+		rule := NewRule()
 		rule.Operator = RuleOperatorNotMatch
 		rule.Value = "\\d+"
 		err := rule.Init()
@@ -239,6 +251,18 @@ func TestRule_Test(t *testing.T) {
 			t.Fatal(err)
 		}
 		a.IsFalse(rule.Test("ABC"))
+	}
+
+	{
+		rule := NewRule()
+		rule.Operator = RuleOperatorNotMatch
+		rule.Value = "^\\d+"
+		err := rule.Init()
+		if err != nil {
+			t.Fatal(err)
+		}
+		a.IsFalse(rule.Test([]string{"123", "456", "abc"}))
+		a.IsTrue(rule.Test([]string{"abc123"}))
 	}
 
 	{
@@ -438,7 +462,10 @@ func TestRule_SetCheckpointFinder(t *testing.T) {
 		rule := NewRule()
 		rule.Param = "${arg.abc}"
 		rule.Operator = RuleOperatorMatch
-		rule.Init()
+		err := rule.Init()
+		if err != nil {
+			t.Fatal(err)
+		}
 		t.Logf("%#v", rule.singleCheckpoint)
 	}
 
@@ -449,7 +476,10 @@ func TestRule_SetCheckpointFinder(t *testing.T) {
 		rule.checkpointFinder = func(prefix string) checkpoints.CheckpointInterface {
 			return new(checkpoints.SampleRequestCheckpoint)
 		}
-		rule.Init()
+		err := rule.Init()
+		if err != nil {
+			t.Fatal(err)
+		}
 		t.Logf("%#v", rule.singleCheckpoint)
 	}
 }

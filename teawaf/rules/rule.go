@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf/checkpoints"
 	"github.com/TeaWeb/code/teawaf/requests"
+	"github.com/TeaWeb/code/teawaf/utils"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -269,9 +270,50 @@ func (this *Rule) Test(value interface{}) bool {
 			return types.String(value) != this.Value
 		}
 	case RuleOperatorMatch:
-		return this.reg.MatchString(types.String(value))
+		if value == nil {
+			return false
+		}
+
+		// strings
+		stringList, ok := value.([]string)
+		if ok {
+			for _, s := range stringList {
+				if utils.MatchStringCache(this.reg, s) {
+					return true
+				}
+			}
+			return false
+		}
+
+		// bytes
+		byteSlice, ok := value.([]byte)
+		if ok {
+			return utils.MatchBytesCache(this.reg, byteSlice)
+		}
+
+		// string
+		return utils.MatchStringCache(this.reg, types.String(value))
 	case RuleOperatorNotMatch:
-		return !this.reg.MatchString(types.String(value))
+		if value == nil {
+			return true
+		}
+		stringList, ok := value.([]string)
+		if ok {
+			for _, s := range stringList {
+				if utils.MatchStringCache(this.reg, s) {
+					return false
+				}
+			}
+			return true
+		}
+
+		// bytes
+		byteSlice, ok := value.([]byte)
+		if ok {
+			return !utils.MatchBytesCache(this.reg, byteSlice)
+		}
+
+		return !utils.MatchStringCache(this.reg, types.String(value))
 	case RuleOperatorContains:
 		if types.IsSlice(value) {
 			ok := false

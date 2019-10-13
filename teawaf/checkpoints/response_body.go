@@ -33,8 +33,8 @@ func (this *ResponseBodyCheckpoint) ResponseValue(req *requests.Request, resp *r
 			return
 		}
 		resp.BodyData = body
-		resp.Body.Close()
-		value = string(body)
+		_ = resp.Body.Close()
+		value = body
 		resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 	}
 	return

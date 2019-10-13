@@ -202,9 +202,15 @@ func Template() *WAF {
 			set.Connector = rules.RuleConnectorOr
 			set.Action = actions.ActionBlock
 			set.AddRule(&rules.Rule{
-				Param:             "${requestAll}",
+				Param:             "${requestURI}",
 				Operator:          rules.RuleOperatorMatch,
-				Value:             `\b(pwd|ls|ll|whoami|id|net\s+user)\b$`, // TODO more keywords here
+				Value:             `\b(pwd|ls|ll|whoami|id|net\s+user)\s*$`, // TODO more keywords here
+				IsCaseInsensitive: false,
+			})
+			set.AddRule(&rules.Rule{
+				Param:             "${requestBody}",
+				Operator:          rules.RuleOperatorMatch,
+				Value:             `\b(pwd|ls|ll|whoami|id|net\s+user)\s*$`, // TODO more keywords here
 				IsCaseInsensitive: false,
 			})
 			group.AddRuleSet(set)

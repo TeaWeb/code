@@ -6,6 +6,7 @@ import (
 	"github.com/iwind/TeaGo/types"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -17,7 +18,15 @@ func TestRequestAllCheckpoint_RequestValue(t *testing.T) {
 	}
 
 	checkpoint := new(RequestAllCheckpoint)
-	t.Log(checkpoint.RequestValue(requests.NewRequest(req), "", nil))
+	v, sysErr, userErr := checkpoint.RequestValue(requests.NewRequest(req), "", nil)
+	if sysErr != nil {
+		t.Fatal(sysErr)
+	}
+	if userErr != nil {
+		t.Fatal(userErr)
+	}
+	t.Log(v)
+	t.Log(types.String(v))
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -44,4 +53,18 @@ func TestRequestAllCheckpoint_RequestValue_Max(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("raw bytes:", len(body))
+}
+
+func BenchmarkRequestAllCheckpoint_RequestValue(b *testing.B) {
+	runtime.GOMAXPROCS(1)
+
+	req, err := http.NewRequest(http.MethodPost, "http://teaos.cn/hello/world", bytes.NewBuffer(bytes.Repeat([]byte("HELLO"), 1024)))
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	checkpoint := new(RequestAllCheckpoint)
+	for i := 0; i < b.N; i++ {
+		_, _, _ = checkpoint.RequestValue(requests.NewRequest(req), "", nil)
+	}
 }
