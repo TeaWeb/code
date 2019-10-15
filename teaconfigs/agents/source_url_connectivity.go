@@ -252,7 +252,7 @@ func (this *URLConnectivitySource) Thresholds() []*Threshold {
 		t.Operator = ThresholdOperatorGte
 		t.Value = "400"
 		t.NoticeLevel = notices.NoticeLevelWarning
-		t.NoticeMessage = "请求状态码错误"
+		t.NoticeMessage = "请求状态码错误：${status}"
 		result = append(result, t)
 	}
 

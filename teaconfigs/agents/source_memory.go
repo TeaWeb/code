@@ -98,6 +98,7 @@ func (this *MemorySource) Thresholds() []*Threshold {
 		t.Operator = ThresholdOperatorGte
 		t.Value = "80"
 		t.NoticeLevel = notices.NoticeLevelWarning
+		t.NoticeMessage = "内存使用已达到${usage.virtualPercent|round}%"
 		result = append(result, t)
 	}
 

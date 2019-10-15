@@ -124,6 +124,7 @@ func (this *CPUSource) Thresholds() []*Threshold {
 		t.Operator = ThresholdOperatorGte
 		t.Value = "80"
 		t.NoticeLevel = notices.NoticeLevelWarning
+		t.NoticeMessage = "CPU使用已达到${usage.avg|round}%"
 		result = append(result, t)
 	}
 
