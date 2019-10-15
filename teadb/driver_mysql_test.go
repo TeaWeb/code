@@ -225,3 +225,41 @@ func TestMySQLDriver_Ping(t *testing.T) {
 
 	t.Log(driver.Test())
 }
+
+func TestMySQLDriver_ListTables(t *testing.T) {
+	if !teatesting.RequireDBAvailable() || !teatesting.RequireMySQL() {
+		return
+	}
+
+	driver := new(MySQLDriver)
+	driver.isAvailable = true
+	err := driver.initDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(driver.ListTables())
+}
+
+func TestMySQLDriver_StatTables(t *testing.T) {
+	if !teatesting.RequireDBAvailable() || !teatesting.RequireMySQL() {
+		return
+	}
+
+	driver := new(MySQLDriver)
+	driver.isAvailable = true
+	err := driver.initDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tables, err := driver.ListTables()
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := driver.StatTables(tables)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logs.PrintAsJSON(result, t)
+}

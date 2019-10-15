@@ -52,6 +52,9 @@ type DriverInterface interface {
 	// 关闭
 	Shutdown() error
 
+	// 列出所有表
+	ListTables() ([]string, error)
+
 	// 统计数据表信息
 	StatTables(tables []string) (map[string]*TableStat, error)
 

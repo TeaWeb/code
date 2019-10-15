@@ -44,14 +44,32 @@ func RequireNginxStatus() bool {
 	return false
 }
 
+// 需要MongoDB支持
+func RequireMongoDB() bool {
+	if !IsGlobal() {
+		return true
+	}
+
+	// TODO
+	return false
+}
+
 // 需要MySQL支持
 func RequireMySQL() bool {
+	if !IsGlobal() {
+		return true
+	}
+
 	// TODO
 	return false
 }
 
 // 需要Postgres支持
 func RequirePostgres() bool {
+	if !IsGlobal() {
+		return true
+	}
+
 	// TODO
 	return false
 }

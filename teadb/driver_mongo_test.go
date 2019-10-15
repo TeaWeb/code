@@ -85,3 +85,18 @@ func TestMongoDriver_convertArrayElement(t *testing.T) {
 	t.Log(driver.convertArrayElement("value.usage.all.0"))
 	t.Log(driver.convertArrayElement("value.0"))
 }
+
+func TestMongoDriver_ListTables(t *testing.T) {
+	if !teatesting.RequireDBAvailable() || !teatesting.RequireMongoDB() {
+		return
+	}
+
+	driver := new(MongoDriver)
+	driver.isAvailable = true
+	names, err := driver.ListTables()
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+	t.Log(names)
+}

@@ -20,6 +20,9 @@ func init() {
 			Get("", new(IndexAction)).
 			GetPost("/update", new(UpdateAction)).
 			GetPost("/test", new(TestAction)).
+			Get("/data", new(DataAction)).
+			Get("/clean", new(CleanAction)).
+			GetPost("/cleanUpdate", new(CleanUpdateAction)).
 			EndAll()
 	})
 }

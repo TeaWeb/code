@@ -3,13 +3,18 @@ package teadb
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/TeaWeb/code/teadb/shared"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
+	timeutil "github.com/iwind/TeaGo/utils/time"
 	_ "github.com/lib/pq"
 	"net/url"
+	"regexp"
+	"sort"
 	"strings"
+	"time"
 )
 
 type PostgresDriver struct {
@@ -48,6 +53,11 @@ func (this *PostgresDriver) Init() {
 	noticeDAO = new(SQLNoticeDAO)
 	noticeDAO.SetDriver(this)
 	noticeDAO.Init()
+
+	// tasks
+	go func() {
+		this.cleanAccessLogs()
+	}()
 }
 
 // 初始化数据库
@@ -189,8 +199,150 @@ func (this *PostgresDriver) TestDSN(dsn string, autoCreateDB bool) (message stri
 	return
 }
 
+// 列出所有表
+func (this *PostgresDriver) ListTables() ([]string, error) {
+	currentDB, err := this.checkDB()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := currentDB.Query("SELECT \"table_name\" FROM \"information_schema\".\"tables\"")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	tables := []string{}
+	for rows.Next() {
+		s := ""
+		err = rows.Scan(&s)
+		if err != nil {
+			return nil, err
+		}
+		if !strings.HasPrefix(s, "teaweb_") {
+			continue
+		}
+		tables = append(tables, s)
+	}
+
+	sort.Strings(tables)
+
+	return tables, nil
+}
+
 // 统计数据表
-// TODO
 func (this *PostgresDriver) StatTables(tables []string) (map[string]*TableStat, error) {
-	return map[string]*TableStat{}, errors.New("not implemented yet")
+	if len(tables) == 0 {
+		return nil, nil
+	}
+
+	currentDB, err := this.checkDB()
+	if err != nil {
+		return nil, err
+	}
+
+	result := map[string]*TableStat{}
+	for _, table := range tables {
+		row := currentDB.QueryRow("SELECT COUNT(*) FROM " + this.quoteKeyword(table))
+		countRows := int64(0)
+		if row == nil {
+			countRows = 0
+		} else {
+			err = row.Scan(&countRows)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		tableSize := int64(0)
+		formattedSize := ""
+
+		row = currentDB.QueryRow("SELECT \"oid\" FROM \"pg_class\" WHERE \"relname\"=$1", table)
+		if row == nil {
+			tableSize = 0
+		} else {
+			oid := ""
+			err = row.Scan(&oid)
+			if err != nil {
+				logs.Println("err:", err)
+				return nil, err
+			}
+
+			row = currentDB.QueryRow("SELECT pg_total_relation_size($1)", oid)
+			if row == nil {
+				tableSize = 0
+			} else {
+				err = row.Scan(&tableSize)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if tableSize < 1024 {
+				formattedSize = fmt.Sprintf("%.2fB", float64(tableSize))
+			} else if tableSize < 1024*1024 {
+				formattedSize = fmt.Sprintf("%.2fKB", float64(tableSize)/1024)
+			} else if tableSize < 1024*1024*1024 {
+				formattedSize = fmt.Sprintf("%.2fMB", float64(tableSize)/1024/1024)
+			} else {
+				formattedSize = fmt.Sprintf("%.2fGB", float64(tableSize)/1024/1024/1024)
+			}
+		}
+
+		result[table] = &TableStat{
+			Count:         countRows,
+			Size:          tableSize,
+			FormattedSize: formattedSize,
+		}
+	}
+
+	return result, nil
+}
+
+// 清理访问日志任务
+func (this *PostgresDriver) cleanAccessLogs() {
+	reg := regexp.MustCompile(`^teaweb_logs_(\d{8})$`)
+
+	teautils.Every(1*time.Minute, func(ticker *teautils.Ticker) {
+		config, _ := db.LoadPostgresConfig()
+		if config == nil {
+			return
+		}
+
+		if config.AccessLog == nil {
+			return
+		}
+
+		now := time.Now()
+		if config.AccessLog.CleanHour != now.Hour() ||
+			now.Minute() != 0 ||
+			config.AccessLog.KeepDays < 1 {
+			return
+		}
+
+		compareDay := "teaweb_logs_" + timeutil.Format("Ymd", time.Now().Add(-time.Duration(config.AccessLog.KeepDays*24)*time.Hour))
+		logs.Println("[postgres]clean access logs before '" + compareDay + "'")
+
+		tables, err := this.ListTables()
+		if err != nil {
+			logs.Println("[postgres]" + err.Error())
+			return
+		}
+
+		for _, table := range tables {
+			if !reg.MatchString(table) {
+				continue
+			}
+
+			if table < compareDay {
+				logs.Println("[postgres]clean table '" + table + "'")
+				err = this.DropTable(table)
+				if err != nil {
+					logs.Println("[postgres]" + err.Error())
+				}
+			}
+		}
+	})
 }

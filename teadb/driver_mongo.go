@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -553,6 +554,40 @@ func (this *MongoDriver) SelectColl(name string) (*MongoCollection, error) {
 		return coll, nil
 	}
 	return nil, errors.New("can not select collection '" + name + "'")
+}
+
+// 列出所有表
+func (this *MongoDriver) ListTables() ([]string, error) {
+	if !this.isAvailable {
+		return nil, ErrorDBUnavailable
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	cursor, err := this.DB().ListCollections(ctx, maps.Map{})
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = cursor.Close(context.Background())
+	}()
+
+	names := []string{}
+	for cursor.Next(context.Background()) {
+		m := maps.Map{}
+		err := cursor.Decode(&m)
+		if err != nil {
+			return nil, err
+		}
+		name := m.GetString("name")
+		if len(name) == 0 {
+			continue
+		}
+		names = append(names, name)
+	}
+
+	sort.Strings(names)
+
+	return names, nil
 }
 
 // 统计数据表

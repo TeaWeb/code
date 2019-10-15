@@ -16,6 +16,9 @@ func init() {
 			Helper(new(settings.Helper)).
 			Prefix("/settings/database").
 			Get("", new(IndexAction)).
+			Post("/tables", new(TablesAction)).
+			Post("/tableStat", new(TableStatAction)).
+			Post("/deleteTable", new(DeleteTableAction)).
 			EndAll()
 	})
 }

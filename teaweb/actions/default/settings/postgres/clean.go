@@ -1,4 +1,4 @@
-package mongo
+package postgres
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/db"
@@ -9,7 +9,7 @@ type CleanAction actions.Action
 
 // 设置自动清理
 func (this *CleanAction) Run(params struct{}) {
-	config, _ := db.LoadMongoConfig()
+	config, _ := db.LoadPostgresConfig()
 	if config != nil {
 		this.Data["accessLog"] = config.AccessLog
 	} else {

@@ -23,9 +23,6 @@ func init() {
 			GetPost("/install", new(InstallAction)).
 			Get("/installStatus", new(InstallStatusAction)).
 			Get("/data", new(DataAction)).
-			Post("/colls", new(CollsAction)).
-			Post("/collStat", new(CollStatAction)).
-			Post("/deleteColl", new(DeleteCollAction)).
 			Get("/clean", new(CleanAction)).
 			GetPost("/cleanUpdate", new(CleanUpdateAction)).
 			EndAll()

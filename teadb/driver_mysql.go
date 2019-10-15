@@ -3,12 +3,17 @@ package teadb
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/db"
 	"github.com/TeaWeb/code/teadb/shared"
+	"github.com/TeaWeb/code/teautils"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/logs"
+	timeutil "github.com/iwind/TeaGo/utils/time"
+	"regexp"
+	"sort"
 	"strings"
+	"time"
 )
 
 type MySQLDriver struct {
@@ -47,6 +52,11 @@ func (this *MySQLDriver) Init() {
 	noticeDAO = new(SQLNoticeDAO)
 	noticeDAO.SetDriver(this)
 	noticeDAO.Init()
+
+	// tasks
+	go func() {
+		this.cleanAccessLogs()
+	}()
 }
 
 func (this *MySQLDriver) initDB() error {
@@ -188,8 +198,135 @@ func (this *MySQLDriver) TestDSN(dsn string, autoCreateDB bool) (message string,
 	return
 }
 
+// 列出所有表
+func (this *MySQLDriver) ListTables() ([]string, error) {
+	currentDB, err := this.checkDB()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := currentDB.Query("SHOW TABLES")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	tables := []string{}
+	for rows.Next() {
+		s := ""
+		err = rows.Scan(&s)
+		if err != nil {
+			return nil, err
+		}
+		if !strings.HasPrefix(s, "teaweb_") {
+			continue
+		}
+		tables = append(tables, s)
+	}
+
+	sort.Strings(tables)
+
+	return tables, nil
+}
+
 // 统计数据表
-// TODO
 func (this *MySQLDriver) StatTables(tables []string) (map[string]*TableStat, error) {
-	return map[string]*TableStat{}, errors.New("not implemented yet")
+	if len(tables) == 0 {
+		return nil, nil
+	}
+
+	currentDB, err := this.checkDB()
+	if err != nil {
+		return nil, err
+	}
+
+	holders := []string{}
+	args := []interface{}{}
+	for _, table := range tables {
+		holders = append(holders, "?")
+		args = append(args, table)
+	}
+	rows, err := currentDB.Query("SELECT `table_name`, `table_rows`, `data_length` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `table_schema`=DATABASE() AND `table_name` IN ("+strings.Join(holders, ", ")+")", args...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	result := map[string]*TableStat{}
+	for rows.Next() {
+		tableName := ""
+		tableRows := int64(0)
+		tableSize := int64(0)
+		err = rows.Scan(&tableName, &tableRows, &tableSize)
+		if err != nil {
+			return nil, err
+		}
+		formattedSize := ""
+		if tableSize < 1024 {
+			formattedSize = fmt.Sprintf("%.2fB", float64(tableSize))
+		} else if tableSize < 1024*1024 {
+			formattedSize = fmt.Sprintf("%.2fKB", float64(tableSize)/1024)
+		} else if tableSize < 1024*1024*1024 {
+			formattedSize = fmt.Sprintf("%.2fMB", float64(tableSize)/1024/1024)
+		} else {
+			formattedSize = fmt.Sprintf("%.2fGB", float64(tableSize)/1024/1024/1024)
+		}
+		result[tableName] = &TableStat{
+			Count:         tableRows,
+			Size:          tableSize,
+			FormattedSize: formattedSize,
+		}
+	}
+
+	return result, nil
+}
+
+// 清理访问日志任务
+func (this *MySQLDriver) cleanAccessLogs() {
+	reg := regexp.MustCompile(`^teaweb_logs_(\d{8})$`)
+
+	teautils.Every(1*time.Minute, func(ticker *teautils.Ticker) {
+		config, _ := db.LoadMySQLConfig()
+		if config == nil {
+			return
+		}
+
+		if config.AccessLog == nil {
+			return
+		}
+
+		now := time.Now()
+		if config.AccessLog.CleanHour != now.Hour() ||
+			now.Minute() != 0 ||
+			config.AccessLog.KeepDays < 1 {
+			return
+		}
+
+		compareDay := "teaweb_logs_" + timeutil.Format("Ymd", time.Now().Add(-time.Duration(config.AccessLog.KeepDays*24)*time.Hour))
+		logs.Println("[mysql]clean access logs before '" + compareDay + "'")
+
+		tables, err := this.ListTables()
+		if err != nil {
+			logs.Println("[mysql]" + err.Error())
+			return
+		}
+
+		for _, table := range tables {
+			if !reg.MatchString(table) {
+				continue
+			}
+
+			if table < compareDay {
+				logs.Println("[mysql]clean table '" + table + "'")
+				err = this.DropTable(table)
+				if err != nil {
+					logs.Println("[mysql]" + err.Error())
+				}
+			}
+		}
+	})
 }

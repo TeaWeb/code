@@ -25,9 +25,6 @@ type MongoConfig struct {
 
 	URI string `yaml:"uri" json:"uri"`
 
-	// 日志访问配置
-	AccessLog *MongoAccessLogConfig `yaml:"accessLog" json:"accessLog"`
-
 	Scheme                  string             `yaml:"scheme" json:"scheme"`
 	Username                string             `yaml:"username" json:"username"`
 	Password                string             `yaml:"password" json:"password"`
@@ -37,6 +34,9 @@ type MongoConfig struct {
 	AuthMechanismProperties []*shared.Variable `yaml:"authMechanismProperties" json:"authMechanismProperties"`
 	RequestURI              string             `yaml:"requestURI" json:"requestURI"` // @TODO 未来版本需要实现
 	DBName                  string             `yaml:"dbName" json:"dbName"`
+
+	// 日志访问配置
+	AccessLog *MongoAccessLogConfig `yaml:"accessLog" json:"accessLog"`
 }
 
 // 访问日志配置

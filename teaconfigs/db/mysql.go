@@ -19,6 +19,15 @@ type MySQLConfig struct {
 	Username string `yaml:"username" json:"username"`
 	Password string `yaml:"password" json:"password"`
 	DBName   string `yaml:"dbName" json:"dbName"`
+
+	// 日志访问配置
+	AccessLog *MySQLAccessLogConfig `yaml:"accessLog" json:"accessLog"`
+}
+
+// 访问日志配置
+type MySQLAccessLogConfig struct {
+	CleanHour int `yaml:"cleanHour" json:"cleanHour"` // 清理时间，0-23
+	KeepDays  int `yaml:"keepDays" json:"keepDays"`   // 保留挺熟
 }
 
 // 获取新MySQL配置对象

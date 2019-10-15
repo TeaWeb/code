@@ -1,59 +1,21 @@
-package mongo
+package database
 
 import (
-	"context"
 	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"regexp"
-	"sort"
-	"time"
 )
 
-type CollsAction actions.Action
+type TablesAction actions.Action
 
 // 集合列表
-func (this *CollsAction) Run(params struct{}) {
-	driver, ok := teadb.SharedDB().(*teadb.MongoDriver)
-	if !ok {
-		this.Fail("驱动错误")
-	}
-
-	db := driver.DB()
-	if db == nil {
-		this.Fail("无法选取数据库")
-	}
-
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	cursor, err := db.ListCollections(ctx, maps.Map{})
+func (this *TablesAction) Run(params struct{}) {
+	tables, err := teadb.SharedDB().ListTables()
 	if err != nil {
-		logs.Error(err)
-		this.Fail("读取集合列表失败：" + err.Error())
+		this.Fail("数据库查询错误：" + err.Error())
 	}
-	defer func() {
-		_ = cursor.Close(context.Background())
-	}()
-
-	names := []string{}
-	for cursor.Next(context.Background()) {
-		m := maps.Map{}
-		err := cursor.Decode(&m)
-		if err != nil {
-			logs.Error(err)
-			this.Fail("读取集合列表失败：" + err.Error())
-		}
-		name := m.GetString("name")
-		if len(name) == 0 {
-			continue
-		}
-		names = append(names, name)
-	}
-
-	sort.Slice(names, func(i, j int) bool {
-		return names[i] < names[j]
-	})
 
 	// 排序
 	result := []maps.Map{}
@@ -61,9 +23,10 @@ func (this *CollsAction) Run(params struct{}) {
 
 	// 日志
 	{
-		reg := regexp.MustCompile("^logs\\.\\d{8}$")
-		for _, name := range names {
-			if !reg.MatchString(name) {
+		reg := regexp.MustCompile("^(?:logs\\.|teaweb_logs_)(\\d{8})$")
+		for _, name := range tables {
+			matches := reg.FindStringSubmatch(name)
+			if len(matches) == 0 {
 				continue
 			}
 			recognizedNames = append(recognizedNames, name)
@@ -71,15 +34,15 @@ func (this *CollsAction) Run(params struct{}) {
 				"name":      name,
 				"type":      "代理访问日志",
 				"canDelete": true,
-				"subName":   name[5:9] + "-" + name[9:11] + "-" + name[11:],
+				"subName":   matches[1][:4] + "-" + matches[1][4:6] + "-" + matches[1][6:],
 			})
 		}
 	}
 
 	// 统计
 	{
-		reg := regexp.MustCompile("^values\\.server\\.")
-		for _, name := range names {
+		reg := regexp.MustCompile("^(values\\.server\\.|teaweb_values_server_)")
+		for _, name := range tables {
 			if !reg.MatchString(name) {
 				continue
 			}
@@ -94,8 +57,8 @@ func (this *CollsAction) Run(params struct{}) {
 
 	// 监控数据
 	{
-		reg := regexp.MustCompile("^values\\.agent\\.")
-		for _, name := range names {
+		reg := regexp.MustCompile("^(values\\.agent\\.|teaweb_values_agent_)")
+		for _, name := range tables {
 			if !reg.MatchString(name) {
 				continue
 			}
@@ -108,10 +71,10 @@ func (this *CollsAction) Run(params struct{}) {
 		}
 	}
 
-	// 监控数据
+	// 监控日志
 	{
-		reg := regexp.MustCompile("^logs\\.agent\\.")
-		for _, name := range names {
+		reg := regexp.MustCompile("^(logs\\.agent\\.|teaweb_logs_agent_)")
+		for _, name := range tables {
 			if !reg.MatchString(name) {
 				continue
 			}
@@ -126,8 +89,8 @@ func (this *CollsAction) Run(params struct{}) {
 
 	// 通知
 	{
-		reg := regexp.MustCompile("^notices$")
-		for _, name := range names {
+		reg := regexp.MustCompile("^(notices|teaweb_notices)$")
+		for _, name := range tables {
 			if !reg.MatchString(name) {
 				continue
 			}
@@ -142,8 +105,8 @@ func (this *CollsAction) Run(params struct{}) {
 
 	// 审计日志
 	{
-		reg := regexp.MustCompile("^logs\\.audit$")
-		for _, name := range names {
+		reg := regexp.MustCompile("^(logs\\.audit|teaweb_logs_audit)$")
+		for _, name := range tables {
 			if !reg.MatchString(name) {
 				continue
 			}
@@ -158,8 +121,8 @@ func (this *CollsAction) Run(params struct{}) {
 
 	// 旧的统计数据
 	{
-		reg := regexp.MustCompile("^stats\\.")
-		for _, name := range names {
+		reg := regexp.MustCompile("^(stats\\.|teaweb_stats_)")
+		for _, name := range tables {
 			if !reg.MatchString(name) {
 				continue
 			}
@@ -175,8 +138,8 @@ func (this *CollsAction) Run(params struct{}) {
 
 	// 测试
 	{
-		reg := regexp.MustCompile("^test\\.")
-		for _, name := range names {
+		reg := regexp.MustCompile("^(test\\.|teaweb_test)")
+		for _, name := range tables {
 			if !reg.MatchString(name) {
 				continue
 			}
@@ -191,7 +154,7 @@ func (this *CollsAction) Run(params struct{}) {
 	}
 
 	// 其他
-	for _, name := range names {
+	for _, name := range tables {
 		if lists.ContainsString(recognizedNames, name) {
 			continue
 		}
@@ -203,7 +166,7 @@ func (this *CollsAction) Run(params struct{}) {
 		})
 	}
 
-	this.Data["colls"] = result
+	this.Data["tables"] = result
 
 	this.Success()
 }

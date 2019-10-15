@@ -1,17 +1,17 @@
-package mongo
+package database
 
 import (
 	"github.com/TeaWeb/code/teadb"
 	"github.com/iwind/TeaGo/actions"
 )
 
-type CollStatAction actions.Action
+type TableStatAction actions.Action
 
 // 集合统计
-func (this *CollStatAction) Run(params struct {
-	CollNames []string
+func (this *TableStatAction) Run(params struct {
+	Tables []string
 }) {
-	statMap, err := teadb.SharedDB().StatTables(params.CollNames)
+	statMap, err := teadb.SharedDB().StatTables(params.Tables)
 	if err != nil {
 		this.Data["result"] = map[string]interface{}{}
 		this.Fail("获取统计信息失败：" + err.Error())

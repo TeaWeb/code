@@ -114,3 +114,41 @@ func TestPostgresDriver_TestDSN_Create(t *testing.T) {
 		t.Log(message, ok)
 	}
 }
+
+func TestPostgresDriver_ListTables(t *testing.T) {
+	if !teatesting.RequireDBAvailable() || !teatesting.RequirePostgres() {
+		return
+	}
+
+	driver := new(PostgresDriver)
+	driver.isAvailable = true
+	err := driver.initDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(driver.ListTables())
+}
+
+func TestPostgresDriver_StatTables(t *testing.T) {
+	if !teatesting.RequireDBAvailable() || !teatesting.RequirePostgres() {
+		return
+	}
+
+	driver := new(PostgresDriver)
+	driver.isAvailable = true
+	err := driver.initDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tables, err := driver.ListTables()
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := driver.StatTables(tables)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logs.PrintAsJSON(result, t)
+}
