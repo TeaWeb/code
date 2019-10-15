@@ -2,7 +2,6 @@ package agents
 
 import (
 	"errors"
-	"fmt"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
@@ -16,87 +15,23 @@ func EvalParam(param string, value interface{}, old interface{}, varMapping maps
 		old = value
 	}
 	var resultErr error = nil
-	paramValue := thresholdRegexpParamNamedVariable.ReplaceAllStringFunc(param, func(s string) string {
+	paramValue := RegexpParamNamedVariable.ReplaceAllStringFunc(param, func(s string) string {
 		varName := s[2 : len(s)-1]
-
-		// 从varMapping中查找
-		if varMapping != nil {
-			index := strings.Index(varName, ".")
-			var firstKey = varName
-			if index > 0 {
-				firstKey = varName[:index]
-			}
-			firstKey = strings.TrimSpace(firstKey)
-			if varMapping.Has(firstKey) {
-				keys := strings.Split(varName, ".")
-				for index, key := range keys {
-					keys[index] = strings.TrimSpace(key)
-				}
-				result := teautils.Get(varMapping, keys)
-				if result == nil {
-					return ""
-				}
-				return types.String(result)
-			}
+		funcExpr := ""
+		index := strings.Index(varName, "|")
+		if index > -1 {
+			funcExpr = varName[index+1:]
+			varName = strings.TrimSpace(varName[:index])
 		}
 
-		if value == nil {
-			return ""
+		result, err := evalVarName(varName, value, old, varMapping, supportsMath)
+		if err != nil {
+			resultErr = err
+		} else if len(funcExpr) > 0 {
+			result, err = RunFuncExpr(result, []byte(funcExpr))
 		}
 
-		// 支持${OLD}和${OLD.xxx}
-		if varName == "OLD" {
-			result, err := EvalParam("${0}", old, nil, nil, supportsMath)
-			if err != nil {
-				resultErr = err
-			}
-			return result
-		} else if strings.HasPrefix(varName, "OLD.") {
-			result, err := EvalParam("${"+varName[4:]+"}", old, nil, nil, supportsMath)
-			if err != nil {
-				resultErr = err
-			}
-			return result
-		}
-
-		switch v := value.(type) {
-		case string:
-			if varName == "0" {
-				return v
-			}
-			return ""
-		case int8, int16, int, int32, int64, uint8, uint16, uint, uint32, uint64:
-			if varName == "0" {
-				return fmt.Sprintf("%d", v)
-			}
-			return "0"
-		case float32, float64:
-			if varName == "0" {
-				return fmt.Sprintf("%f", v)
-			}
-			return "0"
-		case bool:
-			if varName == "0" {
-				if v {
-					return "1"
-				}
-				return "0"
-			}
-			return "0"
-		default:
-			if types.IsSlice(value) || types.IsMap(value) {
-				keys := strings.Split(varName, ".")
-				for index, key := range keys {
-					keys[index] = strings.TrimSpace(key)
-				}
-				result := teautils.Get(v, keys)
-				if result == nil {
-					return ""
-				}
-				return types.String(result)
-			}
-		}
-		return s
+		return types.String(result)
 	})
 
 	// 支持加、减、乘、除、余
@@ -124,4 +59,71 @@ func EvalParam(param string, value interface{}, old interface{}, varMapping maps
 	}
 
 	return paramValue, resultErr
+}
+
+func evalVarName(varName string, value interface{}, old interface{}, varMapping maps.Map, supportsMath bool) (interface{}, error) {
+	// 从varMapping中查找
+	if varMapping != nil {
+		index := strings.Index(varName, ".")
+		var firstKey = varName
+		if index > 0 {
+			firstKey = varName[:index]
+		}
+		firstKey = strings.TrimSpace(firstKey)
+		if varMapping.Has(firstKey) {
+			keys := strings.Split(varName, ".")
+			for index, key := range keys {
+				keys[index] = strings.TrimSpace(key)
+			}
+			result := teautils.Get(varMapping, keys)
+			if result == nil {
+				return "", nil
+			}
+
+			return result, nil
+		}
+	}
+
+	if value == nil {
+		return nil, nil
+	}
+
+	// 支持${OLD}和${OLD.xxx}
+	if varName == "OLD" {
+		return evalVarName("0", old, nil, nil, supportsMath)
+	} else if strings.HasPrefix(varName, "OLD.") {
+		return evalVarName(varName[4:], old, nil, nil, supportsMath)
+	}
+
+	switch v := value.(type) {
+	case string:
+		if varName == "0" {
+			return v, nil
+		}
+		return "", nil
+	case int8, int16, int, int32, int64, uint8, uint16, uint, uint32, uint64:
+		if varName == "0" {
+			return v, nil
+		}
+		return 0, nil
+	case float32, float64:
+		if varName == "0" {
+			return v, nil
+		}
+		return 0, nil
+	case bool:
+		if varName == "0" {
+			return v, nil
+		}
+		return false, nil
+	default:
+		if types.IsSlice(value) || types.IsMap(value) {
+			keys := strings.Split(varName, ".")
+			for index, key := range keys {
+				keys[index] = strings.TrimSpace(key)
+			}
+			return teautils.Get(v, keys), nil
+		}
+	}
+	return "${" + varName + "}", nil
 }

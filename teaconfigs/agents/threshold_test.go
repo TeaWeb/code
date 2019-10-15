@@ -1,12 +1,15 @@
 package agents
 
 import (
+	"github.com/iwind/TeaGo/assert"
 	"github.com/iwind/TeaGo/maps"
 	"testing"
 	"time"
 )
 
 func TestThreshold_Test(t *testing.T) {
+	a := assert.NewAssertion(t)
+
 	threshold := NewThreshold()
 	threshold.Param = "${0}"
 	threshold.Operator = ThresholdOperatorGt
@@ -24,14 +27,14 @@ func TestThreshold_Test(t *testing.T) {
 		threshold.Operator = ThresholdOperatorContains
 		threshold.Value = "qy-api"
 		threshold.supportsMath = true
-		t.Log(threshold.Test(`"31399 qy-api\n5409"`, nil))
+		a.IsTrue(threshold.Test(`"31399 qy-api\n5409"`, nil))
 
 		threshold = NewThreshold()
 		threshold.Param = `${0}`
 		threshold.Operator = ThresholdOperatorContains
 		threshold.Value = "qy-api"
 		threshold.supportsMath = true
-		t.Log(threshold.Test(`"31399 qy-api\n5409"`, nil))
+		a.IsTrue(threshold.Test(`"31399 qy-api\n5409"`, nil))
 
 		threshold = NewThreshold()
 		threshold.Param = `${0}`
@@ -41,7 +44,7 @@ func TestThreshold_Test(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Log(threshold.Test(`"31399 qy-api\n5409"`, nil))
+		a.IsTrue(threshold.Test(`"31399 qy-api\n5409"`, nil))
 	}
 
 	threshold.Param = "${1}"
@@ -50,7 +53,7 @@ func TestThreshold_Test(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(threshold.Test([]interface{}{1, 200, 3}, nil))
+	a.IsTrue(threshold.Test([]interface{}{1, 200, 3}, nil))
 
 	threshold.Param = "${host}"
 	threshold.Operator = ThresholdOperatorPrefix
@@ -59,7 +62,7 @@ func TestThreshold_Test(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(threshold.Test(map[string]interface{}{
+	a.IsTrue(threshold.Test(map[string]interface{}{
 		"host": "127.0.0.1",
 	}, nil))
 
@@ -70,7 +73,7 @@ func TestThreshold_Test(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(threshold.Test(map[string]interface{}{
+	a.IsTrue(threshold.Test(map[string]interface{}{
 		"data": maps.Map{
 			"version": "1.0.25",
 		},
@@ -83,7 +86,7 @@ func TestThreshold_Test(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(threshold.Test(map[string]interface{}{
+	a.IsTrue(threshold.Test(map[string]interface{}{
 		"data": maps.Map{
 			"version": "1.25",
 		},
@@ -92,7 +95,7 @@ func TestThreshold_Test(t *testing.T) {
 	threshold.Param = "${data.hello.world.0}"
 	threshold.Operator = ThresholdOperatorEq
 	threshold.Value = "1"
-	t.Log(threshold.Test(map[string]interface{}{
+	a.IsTrue(threshold.Test(map[string]interface{}{
 		"data": maps.Map{
 			"version": "1.0.25",
 			"hello": maps.Map{
@@ -104,6 +107,8 @@ func TestThreshold_Test(t *testing.T) {
 
 // 测试修改
 func TestThreshold_Test2(t *testing.T) {
+	a := assert.NewAssertion(t)
+
 	threshold := NewThreshold()
 	threshold.Param = "${changes}"
 	threshold.Operator = ThresholdOperatorEq
@@ -112,13 +117,15 @@ func TestThreshold_Test2(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(threshold.Test(maps.Map{
+	a.IsTrue(threshold.Test(maps.Map{
 		"changes": true,
 	}, nil))
 }
 
 // 测试多级获取数据
 func TestThreshold_Eval(t *testing.T) {
+	a := assert.NewAssertion(t)
+
 	threshold := NewThreshold()
 	threshold.Param = "${data.hello.world.0} * 100 / ${data.hello.world.1}"
 	threshold.Operator = ThresholdOperatorEq
@@ -126,28 +133,80 @@ func TestThreshold_Eval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(threshold.Eval(map[string]interface{}{
-		"data": maps.Map{
-			"version": "1.0.25",
-			"hello": maps.Map{
-				"world": []string{"1", "2", "3", "4", "5"},
+
+	{
+		result, err := threshold.Eval(map[string]interface{}{
+			"data": maps.Map{
+				"version": "1.0.25",
+				"hello": maps.Map{
+					"world": []string{"1", "2", "3", "4", "5"},
+				},
 			},
-		},
-	}, nil))
+		}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(result)
+		a.IsTrue(result == "50")
+	}
+
+	{
+		result, err := threshold.Eval(map[string]interface{}{
+			"data": maps.Map{
+				"version": "1.0.25",
+				"hello": maps.Map{
+					"world": []string{"3", "2"},
+				},
+			},
+		}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(result)
+		a.IsTrue(result == "150")
+	}
 }
 
 func TestThreshold_Array(t *testing.T) {
-	t.Log(EvalParam("${0.a.b.0.d}", []maps.Map{
-		{
-			"a": maps.Map{
-				"b": []interface{}{
-					maps.Map{
-						"d": "123",
+	a := assert.NewAssertion(t)
+
+	{
+		result, err := EvalParam("${0.a.b.0.d}", []maps.Map{
+			{
+				"a": maps.Map{
+					"b": []interface{}{
+						maps.Map{
+							"d": "123",
+						},
 					},
 				},
 			},
-		},
-	}, nil, nil, true))
+		}, nil, nil, true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(result)
+		a.IsTrue(result == "123")
+	}
+
+	{
+		result, err := EvalParam("${0.a.b.c}", []maps.Map{
+			{
+				"a": maps.Map{
+					"b": []interface{}{
+						maps.Map{
+							"d": "123",
+						},
+					},
+				},
+			},
+		}, nil, nil, true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(result)
+		a.IsTrue(result == "")
+	}
 }
 
 func TestThreshold_Eval_Date(t *testing.T) {
@@ -172,6 +231,8 @@ func TestThreshold_Eval_Javascript(t *testing.T) {
 }
 
 func TestThreshold_Eval_Dollar(t *testing.T) {
+	a := assert.NewAssertion(t)
+
 	threshold := NewThreshold()
 	threshold.Param = "${a.$.percent}"
 	threshold.Operator = ThresholdOperatorGt
@@ -181,7 +242,7 @@ func TestThreshold_Eval_Dollar(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
-	t.Log(threshold.TestRow(maps.Map{
+	a.IsTrue(threshold.TestRow(maps.Map{
 		"a": []maps.Map{
 			{
 				"name":    "30",
@@ -201,11 +262,29 @@ func TestThreshold_Eval_Dollar(t *testing.T) {
 			},
 		},
 	}, nil))
+	a.IsFalse(threshold.TestRow(maps.Map{
+		"a": []maps.Map{
+			{
+				"name":    "30",
+				"percent": 30,
+			},
+			{
+				"name":    "60",
+				"percent": 60,
+			},
+			{
+				"name":    "50",
+				"percent": 50,
+			},
+		},
+	}, nil))
 
-	t.Log(threshold.TestRow("abc", nil))
+	a.IsFalse(threshold.TestRow("abc", nil))
 }
 
 func TestThreshold_Eval_Dollar2(t *testing.T) {
+	a := assert.NewAssertion(t)
+
 	threshold := NewThreshold()
 	threshold.Param = "${$.percent}"
 	threshold.Operator = ThresholdOperatorGt
@@ -215,7 +294,7 @@ func TestThreshold_Eval_Dollar2(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
-	t.Log(threshold.Test([]maps.Map{
+	a.IsTrue(threshold.Test([]maps.Map{
 		{
 			"percent": 30,
 		},
@@ -229,9 +308,25 @@ func TestThreshold_Eval_Dollar2(t *testing.T) {
 			"percent": 50,
 		},
 	}, nil))
+	a.IsFalse(threshold.Test([]maps.Map{
+		{
+			"percent": 30,
+		},
+		{
+			"percent": 60,
+		},
+		{
+			"percent": 80,
+		},
+		{
+			"percent": 50,
+		},
+	}, nil))
 }
 
 func TestThreshold_Eval_Dollar3(t *testing.T) {
+	a := assert.NewAssertion(t)
+
 	threshold := NewThreshold()
 	threshold.Param = "${$}"
 	threshold.Operator = ThresholdOperatorGt
@@ -241,10 +336,13 @@ func TestThreshold_Eval_Dollar3(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
-	t.Log(threshold.Test([]int{1, 2, 3, 4}, nil))
+	a.IsTrue(threshold.Test([]int{1, 2, 3, 4}, nil))
+	a.IsFalse(threshold.Test([]int{1, 2, 3}, nil))
 }
 
 func TestThreshold_Eval_Nil(t *testing.T) {
+	a := assert.NewAssertion(t)
+
 	threshold := NewThreshold()
 	threshold.Param = "${0}"
 	threshold.Operator = ThresholdOperatorGte
@@ -254,10 +352,16 @@ func TestThreshold_Eval_Nil(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("should loop:", threshold.shouldLoop, threshold.loopVar)
-	t.Log(threshold.Test(nil, nil))
+	result, err := threshold.Test(nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a.IsTrue(result == true)
 }
 
 func TestThreshold_Old(t *testing.T) {
+	a := assert.NewAssertion(t)
+
 	threshold := NewThreshold()
 	threshold.Param = "${rows} - ${OLD.rows234}"
 	threshold.Operator = ThresholdOperatorEq
@@ -265,14 +369,20 @@ func TestThreshold_Old(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(threshold.Eval(map[string]interface{}{
+	result, err := threshold.Eval(map[string]interface{}{
 		"rows": 1,
 	}, map[string]interface{}{
 		"rows234": 123,
-	}, ))
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	a.IsTrue(result == "-122")
 }
 
 func TestThreshold_Old2(t *testing.T) {
+	a := assert.NewAssertion(t)
+
 	threshold := NewThreshold()
 	threshold.Param = "Math.abs(${0} - ${OLD})"
 	threshold.Operator = ThresholdOperatorEq
@@ -281,7 +391,8 @@ func TestThreshold_Old2(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(threshold.Test(123, 456, ))
+	a.IsTrue(threshold.Test(123, 456))
+	a.IsFalse(threshold.Test(123, 455))
 }
 
 func TestThreshold_RunActions(t *testing.T) {

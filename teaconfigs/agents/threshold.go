@@ -14,7 +14,7 @@ import (
 )
 
 // 参数值正则
-var thresholdRegexpParamNamedVariable = regexp.MustCompile("\\${[$\\w. \t-]+}")
+var RegexpParamNamedVariable = regexp.MustCompile(`(?U)\${[$\w\s.-]+(\s*\|.+)?}`)
 
 // 阈值定义
 type Threshold struct {
@@ -63,7 +63,7 @@ func (this *Threshold) Validate() error {
 	}
 
 	// 检查参数值
-	for _, v := range thresholdRegexpParamNamedVariable.FindAllStringSubmatch(this.Param, -1) {
+	for _, v := range RegexpParamNamedVariable.FindAllStringSubmatch(this.Param, -1) {
 		varName := v[0][2 : len(v[0])-1]
 		pieces := strings.Split(varName, ".")
 		if lists.ContainsString(pieces, "$") {

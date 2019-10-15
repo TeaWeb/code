@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"github.com/iwind/TeaGo/assert"
 	"github.com/iwind/TeaGo/maps"
 	"testing"
 )
@@ -15,6 +16,8 @@ func TestEvalParam(t *testing.T) {
 
 // 测试空格
 func TestEvalParam_Spaces(t *testing.T) {
+	a := assert.NewAssertion(t)
+
 	threshold := NewThreshold()
 	threshold.Param = "[${data    .	version}]"
 	threshold.Operator = ThresholdOperatorEq
@@ -23,14 +26,27 @@ func TestEvalParam_Spaces(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(threshold.Eval(map[string]interface{}{
-		"data": maps.Map{
-			"version": "1.0.26",
-		},
-	}, nil))
-	t.Log(EvalParam(threshold.Param, nil, nil, maps.Map{
-		"data": maps.Map{
-			"version": "1.1",
-		},
-	}, true))
+	{
+		result, err := threshold.Eval(map[string]interface{}{
+			"data": maps.Map{
+				"version": "1.0.26",
+			},
+		}, nil)
+		a.IsNil(err)
+		a.IsTrue(result == "[1.0.26]")
+	}
+	{
+		result, err := EvalParam(threshold.Param, nil, nil, maps.Map{
+			"data": maps.Map{
+				"version": "1.1",
+			},
+		}, true)
+		a.IsNil(err)
+		a.IsTrue(result == "[1.1]")
+	}
+}
+
+// 格式化
+func TestEvalParam_Format(t *testing.T) {
+	t.Log(EvalParam("this is ${0 | float('%.2f')} and ${0}", "123.456789", "", maps.Map{}, false))
 }
