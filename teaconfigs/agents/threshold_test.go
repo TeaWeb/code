@@ -408,3 +408,211 @@ func TestThreshold_RunActions(t *testing.T) {
 	}
 	t.Log(threshold.RunActions(nil))
 }
+
+func TestThresholdIP(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorEqIP,
+			Value:    "hello",
+		}
+		a.IsNotNil(th.Validate())
+		a.IsFalse(th.Test("hello", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorEqIP,
+			Value:    "hello",
+		}
+		a.IsNotNil(th.Validate())
+		a.IsFalse(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorEqIP,
+			Value:    "192.168.1.100",
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorGtIP,
+			Value:    "192.168.1.90",
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorGteIP,
+			Value:    "192.168.1.90",
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorLtIP,
+			Value:    "192.168.1.90",
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test("192.168.1.80", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorLteIP,
+			Value:    "192.168.1.90",
+		}
+		a.IsNil(th.Validate())
+		a.IsFalse(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorIPRange,
+			Value:    "192.168.0.90,",
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorIPRange,
+			Value:    "192.168.0.90,192.168.1.100",
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorIPRange,
+			Value:    ",192.168.1.100",
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorIPRange,
+			Value:    "192.168.0.90,192.168.1.99",
+		}
+		a.IsNil(th.Validate())
+		a.IsFalse(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorIPRange,
+			Value:    "192.168.0.90/24",
+		}
+		a.IsNil(th.Validate())
+		a.IsFalse(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorIPRange,
+			Value:    "192.168.0.90/18",
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test("192.168.1.100", nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "${0}",
+			Operator: ThresholdOperatorIPRange,
+			Value:    "a/18",
+		}
+		a.IsNotNil(th.Validate())
+		a.IsFalse(th.Test("192.168.1.100", nil))
+	}
+}
+
+func TestThreshold_Version(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	{
+		th := Threshold{
+			Param:    "1.0",
+			Operator: ThresholdOperatorVersionRange,
+			Value:    `1.0,1.1`,
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test(nil, nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "1.0",
+			Operator: ThresholdOperatorVersionRange,
+			Value:    `1.0,`,
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test(nil, nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "1.0",
+			Operator: ThresholdOperatorVersionRange,
+			Value:    `,1.1`,
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test(nil, nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "0.9",
+			Operator: ThresholdOperatorVersionRange,
+			Value:    `1.0,1.1`,
+		}
+		a.IsNil(th.Validate())
+		a.IsFalse(th.Test(nil, nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "0.9",
+			Operator: ThresholdOperatorVersionRange,
+			Value:    `1.0`,
+		}
+		a.IsNil(th.Validate())
+		a.IsFalse(th.Test(nil, nil))
+	}
+
+	{
+		th := Threshold{
+			Param:    "1.1",
+			Operator: ThresholdOperatorVersionRange,
+			Value:    `1.0`,
+		}
+		a.IsNil(th.Validate())
+		a.IsTrue(th.Test(nil, nil))
+	}
+}

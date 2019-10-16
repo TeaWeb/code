@@ -4,23 +4,35 @@ type RuleOperator = string
 type RuleCaseInsensitive = string
 
 const (
-	RuleOperatorGt          = "gt"
-	RuleOperatorGte         = "gte"
-	RuleOperatorLt          = "lt"
-	RuleOperatorLte         = "lte"
-	RuleOperatorEq          = "eq"
-	RuleOperatorNeq         = "neq"
-	RuleOperatorEqString    = "eq string"
-	RuleOperatorNeqString   = "neq string"
-	RuleOperatorMatch       = "match"
-	RuleOperatorNotMatch    = "not match"
-	RuleOperatorContains    = "contains"
-	RuleOperatorNotContains = "not contains"
-	RuleOperatorPrefix      = "prefix"
-	RuleOperatorSuffix      = "suffix"
-	RuleOperatorHasKey      = "has key" // has key in slice or map
-	RuleOperatorVersionGt   = "version gt"
-	RuleOperatorVersionLt   = "version lt"
+	RuleOperatorGt           RuleOperator = "gt"
+	RuleOperatorGte          RuleOperator = "gte"
+	RuleOperatorLt           RuleOperator = "lt"
+	RuleOperatorLte          RuleOperator = "lte"
+	RuleOperatorEq           RuleOperator = "eq"
+	RuleOperatorNeq          RuleOperator = "neq"
+	RuleOperatorEqString     RuleOperator = "eq string"
+	RuleOperatorNeqString    RuleOperator = "neq string"
+	RuleOperatorMatch        RuleOperator = "match"
+	RuleOperatorNotMatch     RuleOperator = "not match"
+	RuleOperatorContains     RuleOperator = "contains"
+	RuleOperatorNotContains  RuleOperator = "not contains"
+	RuleOperatorPrefix       RuleOperator = "prefix"
+	RuleOperatorSuffix       RuleOperator = "suffix"
+	RuleOperatorHasKey       RuleOperator = "has key" // has key in slice or map
+	RuleOperatorVersionGt    RuleOperator = "version gt"
+	RuleOperatorVersionLt    RuleOperator = "version lt"
+	RuleOperatorVersionRange RuleOperator = "version range"
+
+	// ip
+	RuleOperatorEqIP     RuleOperator = "eq ip"
+	RuleOperatorGtIP     RuleOperator = "gt ip"
+	RuleOperatorGteIP    RuleOperator = "gte ip"
+	RuleOperatorLtIP     RuleOperator = "lt ip"
+	RuleOperatorLteIP    RuleOperator = "lte ip"
+	RuleOperatorIPRange  RuleOperator = "ip range"
+	RuleOperatorIPMod10  RuleOperator = "ip mod 10"
+	RuleOperatorIPMod100 RuleOperator = "ip mod 100"
+	RuleOperatorIPMod    RuleOperator = "ip mod"
 
 	RuleCaseInsensitiveNone = "none"
 	RuleCaseInsensitiveYes  = "yes"
@@ -128,7 +140,73 @@ var AllRuleOperators = []*RuleOperatorDefinition{
 	{
 		Name:            "版本号大于",
 		Code:            RuleOperatorVersionGt,
-		Description:     "对于版本号大于",
+		Description:     "对比版本号大于",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "版本号小于",
+		Code:            RuleOperatorVersionLt,
+		Description:     "对比版本号小于",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "版本号范围",
+		Code:            RuleOperatorVersionRange,
+		Description:     "判断版本号在某个范围内，格式为version1,version2",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "IP等于",
+		Code:            RuleOperatorEqIP,
+		Description:     "将参数转换为IP进行对比",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "IP大于",
+		Code:            RuleOperatorGtIP,
+		Description:     "将参数转换为IP进行对比",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "IP大于等于",
+		Code:            RuleOperatorGteIP,
+		Description:     "将参数转换为IP进行对比",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "IP小于",
+		Code:            RuleOperatorLtIP,
+		Description:     "将参数转换为IP进行对比",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "IP小于等于",
+		Code:            RuleOperatorLteIP,
+		Description:     "将参数转换为IP进行对比",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "IP范围",
+		Code:            RuleOperatorIPRange,
+		Description:     "IP在某个范围之内，范围格式可以是英文逗号分隔的ip1,ip2，或者CIDR格式的ip/bits",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "IP取模10",
+		Code:            RuleOperatorIPMod10,
+		Description:     "对IP参数值取模，除数为10，对比值为余数",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "IP取模100",
+		Code:            RuleOperatorIPMod100,
+		Description:     "对IP参数值取模，除数为100，对比值为余数",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "IP取模",
+		Code:            RuleOperatorIPMod,
+		Description:     "对IP参数值取模，对比值格式为：除数,余数，比如10,1",
 		CaseInsensitive: RuleCaseInsensitiveNo,
 	},
 }

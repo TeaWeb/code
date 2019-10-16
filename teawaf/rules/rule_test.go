@@ -483,3 +483,218 @@ func TestRule_SetCheckpointFinder(t *testing.T) {
 		t.Logf("%#v", rule.singleCheckpoint)
 	}
 }
+
+func TestRule_Version(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorVersionRange,
+			Value:    `1.0,1.1`,
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("1.0"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorVersionRange,
+			Value:    `1.0,`,
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("1.0"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorVersionRange,
+			Value:    `,1.1`,
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("1.0"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorVersionRange,
+			Value:    `1.0,1.1`,
+		}
+		a.IsNil(rule.Init())
+		a.IsFalse(rule.Test("0.9"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorVersionRange,
+			Value:    `1.0`,
+		}
+		a.IsNil(rule.Init())
+		a.IsFalse(rule.Test( "0.9"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorVersionRange,
+			Value:    `1.0`,
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("1.1"))
+	}
+}
+
+func TestRule_IP(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorEqIP,
+			Value:    "hello",
+		}
+		a.IsNotNil(rule.Init())
+		a.IsFalse(rule.Test("hello"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorEqIP,
+			Value:    "hello",
+		}
+		a.IsNotNil(rule.Init())
+		a.IsFalse(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorEqIP,
+			Value:    "192.168.1.100",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorGtIP,
+			Value:    "192.168.1.90",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorGteIP,
+			Value:    "192.168.1.90",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorLtIP,
+			Value:    "192.168.1.90",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.1.80"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorLteIP,
+			Value:    "192.168.1.90",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.0.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorIPRange,
+			Value:    "192.168.0.90,",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.0.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorIPRange,
+			Value:    "192.168.0.90,192.168.1.100",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.0.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorIPRange,
+			Value:    ",192.168.1.100",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.0.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorIPRange,
+			Value:    "192.168.0.90,192.168.1.99",
+		}
+		a.IsNil(rule.Init())
+		a.IsFalse(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorIPRange,
+			Value:    "192.168.0.90/24",
+		}
+		a.IsNil(rule.Init())
+		a.IsFalse(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorIPRange,
+			Value:    "192.168.0.90/18",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorIPRange,
+			Value:    "a/18",
+		}
+		a.IsNotNil(rule.Init())
+		a.IsFalse(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorIPMod10,
+			Value:    "6",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorIPMod100,
+			Value:    "76",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorIPMod,
+			Value:    "10,6",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.1.100"))
+	}
+}

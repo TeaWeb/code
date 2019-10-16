@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf/checkpoints"
@@ -10,6 +12,7 @@ import (
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	"net"
 	"reflect"
 	"regexp"
 	"strings"
@@ -31,6 +34,9 @@ type Rule struct {
 	singleCheckpoint checkpoints.CheckpointInterface // if is single check point
 
 	multipleCheckpoints map[string]checkpoints.CheckpointInterface
+
+	isIP    bool
+	ipValue net.IP
 
 	floatValue float64
 	reg        *regexp.Regexp
@@ -81,6 +87,41 @@ func (this *Rule) Init() error {
 			return err
 		}
 		this.reg = reg
+	case RuleOperatorEqIP, RuleOperatorGtIP, RuleOperatorGteIP, RuleOperatorLtIP, RuleOperatorLteIP:
+		this.ipValue = net.ParseIP(this.Value)
+		this.isIP = this.ipValue != nil
+
+		if !this.isIP {
+			return errors.New("value should be a valid ip")
+		}
+	case RuleOperatorIPRange:
+		if strings.Contains(this.Value, ",") {
+			ipList := strings.SplitN(this.Value, ",", 2)
+			ipString1 := strings.TrimSpace(ipList[0])
+			ipString2 := strings.TrimSpace(ipList[1])
+
+			if len(ipString1) > 0 {
+				ip1 := net.ParseIP(ipString1)
+				if ip1 == nil {
+					return errors.New("start ip is invalid")
+				}
+			}
+
+			if len(ipString2) > 0 {
+				ip2 := net.ParseIP(ipString2)
+				if ip2 == nil {
+					return errors.New("end ip is invalid")
+				}
+			}
+		} else if strings.Contains(this.Value, "/") {
+			_, _, err := net.ParseCIDR(this.Value)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New("invalid ip range")
+		}
+
 	}
 
 	if singleParamRegexp.MatchString(this.Param) {
@@ -393,6 +434,111 @@ func (this *Rule) Test(value interface{}) bool {
 		return stringutil.VersionCompare(this.Value, types.String(value)) > 0
 	case RuleOperatorVersionLt:
 		return stringutil.VersionCompare(this.Value, types.String(value)) < 0
+	case RuleOperatorVersionRange:
+		if strings.Contains(this.Value, ",") {
+			versions := strings.SplitN(this.Value, ",", 2)
+			version1 := strings.TrimSpace(versions[0])
+			version2 := strings.TrimSpace(versions[1])
+			if len(version1) > 0 && stringutil.VersionCompare(types.String(value), version1) < 0 {
+				return false
+			}
+			if len(version2) > 0 && stringutil.VersionCompare(types.String(value), version2) > 0 {
+				return false
+			}
+			return true
+		} else {
+			return stringutil.VersionCompare(types.String(value), this.Value) >= 0
+		}
+	case RuleOperatorEqIP:
+		ip := net.ParseIP(types.String(value))
+		if ip == nil {
+			return false
+		}
+		return this.isIP && bytes.Compare(this.ipValue, ip) == 0
+	case RuleOperatorGtIP:
+		ip := net.ParseIP(types.String(value))
+		if ip == nil {
+			return false
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) > 0
+	case RuleOperatorGteIP:
+		ip := net.ParseIP(types.String(value))
+		if ip == nil {
+			return false
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) >= 0
+	case RuleOperatorLtIP:
+		ip := net.ParseIP(types.String(value))
+		if ip == nil {
+			return false
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) < 0
+	case RuleOperatorLteIP:
+		ip := net.ParseIP(types.String(value))
+		if ip == nil {
+			return false
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) <= 0
+	case RuleOperatorIPRange:
+		ip := net.ParseIP(types.String(value))
+		if ip == nil {
+			return false
+		}
+
+		// 检查IP范围格式
+		if strings.Contains(this.Value, ",") {
+			ipList := strings.SplitN(this.Value, ",", 2)
+			ipString1 := strings.TrimSpace(ipList[0])
+			ipString2 := strings.TrimSpace(ipList[1])
+
+			if len(ipString1) > 0 {
+				ip1 := net.ParseIP(ipString1)
+				if ip1 == nil {
+					return false
+				}
+
+				if bytes.Compare(ip, ip1) < 0 {
+					return false
+				}
+			}
+
+			if len(ipString2) > 0 {
+				ip2 := net.ParseIP(ipString2)
+				if ip2 == nil {
+					return false
+				}
+
+				if bytes.Compare(ip, ip2) > 0 {
+					return false
+				}
+			}
+
+			return true
+		} else if strings.Contains(this.Value, "/") {
+			_, ipNet, err := net.ParseCIDR(this.Value)
+			if err != nil {
+				return false
+			}
+			return ipNet.Contains(ip)
+		} else {
+			return false
+		}
+	case RuleOperatorIPMod:
+		pieces := strings.SplitN(this.Value, ",", 2)
+		if len(pieces) == 1 {
+			rem := types.Int64(pieces[0])
+			return this.ipToInt64(net.ParseIP(types.String(value)))%10 == rem
+		}
+		div := types.Int64(pieces[0])
+		if div == 0 {
+			return false
+		}
+		rem := types.Int64(pieces[1])
+		return this.ipToInt64(net.ParseIP(types.String(value)))%div == rem
+	case RuleOperatorIPMod10:
+		return this.ipToInt64(net.ParseIP(types.String(value)))%10 == types.Int64(this.Value)
+	case RuleOperatorIPMod100:
+		return this.ipToInt64(net.ParseIP(types.String(value)))%100 == types.Int64(this.Value)
 	}
 	return false
 }
@@ -417,4 +563,14 @@ func (this *Rule) unescape(v string) string {
 	v = strings.Replace(v, `/`, `(/|%2F)`, -1)
 	v = strings.Replace(v, `;`, `(;|%3B)`, -1)
 	return v
+}
+
+func (this *Rule) ipToInt64(ip net.IP) int64 {
+	if len(ip) == 0 {
+		return 0
+	}
+	if len(ip) == 16 {
+		return int64(binary.BigEndian.Uint32(ip[12:16]))
+	}
+	return int64(binary.BigEndian.Uint32(ip))
 }

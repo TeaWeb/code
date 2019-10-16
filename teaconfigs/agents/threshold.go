@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/notices"
@@ -9,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	"net"
 	"regexp"
 	"strings"
 )
@@ -27,8 +29,12 @@ type Threshold struct {
 	Actions       []map[string]interface{} `yaml:"actions" json:"actions"`             // 动作配置
 	MaxFails      int                      `yaml:"maxFails" json:"maxFails"`           // 连续失败次数
 
-	regValue     *regexp.Regexp
-	floatValue   float64
+	isIP bool
+
+	regValue   *regexp.Regexp
+	floatValue float64
+	ipValue    net.IP
+
 	supportsMath bool
 
 	shouldLoop bool   // 是否应该循环测试，如果包含名为$（dollar符号）的变量，则表示是循环测试
@@ -60,6 +66,48 @@ func (this *Threshold) Validate() error {
 		this.supportsMath = true
 	} else if this.Operator == ThresholdOperatorEq {
 		this.supportsMath = true // 为了兼容以前版本的此处必须为true
+	} else if lists.ContainsString([]string{
+		ThresholdOperatorEqIP,
+		ThresholdOperatorGtIP,
+		ThresholdOperatorGteIP,
+		ThresholdOperatorLtIP,
+		ThresholdOperatorLteIP,
+	}, this.Operator) {
+		this.ipValue = net.ParseIP(this.Value)
+		this.isIP = this.ipValue != nil
+
+		if !this.isIP {
+			return errors.New("value should be a valid ip")
+		}
+	} else if lists.ContainsString([]string{
+		ThresholdOperatorIPRange,
+	}, this.Operator) {
+		if strings.Contains(this.Value, ",") {
+			ipList := strings.SplitN(this.Value, ",", 2)
+			ipString1 := strings.TrimSpace(ipList[0])
+			ipString2 := strings.TrimSpace(ipList[1])
+
+			if len(ipString1) > 0 {
+				ip1 := net.ParseIP(ipString1)
+				if ip1 == nil {
+					return errors.New("start ip is invalid")
+				}
+			}
+
+			if len(ipString2) > 0 {
+				ip2 := net.ParseIP(ipString2)
+				if ip2 == nil {
+					return errors.New("end ip is invalid")
+				}
+			}
+		} else if strings.Contains(this.Value, "/") {
+			_, _, err := net.ParseCIDR(this.Value)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New("invalid ip range")
+		}
 	}
 
 	// 检查参数值
@@ -175,6 +223,95 @@ func (this *Threshold) testParam(param string, shouldLoop bool, value interface{
 		return strings.Contains(types.String(paramValue), this.Value), nil, nil
 	case ThresholdOperatorNotContains:
 		return !strings.Contains(types.String(paramValue), this.Value), nil, nil
+	case ThresholdOperatorVersionRange:
+		if strings.Contains(this.Value, ",") {
+			versions := strings.SplitN(this.Value, ",", 2)
+			version1 := strings.TrimSpace(versions[0])
+			version2 := strings.TrimSpace(versions[1])
+			if len(version1) > 0 && stringutil.VersionCompare(paramValue, version1) < 0 {
+				return false, nil, nil
+			}
+			if len(version2) > 0 && stringutil.VersionCompare(paramValue, version2) > 0 {
+				return false, nil, nil
+			}
+			return true, nil, nil
+		} else {
+			return stringutil.VersionCompare(paramValue, this.Value) >= 0, nil, nil
+		}
+	case ThresholdOperatorEqIP:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false, nil, nil
+		}
+		return this.isIP && bytes.Compare(this.ipValue, ip) == 0, nil, nil
+	case ThresholdOperatorGtIP:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false, nil, nil
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) > 0, nil, nil
+	case ThresholdOperatorGteIP:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false, nil, nil
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) >= 0, nil, nil
+	case ThresholdOperatorLtIP:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false, nil, nil
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) < 0, nil, nil
+	case ThresholdOperatorLteIP:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false, nil, nil
+		}
+		return this.isIP && bytes.Compare(ip, this.ipValue) <= 0, nil, nil
+	case ThresholdOperatorIPRange:
+		ip := net.ParseIP(paramValue)
+		if ip == nil {
+			return false, nil, nil
+		}
+
+		// 检查IP范围格式
+		if strings.Contains(this.Value, ",") {
+			ipList := strings.SplitN(this.Value, ",", 2)
+			ipString1 := strings.TrimSpace(ipList[0])
+			ipString2 := strings.TrimSpace(ipList[1])
+
+			if len(ipString1) > 0 {
+				ip1 := net.ParseIP(ipString1)
+				if ip1 == nil {
+					return false, nil, nil
+				}
+
+				if bytes.Compare(ip, ip1) < 0 {
+					return false, nil, nil
+				}
+			}
+
+			if len(ipString2) > 0 {
+				ip2 := net.ParseIP(ipString2)
+				if ip2 == nil {
+					return false, nil, nil
+				}
+
+				if bytes.Compare(ip, ip2) > 0 {
+					return false, nil, nil
+				}
+			}
+
+			return true, nil, nil
+		} else if strings.Contains(this.Value, "/") {
+			_, ipNet, err := net.ParseCIDR(this.Value)
+			if err != nil {
+				return false, nil, nil
+			}
+			return ipNet.Contains(ip), nil, nil
+		} else {
+			return false, nil, nil
+		}
 	}
 	return false, nil, nil
 }

@@ -8,19 +8,28 @@ import (
 type ThresholdOperator = string
 
 const (
-	ThresholdOperatorRegexp      = "regexp"
-	ThresholdOperatorNotRegexp   = "not regexp"
-	ThresholdOperatorGt          = "gt"
-	ThresholdOperatorGte         = "gte"
-	ThresholdOperatorLt          = "lt"
-	ThresholdOperatorLte         = "lte"
-	ThresholdOperatorEq          = "eq"
-	ThresholdOperatorNumberEq    = "number eq"
-	ThresholdOperatorNot         = "not"
-	ThresholdOperatorPrefix      = "prefix"
-	ThresholdOperatorSuffix      = "suffix"
-	ThresholdOperatorContains    = "contains"
-	ThresholdOperatorNotContains = "not contains"
+	ThresholdOperatorRegexp       ThresholdOperator = "regexp"
+	ThresholdOperatorNotRegexp    ThresholdOperator = "not regexp"
+	ThresholdOperatorGt           ThresholdOperator = "gt"
+	ThresholdOperatorGte          ThresholdOperator = "gte"
+	ThresholdOperatorLt           ThresholdOperator = "lt"
+	ThresholdOperatorLte          ThresholdOperator = "lte"
+	ThresholdOperatorEq           ThresholdOperator = "eq"
+	ThresholdOperatorNumberEq     ThresholdOperator = "number eq"
+	ThresholdOperatorNot          ThresholdOperator = "not"
+	ThresholdOperatorPrefix       ThresholdOperator = "prefix"
+	ThresholdOperatorSuffix       ThresholdOperator = "suffix"
+	ThresholdOperatorContains     ThresholdOperator = "contains"
+	ThresholdOperatorNotContains  ThresholdOperator = "not contains"
+	ThresholdOperatorVersionRange ThresholdOperator = "version range"
+
+	// IP相关
+	ThresholdOperatorEqIP    ThresholdOperator = "eq ip"
+	ThresholdOperatorGtIP    ThresholdOperator = "gt ip"
+	ThresholdOperatorGteIP   ThresholdOperator = "gte ip"
+	ThresholdOperatorLtIP    ThresholdOperator = "lt ip"
+	ThresholdOperatorLteIP   ThresholdOperator = "lte ip"
+	ThresholdOperatorIPRange ThresholdOperator = "ip range"
 )
 
 // 所有的运算符
@@ -90,6 +99,41 @@ func AllThresholdOperators() []maps.Map {
 			"name":        "小于等于",
 			"op":          ThresholdOperatorLte,
 			"description": "将参数转换为数字进行对比",
+		},
+		{
+			"name":        "版本号范围",
+			"op":          ThresholdOperatorVersionRange,
+			"description": "判断版本号在某个范围内，格式为version1,version2",
+		},
+		{
+			"name":        "IP等于",
+			"op":          ThresholdOperatorEqIP,
+			"description": "将参数转换为IP进行对比",
+		},
+		{
+			"name":        "IP大于",
+			"op":          ThresholdOperatorGtIP,
+			"description": "将参数转换为IP进行对比",
+		},
+		{
+			"name":        "IP大于等于",
+			"op":          ThresholdOperatorGteIP,
+			"description": "将参数转换为IP进行对比",
+		},
+		{
+			"name":        "IP小于",
+			"op":          ThresholdOperatorLtIP,
+			"description": "将参数转换为IP进行对比",
+		},
+		{
+			"name":        "IP小于等于",
+			"op":          ThresholdOperatorLteIP,
+			"description": "将参数转换为IP进行对比",
+		},
+		{
+			"name":        "IP范围",
+			"op":          ThresholdOperatorIPRange,
+			"description": "IP在某个范围之内，范围格式可以是英文逗号分隔的ip1,ip2，或者CIDR格式的ip/bits",
 		},
 	}
 }
