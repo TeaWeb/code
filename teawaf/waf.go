@@ -268,13 +268,13 @@ func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) 
 		if b {
 			if this.onActionCallback == nil {
 				if set.Action == actions.ActionBlock && this.ActionBlock != nil {
-					return this.ActionBlock.Perform(writer), set, nil
+					return this.ActionBlock.Perform(rawReq, writer), set, nil
 				} else {
 					actionObject := actions.FindActionInstance(set.Action)
 					if actionObject == nil {
 						return true, set, errors.New("no action called '" + set.Action + "'")
 					}
-					goNext := actionObject.Perform(writer)
+					goNext := actionObject.Perform(rawReq, writer)
 					return goNext, set, nil
 				}
 			} else {
@@ -303,13 +303,13 @@ func (this *WAF) MatchResponse(rawReq *http.Request, rawResp *http.Response, wri
 		if b {
 			if this.onActionCallback == nil {
 				if set.Action == actions.ActionBlock && this.ActionBlock != nil {
-					return this.ActionBlock.Perform(writer), set, nil
+					return this.ActionBlock.Perform(rawReq, writer), set, nil
 				} else {
 					actionObject := actions.FindActionInstance(set.Action)
 					if actionObject == nil {
 						return true, set, errors.New("no action called '" + set.Action + "'")
 					}
-					goNext := actionObject.Perform(writer)
+					goNext := actionObject.Perform(rawReq, writer)
 					return goNext, set, nil
 				}
 			} else {

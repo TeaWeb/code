@@ -23,7 +23,7 @@ type BlockAction struct {
 	URL        string `yaml:"url" json:"url"`
 }
 
-func (this *BlockAction) Perform(writer http.ResponseWriter) (allow bool) {
+func (this *BlockAction) Perform(request *http.Request, writer http.ResponseWriter) (allow bool) {
 	if writer != nil {
 		if this.StatusCode > 0 {
 			writer.WriteHeader(this.StatusCode)
@@ -42,7 +42,9 @@ func (this *BlockAction) Perform(writer http.ResponseWriter) (allow bool) {
 					logs.Error(err)
 					return false
 				}
-				defer resp.Body.Close()
+				defer func() {
+					_ = resp.Body.Close()
+				}()
 
 				for k, v := range resp.Header {
 					for _, v1 := range v {
@@ -51,7 +53,7 @@ func (this *BlockAction) Perform(writer http.ResponseWriter) (allow bool) {
 				}
 
 				buf := make([]byte, 1024)
-				io.CopyBuffer(writer, resp.Body, buf)
+				_, _ = io.CopyBuffer(writer, resp.Body, buf)
 			} else {
 				path := this.URL
 				if !filepath.IsAbs(this.URL) {
@@ -63,14 +65,14 @@ func (this *BlockAction) Perform(writer http.ResponseWriter) (allow bool) {
 					logs.Error(err)
 					return false
 				}
-				writer.Write(data)
+				_, _ = writer.Write(data)
 			}
 			return false
 		}
 		if len(this.Body) > 0 {
-			writer.Write([]byte(this.Body))
+			_, _ = writer.Write([]byte(this.Body))
 		} else {
-			writer.Write([]byte("The request is blocked by TeaWAF"))
+			_, _ = writer.Write([]byte("The request is blocked by TeaWAF"))
 		}
 	}
 	return false

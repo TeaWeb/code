@@ -7,10 +7,10 @@ type ActionString = string
 const (
 	ActionLog     = "log"     // allow and log
 	ActionBlock   = "block"   // block
-	ActionCaptcha = "captcha" // block and show captcha // TODO
+	ActionCaptcha = "captcha" // block and show captcha
 	ActionAllow   = "allow"   // allow
 )
 
 type ActionInterface interface {
-	Perform(writer http.ResponseWriter) (allow bool)
+	Perform(request *http.Request, writer http.ResponseWriter) (allow bool)
 }

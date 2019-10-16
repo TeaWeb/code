@@ -16,6 +16,11 @@ var AllActions = []*ActionDefinition{
 		Code:     ActionLog,
 		Instance: new(LogAction),
 	},
+	{
+		Name:     "Captcha验证码",
+		Code:     ActionCaptcha,
+		Instance: new(CaptchaAction),
+	},
 }
 
 func FindActionInstance(action ActionString) ActionInterface {

@@ -1,5 +1,6 @@
 package actions
 
+// action definition
 type ActionDefinition struct {
 	Name        string
 	Code        ActionString
