@@ -395,6 +395,36 @@ func Template() *WAF {
 		waf.AddRuleGroup(group)
 	}
 
+	// bot
+	{
+		group := rules.NewRuleGroup()
+		group.On = false
+		group.IsInbound = true
+		group.Name = "网络爬虫"
+		group.Code = "bot"
+		group.Description = "禁止一些网络爬虫"
+
+		{
+			set := rules.NewRuleSet()
+			set.On = true
+			set.Name = "常见网络爬虫"
+			set.Code = "20001"
+			set.Connector = rules.RuleConnectorOr
+			set.Action = actions.ActionBlock
+
+			set.AddRule(&rules.Rule{
+				Param:             "${userAgent}",
+				Operator:          rules.RuleOperatorMatch,
+				Value:             `Googlebot|AdsBot|bingbot|BingPreview|facebookexternalhit|Slurp|Sogou|proximic|Baiduspider|spider|python`,
+				IsCaseInsensitive: true,
+			})
+
+			group.AddRuleSet(set)
+		}
+
+		waf.AddRuleGroup(group)
+	}
+
 	// cc
 	{
 		group := rules.NewRuleGroup()

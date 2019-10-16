@@ -14,6 +14,10 @@ import (
 
 var captchaSalt = stringutil.Rand(32)
 
+const (
+	CaptchaSeconds = 600 // 10 minutes
+)
+
 type CaptchaAction struct {
 }
 
@@ -35,12 +39,12 @@ func (this *CaptchaAction) Perform(request *http.Request, writer http.ResponseWr
 			captchaCode := request.FormValue("TEAWEB_WAF_CAPTCHA_CODE")
 			if captcha.VerifyString(captchaId, captchaCode) {
 				// set cookie
-				timestamp := fmt.Sprintf("%d", time.Now().Unix()+600) // 10 minutes
+				timestamp := fmt.Sprintf("%d", time.Now().Unix()+CaptchaSeconds)
 				m := stringutil.Md5(captchaSalt + timestamp)
 				http.SetCookie(writer, &http.Cookie{
 					Name:   "TEAWEB_WAF_CAPTCHA",
 					Value:  m + timestamp,
-					MaxAge: 600,
+					MaxAge: CaptchaSeconds,
 					Path:   "/", // all of dirs
 				})
 

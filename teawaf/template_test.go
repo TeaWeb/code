@@ -36,6 +36,7 @@ func Test_Template(t *testing.T) {
 	testTemplate5001(a, t, template)
 	testTemplate6001(a, t, template)
 	testTemplate7001(a, t, template)
+	testTemplate20001(a, t, template)
 }
 
 func Test_Template2(t *testing.T) {
@@ -310,6 +311,43 @@ func testTemplate7001(a *assert.Assertion, t *testing.T, template *WAF) {
 			a.IsTrue(lists.ContainsAny([]string{"7001", "7002", "7003", "7004", "7005"}, result.Code))
 		} else {
 			t.Log("break:", id)
+		}
+	}
+}
+
+func testTemplate20001(a *assert.Assertion, t *testing.T, template *WAF) {
+	// enable bot rule set
+	for _, g := range template.Inbound {
+		if g.Code == "bot" {
+			g.On = true
+			break
+		}
+	}
+
+	for _, bot := range []string{
+		"Googlebot",
+		"AdsBot",
+		"bingbot",
+		"BingPreview",
+		"facebookexternalhit",
+		"Slurp",
+		"Sogou",
+		"Baiduspider http://baidu.com",
+	} {
+		req, err := http.NewRequest(http.MethodPost, "http://example.com/", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("User-Agent", bot)
+		_, result, err := template.MatchRequest(req, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		a.IsNotNil(result)
+		if result != nil {
+			a.IsTrue(lists.ContainsAny([]string{"20001"}, result.Code))
+		} else {
+			t.Log("break:", bot)
 		}
 	}
 }
