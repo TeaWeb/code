@@ -8,7 +8,6 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -27,21 +26,35 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	}
 
 	requestPath := this.uri
-	uri, err := url.ParseRequestURI(this.uri)
 	query := ""
-	if err == nil {
-		requestPath = uri.Path
-		query = uri.RawQuery
+
+	questionMarkIndex := strings.Index(this.uri, "?")
+	if questionMarkIndex > -1 {
+		requestPath = this.uri[:questionMarkIndex]
+		query = this.uri[questionMarkIndex+1:]
 	}
 
 	// 去掉其中的奇怪的路径
 	requestPath = strings.Replace(requestPath, "..\\", "", -1)
 
+	// 去掉前缀
+	if len(this.urlPrefix) > 0 {
+		if this.urlPrefix[0] != '/' {
+			this.urlPrefix = "/" + this.urlPrefix
+		}
+		this.urlPrefix = strings.TrimRight(this.urlPrefix, "/")
+
+		requestPath = strings.TrimPrefix(requestPath, this.urlPrefix)
+		if len(requestPath) == 0 || requestPath[0] != '/' {
+			requestPath = "/" + requestPath
+		}
+	}
+
 	if requestPath == "/" {
 		// 根目录
 		indexFile := this.findIndexFile(this.root)
 		if len(indexFile) > 0 {
-			this.uri = requestPath + indexFile
+			this.uri = this.urlPrefix + requestPath + indexFile
 			if len(query) > 0 {
 				this.uri += "?" + query
 			}
@@ -52,7 +65,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 				this.serverError(writer)
 				return nil
 			}
-			return this.call(writer)
+			return this.callBegin(writer)
 		} else {
 			this.notFoundError(writer)
 			return nil
@@ -60,7 +73,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	}
 	filename := strings.Replace(requestPath, "/", Tea.DS, -1)
 	filePath := ""
-	if filename[0:1] == Tea.DS {
+	if len(filename) > 0 && filename[0:1] == Tea.DS {
 		filePath = this.root + filename
 	} else {
 		filePath = this.root + Tea.DS + filename
@@ -83,7 +96,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 	if stat.IsDir() {
 		indexFile := this.findIndexFile(filePath)
 		if len(indexFile) > 0 {
-			this.uri = requestPath + indexFile
+			this.uri = this.urlPrefix + requestPath + indexFile
 			if len(query) > 0 {
 				this.uri += "?" + query
 			}
@@ -94,7 +107,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 				this.addError(err)
 				return nil
 			}
-			return this.call(writer)
+			return this.callBegin(writer)
 		} else {
 			this.notFoundError(writer)
 			return nil
@@ -189,7 +202,9 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 		}
 		contentReader = reader
 		if shouldClose {
-			defer contentReader.(*os.File).Close()
+			defer func() {
+				_ = contentReader.(*os.File).Close()
+			}()
 		}
 	} else {
 		reader, err := os.OpenFile(filePath, os.O_RDONLY, 0444)
@@ -212,7 +227,7 @@ func (this *Request) callRoot(writer *ResponseWriter) error {
 
 	// 不使用defer，以便于加快速度
 	if isOpen {
-		contentReader.(*os.File).Close()
+		_ = contentReader.(*os.File).Close()
 	}
 
 	if err != nil {

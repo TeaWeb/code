@@ -26,6 +26,7 @@ type LocationConfig struct {
 	Async       bool          `yaml:"async" json:"async"`             // 是否异步请求 @TODO
 	Notify      []interface{} `yaml:"notify" json:"notify"`           // 转发请求，可以配置转发策略 @TODO
 	LogOnly     bool          `yaml:"logOnly" json:"logOnly"`         // 是否只记录日志 @TODO
+	URLPrefix   string        `yaml:"urlPrefix" json:"urlPrefix"`     // 实际的URL前缀，目前和资源根目录配合使用
 	Root        string        `yaml:"root" json:"root"`               // 资源根目录
 	Index       []string      `yaml:"index" json:"index"`             // 默认文件
 	Charset     string        `yaml:"charset" json:"charset"`         // 字符集设置

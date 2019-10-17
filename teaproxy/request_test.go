@@ -10,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/assert"
 	"net/http"
 	"net/url"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -412,10 +413,12 @@ func TestRequest_RewriteVariables(t *testing.T) {
 	}
 }
 
-func TestPerformanceConfigure(t *testing.T) {
+func BenchmarkPerformanceConfigure(b *testing.B) {
+	runtime.GOMAXPROCS(1)
+
 	rawReq, err := http.NewRequest("GET", "http://www.example.com/hello/world?name=Lu&age=20", bytes.NewBuffer([]byte("hello=world")))
 	if err != nil {
-		t.Fatal(err)
+		b.Fatal(err)
 	}
 
 	server := teaconfigs.NewServerConfig()
@@ -454,10 +457,7 @@ func TestPerformanceConfigure(t *testing.T) {
 
 	err = server.Validate()
 
-	count := 10000
-	before := time.Now()
-
-	for i := 0; i < count; i++ {
+	for i := 0; i < b.N; i++ {
 		req := NewRequest(rawReq)
 		req.uri = "/hello/world?charset=utf-8"
 		req.host = "www.example.com"
@@ -465,12 +465,9 @@ func TestPerformanceConfigure(t *testing.T) {
 
 		err = req.configure(server, 0, false)
 		if err != nil {
-			t.Fatal(err.Error())
+			b.Fatal(err.Error())
 		}
 	}
-
-	cost := time.Since(before).Seconds()
-	t.Log(float64(count)/cost, "qps")
 }
 
 func TestPerformanceFormatHeaders(t *testing.T) {

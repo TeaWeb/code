@@ -33,6 +33,7 @@ func (this *DetailAction) Run(params struct {
 		"root":            location.Root,
 		"charset":         location.Charset,
 		"index":           location.Index,
+		"urlPrefix":       location.URLPrefix,
 		"maxBodySize":     location.MaxBodySize,
 		"enableStat":      !location.DisableStat,
 		"gzip":            location.Gzip,

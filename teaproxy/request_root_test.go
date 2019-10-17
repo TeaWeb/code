@@ -3,11 +3,114 @@ package teaproxy
 import (
 	"fmt"
 	"github.com/dchest/siphash"
+	"github.com/iwind/TeaGo/Tea"
 	stringutil "github.com/iwind/TeaGo/utils/string"
+	"net/url"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"testing"
 )
+
+func TestFormatURLForRoot(t *testing.T) {
+	var uriString = "/www/test/index.html"
+	var root = "/home/www/"
+
+	if !filepath.IsAbs(root) {
+		root = Tea.Root + Tea.DS + root
+	}
+
+	requestPath := uriString
+
+	uri, err := url.ParseRequestURI(uriString)
+	query := ""
+	if err == nil {
+		requestPath = uri.Path
+		query = uri.RawQuery
+	}
+
+	// 去掉其中的奇怪的路径
+	requestPath = strings.Replace(requestPath, "..\\", "", -1)
+
+	t.Log(requestPath, query)
+}
+
+func BenchmarkFormatURLForRoot(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var uriString = "/www/test/index.html"
+		var root = "/home/www/"
+
+		if !filepath.IsAbs(root) {
+			root = Tea.Root + Tea.DS + root
+		}
+
+		requestPath := uriString
+
+		/**uri, err := url.ParseRequestURI(uriString)
+		query := ""
+		if err == nil {
+			requestPath = uri.Path
+			query = uri.RawQuery
+		}**/
+		index := strings.Index(uriString, "?")
+		query := ""
+		if index > -1 {
+			requestPath = uriString[:index]
+			query = uriString[index+1:]
+		}
+
+		// 去掉其中的奇怪的路径
+		requestPath = strings.Replace(requestPath, "..\\", "", -1)
+		_ = query
+		_ = requestPath
+	}
+}
+
+func TestFileStat(t *testing.T) {
+	gopath, _ := os.LookupEnv("GOPATH")
+	if len(gopath) == 0 {
+		return
+	}
+
+	f, err := os.Open(gopath + "/src/github.com/TeaWeb/code/teaproxy/request_root.go")
+	t.Log(f, err)
+	if err == nil {
+		t.Log(f.Stat())
+	}
+}
+
+func BenchmarkFileStat(b *testing.B) {
+	gopath, _ := os.LookupEnv("GOPATH")
+	if len(gopath) == 0 {
+		return
+	}
+
+	for i := 0; i < b.N; i++ {
+		f, err := os.Open(gopath + "/src/github.com/TeaWeb/code/teaproxy/request_root.go")
+		if err == nil {
+			_ = f.Close()
+			_, _ = f.Stat()
+		}
+	}
+}
+
+func BenchmarkFileStat2(b *testing.B) {
+	gopath, _ := os.LookupEnv("GOPATH")
+	if len(gopath) == 0 {
+		return
+	}
+
+	for i := 0; i < b.N; i++ {
+		f, err := os.Open(gopath + "/src/github.com/TeaWeb/code/teaproxy/request_root.go")
+		if err == nil {
+			_ = f.Close()
+		}
+
+		_, _ = os.Stat(gopath + "/src/github.com/TeaWeb/code/teaproxy/request_root.go")
+	}
+}
 
 func TestFileEtag(t *testing.T) {
 	etag := stringutil.Md5(fmt.Sprintf("%d,%d", 1563192836000, 1024))

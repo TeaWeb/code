@@ -63,6 +63,7 @@ func (this *AddAction) RunPost(params struct {
 	Root                 string
 	Charset              string
 	Index                []string
+	URLPrefix            string `alias:"urlPrefix"`
 	MaxBodySize          float64
 	MaxBodyUnit          string
 	AccessLogIsInherited bool
@@ -115,6 +116,7 @@ func (this *AddAction) RunPost(params struct {
 	location.CacheOn = true
 	location.Name = params.Name
 	location.Root = params.Root
+	location.URLPrefix = params.URLPrefix
 	location.Charset = params.Charset
 	location.MaxBodySize = strconv.FormatFloat(params.MaxBodySize, 'f', -1, 64) + params.MaxBodyUnit
 	if params.AccessLogIsInherited {

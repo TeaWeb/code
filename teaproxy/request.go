@@ -76,8 +76,9 @@ type Request struct {
 	uppercaseIgnoreHeaders []string               // 忽略的响应Header
 	varMapping             map[string]string      // 自定义变量
 
-	root  string   // 资源根目录
-	index []string // 目录下默认访问的文件
+	root      string   // 资源根目录
+	urlPrefix string   // URL前缀
+	index     []string // 目录下默认访问的文件
 
 	backend     *teaconfigs.BackendConfig
 	backendCall *shared.RequestCall
@@ -180,6 +181,8 @@ func (this *Request) reset(rawRequest *http.Request) {
 	this.responseHeaders = nil
 	this.uppercaseIgnoreHeaders = nil
 
+	this.urlPrefix = ""
+
 	this.backend = nil
 	this.fastcgi = nil
 	this.proxy = nil
@@ -231,11 +234,15 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 	}
 	redirects++
 
-	uri, err := url.ParseRequestURI(this.uri)
-	if err != nil {
-		return err
+	rawPath := ""
+	rawQuery := ""
+	qIndex := strings.Index(this.uri, "?") // question mark index
+	if qIndex > -1 {
+		rawPath = this.uri[:qIndex]
+		rawQuery = this.uri[qIndex+1:]
+	} else {
+		rawPath = this.uri
 	}
-	path := uri.Path
 
 	// 是否切换了内部的代理服务
 	if isChanged {
@@ -324,11 +331,12 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 			if !location.On {
 				continue
 			}
-			if locationMatches, ok := location.Match(path, this.Format); ok {
+			if locationMatches, ok := location.Match(rawPath, this.Format); ok {
 				this.addVarMapping(locationMatches)
 
 				if len(location.Root) > 0 {
 					this.root = this.Format(location.Root)
+					this.urlPrefix = location.URLPrefix
 					locationConfigured = true
 				}
 				if len(location.Charset) > 0 {
@@ -401,7 +409,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 							continue
 						}
 
-						if replace, varMapping, ok := rule.Match(path, this.Format); ok {
+						if replace, varMapping, ok := rule.Match(rawPath, this.Format); ok {
 							this.addVarMapping(varMapping)
 							this.rewriteId = rule.Id
 							this.rewriteIsPermanent = rule.IsPermanent
@@ -438,13 +446,13 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 							}
 							if len(newURI.RawQuery) > 0 {
 								this.uri = newURI.Path + "?" + newURI.RawQuery
-								if len(uri.RawQuery) > 0 {
-									this.uri += "&" + uri.RawQuery
+								if len(rawQuery) > 0 {
+									this.uri += "&" + rawQuery
 								}
 							} else {
 								this.uri = newURI.Path
-								if len(uri.RawQuery) > 0 {
-									this.uri += "?" + uri.RawQuery
+								if len(rawQuery) > 0 {
+									this.uri += "?" + rawQuery
 								}
 							}
 
@@ -545,7 +553,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 			if !rule.On {
 				continue
 			}
-			if replace, varMapping, ok := rule.Match(path, func(source string) string {
+			if replace, varMapping, ok := rule.Match(rawPath, func(source string) string {
 				return this.Format(source)
 			}); ok {
 				this.addVarMapping(varMapping)
@@ -588,12 +596,12 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 				}
 				if len(newURI.RawQuery) > 0 {
 					this.uri = newURI.Path + "?" + newURI.RawQuery
-					if len(uri.RawQuery) > 0 {
-						this.uri += "&" + uri.RawQuery
+					if len(rawQuery) > 0 {
+						this.uri += "&" + rawQuery
 					}
 				} else {
-					if len(uri.RawQuery) > 0 {
-						this.uri = newURI.Path + "?" + uri.RawQuery
+					if len(rawQuery) > 0 {
+						this.uri = newURI.Path + "?" + rawQuery
 					}
 				}
 
@@ -681,34 +689,16 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 }
 
 func (this *Request) call(writer *ResponseWriter) error {
-	defer func() {
-		// log
-		this.log()
-
-		// call hook
-		CallRequestAfterHook(this, writer)
-	}()
-
 	if this.requestMaxSize > 0 {
 		this.raw.Body = http.MaxBytesReader(writer, this.raw.Body, this.requestMaxSize)
 	}
-
-	// UV
-	/**uid, err := this.raw.Cookie("TeaUID")
-	if err != nil || uid == nil {
-		http.SetCookie(writer, &http.Cookie{
-			Name:    "TeaUID",
-			Value:   stringutil.Rand(32),
-			Path:    "/",
-			Expires: time.Now().Add(24 * time.Hour),
-		})
-	}**/
 
 	this.responseWriter = writer
 
 	// WAF
 	if this.waf != nil {
 		if this.callWAFRequest(writer) {
+			this.callEnd(writer)
 			return nil
 		}
 	}
@@ -716,6 +706,7 @@ func (this *Request) call(writer *ResponseWriter) error {
 	// hook
 	b := CallRequestBeforeHook(this, writer)
 	if !b {
+		this.callEnd(writer)
 		return nil
 	}
 
@@ -725,6 +716,12 @@ func (this *Request) call(writer *ResponseWriter) error {
 		defer writer.Close()
 	}
 
+	err := this.callBegin(writer)
+	this.callEnd(writer)
+	return err
+}
+
+func (this *Request) callBegin(writer *ResponseWriter) error {
 	// watch
 	if this.isWatching {
 		// 判断如果Content-Length过长，则截断
@@ -804,6 +801,14 @@ func (this *Request) call(writer *ResponseWriter) error {
 		return this.callRoot(writer)
 	}
 	return errors.New("unable to handle the request")
+}
+
+func (this *Request) callEnd(writer *ResponseWriter) {
+	// log
+	this.log()
+
+	// call hook
+	CallRequestAfterHook(this, writer)
 }
 
 func (this *Request) notFoundError(writer *ResponseWriter) {
