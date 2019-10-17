@@ -15,12 +15,13 @@ const (
 )
 
 type RuleSet struct {
-	Id        string        `yaml:"id" json:"id"`
-	Code      string        `yaml:"code" json:"code"`
-	On        bool          `yaml:"on" json:"on"`
-	Name      string        `yaml:"name" json:"name"`
-	Rules     []*Rule       `yaml:"rules" json:"rules"`
-	Connector RuleConnector `yaml:"connector" json:"connector"` // rules connector
+	Id          string        `yaml:"id" json:"id"`
+	Code        string        `yaml:"code" json:"code"`
+	On          bool          `yaml:"on" json:"on"`
+	Name        string        `yaml:"name" json:"name"`
+	Description string        `yaml:"description" json:"description"`
+	Rules       []*Rule       `yaml:"rules" json:"rules"`
+	Connector   RuleConnector `yaml:"connector" json:"connector"` // rules connector
 
 	Action        actions.ActionString `yaml:"action" json:"action"`
 	ActionOptions maps.Map             `yaml:"actionOptions" json:"actionOptions"` // TODO TO BE IMPLEMENTED

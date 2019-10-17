@@ -529,7 +529,7 @@ func TestRule_Version(t *testing.T) {
 			Value:    `1.0`,
 		}
 		a.IsNil(rule.Init())
-		a.IsFalse(rule.Test( "0.9"))
+		a.IsFalse(rule.Test("0.9"))
 	}
 
 	{
@@ -696,5 +696,38 @@ func TestRule_IP(t *testing.T) {
 		}
 		a.IsNil(rule.Init())
 		a.IsTrue(rule.Test("192.168.1.100"))
+	}
+
+	{
+		rule := Rule{
+			Operator: RuleOperatorNotIPRange,
+			Value:    "192.168.0.90,192.168.1.100",
+		}
+		a.IsNil(rule.Init())
+		a.IsFalse(rule.Test("192.168.0.100"))
+	}
+	{
+		rule := Rule{
+			Operator: RuleOperatorNotIPRange,
+			Value:    "192.168.0.90,192.168.1.100",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.168.2.100"))
+	}
+	{
+		rule := Rule{
+			Operator: RuleOperatorNotIPRange,
+			Value:    "192.168.0.90/8",
+		}
+		a.IsNil(rule.Init())
+		a.IsFalse(rule.Test("192.168.2.100"))
+	}
+	{
+		rule := Rule{
+			Operator: RuleOperatorNotIPRange,
+			Value:    "192.168.0.90/16",
+		}
+		a.IsNil(rule.Init())
+		a.IsTrue(rule.Test("192.169.2.100"))
 	}
 }

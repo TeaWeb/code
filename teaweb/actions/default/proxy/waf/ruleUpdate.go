@@ -47,7 +47,10 @@ func (this *RuleUpdateAction) RunGet(params struct {
 	if set == nil {
 		this.Fail("找不到规则集")
 	}
-	set.Init()
+	err := set.Init()
+	if err != nil {
+		this.Fail("规则校验失败：" + err.Error())
+	}
 
 	reg := regexp.MustCompile("^\\${([\\w.-]+)}$")
 	this.Data["set"] = set

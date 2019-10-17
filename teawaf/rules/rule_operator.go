@@ -24,15 +24,16 @@ const (
 	RuleOperatorVersionRange RuleOperator = "version range"
 
 	// ip
-	RuleOperatorEqIP     RuleOperator = "eq ip"
-	RuleOperatorGtIP     RuleOperator = "gt ip"
-	RuleOperatorGteIP    RuleOperator = "gte ip"
-	RuleOperatorLtIP     RuleOperator = "lt ip"
-	RuleOperatorLteIP    RuleOperator = "lte ip"
-	RuleOperatorIPRange  RuleOperator = "ip range"
-	RuleOperatorIPMod10  RuleOperator = "ip mod 10"
-	RuleOperatorIPMod100 RuleOperator = "ip mod 100"
-	RuleOperatorIPMod    RuleOperator = "ip mod"
+	RuleOperatorEqIP       RuleOperator = "eq ip"
+	RuleOperatorGtIP       RuleOperator = "gt ip"
+	RuleOperatorGteIP      RuleOperator = "gte ip"
+	RuleOperatorLtIP       RuleOperator = "lt ip"
+	RuleOperatorLteIP      RuleOperator = "lte ip"
+	RuleOperatorIPRange    RuleOperator = "ip range"
+	RuleOperatorNotIPRange RuleOperator = "not ip range"
+	RuleOperatorIPMod10    RuleOperator = "ip mod 10"
+	RuleOperatorIPMod100   RuleOperator = "ip mod 100"
+	RuleOperatorIPMod      RuleOperator = "ip mod"
 
 	RuleCaseInsensitiveNone = "none"
 	RuleCaseInsensitiveYes  = "yes"
@@ -189,6 +190,12 @@ var AllRuleOperators = []*RuleOperatorDefinition{
 		Name:            "IP范围",
 		Code:            RuleOperatorIPRange,
 		Description:     "IP在某个范围之内，范围格式可以是英文逗号分隔的ip1,ip2，或者CIDR格式的ip/bits",
+		CaseInsensitive: RuleCaseInsensitiveNo,
+	},
+	{
+		Name:            "不在IP范围",
+		Code:            RuleOperatorNotIPRange,
+		Description:     "IP不在某个范围之内，范围格式可以是英文逗号分隔的ip1,ip2，或者CIDR格式的ip/bits",
 		CaseInsensitive: RuleCaseInsensitiveNo,
 	},
 	{

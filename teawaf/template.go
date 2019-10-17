@@ -415,7 +415,7 @@ func Template() *WAF {
 			set.AddRule(&rules.Rule{
 				Param:             "${userAgent}",
 				Operator:          rules.RuleOperatorMatch,
-				Value:             `Googlebot|AdsBot|bingbot|BingPreview|facebookexternalhit|Slurp|Sogou|proximic|Baiduspider|spider|python`,
+				Value:             `Googlebot|AdsBot|bingbot|BingPreview|facebookexternalhit|Slurp|Sogou|proximic|Baiduspider|yandex|twitterbot|spider|python`,
 				IsCaseInsensitive: true,
 			})
 
@@ -438,6 +438,7 @@ func Template() *WAF {
 			set := rules.NewRuleSet()
 			set.On = true
 			set.Name = "CC请求数"
+			set.Description = "限制单IP在一定时间内的请求数"
 			set.Code = "8001"
 			set.Connector = rules.RuleConnectorAnd
 			set.Action = actions.ActionBlock
@@ -452,8 +453,26 @@ func Template() *WAF {
 			})
 			set.AddRule(&rules.Rule{
 				Param:             "${remoteAddr}",
-				Operator:          rules.RuleOperatorNotMatch,
-				Value:             `127\.0\.0\.1|192\.168\.1\.100`,
+				Operator:          rules.RuleOperatorNotIPRange,
+				Value:             `127.0.0.1/8`,
+				IsCaseInsensitive: false,
+			})
+			set.AddRule(&rules.Rule{
+				Param:             "${remoteAddr}",
+				Operator:          rules.RuleOperatorNotIPRange,
+				Value:             `192.168.0.1/16`,
+				IsCaseInsensitive: false,
+			})
+			set.AddRule(&rules.Rule{
+				Param:             "${remoteAddr}",
+				Operator:          rules.RuleOperatorNotIPRange,
+				Value:             `10.0.0.1/8`,
+				IsCaseInsensitive: false,
+			})
+			set.AddRule(&rules.Rule{
+				Param:             "${remoteAddr}",
+				Operator:          rules.RuleOperatorNotIPRange,
+				Value:             `172.16.0.1/12`,
 				IsCaseInsensitive: false,
 			})
 

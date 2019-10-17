@@ -435,7 +435,9 @@ func (this *WAF) MergeTemplate() (changedItems []string) {
 			if oldSet == nil {
 				oldGroup.AddRuleSet(set)
 				changedItems = append(changedItems, "+group "+group.Name+" rule set:"+set.Name)
-				continue
+			} else if len(oldSet.Rules) < len(set.Rules) {
+				oldSet.Rules = set.Rules
+				changedItems = append(changedItems, "*group "+group.Name+" rule set:"+set.Name)
 			}
 		}
 	}

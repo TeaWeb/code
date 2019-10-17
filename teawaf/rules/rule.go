@@ -22,6 +22,7 @@ var singleParamRegexp = regexp.MustCompile("^\\${[\\w.-]+}$")
 
 // rule
 type Rule struct {
+	Description       string            `yaml:"description" json:"description"`
 	Param             string            `yaml:"param" json:"param"`       // such as ${arg.name} or ${args}, can be composite as ${arg.firstName}${arg.lastName}
 	Operator          RuleOperator      `yaml:"operator" json:"operator"` // such as contains, gt,  ...
 	Value             string            `yaml:"value" json:"value"`       // compared value
@@ -94,7 +95,7 @@ func (this *Rule) Init() error {
 		if !this.isIP {
 			return errors.New("value should be a valid ip")
 		}
-	case RuleOperatorIPRange:
+	case RuleOperatorIPRange, RuleOperatorNotIPRange:
 		if strings.Contains(this.Value, ",") {
 			ipList := strings.SplitN(this.Value, ",", 2)
 			ipString1 := strings.TrimSpace(ipList[0])
@@ -480,49 +481,9 @@ func (this *Rule) Test(value interface{}) bool {
 		}
 		return this.isIP && bytes.Compare(ip, this.ipValue) <= 0
 	case RuleOperatorIPRange:
-		ip := net.ParseIP(types.String(value))
-		if ip == nil {
-			return false
-		}
-
-		// 检查IP范围格式
-		if strings.Contains(this.Value, ",") {
-			ipList := strings.SplitN(this.Value, ",", 2)
-			ipString1 := strings.TrimSpace(ipList[0])
-			ipString2 := strings.TrimSpace(ipList[1])
-
-			if len(ipString1) > 0 {
-				ip1 := net.ParseIP(ipString1)
-				if ip1 == nil {
-					return false
-				}
-
-				if bytes.Compare(ip, ip1) < 0 {
-					return false
-				}
-			}
-
-			if len(ipString2) > 0 {
-				ip2 := net.ParseIP(ipString2)
-				if ip2 == nil {
-					return false
-				}
-
-				if bytes.Compare(ip, ip2) > 0 {
-					return false
-				}
-			}
-
-			return true
-		} else if strings.Contains(this.Value, "/") {
-			_, ipNet, err := net.ParseCIDR(this.Value)
-			if err != nil {
-				return false
-			}
-			return ipNet.Contains(ip)
-		} else {
-			return false
-		}
+		return this.containsIP(value)
+	case RuleOperatorNotIPRange:
+		return !this.containsIP(value)
 	case RuleOperatorIPMod:
 		pieces := strings.SplitN(this.Value, ",", 2)
 		if len(pieces) == 1 {
@@ -563,6 +524,52 @@ func (this *Rule) unescape(v string) string {
 	v = strings.Replace(v, `/`, `(/|%2F)`, -1)
 	v = strings.Replace(v, `;`, `(;|%3B)`, -1)
 	return v
+}
+
+func (this *Rule) containsIP(value interface{}) bool {
+	ip := net.ParseIP(types.String(value))
+	if ip == nil {
+		return false
+	}
+
+	// 检查IP范围格式
+	if strings.Contains(this.Value, ",") {
+		ipList := strings.SplitN(this.Value, ",", 2)
+		ipString1 := strings.TrimSpace(ipList[0])
+		ipString2 := strings.TrimSpace(ipList[1])
+
+		if len(ipString1) > 0 {
+			ip1 := net.ParseIP(ipString1)
+			if ip1 == nil {
+				return false
+			}
+
+			if bytes.Compare(ip, ip1) < 0 {
+				return false
+			}
+		}
+
+		if len(ipString2) > 0 {
+			ip2 := net.ParseIP(ipString2)
+			if ip2 == nil {
+				return false
+			}
+
+			if bytes.Compare(ip, ip2) > 0 {
+				return false
+			}
+		}
+
+		return true
+	} else if strings.Contains(this.Value, "/") {
+		_, ipNet, err := net.ParseCIDR(this.Value)
+		if err != nil {
+			return false
+		}
+		return ipNet.Contains(ip)
+	} else {
+		return false
+	}
 }
 
 func (this *Rule) ipToInt64(ip net.IP) int64 {
