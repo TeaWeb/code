@@ -27,7 +27,7 @@ const (
 )
 
 // 对象pool
-var requestPool = teautils.NewObjectPool(10240, func() interface{} {
+var requestPool = teautils.NewObjectPool(20480, func() interface{} {
 	return &Request{
 		isNew: true,
 	}

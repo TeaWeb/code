@@ -1,10 +1,12 @@
 package teaproxy
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/dchest/siphash"
 	"github.com/iwind/TeaGo/Tea"
 	stringutil "github.com/iwind/TeaGo/utils/string"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -12,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestFormatURLForRoot(t *testing.T) {
@@ -74,10 +77,22 @@ func TestFileStat(t *testing.T) {
 		return
 	}
 
+	before := time.Now()
 	f, err := os.Open(gopath + "/src/github.com/TeaWeb/code/teaproxy/request_root.go")
+	t.Log("open", time.Since(before).Seconds()*1000, "ms")
+
+	if err == nil {
+		before := time.Now()
+		buf := bytes.NewBuffer([]byte{})
+		_, _ = io.Copy(buf, f)
+		t.Log("copy", time.Since(before).Seconds()*1000, "ms")
+	}
+
 	t.Log(f, err)
 	if err == nil {
+		before := time.Now()
 		t.Log(f.Stat())
+		t.Log("stat", time.Since(before).Seconds()*1000, "ms")
 	}
 }
 
@@ -103,7 +118,7 @@ func BenchmarkFileStat2(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		f, err := os.Open(gopath + "/src/github.com/TeaWeb/code/teaproxy/request_root.go")
+		f, err := os.OpenFile(gopath+"/src/github.com/TeaWeb/code/teaproxy/request_root.go", os.O_RDONLY, 0444)
 		if err == nil {
 			_ = f.Close()
 		}

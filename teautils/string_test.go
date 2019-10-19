@@ -6,17 +6,17 @@ import (
 )
 
 func TestBytesToString(t *testing.T) {
-	t.Log(BytesToString([]byte("Hello,World")))
+	t.Log(UnsafeBytesToString([]byte("Hello,World")))
 }
 
 func TestStringToBytes(t *testing.T) {
-	t.Log(string(StringToBytes("Hello,World")))
+	t.Log(string(UnsafeStringToBytes("Hello,World")))
 }
 
 func BenchmarkBytesToString(b *testing.B) {
 	data := []byte("Hello,World")
 	for i := 0; i < b.N; i++ {
-		_ = BytesToString(data)
+		_ = UnsafeBytesToString(data)
 	}
 }
 
@@ -30,7 +30,7 @@ func BenchmarkBytesToString2(b *testing.B) {
 func BenchmarkStringToBytes(b *testing.B) {
 	s := strings.Repeat("Hello,World", 1024)
 	for i := 0; i < b.N; i++ {
-		_ = StringToBytes(s)
+		_ = UnsafeStringToBytes(s)
 	}
 }
 

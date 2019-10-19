@@ -48,10 +48,10 @@ var textMimeMap = map[string]bool{
 }
 
 // byte pool
-var bytePool256b = teautils.NewBytePool(10240, 256)
-var bytePool1k = teautils.NewBytePool(10240, 1024)
-var bytePool32k = teautils.NewBytePool(10240, 32*1024)
-var bytePool128k = teautils.NewBytePool(10240, 128*1024)
+var bytePool256b = teautils.NewBytePool(20480, 256)
+var bytePool1k = teautils.NewBytePool(20480, 1024)
+var bytePool32k = teautils.NewBytePool(20480, 32*1024)
+var bytePool128k = teautils.NewBytePool(20480, 128*1024)
 
 // 请求定义
 // HTTP HEADER RFC: https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
