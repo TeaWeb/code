@@ -64,7 +64,7 @@ func (this *AdminUser) Granted(grant string) bool {
 func (this *AdminUser) IncreaseLoginTries() {
 	this.locker.Lock()
 	defer this.locker.Unlock()
-	this.countLoginTries ++
+	this.countLoginTries++
 }
 
 func (this *AdminUser) CountLoginTries() uint {

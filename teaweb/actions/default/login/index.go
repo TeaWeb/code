@@ -79,7 +79,7 @@ func (this *IndexAction) RunPost(params struct {
 		}
 
 		// 密码错误
-		if user.Password != params.Password {
+		if !adminConfig.ComparePassword(params.Password, user.Password) {
 			user.IncreaseLoginTries()
 			this.Fail("登录失败，请检查用户名密码")
 		}

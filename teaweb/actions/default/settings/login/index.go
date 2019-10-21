@@ -21,7 +21,11 @@ func (this *IndexAction) Run(params struct{}) {
 		return
 	}
 
-	this.Data["passwordMask"] = strings.Repeat("*", len(user.Password))
+	encryptedType := ""
+	if strings.HasPrefix(user.Password, "md5:") {
+		encryptedType = "md5:"
+	}
+	this.Data["passwordMask"] = encryptedType + strings.Repeat("*", len(user.Password))
 	this.Data["key"] = user.Key
 
 	this.Show()

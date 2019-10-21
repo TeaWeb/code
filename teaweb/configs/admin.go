@@ -6,7 +6,9 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
+	stringutil "github.com/iwind/TeaGo/utils/string"
 	"io/ioutil"
+	"strings"
 	"sync"
 )
 
@@ -92,6 +94,31 @@ func (this *AdminConfig) Save() error {
 	_, err = writer.WriteYAML(this)
 
 	return err
+}
+
+// 加密密码
+func (this *AdminConfig) EncryptPassword(password string) string {
+	if this.Security == nil {
+		return password
+	}
+	switch this.Security.PasswordEncryptType {
+	case "clear":
+		return "clear:" + password
+	case "md5":
+		return "md5:" + stringutil.Md5(password)
+	}
+	return "clear:" + password
+}
+
+// 对比密码
+func (this *AdminConfig) ComparePassword(rawPassword, encryptedPassword string) bool {
+	if strings.HasPrefix(encryptedPassword, "clear:") {
+		return "clear:"+rawPassword == encryptedPassword
+	}
+	if strings.HasPrefix(encryptedPassword, "md5:") {
+		return "md5:"+stringutil.Md5(rawPassword) == encryptedPassword
+	}
+	return rawPassword == encryptedPassword
 }
 
 // 是否包含某个激活的用户名

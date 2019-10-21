@@ -20,16 +20,18 @@ func (this *SecurityAction) Run(params struct{}) {
 	this.Data["security"] = admin.Security
 	this.Data["allowAll"] = lists.ContainsString(admin.Security.Allow, "all")
 	this.Data["userIP"] = this.RequestRemoteIP()
+	this.Data["types"] = configs.PasswordEncryptTypes()
 
 	this.Show()
 }
 
 func (this *SecurityAction) RunPost(params struct {
-	AllowIPs        []string
-	DenyIPs         []string
-	AllowAll        bool
-	DirAutoComplete bool
-	LoginURL        string
+	AllowIPs            []string
+	DenyIPs             []string
+	AllowAll            bool
+	DirAutoComplete     bool
+	LoginURL            string
+	PasswordEncryptType string
 }) {
 	admin := configs.SharedAdminConfig()
 	if admin.Security == nil {
@@ -70,6 +72,7 @@ func (this *SecurityAction) RunPost(params struct {
 		isServerChanged = true
 	}
 	admin.Security.LoginURL = params.LoginURL
+	admin.Security.PasswordEncryptType = params.PasswordEncryptType
 
 	err := admin.Save()
 	if err != nil {

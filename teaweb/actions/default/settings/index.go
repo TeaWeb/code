@@ -22,7 +22,11 @@ func (this *IndexAction) Run(params struct{}) {
 
 	// admin
 	admin := configs.SharedAdminConfig()
+	if admin.Security == nil {
+		admin.Security = configs.NewAdminSecurity()
+	}
 	this.Data["security"] = admin.Security
+	this.Data["passwordEncryptTypeText"] = admin.Security.PasswordEncryptTypeText()
 
 	this.Show()
 }

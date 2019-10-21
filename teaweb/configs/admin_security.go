@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	"net"
 )
 
@@ -11,12 +12,13 @@ import (
 type AdminSecurity struct {
 	TeaVersion string `yaml:"teaVersion" json:"teaVersion"`
 
-	Allow           []string `yaml:"allow" json:"allow"`                     //支持的IP
-	Deny            []string `yaml:"deny" json:"deny"`                       // 拒绝的IP
-	Secret          string   `yaml:"secret" json:"secret"`                   // 密钥
-	IsDisabled      bool     `yaml:"isDisabled" json:"isDisabled"`           // 是否禁用
-	DirAutoComplete bool     `yaml:"dirAutoComplete" json:"dirAutoComplete"` // 是否支持目录自动补全
-	LoginURL        string   `yaml:"loginURL" json:"loginURL"`               // 登录页面的URL
+	Allow               []string `yaml:"allow" json:"allow"`                             //支持的IP
+	Deny                []string `yaml:"deny" json:"deny"`                               // 拒绝的IP
+	Secret              string   `yaml:"secret" json:"secret"`                           // 密钥
+	IsDisabled          bool     `yaml:"isDisabled" json:"isDisabled"`                   // 是否禁用
+	DirAutoComplete     bool     `yaml:"dirAutoComplete" json:"dirAutoComplete"`         // 是否支持目录自动补全
+	LoginURL            string   `yaml:"loginURL" json:"loginURL"`                       // 登录页面的URL
+	PasswordEncryptType string   `yaml:"passwordEncryptType" json:"passwordEncryptType"` // 密码加密方式
 
 	allowIPRanges []*teaconfigs.IPRangeConfig
 	denyIPRanges  []*teaconfigs.IPRangeConfig
@@ -30,12 +32,27 @@ func NewAdminSecurity() *AdminSecurity {
 	}
 }
 
+// 密码加密方式列表
+func PasswordEncryptTypes() []maps.Map {
+	return []maps.Map{
+		{
+			"name": "明文",
+			"code": "clear",
+		},
+		{
+			"name": "MD5",
+			"code": "md5",
+		},
+	}
+}
+
 // 校验
 func (this *AdminSecurity) Validate() error {
-	// 兼容性
+	// 版本兼容性
 	if len(this.TeaVersion) == 0 {
 		this.TeaVersion = teaconst.TeaVersion
 		this.DirAutoComplete = true
+		this.PasswordEncryptType = "clear"
 	}
 
 	this.allowIPRanges = []*teaconfigs.IPRangeConfig{}
@@ -100,4 +117,14 @@ func (this *AdminSecurity) NewLoginURL() string {
 		url = "/" + url
 	}
 	return url
+}
+
+// 获取加密方式文字说明
+func (this *AdminSecurity) PasswordEncryptTypeText() string {
+	for _, m := range PasswordEncryptTypes() {
+		if m.GetString("code") == this.PasswordEncryptType {
+			return m.GetString("name")
+		}
+	}
+	return "明文"
 }

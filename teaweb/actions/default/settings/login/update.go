@@ -1,8 +1,8 @@
 package login
 
 import (
-	"github.com/iwind/TeaGo/actions"
 	"github.com/TeaWeb/code/teaweb/configs"
+	"github.com/iwind/TeaGo/actions"
 )
 
 type UpdateAction actions.Action
@@ -45,7 +45,7 @@ func (this *UpdateAction) RunPost(params struct {
 			user.Username = params.Username
 
 			if len(params.Password) > 0 {
-				user.Password = params.Password
+				user.Password = config.EncryptPassword(params.Password)
 			}
 
 			found = true
