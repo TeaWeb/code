@@ -5,7 +5,6 @@ import (
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"io/ioutil"
 	"sync"
@@ -53,7 +52,23 @@ func SharedAdminConfig() *AdminConfig {
 		return adminConfig
 	}
 
+	err = adminConfig.Validate()
+	if err != nil {
+		logs.Error(err)
+	}
+
 	return adminConfig
+}
+
+// 校验
+func (this *AdminConfig) Validate() error {
+	if this.Security != nil {
+		err := this.Security.Validate()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // 写回配置文件
@@ -61,12 +76,21 @@ func (this *AdminConfig) Save() error {
 	adminConfigLocker.Lock()
 	defer adminConfigLocker.Unlock()
 
+	// 校验
+	err := this.Validate()
+	if err != nil {
+		logs.Error(err)
+	}
+
 	writer, err := files.NewWriter(Tea.ConfigFile("admin.conf"))
 	if err != nil {
 		return err
 	}
-	defer writer.Close()
+	defer func() {
+		_ = writer.Close()
+	}()
 	_, err = writer.WriteYAML(this)
+
 	return err
 }
 
@@ -205,7 +229,7 @@ func (this *AdminConfig) FindAllActiveGrants() []*AdminGrant {
 			NewAdminGrant("测试小Q", AdminGrantQ),
 			NewAdminGrant("API", AdminGrantApi),
 			NewAdminGrant("团队", AdminGrantTeam),
-		} ...)
+		}...)
 	}
 
 	return grants
@@ -218,17 +242,11 @@ func (this *AdminConfig) AddGrant(grant *AdminGrant) {
 
 // 检查是否允许IP
 func (this *AdminConfig) AllowIP(ip string) bool {
-	// deny
-	if len(this.Security.Deny) > 0 && lists.ContainsString(this.Security.Deny, ip) {
-		return false
-	}
-
-	// allow
-	if lists.ContainsString(this.Security.Allow, "all") || lists.ContainsString(this.Security.Allow, "0.0.0.0") || lists.ContainsString(this.Security.Allow, ip) {
+	if this.Security == nil {
 		return true
 	}
 
-	return false
+	return this.Security.AllowIP(ip)
 }
 
 // 重置状态

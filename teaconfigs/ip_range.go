@@ -5,14 +5,16 @@ import (
 	"errors"
 	"github.com/iwind/TeaGo/utils/string"
 	"net"
+	"strings"
 )
 
 // IP Range类型
 type IPRangeType = int
 
 const (
-	IPRangeTypeRange = IPRangeType(1)
-	IPRangeTypeCIDR  = IPRangeType(2)
+	IPRangeTypeRange IPRangeType = 1
+	IPRangeTypeCIDR  IPRangeType = 2
+	IPRangeTypeAll   IPRangeType = 3
 )
 
 // IP Range
@@ -36,6 +38,45 @@ func NewIPRangeConfig() *IPRangeConfig {
 	return &IPRangeConfig{
 		Id: stringutil.Rand(16),
 	}
+}
+
+// 从字符串中分析
+func ParseIPRange(s string) (*IPRangeConfig, error) {
+	if len(s) == 0 {
+		return nil, errors.New("invalid ip range")
+	}
+
+	ipRange := &IPRangeConfig{}
+
+	if s == "all" || s == "ALL" || s == "0.0.0.0" {
+		ipRange.Type = IPRangeTypeAll
+		return ipRange, nil
+	}
+
+	if strings.Contains(s, "/") {
+		ipRange.Type = IPRangeTypeCIDR
+		ipRange.CIDR = strings.Replace(s, " ", "", -1)
+	} else if strings.Contains(s, "-") {
+		ipRange.Type = IPRangeTypeRange
+		pieces := strings.SplitN(s, "-", 2)
+		ipRange.IPFrom = strings.TrimSpace(pieces[0])
+		ipRange.IPTo = strings.TrimSpace(pieces[1])
+	} else if strings.Contains(s, ",") {
+		ipRange.Type = IPRangeTypeRange
+		pieces := strings.SplitN(s, ",", 2)
+		ipRange.IPFrom = strings.TrimSpace(pieces[0])
+		ipRange.IPTo = strings.TrimSpace(pieces[1])
+	} else {
+		ipRange.Type = IPRangeTypeRange
+		ipRange.IPFrom = s
+		ipRange.IPTo = s
+	}
+
+	err := ipRange.Validate()
+	if err != nil {
+		return nil, err
+	}
+	return ipRange, nil
 }
 
 // 校验
@@ -85,6 +126,9 @@ func (this *IPRangeConfig) Contains(ipString string) bool {
 			return false
 		}
 		return bytes.Compare(ip, this.ipFrom) >= 0 && bytes.Compare(ip, this.ipTo) <= 0
+	}
+	if this.Type == IPRangeTypeAll {
+		return true
 	}
 	return false
 }

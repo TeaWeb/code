@@ -13,7 +13,7 @@ func TestGeoConfig_Contains(t *testing.T) {
 		geo.Type = IPRangeTypeRange
 		geo.IPFrom = "192.168.1.100"
 		geo.IPTo = "192.168.1.110"
-		geo.Validate()
+		a.IsNil(geo.Validate())
 		a.IsTrue(geo.Contains("192.168.1.100"))
 		a.IsTrue(geo.Contains("192.168.1.101"))
 		a.IsTrue(geo.Contains("192.168.1.110"))
@@ -24,7 +24,7 @@ func TestGeoConfig_Contains(t *testing.T) {
 		geo := NewIPRangeConfig()
 		geo.Type = IPRangeTypeCIDR
 		geo.CIDR = "192.168.1.1/24"
-		geo.Validate()
+		a.IsNil(geo.Validate())
 		a.IsTrue(geo.Contains("192.168.1.100"))
 		a.IsFalse(geo.Contains("192.168.2.100"))
 	}
@@ -33,7 +33,63 @@ func TestGeoConfig_Contains(t *testing.T) {
 		geo := NewIPRangeConfig()
 		geo.Type = IPRangeTypeCIDR
 		geo.CIDR = "192.168.1.1/16"
-		geo.Validate()
+		a.IsNil(geo.Validate())
 		a.IsTrue(geo.Contains("192.168.2.100"))
+	}
+}
+
+func TestParseIPRange(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	{
+		_, err := ParseIPRange("")
+		a.IsNotNil(err)
+	}
+
+	{
+		r, err := ParseIPRange("192.168.1.100")
+		a.IsNil(err)
+		a.IsTrue(r.IPFrom == r.IPTo)
+		a.IsTrue(r.IPFrom == "192.168.1.100")
+		a.IsTrue(r.Contains("192.168.1.100"))
+		a.IsFalse(r.Contains("192.168.1.99"))
+	}
+
+	{
+		r, err := ParseIPRange("192.168.1.100/24")
+		a.IsNil(err)
+		a.IsTrue(r.CIDR == "192.168.1.100/24")
+		a.IsTrue(r.Contains("192.168.1.100"))
+		a.IsTrue(r.Contains("192.168.1.99"))
+		a.IsFalse(r.Contains("192.168.2.100"))
+	}
+
+	{
+		r, err := ParseIPRange("192.168.1.100, 192.168.1.200")
+		a.IsNil(err)
+		a.IsTrue(r.IPFrom == "192.168.1.100")
+		a.IsTrue(r.IPTo == "192.168.1.200")
+		a.IsTrue(r.Contains("192.168.1.100"))
+		a.IsTrue(r.Contains("192.168.1.150"))
+		a.IsFalse(r.Contains("192.168.2.100"))
+	}
+
+	{
+		r, err := ParseIPRange("192.168.1.100-192.168.1.200")
+		a.IsNil(err)
+		a.IsTrue(r.IPFrom == "192.168.1.100")
+		a.IsTrue(r.IPTo == "192.168.1.200")
+		a.IsTrue(r.Contains("192.168.1.100"))
+		a.IsTrue(r.Contains("192.168.1.150"))
+		a.IsFalse(r.Contains("192.168.2.100"))
+	}
+
+	{
+		r, err := ParseIPRange("all")
+		a.IsNil(err)
+		a.IsTrue(r.Type == IPRangeTypeAll)
+		a.IsTrue(r.Contains("192.168.1.100"))
+		a.IsTrue(r.Contains("192.168.1.150"))
+		a.IsTrue(r.Contains("192.168.2.100"))
 	}
 }
