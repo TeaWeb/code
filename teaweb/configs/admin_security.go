@@ -16,6 +16,7 @@ type AdminSecurity struct {
 	Secret          string   `yaml:"secret" json:"secret"`                   // 密钥
 	IsDisabled      bool     `yaml:"isDisabled" json:"isDisabled"`           // 是否禁用
 	DirAutoComplete bool     `yaml:"dirAutoComplete" json:"dirAutoComplete"` // 是否支持目录自动补全
+	LoginURL        string   `yaml:"loginURL" json:"loginURL"`               // 登录页面的URL
 
 	allowIPRanges []*teaconfigs.IPRangeConfig
 	denyIPRanges  []*teaconfigs.IPRangeConfig
@@ -87,4 +88,16 @@ func (this *AdminSecurity) AllowIP(ip string) bool {
 	}
 
 	return true
+}
+
+// 获取登录URL
+func (this *AdminSecurity) NewLoginURL() string {
+	url := "/login"
+	if len(this.LoginURL) > 0 {
+		url = this.LoginURL
+	}
+	if url[0] != '/' {
+		url = "/" + url
+	}
+	return url
 }

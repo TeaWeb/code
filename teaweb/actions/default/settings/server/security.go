@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/TeaWeb/code/teaweb/actions/default/settings"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
@@ -28,6 +29,7 @@ func (this *SecurityAction) RunPost(params struct {
 	DenyIPs         []string
 	AllowAll        bool
 	DirAutoComplete bool
+	LoginURL        string
 }) {
 	admin := configs.SharedAdminConfig()
 	if admin.Security == nil {
@@ -63,9 +65,19 @@ func (this *SecurityAction) RunPost(params struct {
 
 	admin.Security.DirAutoComplete = params.DirAutoComplete
 
+	isServerChanged := false
+	if admin.Security.LoginURL != params.LoginURL {
+		isServerChanged = true
+	}
+	admin.Security.LoginURL = params.LoginURL
+
 	err := admin.Save()
 	if err != nil {
 		this.Fail("保存失败：" + err.Error())
+	}
+
+	if isServerChanged {
+		settings.NotifyServerChange()
 	}
 
 	this.Next("/settings", map[string]interface{}{})

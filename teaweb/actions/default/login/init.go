@@ -1,11 +1,21 @@
 package login
 
-import "github.com/iwind/TeaGo"
+import (
+	"github.com/TeaWeb/code/teaweb/configs"
+	"github.com/iwind/TeaGo"
+)
 
 func init() {
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {
+		// 自定义登录URL
+		prefix := "/login"
+		security := configs.SharedAdminConfig().Security
+		if security != nil {
+			prefix = security.NewLoginURL()
+		}
+
 		server.
-			Prefix("/login").
+			Prefix(prefix).
 			GetPost("", new(IndexAction)).
 			EndAll()
 	})

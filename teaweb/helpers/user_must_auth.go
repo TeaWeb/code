@@ -153,5 +153,10 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 }
 
 func (this *UserMustAuth) login(action *actions.ActionObject) {
-	action.RedirectURL("/login")
+	security := configs.SharedAdminConfig().Security
+	if security != nil {
+		action.RedirectURL(security.NewLoginURL())
+	} else {
+		action.RedirectURL("/login")
+	}
 }
