@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/types"
 	"strconv"
@@ -40,6 +41,14 @@ func (this *UpdateAction) Run(params struct {
 	// 通知设置
 	server.SetupNoticeItems()
 	this.Data["noticeItems"] = server.NoticeItems
+
+	// 目录补全
+	security := configs.SharedAdminConfig().Security
+	if security != nil {
+		this.Data["dirAutoComplete"] = security.DirAutoComplete
+	} else {
+		this.Data["dirAutoComplete"] = false
+	}
 
 	this.Show()
 }

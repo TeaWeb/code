@@ -2,22 +2,41 @@ package configs
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/logs"
 	"net"
 )
 
 // 安全设置定义
 type AdminSecurity struct {
-	Allow      []string `yaml:"allow" json:"allow"`           //支持的IP
-	Deny       []string `yaml:"deny" json:"deny"`             // 拒绝的IP
-	Secret     string   `yaml:"secret" json:"secret"`         // 密钥
-	IsDisabled bool     `yaml:"isDisabled" json:"isDisabled"` // 是否禁用
+	TeaVersion string `yaml:"teaVersion" json:"teaVersion"`
+
+	Allow           []string `yaml:"allow" json:"allow"`                     //支持的IP
+	Deny            []string `yaml:"deny" json:"deny"`                       // 拒绝的IP
+	Secret          string   `yaml:"secret" json:"secret"`                   // 密钥
+	IsDisabled      bool     `yaml:"isDisabled" json:"isDisabled"`           // 是否禁用
+	DirAutoComplete bool     `yaml:"dirAutoComplete" json:"dirAutoComplete"` // 是否支持目录自动补全
 
 	allowIPRanges []*teaconfigs.IPRangeConfig
 	denyIPRanges  []*teaconfigs.IPRangeConfig
 }
 
+// 获取新对象
+func NewAdminSecurity() *AdminSecurity {
+	return &AdminSecurity{
+		Allow: []string{},
+		Deny:  []string{},
+	}
+}
+
+// 校验
 func (this *AdminSecurity) Validate() error {
+	// 兼容性
+	if len(this.TeaVersion) == 0 {
+		this.TeaVersion = teaconst.TeaVersion
+		this.DirAutoComplete = true
+	}
+
 	this.allowIPRanges = []*teaconfigs.IPRangeConfig{}
 	for _, s := range this.Allow {
 		r, err := teaconfigs.ParseIPRange(s)

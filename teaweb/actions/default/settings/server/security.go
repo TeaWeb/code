@@ -11,6 +11,11 @@ type SecurityAction actions.Action
 // 安全设置
 func (this *SecurityAction) Run(params struct{}) {
 	admin := configs.SharedAdminConfig()
+
+	if admin.Security == nil {
+		admin.Security = configs.NewAdminSecurity()
+	}
+
 	this.Data["security"] = admin.Security
 	this.Data["allowAll"] = lists.ContainsString(admin.Security.Allow, "all")
 	this.Data["userIP"] = this.RequestRemoteIP()
@@ -19,11 +24,16 @@ func (this *SecurityAction) Run(params struct{}) {
 }
 
 func (this *SecurityAction) RunPost(params struct {
-	AllowIPs []string
-	DenyIPs  []string
-	AllowAll bool
+	AllowIPs        []string
+	DenyIPs         []string
+	AllowAll        bool
+	DirAutoComplete bool
 }) {
 	admin := configs.SharedAdminConfig()
+	if admin.Security == nil {
+		admin.Security = configs.NewAdminSecurity()
+	}
+
 	if params.AllowAll {
 		admin.Security.Allow = []string{"all"}
 	} else {
@@ -50,6 +60,8 @@ func (this *SecurityAction) RunPost(params struct {
 		}
 		admin.Security.Deny = ips
 	}
+
+	admin.Security.DirAutoComplete = params.DirAutoComplete
 
 	err := admin.Save()
 	if err != nil {

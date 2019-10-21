@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"strings"
@@ -15,6 +16,14 @@ type AddAction actions.Action
 
 func (this *AddAction) Run(params struct {
 }) {
+	// 目录补全
+	security := configs.SharedAdminConfig().Security
+	if security != nil {
+		this.Data["dirAutoComplete"] = security.DirAutoComplete
+	} else {
+		this.Data["dirAutoComplete"] = false
+	}
+
 	this.Show()
 }
 

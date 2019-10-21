@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
+	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/types"
@@ -49,6 +50,14 @@ func (this *AddAction) Run(params struct {
 		Level:     -1,
 		MinLength: "",
 		MimeTypes: teaconfigs.DefaultGzipMimeTypes,
+	}
+
+	// 目录补全
+	security := configs.SharedAdminConfig().Security
+	if security != nil {
+		this.Data["dirAutoComplete"] = security.DirAutoComplete
+	} else {
+		this.Data["dirAutoComplete"] = false
 	}
 
 	this.Show()
