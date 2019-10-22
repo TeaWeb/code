@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teaevents"
 	"github.com/iwind/TeaGo/logs"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -51,7 +52,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		this.raw.URL.Host = this.host
 	}
 
-	if len(this.backend.Scheme) > 0 && this.backend.Scheme != "http" {
+	if len(this.backend.Scheme) > 0 && this.backend.Scheme != "http" && this.backend.Scheme != "ftp" {
 		this.raw.URL.Scheme = this.backend.Scheme
 	} else {
 		this.raw.URL.Scheme = this.scheme
@@ -108,11 +109,17 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 		}
 	}
 
-	client := SharedClientPool.client(this.backend)
-
 	this.raw.RequestURI = ""
 
-	resp, err := client.Do(this.raw)
+	var resp *http.Response = nil
+	var err error = nil
+	if this.backend.IsFTP() {
+		client := SharedFTPClientPool.client(this.backend)
+		resp, err = client.Do(this.raw)
+	} else {
+		client := SharedHTTPClientPool.client(this.backend)
+		resp, err = client.Do(this.raw)
+	}
 	if err != nil {
 		// 客户端取消请求，则不提示
 		httpErr, ok := err.(*url.Error)
@@ -142,11 +149,14 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 			this.serverError(writer)
 
-			logs.Println("[proxy]" + err.Error())
+			logs.Println("[proxy]'" + this.raw.URL.String() + "': " + err.Error())
 			this.addError(err)
 		} else {
 			this.serverError(writer)
 			this.addError(err)
+		}
+		if resp != nil && resp.Body != nil {
+			_ = resp.Body.Close()
 		}
 		return nil
 	}

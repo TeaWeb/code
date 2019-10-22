@@ -66,6 +66,10 @@ func (this *UpdateAction) Run(params struct {
 		backend.RequestURI = "${requestURI}"
 	}
 
+	if backend.FTP == nil {
+		backend.FTP = &teaconfigs.FTPBackendConfig{}
+	}
+
 	this.Data["backend"] = maps.Map{
 		"id":              backend.Id,
 		"address":         backend.Address,
@@ -91,6 +95,7 @@ func (this *UpdateAction) Run(params struct {
 		"responseHeaders": backend.ResponseHeaders,
 		"host":            backend.Host,
 		"cert":            backend.Cert,
+		"ftp":             backend.FTP,
 	}
 
 	// 公共可以使用的证书
@@ -129,6 +134,10 @@ func (this *UpdateAction) RunPost(params struct {
 	CheckURL      string
 	CheckInterval int
 	CheckTimeout  string
+
+	FtpUsername string
+	FtpPassword string
+	FtpDir      string
 
 	RequestHeaderNames  []string
 	RequestHeaderValues []string
@@ -245,6 +254,15 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 
 	backend.Host = params.Host
+
+	// ftp
+	if params.Scheme == "ftp" {
+		backend.FTP = &teaconfigs.FTPBackendConfig{
+			Username: params.FtpUsername,
+			Password: params.FtpPassword,
+			Dir:      params.FtpDir,
+		}
+	}
 
 	err = server.Save()
 	if err != nil {

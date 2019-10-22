@@ -60,6 +60,10 @@ func (this *AddAction) RunPost(params struct {
 	CertId         string
 	CertServerName string
 
+	FtpDir      string
+	FtpUsername string
+	FtpPassword string
+
 	Weight uint
 	On     bool
 	Code   string
@@ -178,6 +182,15 @@ func (this *AddAction) RunPost(params struct {
 	}
 
 	backend.Host = params.Host
+
+	// ftp
+	if params.Scheme == "ftp" {
+		backend.FTP = &teaconfigs.FTPBackendConfig{
+			Username: params.FtpUsername,
+			Password: params.FtpPassword,
+			Dir:      params.FtpDir,
+		}
+	}
 
 	backendList, err := server.FindBackendList(params.LocationId, params.Websocket)
 	if err != nil {

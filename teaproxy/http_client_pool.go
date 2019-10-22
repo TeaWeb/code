@@ -13,24 +13,24 @@ import (
 	"time"
 )
 
-// 客户端池单例
-var SharedClientPool = NewClientPool()
+// HTTP客户端池单例
+var SharedHTTPClientPool = NewHTTPClientPool()
 
 // 客户端池
-type ClientPool struct {
+type HTTPClientPool struct {
 	clientsMap map[string]*http.Client // backend key => client
 	locker     sync.RWMutex
 }
 
 // 获取新对象
-func NewClientPool() *ClientPool {
-	return &ClientPool{
+func NewHTTPClientPool() *HTTPClientPool {
+	return &HTTPClientPool{
 		clientsMap: map[string]*http.Client{},
 	}
 }
 
 // 根据地址获取客户端
-func (this *ClientPool) client(backend *teaconfigs.BackendConfig) *http.Client {
+func (this *HTTPClientPool) client(backend *teaconfigs.BackendConfig) *http.Client {
 	key := backend.UniqueKey()
 
 	this.locker.RLock()
@@ -122,7 +122,7 @@ func (this *ClientPool) client(backend *teaconfigs.BackendConfig) *http.Client {
 }
 
 // 关闭老的client
-func (this *ClientPool) closeOldClient(key string) {
+func (this *HTTPClientPool) closeOldClient(key string) {
 	backendId := strings.Split(key, "@")[0]
 	for key2, client := range this.clientsMap {
 		backendId2 := strings.Split(key2, "@")[0]

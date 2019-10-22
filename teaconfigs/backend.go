@@ -28,7 +28,7 @@ type BackendConfig struct {
 	Version      int    `yaml:"version" json:"version"`           // 版本号
 	Code         string `yaml:"code" json:"code"`                 // 代号
 	Address      string `yaml:"address" json:"address"`           // 地址
-	Scheme       string `yaml:"scheme" json:"scheme"`             // 协议，http、https、tcp、tcp+tls
+	Scheme       string `yaml:"scheme" json:"scheme"`             // 协议，http、https、tcp、tcp+tls、ftp
 	Weight       uint   `yaml:"weight" json:"weight"`             // 权重
 	IsBackup     bool   `yaml:"backup" json:"isBackup"`           // 是否为备份
 	FailTimeout  string `yaml:"failTimeout" json:"failTimeout"`   // 连接失败超时
@@ -56,6 +56,9 @@ type BackendConfig struct {
 	CheckTimeout  string `yaml:"checkTimeout" json:"checkTimeout"` // 超时时间
 
 	Cert *SSLCertConfig `yaml:"cert" json:"cert"` // 请求源服务器用的证书
+
+	// ftp
+	FTP *FTPBackendConfig `yaml:"ftp" json:"ftp"`
 
 	failTimeoutDuration time.Duration
 	readTimeoutDuration time.Duration
@@ -459,4 +462,9 @@ func (this *BackendConfig) IsHTTP() bool {
 // 是否为TCP
 func (this *BackendConfig) IsTCP() bool {
 	return this.Scheme == "tcp" || this.Scheme == "tcp+tls"
+}
+
+// 是否为FTP
+func (this *BackendConfig) IsFTP() bool {
+	return this.Scheme == "ftp"
 }
