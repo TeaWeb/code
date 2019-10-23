@@ -18,10 +18,14 @@ func TestBackupZip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer fp.Close()
+	defer func() {
+		_ = fp.Close()
+	}()
 
 	z := zip.NewWriter(fp)
-	defer z.Close()
+	defer func() {
+		_ = z.Close()
+	}()
 
 	{
 		h := &zip.FileHeader{
@@ -32,7 +36,7 @@ func TestBackupZip(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		w.Write([]byte("Hello, World"))
+		_, _ = w.Write([]byte("Hello, World"))
 	}
 
 	{
@@ -44,7 +48,7 @@ func TestBackupZip(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		w.Write([]byte("Hello, Hello"))
+		_, _ = w.Write([]byte("Hello, Hello"))
 	}
 }
 

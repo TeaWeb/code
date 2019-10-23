@@ -31,6 +31,7 @@ func init() {
 			Post("/delete", new(DeleteAction)).
 			Post("/restore", new(RestoreAction)).
 			Get("/download", new(DownloadAction)).
+			Post("/clean", new(CleanAction)).
 			EndAll()
 	})
 
@@ -65,10 +66,14 @@ func backupTask() error {
 	if err != nil {
 		return err
 	}
-	defer fp.Close()
+	defer func() {
+		_ = fp.Close()
+	}()
 
 	z := zip.NewWriter(fp)
-	defer z.Close()
+	defer func() {
+		_ = z.Close()
+	}()
 
 	configsDir := files.NewFile(Tea.Root + "/configs")
 	configsAbs, _ := configsDir.AbsPath()
