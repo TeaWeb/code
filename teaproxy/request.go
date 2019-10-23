@@ -755,15 +755,19 @@ func (this *Request) callBegin(writer *ResponseWriter) error {
 	// access policy
 	if this.accessPolicy != nil {
 		if !this.accessPolicy.AllowAccess(this.requestRemoteAddr()) {
-			writer.WriteHeader(http.StatusForbidden)
-			_, _ = writer.Write([]byte("Forbidden Request"))
+			if !this.callPage(writer, http.StatusForbidden) {
+				writer.WriteHeader(http.StatusForbidden)
+				_, _ = writer.Write([]byte("Request Forbidden"))
+			}
 			return nil
 		}
 
 		reason, allowed := this.accessPolicy.AllowTraffic()
 		if !allowed {
-			writer.WriteHeader(http.StatusTooManyRequests)
-			_, _ = writer.Write([]byte("[" + reason + "]Request Quota Exceeded"))
+			if !this.callPage(writer, http.StatusTooManyRequests) {
+				writer.WriteHeader(http.StatusTooManyRequests)
+				_, _ = writer.Write([]byte("[" + reason + "]Request Quota Exceeded"))
+			}
 			return nil
 		}
 	}
