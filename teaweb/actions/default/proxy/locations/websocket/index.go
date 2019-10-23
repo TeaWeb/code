@@ -19,7 +19,7 @@ func (this *IndexAction) Run(params struct {
 		"websocket":  1,
 	}
 
-	_, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "websocket")
+	server, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "websocket")
 
 	if location.Websocket == nil {
 		this.Data["websocket"] = nil
@@ -32,6 +32,9 @@ func (this *IndexAction) Run(params struct {
 			"forwardMode":      location.Websocket.ForwardModeSummary(),
 		}
 	}
+
+	this.Data["isTCP"] = server.IsTCP()
+	this.Data["isHTTP"] = server.IsHTTP()
 
 	this.Show()
 }

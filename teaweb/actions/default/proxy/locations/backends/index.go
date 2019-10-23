@@ -18,7 +18,9 @@ func (this *IndexAction) Run(params struct {
 		"locationId": params.LocationId,
 	}
 
-	locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "backends")
+	server, _ := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "backends")
+	this.Data["isTCP"] = server.IsTCP()
+	this.Data["isHTTP"] = server.IsHTTP()
 
 	this.Show()
 }
