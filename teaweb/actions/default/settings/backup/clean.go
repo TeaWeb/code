@@ -18,6 +18,7 @@ func (this *CleanAction) RunPost(params struct{}) {
 	reg := regexp.MustCompile(`^\d{8}\.zip$`)
 	dir := files.NewFile(Tea.Root + "/backups/")
 	var lastErr error = nil
+	count := 0
 	if dir.Exists() {
 		for _, f := range dir.List() {
 			if !reg.MatchString(f.Name()) {
@@ -29,11 +30,14 @@ func (this *CleanAction) RunPost(params struct{}) {
 					lastErr = err
 					break
 				}
+				count++
 			}
 		}
 	}
+
+	this.Data["count"] = count
 	if lastErr != nil {
-		this.Fail("删除失败：" + lastErr.Error())
+		this.Fail("清除失败：" + lastErr.Error())
 	} else {
 		this.Success()
 	}
