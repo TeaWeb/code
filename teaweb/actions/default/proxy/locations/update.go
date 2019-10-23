@@ -13,6 +13,7 @@ import (
 	"github.com/iwind/TeaGo/types"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type UpdateAction actions.Action
@@ -151,6 +152,12 @@ func (this *UpdateAction) RunPost(params struct {
 		if err != nil {
 			this.Fail("正则表达式校验失败：" + err.Error())
 		}
+	}
+
+	// 自动加上前缀斜杠
+	if params.PatternType == teaconfigs.LocationPatternTypePrefix ||
+		params.PatternType == teaconfigs.LocationPatternTypeExact {
+		params.Pattern = "/" + strings.TrimLeft(params.Pattern, "/")
 	}
 
 	// 匹配条件
