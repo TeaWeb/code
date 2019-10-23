@@ -6,6 +6,7 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"strings"
 )
 
 // 添加服务器菜单
@@ -51,6 +52,38 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 
 			if server.IsTCP() {
 				item.SupName = "tcp"
+			}
+
+			// port
+			ports := []string{}
+			if server.Http {
+				for _, listen := range server.Listen {
+					index := strings.LastIndex(listen, ":")
+					if index > -1 {
+						ports = append(ports, listen[index+1:])
+					}
+				}
+			}
+			if server.SSL != nil && server.SSL.On {
+				for _, listen := range server.SSL.Listen {
+					index := strings.LastIndex(listen, ":")
+					if index > -1 {
+						ports = append(ports, listen[index+1:])
+					}
+				}
+			}
+			if len(ports) > 0 {
+				if len(ports) > 1 {
+					item.SubName = "Port: " + ports[0] + "等 "
+				} else {
+					item.SubName = "Port: " + ports[0]
+				}
+			}
+
+			// on | off
+			if (server.IsHTTP() && !server.Http && (server.SSL == nil || !server.SSL.On)) || (server.IsTCP() && (server.TCP == nil || !server.TCP.TCPOn)) {
+				item.SubName = "未启用"
+				item.SubColor = "red"
 			}
 
 			if server.Id == serverId {
