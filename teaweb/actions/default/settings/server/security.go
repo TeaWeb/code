@@ -26,8 +26,8 @@ func (this *SecurityAction) Run(params struct{}) {
 }
 
 func (this *SecurityAction) RunPost(params struct {
-	AllowIPs            []string
-	DenyIPs             []string
+	AllowIPValues       []string
+	DenyIPValues        []string
 	AllowAll            bool
 	DirAutoComplete     bool
 	LoginURL            string
@@ -42,7 +42,7 @@ func (this *SecurityAction) RunPost(params struct {
 		admin.Security.Allow = []string{"all"}
 	} else {
 		ips := []string{}
-		for _, ip := range params.AllowIPs {
+		for _, ip := range params.AllowIPValues {
 			if len(ip) > 0 {
 				ips = append(ips, ip)
 			}
@@ -57,7 +57,7 @@ func (this *SecurityAction) RunPost(params struct {
 
 	{
 		ips := []string{}
-		for _, ip := range params.DenyIPs {
+		for _, ip := range params.DenyIPValues {
 			if len(ip) > 0 {
 				ips = append(ips, ip)
 			}

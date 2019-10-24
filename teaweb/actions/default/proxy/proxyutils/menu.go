@@ -60,7 +60,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 				for _, listen := range server.Listen {
 					index := strings.LastIndex(listen, ":")
 					if index > -1 {
-						ports = append(ports, listen[index+1:])
+						ports = append(ports, ":"+listen[index+1:])
 					}
 				}
 			}
@@ -68,15 +68,15 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 				for _, listen := range server.SSL.Listen {
 					index := strings.LastIndex(listen, ":")
 					if index > -1 {
-						ports = append(ports, listen[index+1:])
+						ports = append(ports, ":"+listen[index+1:])
 					}
 				}
 			}
 			if len(ports) > 0 {
-				if len(ports) > 1 {
-					item.SubName = "Port: " + ports[0] + "等 "
+				if len(ports) > 2 {
+					item.SubName = ports[0] + ", " + ports[1] + "等 "
 				} else {
-					item.SubName = "Port: " + ports[0]
+					item.SubName = strings.Join(ports, ", ") + " "
 				}
 			}
 

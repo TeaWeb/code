@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/settings"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
@@ -12,9 +13,10 @@ import (
 
 type HttpsUpdateAction actions.Action
 
+// 保存HTTPS设置
 func (this *HttpsUpdateAction) Run(params struct {
-	On        bool
-	Addresses string
+	On           bool
+	ListenValues []string
 
 	CertType string
 	CertFile *actions.File
@@ -23,9 +25,9 @@ func (this *HttpsUpdateAction) Run(params struct {
 
 	Must *actions.Must
 }) {
-	params.Must.
-		Field("addresses", params.Addresses).
-		Require("请输入绑定地址")
+	if len(params.ListenValues) == 0 {
+		this.Fail("请输入绑定地址")
+	}
 
 	server, err := teaconfigs.LoadWebConfig()
 	if err != nil {
@@ -35,8 +37,8 @@ func (this *HttpsUpdateAction) Run(params struct {
 	server.Https.On = params.On
 
 	listen := []string{}
-	for _, addr := range strings.Split(params.Addresses, "\n") {
-		addr = strings.TrimSpace(addr)
+	for _, addr := range params.ListenValues {
+		addr = teautils.FormatAddress(addr)
 		if len(addr) == 0 {
 			continue
 		}

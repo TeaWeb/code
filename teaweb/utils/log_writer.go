@@ -16,13 +16,19 @@ func (this *LogWriter) Init() {
 	// 创建目录
 	dir := files.NewFile(Tea.LogDir())
 	if !dir.Exists() {
-		dir.Mkdir()
+		err := dir.Mkdir()
+		if err != nil {
+			log.Println("[error]" + err.Error())
+		}
 	}
 
 	// 先删除原来的
 	logFile := files.NewFile(Tea.LogFile("teaweb.log"))
 	if logFile.Exists() {
-		logFile.Delete()
+		err := logFile.Delete()
+		if err != nil {
+			log.Println("[error]" + err.Error())
+		}
 	}
 
 	// 打开要写入的日志文件
@@ -38,12 +44,15 @@ func (this *LogWriter) Write(message string) {
 	log.Println(message)
 
 	if this.fileAppender != nil {
-		this.fileAppender.AppendString(timeutil.Format("Y/m/d H:i:s ") + message + "\n")
+		_, err := this.fileAppender.AppendString(timeutil.Format("Y/m/d H:i:s ") + message + "\n")
+		if err != nil {
+			log.Println("[error]" + err.Error())
+		}
 	}
 }
 
 func (this *LogWriter) Close() {
 	if this.fileAppender != nil {
-		this.fileAppender.Close()
+		_ = this.fileAppender.Close()
 	}
 }
