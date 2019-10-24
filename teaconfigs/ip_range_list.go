@@ -1,8 +1,10 @@
 package teaconfigs
 
+import "github.com/TeaWeb/code/teaconfigs/shared"
+
 // IP Range列表
 type IPRangeList struct {
-	IPRanges []*IPRangeConfig
+	IPRanges []*shared.IPRangeConfig
 }
 
 // 校验
@@ -17,13 +19,13 @@ func (this *IPRangeList) Validate() error {
 }
 
 // 添加
-func (this *IPRangeList) AddIPRange(ipRange *IPRangeConfig) {
+func (this *IPRangeList) AddIPRange(ipRange *shared.IPRangeConfig) {
 	this.IPRanges = append(this.IPRanges, ipRange)
 }
 
 // 删除
 func (this *IPRangeList) RemoveIPRange(ipRangeId string) {
-	result := []*IPRangeConfig{}
+	result := []*shared.IPRangeConfig{}
 	for _, r := range this.IPRanges {
 		if r.Id == ipRangeId {
 			continue

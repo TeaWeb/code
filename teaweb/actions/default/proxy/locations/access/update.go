@@ -55,12 +55,12 @@ func (this *UpdateAction) RunPost(params struct {
 	TrafficMonthTotal    int64
 	TrafficMonthDuration int64
 
-	AccessOn       bool
-	AccessAllowOn  bool
-	AccessAllowIPs []string
+	AccessOn            bool
+	AccessAllowOn       bool
+	AccessAllowIPValues []string
 
-	AccessDenyOn  bool
-	AccessDenyIPs []string
+	AccessDenyOn       bool
+	AccessDenyIPValues []string
 
 	Must *actions.Must
 }) {
@@ -107,7 +107,7 @@ func (this *UpdateAction) RunPost(params struct {
 	policy.Access.On = params.AccessOn
 	policy.Access.AllowOn = params.AccessAllowOn
 	policy.Access.Allow = []*shared.ClientConfig{}
-	for _, ip := range params.AccessAllowIPs {
+	for _, ip := range params.AccessAllowIPValues {
 		if len(ip) > 0 {
 			client := shared.NewClientConfig()
 			client.IP = ip
@@ -117,7 +117,7 @@ func (this *UpdateAction) RunPost(params struct {
 
 	policy.Access.DenyOn = params.AccessDenyOn
 	policy.Access.Deny = []*shared.ClientConfig{}
-	for _, ip := range params.AccessDenyIPs {
+	for _, ip := range params.AccessDenyIPValues {
 		if len(ip) > 0 {
 			client := shared.NewClientConfig()
 			client.IP = ip

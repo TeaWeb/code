@@ -9,13 +9,13 @@ import (
 type RequestGroup struct {
 	BackendList `yaml:",inline"`
 
-	Id              string                 `yaml:"id" json:"id"`                           // ID
-	Name            string                 `yaml:"name" json:"name"`                       // 名称
-	Cond            []*shared.RequestCond  `yaml:"conds" json:"conds"`                     // 匹配条件
-	IPRanges        []*IPRangeConfig       `yaml:"ipRanges" json:"ipRanges"`               // IP范围
-	IsDefault       bool                   `yaml:"isDefault" json:"isDefault"`             // 是否为默认分组
-	RequestHeaders  []*shared.HeaderConfig `yaml:"requestHeaders" json:"requestHeaders"`   // 请求Header
-	ResponseHeaders []*shared.HeaderConfig `yaml:"responseHeaders" json:"responseHeaders"` // 响应Header
+	Id              string                  `yaml:"id" json:"id"`                           // ID
+	Name            string                  `yaml:"name" json:"name"`                       // 名称
+	Cond            []*shared.RequestCond   `yaml:"conds" json:"conds"`                     // 匹配条件
+	IPRanges        []*shared.IPRangeConfig `yaml:"ipRanges" json:"ipRanges"`               // IP范围
+	IsDefault       bool                    `yaml:"isDefault" json:"isDefault"`             // 是否为默认分组
+	RequestHeaders  []*shared.HeaderConfig  `yaml:"requestHeaders" json:"requestHeaders"`   // 请求Header
+	ResponseHeaders []*shared.HeaderConfig  `yaml:"responseHeaders" json:"responseHeaders"` // 响应Header
 
 	hasConds           bool
 	hasIPRanges        bool
@@ -80,7 +80,7 @@ func (this *RequestGroup) AddCond(cond *shared.RequestCond) {
 }
 
 // 添加IP范围
-func (this *RequestGroup) AddIPRange(ipRange *IPRangeConfig) {
+func (this *RequestGroup) AddIPRange(ipRange *shared.IPRangeConfig) {
 	this.IPRanges = append(this.IPRanges, ipRange)
 }
 

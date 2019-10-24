@@ -87,7 +87,7 @@ func (this *UpdateAction) RunPost(params struct {
 
 	group.Name = params.Name
 	group.Cond = []*shared.RequestCond{}
-	group.IPRanges = []*teaconfigs.IPRangeConfig{}
+	group.IPRanges = []*shared.IPRangeConfig{}
 	group.RequestHeaders = []*shared.HeaderConfig{}
 	group.ResponseHeaders = []*shared.HeaderConfig{}
 
@@ -103,8 +103,8 @@ func (this *UpdateAction) RunPost(params struct {
 		for index, ipRangeType := range params.IPRangeTypeList {
 			if index < len(params.IPRangeFromList) && index < len(params.IPRangeToList) && index < len(params.IPRangeCIDRIPList) && index < len(params.IPRangeCIDRBitsList) {
 				if ipRangeType == "range" {
-					config := teaconfigs.NewIPRangeConfig()
-					config.Type = teaconfigs.IPRangeTypeRange
+					config := shared.NewIPRangeConfig()
+					config.Type = shared.IPRangeTypeRange
 					config.IPFrom = params.IPRangeFromList[index]
 					config.IPTo = params.IPRangeToList[index]
 					config.Param = params.IPRangeVarList[index]
@@ -114,8 +114,8 @@ func (this *UpdateAction) RunPost(params struct {
 					}
 					group.AddIPRange(config)
 				} else if ipRangeType == "cidr" {
-					config := teaconfigs.NewIPRangeConfig()
-					config.Type = teaconfigs.IPRangeTypeCIDR
+					config := shared.NewIPRangeConfig()
+					config.Type = shared.IPRangeTypeCIDR
 					config.CIDR = params.IPRangeCIDRIPList[index] + "/" + params.IPRangeCIDRBitsList[index]
 					config.Param = params.IPRangeVarList[index]
 					err := config.Validate()

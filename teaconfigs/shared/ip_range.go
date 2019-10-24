@@ -1,10 +1,11 @@
-package teaconfigs
+package shared
 
 import (
 	"bytes"
 	"errors"
 	"github.com/iwind/TeaGo/utils/string"
 	"net"
+	"regexp"
 	"strings"
 )
 
@@ -12,9 +13,10 @@ import (
 type IPRangeType = int
 
 const (
-	IPRangeTypeRange IPRangeType = 1
-	IPRangeTypeCIDR  IPRangeType = 2
-	IPRangeTypeAll   IPRangeType = 3
+	IPRangeTypeRange    IPRangeType = 1
+	IPRangeTypeCIDR     IPRangeType = 2
+	IPRangeTypeAll      IPRangeType = 3
+	IPRangeTypeWildcard IPRangeType = 4 // 通配符，可以使用*
 )
 
 // IP Range
@@ -31,6 +33,7 @@ type IPRangeConfig struct {
 	cidr   *net.IPNet
 	ipFrom net.IP
 	ipTo   net.IP
+	reg    *regexp.Regexp
 }
 
 // 获取新对象
@@ -66,6 +69,10 @@ func ParseIPRange(s string) (*IPRangeConfig, error) {
 		pieces := strings.SplitN(s, ",", 2)
 		ipRange.IPFrom = strings.TrimSpace(pieces[0])
 		ipRange.IPTo = strings.TrimSpace(pieces[1])
+	} else if strings.Contains(s, "*") {
+		ipRange.Type = IPRangeTypeWildcard
+		s = "^" + strings.Replace(regexp.QuoteMeta(s), `\*`, `\d+`, -1) + "$"
+		ipRange.reg = regexp.MustCompile(s)
 	} else {
 		ipRange.Type = IPRangeTypeRange
 		ipRange.IPFrom = s
@@ -126,6 +133,12 @@ func (this *IPRangeConfig) Contains(ipString string) bool {
 			return false
 		}
 		return bytes.Compare(ip, this.ipFrom) >= 0 && bytes.Compare(ip, this.ipTo) <= 0
+	}
+	if this.Type == IPRangeTypeWildcard {
+		if this.reg == nil {
+			return false
+		}
+		return this.reg.MatchString(ipString)
 	}
 	if this.Type == IPRangeTypeAll {
 		return true

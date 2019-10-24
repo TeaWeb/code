@@ -1,7 +1,7 @@
 package configs
 
 import (
-	"github.com/TeaWeb/code/teaconfigs"
+	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
@@ -20,8 +20,8 @@ type AdminSecurity struct {
 	LoginURL            string   `yaml:"loginURL" json:"loginURL"`                       // 登录页面的URL
 	PasswordEncryptType string   `yaml:"passwordEncryptType" json:"passwordEncryptType"` // 密码加密方式
 
-	allowIPRanges []*teaconfigs.IPRangeConfig
-	denyIPRanges  []*teaconfigs.IPRangeConfig
+	allowIPRanges []*shared.IPRangeConfig
+	denyIPRanges  []*shared.IPRangeConfig
 }
 
 // 获取新对象
@@ -55,9 +55,9 @@ func (this *AdminSecurity) Validate() error {
 		this.PasswordEncryptType = "clear"
 	}
 
-	this.allowIPRanges = []*teaconfigs.IPRangeConfig{}
+	this.allowIPRanges = []*shared.IPRangeConfig{}
 	for _, s := range this.Allow {
-		r, err := teaconfigs.ParseIPRange(s)
+		r, err := shared.ParseIPRange(s)
 		if err != nil {
 			logs.Error(err)
 		} else {
@@ -65,9 +65,9 @@ func (this *AdminSecurity) Validate() error {
 		}
 	}
 
-	this.denyIPRanges = []*teaconfigs.IPRangeConfig{}
+	this.denyIPRanges = []*shared.IPRangeConfig{}
 	for _, s := range this.Deny {
-		r, err := teaconfigs.ParseIPRange(s)
+		r, err := shared.ParseIPRange(s)
 		if err != nil {
 			logs.Error(err)
 		} else {

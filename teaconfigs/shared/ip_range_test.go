@@ -1,4 +1,4 @@
-package teaconfigs
+package shared
 
 import (
 	"github.com/iwind/TeaGo/assert"
@@ -91,5 +91,35 @@ func TestParseIPRange(t *testing.T) {
 		a.IsTrue(r.Contains("192.168.1.100"))
 		a.IsTrue(r.Contains("192.168.1.150"))
 		a.IsTrue(r.Contains("192.168.2.100"))
+	}
+
+	{
+		r, err := ParseIPRange("192.168.1.*")
+		a.IsNil(err)
+		if r != nil {
+			a.IsTrue(r.Type == IPRangeTypeWildcard)
+			a.IsTrue(r.Contains("192.168.1.100"))
+			a.IsFalse(r.Contains("192.168.2.100"))
+		}
+	}
+
+	{
+		r, err := ParseIPRange("192.168.*.*")
+		a.IsNil(err)
+		if r != nil {
+			a.IsTrue(r.Type == IPRangeTypeWildcard)
+			a.IsTrue(r.Contains("192.168.1.100"))
+			a.IsTrue(r.Contains("192.168.2.100"))
+		}
+	}
+}
+
+func BenchmarkIPRangeConfig_Contains(b *testing.B) {
+	r, err := ParseIPRange("192.168.1.*")
+	if err != nil {
+		b.Fatal(err)
+	}
+	for i := 0; i < b.N; i++ {
+		_ = r.Contains("192.168.1.100")
 	}
 }

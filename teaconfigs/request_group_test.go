@@ -28,8 +28,8 @@ func TestRequestGroup_Match(t *testing.T) {
 	{
 		group := NewRequestGroup()
 		{
-			ipRange := NewIPRangeConfig()
-			ipRange.Type = IPRangeTypeRange
+			ipRange := shared.NewIPRangeConfig()
+			ipRange.Type = shared.IPRangeTypeRange
 			ipRange.Param = "${remoteAddr}"
 			ipRange.IPFrom = "192.168.1.1"
 			ipRange.IPTo = "192.168.1.200"
@@ -45,8 +45,8 @@ func TestRequestGroup_Match(t *testing.T) {
 	{
 		group := NewRequestGroup()
 		{
-			ipRange := NewIPRangeConfig()
-			ipRange.Type = IPRangeTypeRange
+			ipRange := shared.NewIPRangeConfig()
+			ipRange.Type = shared.IPRangeTypeRange
 			ipRange.Param = "${remoteAddr}"
 			ipRange.IPFrom = "192.168.1.1"
 			ipRange.IPTo = "192.168.1.100"
@@ -62,8 +62,8 @@ func TestRequestGroup_Match(t *testing.T) {
 	{
 		group := NewRequestGroup()
 		{
-			ipRange := NewIPRangeConfig()
-			ipRange.Type = IPRangeTypeRange
+			ipRange := shared.NewIPRangeConfig()
+			ipRange.Type = shared.IPRangeTypeRange
 			ipRange.Param = "${remoteAddr}"
 			ipRange.IPFrom = "192.168.1.1"
 			ipRange.IPTo = "192.168.1.99"
@@ -79,8 +79,8 @@ func TestRequestGroup_Match(t *testing.T) {
 	{
 		group := NewRequestGroup()
 		{
-			ipRange := NewIPRangeConfig()
-			ipRange.Type = IPRangeTypeCIDR
+			ipRange := shared.NewIPRangeConfig()
+			ipRange.Type = shared.IPRangeTypeCIDR
 			ipRange.Param = "${remoteAddr}"
 			ipRange.CIDR = "192.168.1.1/24"
 			group.AddIPRange(ipRange)
@@ -102,8 +102,8 @@ func TestRequestGroup_Match(t *testing.T) {
 			group.AddCond(cond)
 		}
 		{
-			ipRange := NewIPRangeConfig()
-			ipRange.Type = IPRangeTypeCIDR
+			ipRange := shared.NewIPRangeConfig()
+			ipRange.Type = shared.IPRangeTypeCIDR
 			ipRange.Param = "${remoteAddr}"
 			ipRange.CIDR = "192.168.1.1/24"
 			group.AddIPRange(ipRange)
