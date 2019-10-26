@@ -16,17 +16,17 @@ func TestAdminConfig_ComparePassword(t *testing.T) {
 
 	{
 		config := AdminConfig{}
-		a.IsTrue(config.ComparePassword("123456", "123456"))
+		a.IsTrue(config.ComparePassword(stringutil.Md5("123456"), "123456"))
 	}
 
 	{
 		config := AdminConfig{}
-		a.IsTrue(config.ComparePassword("123456", "clear:123456"))
+		a.IsTrue(config.ComparePassword(stringutil.Md5("123456"), "clear:123456"))
 	}
 
 	{
 		config := AdminConfig{}
-		a.IsTrue(config.ComparePassword("123456", "md5:"+stringutil.Md5("123456")))
-		a.IsFalse(config.ComparePassword("123456789", "md5:"+stringutil.Md5("123456")))
+		a.IsTrue(config.ComparePassword(stringutil.Md5("123456"), "md5:"+stringutil.Md5("123456")))
+		a.IsFalse(config.ComparePassword(stringutil.Md5("123456789"), "md5:"+stringutil.Md5("123456")))
 	}
 }

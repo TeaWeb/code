@@ -1,6 +1,7 @@
 package login
 
 import (
+	"fmt"
 	"github.com/TeaWeb/code/teaconfigs/audits"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teadb"
@@ -9,11 +10,15 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/types"
+	stringutil "github.com/iwind/TeaGo/utils/string"
 	"net/http"
 	"time"
 )
 
 type IndexAction actions.Action
+
+var TokenSalt = stringutil.Rand(32)
 
 // 登录
 func (this *IndexAction) RunGet() {
@@ -31,6 +36,9 @@ func (this *IndexAction) RunGet() {
 
 	this.Data["teaDemoEnabled"] = teaconst.DemoEnabled
 
+	timestamp := fmt.Sprintf("%d", time.Now().Unix())
+	this.Data["token"] = stringutil.Md5(TokenSalt+timestamp) + timestamp
+
 	this.Show()
 }
 
@@ -38,6 +46,7 @@ func (this *IndexAction) RunGet() {
 func (this *IndexAction) RunPost(params struct {
 	Username string
 	Password string
+	Token    string
 	Remember bool
 	Must     *actions.Must
 	Auth     *helpers.UserShouldAuth
@@ -70,6 +79,24 @@ func (this *IndexAction) RunPost(params struct {
 		Field("password", params.Password).
 		Require("请输入密码")
 
+	if params.Password == stringutil.Md5("") {
+		this.FailField("password", "请输入密码")
+	}
+
+	// 检查token
+	if len(params.Token) <= 32 {
+		this.Fail("请通过登录页面登录")
+	}
+	timestampString := params.Token[32:]
+	if stringutil.Md5(TokenSalt+timestampString) != params.Token[:32] {
+		this.Fail("登录页面已过期，请刷新后重试")
+	}
+	timestamp := types.Int64(timestampString)
+	if timestamp < time.Now().Unix()-1800 {
+		this.Fail("登录页面已过期，请刷新后重试")
+	}
+
+	// 查找用户
 	adminConfig := configs.SharedAdminConfig()
 	user := adminConfig.FindActiveUser(params.Username)
 	if user != nil {

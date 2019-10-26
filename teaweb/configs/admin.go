@@ -111,14 +111,14 @@ func (this *AdminConfig) EncryptPassword(password string) string {
 }
 
 // 对比密码
-func (this *AdminConfig) ComparePassword(rawPassword, encryptedPassword string) bool {
+func (this *AdminConfig) ComparePassword(inputPassword, encryptedPassword string) bool {
 	if strings.HasPrefix(encryptedPassword, "clear:") {
-		return "clear:"+rawPassword == encryptedPassword
+		return inputPassword == stringutil.Md5(encryptedPassword[len("clear:"):])
 	}
 	if strings.HasPrefix(encryptedPassword, "md5:") {
-		return "md5:"+stringutil.Md5(rawPassword) == encryptedPassword
+		return inputPassword == encryptedPassword[len("md5:"):]
 	}
-	return rawPassword == encryptedPassword
+	return inputPassword == stringutil.Md5(encryptedPassword)
 }
 
 // 是否包含某个激活的用户名
