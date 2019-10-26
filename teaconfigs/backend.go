@@ -19,6 +19,8 @@ import (
 
 // 服务后端配置
 type BackendConfig struct {
+	nextBackend *BackendConfig // 等待切换的下一个Backend
+
 	shared.HeaderList `yaml:",inline"`
 
 	TeaVersion string `yaml:"teaVersion" json:"teaVersion"`
@@ -218,6 +220,9 @@ func (this *BackendConfig) IncreaseConn() int32 {
 
 // 减少连接数，并返回减少之后的数字
 func (this *BackendConfig) DecreaseConn() int32 {
+	if this.nextBackend != nil {
+		return this.nextBackend.DecreaseConn()
+	}
 	return atomic.AddInt32(&this.CurrentConns, -1)
 }
 
@@ -438,6 +443,7 @@ func (this *BackendConfig) CloneState(oldBackend *BackendConfig) {
 	if oldBackend == nil {
 		return
 	}
+	oldBackend.nextBackend = this
 	this.IsDown = oldBackend.IsDown
 	this.DownTime = oldBackend.DownTime
 	this.CurrentFails = oldBackend.CurrentFails
