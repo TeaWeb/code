@@ -135,15 +135,13 @@ func TestAPIAccessPolicyMinute(t *testing.T) {
 	//a.IsTrue(p.AllowTraffic())
 }
 
-func TestAPIAccessPolicyPerformance(t *testing.T) {
-	times := 100000
-	before := time.Now()
+func BenchmarkAccessPolicyPerformance(b *testing.B) {
+	p := AccessPolicy{}
 
-	locker := sync.Mutex{}
-	for i := 0; i < times; i ++ {
+	for i := 0; i < b.N; i++ {
+		locker := sync.Mutex{}
 		locker.Lock()
 
-		p := AccessPolicy{}
 		p.Traffic.On = true
 		p.Traffic.Second.On = true
 		p.Traffic.Second.Duration = 1
@@ -165,8 +163,6 @@ func TestAPIAccessPolicyPerformance(t *testing.T) {
 
 		locker.Unlock()
 	}
-
-	t.Log(int(float64(times) / time.Since(before).Seconds()))
 }
 
 func TestAccessPolicy_AllowAccess(t *testing.T) {

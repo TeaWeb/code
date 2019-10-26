@@ -17,7 +17,7 @@ type AccessPolicy struct {
 			On    bool  `yaml:"on" json:"on"`       // 是否开启
 			Total int64 `yaml:"total" json:"total"` // 总量
 			Used  int64 `yaml:"used" json:"used"`   // 已使用量
-		} `yaml:"total" json:"total"`    // 总量控制
+		} `yaml:"total" json:"total"` // 总量控制
 		Second struct {
 			On       bool  `yaml:"on" json:"on"`             // 是否开启
 			Total    int64 `yaml:"total" json:"total"`       // 总量
@@ -201,13 +201,13 @@ func (this *AccessPolicy) IncreaseTraffic() {
 
 	// total
 	if this.Traffic.Total.On {
-		this.Traffic.Total.Used ++
+		this.Traffic.Total.Used++
 	}
 
 	// second
 	if this.Traffic.Second.On && this.Traffic.Second.Duration > 0 {
 		if timestamp-this.Traffic.Second.FromTime < this.Traffic.Second.Duration {
-			this.Traffic.Second.Used ++
+			this.Traffic.Second.Used++
 		} else {
 			this.Traffic.Second.FromTime = timestamp
 			this.Traffic.Second.Used = 1
@@ -217,7 +217,7 @@ func (this *AccessPolicy) IncreaseTraffic() {
 	// minute
 	if this.Traffic.Minute.On && this.Traffic.Minute.Duration > 0 {
 		if timestamp >= this.Traffic.Minute.FromTime && timestamp < this.Traffic.Minute.ToTime {
-			this.Traffic.Minute.Used ++
+			this.Traffic.Minute.Used++
 		} else {
 			this.Traffic.Minute.Used = 1
 			fromTime := time.Date(year, month, day, hour, minute, 0, 0, time.Local)
@@ -229,7 +229,7 @@ func (this *AccessPolicy) IncreaseTraffic() {
 	// hour
 	if this.Traffic.Hour.On && this.Traffic.Hour.Duration > 0 {
 		if timestamp >= this.Traffic.Hour.FromTime && timestamp < this.Traffic.Hour.ToTime {
-			this.Traffic.Hour.Used ++
+			this.Traffic.Hour.Used++
 		} else {
 			this.Traffic.Hour.Used = 1
 			fromTime := time.Date(year, month, day, hour, 0, 0, 0, time.Local)
@@ -241,7 +241,7 @@ func (this *AccessPolicy) IncreaseTraffic() {
 	// day
 	if this.Traffic.Day.On && this.Traffic.Day.Duration > 0 {
 		if timestamp >= this.Traffic.Day.FromTime && timestamp < this.Traffic.Day.ToTime {
-			this.Traffic.Day.Used ++
+			this.Traffic.Day.Used++
 		} else {
 			this.Traffic.Day.Used = 1
 			fromTime := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
@@ -253,7 +253,7 @@ func (this *AccessPolicy) IncreaseTraffic() {
 	// month
 	if this.Traffic.Month.On && this.Traffic.Month.Duration > 0 {
 		if timestamp >= this.Traffic.Month.FromTime && timestamp < this.Traffic.Month.ToTime {
-			this.Traffic.Month.Used ++
+			this.Traffic.Month.Used++
 		} else {
 			this.Traffic.Month.Used = 1
 			fromTime := time.Date(year, month, 1, 0, 0, 0, 0, time.Local)
