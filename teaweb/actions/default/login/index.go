@@ -89,11 +89,11 @@ func (this *IndexAction) RunPost(params struct {
 	}
 	timestampString := params.Token[32:]
 	if stringutil.Md5(TokenSalt+timestampString) != params.Token[:32] {
-		this.Fail("登录页面已过期，请刷新后重试")
+		this.FailField("refresh", "登录页面已过期，请刷新后重试")
 	}
 	timestamp := types.Int64(timestampString)
 	if timestamp < time.Now().Unix()-1800 {
-		this.Fail("登录页面已过期，请刷新后重试")
+		this.FailField("refresh", "登录页面已过期，请刷新后重试")
 	}
 
 	// 查找用户
