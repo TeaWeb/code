@@ -1093,6 +1093,27 @@ func (this *ServerConfig) MatchKeyword(keyword string) (matched bool, name strin
 		}
 	}
 
+	// 地址
+	for _, addr := range this.Listen {
+		if strings.Index(addr, keyword) > -1 {
+			matched = true
+			name = this.Description
+			tags = []string{addr}
+			return
+		}
+	}
+
+	if this.SSL != nil {
+		for _, addr := range this.SSL.Listen {
+			if strings.Index(addr, keyword) > -1 {
+				matched = true
+				name = this.Description
+				tags = []string{addr}
+				return
+			}
+		}
+	}
+
 	return
 }
 
