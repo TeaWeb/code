@@ -28,12 +28,17 @@ func matchDomain(pattern string, domain string) (isMatched bool) {
 	}
 
 	// 正则表达式
-	if pattern[0:1] == "~" {
-		reg, err := stringutil.RegexpCompile(pattern[1:])
+	if pattern[0] == '~' {
+		reg, err := stringutil.RegexpCompile(strings.TrimSpace(pattern[1:]))
 		if err != nil {
 			logs.Error(err)
+			return false
 		}
 		return reg.MatchString(domain)
+	}
+
+	if pattern[0] == '.' {
+		return strings.HasSuffix(domain, pattern)
 	}
 
 	// 其他匹配

@@ -28,6 +28,16 @@ func TestMatchDomain(t *testing.T) {
 	}
 
 	{
+		ok := MatchDomains([]string{".example.com"}, "a.www.example.com")
+		a.IsTrue(ok)
+	}
+
+	{
+		ok := MatchDomains([]string{".example.com"}, "a.www.example123.com")
+		a.IsFalse(ok)
+	}
+
+	{
 		ok := MatchDomains([]string{"*.example.com"}, "www.example.com")
 		a.IsTrue(ok)
 	}
@@ -49,6 +59,11 @@ func TestMatchDomain(t *testing.T) {
 
 	{
 		ok := MatchDomains([]string{"~\\w+.example.com"}, "www.example.com")
+		a.IsTrue(ok)
+	}
+
+	{
+		ok := MatchDomains([]string{"~\\w+.example.com"}, "a.www.example.com")
 		a.IsTrue(ok)
 	}
 
