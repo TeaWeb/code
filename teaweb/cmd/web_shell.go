@@ -6,6 +6,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teaproxy"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo"
@@ -337,7 +338,7 @@ func (this *WebShell) ExecStatus(writer io.Writer) bool {
 	if proc == nil {
 		this.write(writer, teaconst.TeaProductName+" not started yet")
 	} else {
-		this.write(writer, teaconst.TeaProductName+" is running, pid:"+fmt.Sprintf("%d", proc.Pid))
+		this.write(writer, teaconst.TeaProductName+" is running, pid: "+fmt.Sprintf("%d", proc.Pid))
 	}
 	return true
 }
@@ -377,97 +378,12 @@ func (this *WebShell) ExecPprof(writer io.Writer) bool {
 
 // 写入PID
 func (this *WebShell) writePid() error {
-	fp, err := os.OpenFile(Tea.Root+Tea.DS+"bin"+Tea.DS+"pid", os.O_CREATE|os.O_TRUNC|os.O_WRONLY|os.O_RDONLY, 0666)
-	if err != nil {
-		return err
-	}
-
-	if runtime.GOOS == "windows" {
-		pidFP = fp // hold the fp to lock file
-	} else {
-		defer func() {
-			_ = fp.Close()
-		}()
-	}
-
-	_, err = fp.WriteString(fmt.Sprintf("%d", os.Getpid()))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return teautils.WritePid(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid")
 }
 
 // 检查PID
 func (this *WebShell) checkPid() *os.Process {
-	// check pid file
-	pidFile := files.NewFile(Tea.Root + "/bin/pid")
-	if !pidFile.Exists() {
-		return nil
-	}
-	pidString, err := pidFile.ReadAllString()
-	if err != nil {
-		return nil
-	}
-	pid := types.Int(pidString)
-
-	if pid <= 0 {
-		return nil
-	}
-
-	// 如果是当前进程在检查，说明没有启动
-	if pid == os.Getpid() {
-		return nil
-	}
-
-	proc, err := os.FindProcess(pid)
-	if err != nil || proc == nil {
-		return nil
-	}
-
-	if runtime.GOOS == "windows" {
-		// windows上打开的文件是不能删除的
-		if pidFile.Delete() == nil {
-			return nil
-		}
-		return proc
-	}
-
-	err = proc.Signal(syscall.Signal(0)) // 根据方法文档：Sending Interrupt on Windows is not implemented
-	if err != nil {
-		return nil
-	}
-
-	// ps?
-	ps, err := exec.LookPath("ps")
-	if err != nil {
-		return proc
-	}
-
-	cmd := exec.Command(ps, "-p", pidString, "-o", "command=")
-	output, err := cmd.Output()
-	if err != nil {
-		return proc
-	}
-
-	if len(output) == 0 {
-		return nil
-	}
-
-	outputString := string(output)
-	index := strings.LastIndex(outputString, "/")
-	if index > -1 {
-		outputString = outputString[index+1:]
-	}
-	index2 := strings.LastIndex(outputString, "\\")
-	if index2 > 0 {
-		outputString = outputString[index2+1:]
-	}
-	if strings.Contains(outputString, teaconst.TeaProcessName) && !strings.Contains(outputString, teaconst.TeaProcessName+"-") {
-		return proc
-	}
-
-	return nil
+	return teautils.CheckPid(Tea.Root + "/bin/pid")
 }
 
 // 写入string到writer
