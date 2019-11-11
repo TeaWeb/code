@@ -59,8 +59,8 @@ func (this *HTTPClientPool) client(backend *teaconfigs.BackendConfig) *http.Clie
 	}
 
 	numberCPU := runtime.NumCPU()
-	if numberCPU == 0 {
-		numberCPU = 1
+	if numberCPU < 8 {
+		numberCPU = 8
 	}
 	if maxConnections <= 0 {
 		maxConnections = numberCPU

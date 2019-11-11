@@ -41,8 +41,12 @@ func (this *FTPClientPool) client(backend *teaconfigs.BackendConfig) *FTPClient 
 	if backend.FTP == nil {
 		backend.FTP = &teaconfigs.FTPBackendConfig{}
 	}
+	numberCPU := runtime.NumCPU()
+	if numberCPU < 8 {
+		numberCPU = 8
+	}
 	if backend.IdleConns <= 0 {
-		backend.IdleConns = int32(runtime.NumCPU())
+		backend.IdleConns = int32(numberCPU)
 	}
 	client = &FTPClient{
 		pool: &FTPConnectionPool{
