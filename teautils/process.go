@@ -12,6 +12,13 @@ var pidFileList = []*os.File{}
 
 // 检查Pid
 func CheckPid(path string) *os.Process {
+	// windows上打开的文件是不能删除的
+	if runtime.GOOS == "windows" {
+		if os.Remove(path) == nil {
+			return nil
+		}
+	}
+
 	file, err := os.Open(path)
 	if err != nil {
 		return nil
@@ -26,13 +33,6 @@ func CheckPid(path string) *os.Process {
 	if err == nil {
 		_ = UnlockFile(file)
 		return nil
-	}
-
-	if runtime.GOOS == "windows" {
-		// windows上打开的文件是不能删除的
-		if os.Remove(path) == nil {
-			return nil
-		}
 	}
 
 	pidBytes, err := ioutil.ReadAll(file)
@@ -70,4 +70,21 @@ func WritePid(path string) error {
 	}
 
 	return nil
+}
+
+// 删除Pid
+func DeletePid(path string) error {
+	_, err := os.Stat(path)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	for _, fp := range pidFileList {
+		_ = UnlockFile(fp)
+		_ = fp.Close()
+	}
+	return os.Remove(path)
 }

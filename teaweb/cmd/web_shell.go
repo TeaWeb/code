@@ -11,16 +11,13 @@ import (
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
-	"github.com/iwind/TeaGo/types"
 	"io"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -29,7 +26,6 @@ import (
 )
 
 var sharedShell *WebShell = nil
-var pidFP *os.File // hold pid file pointer on windows
 
 // 命令行相关封装
 type WebShell struct {
@@ -61,57 +57,48 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 	}
 
 	// 信号
-	signalsChannel := make(chan os.Signal, 16)
-	signal.Notify(signalsChannel, syscall.SIGINT, syscall.SIGHUP, syscall.Signal(0x1e /**syscall.SIGUSR1**/), syscall.Signal(0x1f /**syscall.SIGUSR2**/), syscall.SIGTERM)
-	go func() {
-		for {
-			sig := <-signalsChannel
-
-			if sig == syscall.SIGHUP { // 重置
-				configs.SharedAdminConfig().Reset()
-			} else if sig == syscall.Signal(0x1e /**syscall.SIGUSR1**/) { // 刷新代理状态
-				err := teaproxy.SharedManager.Restart()
-				if err != nil {
-					logs.Println("[error]" + err.Error())
-				} else {
-					proxyutils.FinishChange()
-				}
-			} else if sig == syscall.Signal(0x1f /**syscall.SIGUSR2**/) { // 同步
-				node := teaconfigs.SharedNodeConfig()
-				if node == nil {
-					logs.Println("[cluster]not a node yet")
-					return
-				}
-
-				if node.IsMaster() {
-					logs.Println("[cluster]push items")
-					teacluster.SharedManager.BuildSum()
-					teacluster.SharedManager.PushItems()
-				} else {
-					logs.Println("[cluster]pull items")
-					teacluster.SharedManager.BuildSum()
-					teacluster.SharedManager.PullItems()
-				}
+	teautils.ListenSignal(func(sig os.Signal) {
+		if sig == syscall.SIGHUP { // 重置
+			configs.SharedAdminConfig().Reset()
+		} else if sig == syscall.Signal(0x1e /**syscall.SIGUSR1**/) { // 刷新代理状态
+			err := teaproxy.SharedManager.Restart()
+			if err != nil {
+				logs.Println("[error]" + err.Error())
 			} else {
-				if sig == syscall.SIGINT { // 终止进程
-					if server != nil {
-						server.Stop()
-						time.Sleep(1 * time.Second)
-					}
-				}
-
-				// 删除PID
-				pidFile := files.NewFile(Tea.Root + "/bin/pid")
-				if pidFile.Exists() {
-					err = pidFile.Delete()
-					if err != nil {
-						logs.Error(err)
-					}
-				}
-				os.Exit(0)
+				proxyutils.FinishChange()
 			}
+		} else if sig == syscall.Signal(0x1f /**syscall.SIGUSR2**/) { // 同步
+			node := teaconfigs.SharedNodeConfig()
+			if node == nil {
+				logs.Println("[cluster]not a node yet")
+				return
+			}
+
+			if node.IsMaster() {
+				logs.Println("[cluster]push items")
+				teacluster.SharedManager.BuildSum()
+				teacluster.SharedManager.PushItems()
+			} else {
+				logs.Println("[cluster]pull items")
+				teacluster.SharedManager.BuildSum()
+				teacluster.SharedManager.PullItems()
+			}
+		} else {
+			if sig == syscall.SIGINT { // 终止进程
+				if server != nil {
+					server.Stop()
+					time.Sleep(1 * time.Second)
+				}
+			}
+
+			// 删除PID
+			err = teautils.DeletePid(Tea.Root + "/bin/pid")
+			if err != nil {
+				logs.Error(err)
+			}
+			os.Exit(0)
 		}
-	}()
+	}, syscall.SIGINT, syscall.SIGHUP, syscall.Signal(0x1e /**syscall.SIGUSR1**/), syscall.Signal(0x1f /**syscall.SIGUSR2**/), syscall.SIGTERM)
 }
 
 // 重置Root
@@ -233,7 +220,7 @@ func (this *WebShell) ExecStart(writer io.Writer) bool {
 func (this *WebShell) ExecStop(writer io.Writer) bool {
 	proc := this.checkPid()
 	if proc == nil {
-		this.write(writer, teaconst.TeaProductName+" not started")
+		this.write(writer, teaconst.TeaProductName+" not started yet")
 		return true
 	}
 
@@ -243,37 +230,23 @@ func (this *WebShell) ExecStop(writer io.Writer) bool {
 		return true
 	}
 
-	err = files.NewFile(Tea.Root + "/bin/pid").Delete()
+	// 在Windows上经常不能即使释放资源
+	_ = teautils.DeletePid(Tea.Root + "/bin/pid")
 	this.write(writer, teaconst.TeaProductName+" stopped ok, pid:", proc.Pid)
-
-	if err != nil {
-		this.write(writer, "ERROR:", err.Error())
-	}
 
 	return true
 }
 
 // 重载代理配置
 func (this *WebShell) ExecReload(writer io.Writer) bool {
-	pidString, err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").ReadAllString()
-	if err != nil {
-		this.write(writer, err.Error())
-		return true
-	}
-
-	pid := types.Int(pidString)
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		this.write(writer, err.Error())
-		return true
-	}
+	proc := this.checkPid()
 	if proc == nil {
-		this.write(writer, "can not find process")
+		this.write(writer, teaconst.TeaProductName+" not started yet")
 		return true
 	}
-	err = proc.Signal(syscall.Signal(0x1e /**syscall.SIGUSR1**/))
+	err := teautils.NotifySignal(proc, syscall.Signal(0x1e /**syscall.SIGUSR1**/))
 	if err != nil {
-		logs.Error(err)
+		this.write(writer, "[ERROR]"+err.Error())
 		return true
 	}
 	this.write(writer, "reload success")
@@ -300,32 +273,21 @@ func (this *WebShell) ExecRestart(writer io.Writer) bool {
 		this.write(writer, teaconst.TeaProductName+" restart failed:", err.Error())
 		return true
 	}
-	this.write(writer, teaconst.TeaProductName+" restarted ok, pid:", cmd.Process.Pid)
+	this.write(writer, teaconst.TeaProductName+" restarted ok, new pid:", cmd.Process.Pid)
 
 	return true
 }
 
 // 重置
 func (this *WebShell) ExecReset(writer io.Writer) bool {
-	pidString, err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").ReadAllString()
-	if err != nil {
-		this.write(writer, err.Error())
-		return true
-	}
-
-	pid := types.Int(pidString)
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		this.write(writer, err.Error())
-		return true
-	}
+	proc := this.checkPid()
 	if proc == nil {
-		this.write(writer, "can not find process")
+		this.write(writer, teaconst.TeaProductName+" not started yet")
 		return true
 	}
-	err = proc.Signal(syscall.SIGHUP)
+	err := teautils.NotifySignal(proc, syscall.SIGHUP)
 	if err != nil {
-		this.write(writer, err.Error())
+		this.write(writer, "[ERROR]"+err.Error())
 		return true
 	}
 	this.write(writer, "reset success")
@@ -349,9 +311,9 @@ func (this *WebShell) ExecSync(writer io.Writer) bool {
 	if proc == nil {
 		this.write(writer, teaconst.TeaProductName+" not started yet")
 	} else {
-		err := proc.Signal(syscall.Signal(0x1f /**syscall.SIGUSR2**/))
+		err := teautils.NotifySignal(proc, syscall.Signal(0x1f /**syscall.SIGUSR2**/))
 		if err != nil {
-			logs.Error(err)
+			this.write(writer, "[ERROR]"+err.Error())
 			return true
 		}
 		this.write(writer, "signal sent successfully")
