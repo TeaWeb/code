@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -23,7 +24,7 @@ func (this *LogWriter) Init() {
 	}
 
 	// 先删除原来的
-	logFile := files.NewFile(Tea.LogFile("teaweb.log"))
+	logFile := files.NewFile(Tea.LogFile(teaconst.TeaProcessName + ".log"))
 	if logFile.Exists() {
 		err := logFile.Delete()
 		if err != nil {

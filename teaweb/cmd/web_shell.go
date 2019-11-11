@@ -28,6 +28,7 @@ import (
 )
 
 var sharedShell *WebShell = nil
+var pidFP *os.File // hold pid file pointer on windows
 
 // 命令行相关封装
 type WebShell struct {
@@ -51,11 +52,11 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 		return
 	}
 
-	// 当前PID
-	err := files.NewFile(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid").
-		WriteString(fmt.Sprintf("%d", os.Getpid()))
+	// 当前PID文件句柄
+	err := this.writePid()
 	if err != nil {
-		logs.Error(err)
+		logs.Println("[error]write pid file failed: '" + err.Error() + "'")
+		return
 	}
 
 	// 信号
@@ -139,7 +140,7 @@ func (this *WebShell) execArgs(writer io.Writer) bool {
 		// 检查是否已经启动
 		proc := this.checkPid()
 		if proc != nil {
-			this.write(writer, "TeaWeb is already running, pid:", proc.Pid)
+			this.write(writer, teaconst.TeaProductName+" is already running, pid:", proc.Pid)
 			return true
 		}
 		return false
@@ -174,7 +175,7 @@ func (this *WebShell) execArgs(writer io.Writer) bool {
 	}
 
 	if len(args) > 0 {
-		this.write(writer, "Unknown command option '"+strings.Join(args, " ")+"', run './bin/teaweb -h' to lookup the usage.")
+		this.write(writer, "Unknown command option '"+strings.Join(args, " ")+"', run './bin/"+teaconst.TeaProcessName+" -h' to lookup the usage.")
 		return true
 	}
 	return false
@@ -182,8 +183,8 @@ func (this *WebShell) execArgs(writer io.Writer) bool {
 
 // 帮助
 func (this *WebShell) ExecHelp(writer io.Writer) bool {
-	this.write(writer, "TeaWeb v"+teaconst.TeaVersion)
-	this.write(writer, "Usage:", "\n   ./bin/teaweb [option]")
+	this.write(writer, teaconst.TeaProductName+" v"+teaconst.TeaVersion)
+	this.write(writer, "Usage:", "\n   ./bin/"+teaconst.TeaProcessName+" [option]")
 	this.write(writer, "")
 	this.write(writer, "Options:")
 	this.write(writer, fmt.Sprintf("  %-20s%s", "-h", ": print this help"))
@@ -197,14 +198,14 @@ func (this *WebShell) ExecHelp(writer io.Writer) bool {
 	this.write(writer, fmt.Sprintf("  %-20s%s", "sync", ": sync config files with cluster"))
 	this.write(writer, fmt.Sprintf("  %-20s%s", "pprof [address]", ": start pprof server"))
 	this.write(writer, "")
-	this.write(writer, "To run the server in foreground:", "\n   ./bin/teaweb\n")
+	this.write(writer, "To run the server in foreground:", "\n   ./bin/"+teaconst.TeaProcessName+"\n")
 
 	return true
 }
 
 // 版本号
 func (this *WebShell) ExecVersion(writer io.Writer) bool {
-	this.write(writer, "TeaWeb v"+teaconst.TeaVersion, "(build: "+runtime.Version(), runtime.GOOS, runtime.GOARCH+")")
+	this.write(writer, teaconst.TeaProductName+" v"+teaconst.TeaVersion, "(build: "+runtime.Version(), runtime.GOOS, runtime.GOARCH+")")
 	return true
 }
 
@@ -212,17 +213,17 @@ func (this *WebShell) ExecVersion(writer io.Writer) bool {
 func (this *WebShell) ExecStart(writer io.Writer) bool {
 	proc := this.checkPid()
 	if proc != nil {
-		this.write(writer, "TeaWeb already started, pid:", proc.Pid)
+		this.write(writer, teaconst.TeaProductName+" already started, pid:", proc.Pid)
 		return true
 	}
 
 	cmd := exec.Command(os.Args[0])
 	err := cmd.Start()
 	if err != nil {
-		this.write(writer, "TeaWeb  start failed:", err.Error())
+		this.write(writer, teaconst.TeaProductName+"  start failed:", err.Error())
 		return true
 	}
-	this.write(writer, "TeaWeb started ok, pid:", cmd.Process.Pid)
+	this.write(writer, teaconst.TeaProductName+" started ok, pid:", cmd.Process.Pid)
 
 	return true
 }
@@ -231,18 +232,18 @@ func (this *WebShell) ExecStart(writer io.Writer) bool {
 func (this *WebShell) ExecStop(writer io.Writer) bool {
 	proc := this.checkPid()
 	if proc == nil {
-		this.write(writer, "TeaWeb not started")
+		this.write(writer, teaconst.TeaProductName+" not started")
 		return true
 	}
 
 	err := proc.Kill()
 	if err != nil {
-		this.write(writer, "TeaWeb stop error:", err.Error())
+		this.write(writer, teaconst.TeaProductName+" stop error:", err.Error())
 		return true
 	}
 
 	err = files.NewFile(Tea.Root + "/bin/pid").Delete()
-	this.write(writer, "TeaWeb stopped ok, pid:", proc.Pid)
+	this.write(writer, teaconst.TeaProductName+" stopped ok, pid:", proc.Pid)
 
 	if err != nil {
 		this.write(writer, "ERROR:", err.Error())
@@ -284,7 +285,7 @@ func (this *WebShell) ExecRestart(writer io.Writer) bool {
 	if proc != nil {
 		err := proc.Kill()
 		if err != nil {
-			this.write(writer, "TeaWeb stop error:", err.Error())
+			this.write(writer, teaconst.TeaProductName+" stop error:", err.Error())
 			return true
 		}
 
@@ -295,10 +296,10 @@ func (this *WebShell) ExecRestart(writer io.Writer) bool {
 	cmd := exec.Command(os.Args[0])
 	err := cmd.Start()
 	if err != nil {
-		this.write(writer, "TeaWeb restart failed:", err.Error())
+		this.write(writer, teaconst.TeaProductName+" restart failed:", err.Error())
 		return true
 	}
-	this.write(writer, "TeaWeb restarted ok, pid:", cmd.Process.Pid)
+	this.write(writer, teaconst.TeaProductName+" restarted ok, pid:", cmd.Process.Pid)
 
 	return true
 }
@@ -334,9 +335,9 @@ func (this *WebShell) ExecReset(writer io.Writer) bool {
 func (this *WebShell) ExecStatus(writer io.Writer) bool {
 	proc := this.checkPid()
 	if proc == nil {
-		this.write(writer, "TeaWeb not started yet")
+		this.write(writer, teaconst.TeaProductName+" not started yet")
 	} else {
-		this.write(writer, "TeaWeb is running, pid:"+fmt.Sprintf("%d", proc.Pid))
+		this.write(writer, teaconst.TeaProductName+" is running, pid:"+fmt.Sprintf("%d", proc.Pid))
 	}
 	return true
 }
@@ -345,7 +346,7 @@ func (this *WebShell) ExecStatus(writer io.Writer) bool {
 func (this *WebShell) ExecSync(writer io.Writer) bool {
 	proc := this.checkPid()
 	if proc == nil {
-		this.write(writer, "TeaWeb not started yet")
+		this.write(writer, teaconst.TeaProductName+" not started yet")
 	} else {
 		err := proc.Signal(syscall.Signal(0x1f /**syscall.SIGUSR2**/))
 		if err != nil {
@@ -372,6 +373,29 @@ func (this *WebShell) ExecPprof(writer io.Writer) bool {
 	}()
 
 	return false
+}
+
+// 写入PID
+func (this *WebShell) writePid() error {
+	fp, err := os.OpenFile(Tea.Root+Tea.DS+"bin"+Tea.DS+"pid", os.O_CREATE|os.O_TRUNC|os.O_WRONLY|os.O_RDONLY, 0666)
+	if err != nil {
+		return err
+	}
+
+	if runtime.GOOS == "windows" {
+		pidFP = fp // hold the fp to lock file
+	} else {
+		defer func() {
+			_ = fp.Close()
+		}()
+	}
+
+	_, err = fp.WriteString(fmt.Sprintf("%d", os.Getpid()))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // 检查PID
@@ -402,6 +426,10 @@ func (this *WebShell) checkPid() *os.Process {
 	}
 
 	if runtime.GOOS == "windows" {
+		// windows上打开的文件是不能删除的
+		if pidFile.Delete() == nil {
+			return nil
+		}
 		return proc
 	}
 
@@ -435,7 +463,7 @@ func (this *WebShell) checkPid() *os.Process {
 	if index2 > 0 {
 		outputString = outputString[index2+1:]
 	}
-	if strings.Contains(outputString, "teaweb") && !strings.Contains(outputString, "teaweb-") {
+	if strings.Contains(outputString, teaconst.TeaProcessName) && !strings.Contains(outputString, teaconst.TeaProcessName+"-") {
 		return proc
 	}
 

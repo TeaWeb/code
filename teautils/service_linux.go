@@ -4,6 +4,7 @@ package teautils
 
 import (
 	"errors"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"io/ioutil"
@@ -43,7 +44,7 @@ func (this *ServiceManager) Start() error {
 
 		return exec.Command(systemd, "start", "teaweb.service").Start()
 	}
-	return exec.Command("service", "teaweb", "start").Start()
+	return exec.Command("service", teaconst.TeaProcessName, "start").Start()
 }
 
 // 删除服务
@@ -97,7 +98,7 @@ func (this *ServiceManager) installInitService(exePath string, args []string) er
 		return err
 	}
 
-	err = exec.Command(chkCmd, "--add", "teaweb").Start()
+	err = exec.Command(chkCmd, "--add", teaconst.TeaProcessName).Start()
 	if err != nil {
 		return err
 	}

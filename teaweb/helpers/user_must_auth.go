@@ -123,11 +123,11 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	}
 
 	if teaconst.PlusEnabled {
-		action.Data["teaTitle"] = "TeaWeb+管理平台"
-		action.Data["teaName"] = "TeaWeb+"
+		action.Data["teaTitle"] = teaconst.TeaProductName + "+管理平台"
+		action.Data["teaName"] = teaconst.TeaProductName + "+"
 	} else {
-		action.Data["teaTitle"] = "TeaWeb管理平台"
-		action.Data["teaName"] = "TeaWeb"
+		action.Data["teaTitle"] = teaconst.TeaProductName + "管理平台"
+		action.Data["teaName"] = teaconst.TeaProductName
 	}
 
 	if len(user.Name) == 0 {

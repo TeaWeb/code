@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"log"
@@ -10,9 +11,9 @@ import (
 // 安装服务
 func main() {
 	log.Println("installing ...")
-	manager := teautils.NewServiceManager("TeaWeb", "TeaWeb Server")
+	manager := teautils.NewServiceManager(teaconst.TeaProductName, teaconst.TeaProductName+" Server")
 
-	var exePath = Tea.Root + Tea.DS + "bin" + Tea.DS + "teaweb"
+	var exePath = Tea.Root + Tea.DS + "bin" + Tea.DS + teaconst.TeaProcessName
 	if runtime.GOOS == "windows" {
 		exePath += ".exe"
 	}
