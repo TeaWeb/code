@@ -152,8 +152,20 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 			logs.Println("[proxy]'" + this.raw.URL.String() + "': " + err.Error())
 			this.addError(err)
 		} else {
-			this.serverError(writer)
-			this.addError(err)
+			// 是否为客户端方面的错误
+			isClientError := false
+			if ok {
+				if httpErr.Err == context.Canceled {
+					isClientError = true
+					this.addError(errors.New(httpErr.Op + " " + httpErr.URL + ": client closed the connection"))
+					writer.WriteHeader(499) // 仿照nginx
+				}
+			}
+
+			if !isClientError {
+				this.serverError(writer)
+				this.addError(err)
+			}
 		}
 		if resp != nil && resp.Body != nil {
 			_ = resp.Body.Close()
