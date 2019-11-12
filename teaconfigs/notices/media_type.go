@@ -13,6 +13,7 @@ const (
 	NoticeMediaTypeQyWeixin      = "qyWeixin"
 	NoticeMediaTypeQyWeixinRobot = "qyWeixinRobot"
 	NoticeMediaTypeAliyunSms     = "aliyunSms"
+	NoticeMediaTypeTelegram      = "telegram"
 	NoticeMediaTypeTeaSms        = "teaSms"
 )
 
@@ -74,6 +75,14 @@ func AllNoticeMediaTypes() []maps.Map {
 			"instance":     new(NoticeAliyunSmsMedia),
 			"description":  "通过<a href=\"https://www.aliyun.com/product/sms?spm=5176.11533447.1097531.2.12055cfa6UnIix\" target=\"_blank\">阿里云短信服务</a>发送短信，<a href=\"http://teaos.cn/doc/notices/AliyunSms.md\" target=\"_blank\">相关文档&raquo;</a>",
 			"user":         "接收消息的手机号",
+		},
+		{
+			"name":         "Telegram机器人",
+			"code":         NoticeMediaTypeTelegram,
+			"supportsHTML": false,
+			"instance":     new(NoticeTelegramMedia),
+			"description":  "通过机器人向群或者某个用户发送消息，需要确保所在网络能够访问Telegram API服务",
+			"user":         "群或用户的Chat ID，通常是一个数字，可以通过和 @get_id_bot 建立对话并发送任意消息获得",
 		},
 		{
 			"name":         "TeaOS云短信",

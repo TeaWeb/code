@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"net/http"
 )
 
@@ -65,6 +66,8 @@ func (this *AddMediaAction) RunPost(params struct {
 	AliyunSmsAccessKeyId       string
 	AliyunSmsAccessKeySecret   string
 
+	TelegramToken string
+
 	TeaSmsAccessId     string
 	TeaSmsAccessSecret string
 
@@ -111,7 +114,10 @@ func (this *AddMediaAction) RunPost(params struct {
 		media.Username = params.EmailUsername
 		media.Password = params.EmailPassword
 		media.From = params.EmailFrom
-		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		err := teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case notices.NoticeMediaTypeWebhook:
 		params.Must.
 			Field("webhookURL", params.WebhookURL).
@@ -143,7 +149,10 @@ func (this *AddMediaAction) RunPost(params struct {
 			media.Body = params.WebhookBody
 		}
 
-		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		err := teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case notices.NoticeMediaTypeScript:
 		if params.ScriptType == "path" {
 			params.Must.
@@ -172,7 +181,10 @@ func (this *AddMediaAction) RunPost(params struct {
 			}
 		}
 
-		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		err := teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case notices.NoticeMediaTypeDingTalk:
 		params.Must.
 			Field("dingTalkWebhookURL", params.DingTalkWebhookURL).
@@ -181,7 +193,10 @@ func (this *AddMediaAction) RunPost(params struct {
 
 		media := notices.NewNoticeDingTalkMedia()
 		media.WebhookURL = params.DingTalkWebhookURL
-		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		err := teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case notices.NoticeMediaTypeQyWeixin:
 		params.Must.
 			Field("qyWeixinCorporateId", params.QyWeixinCorporateId).
@@ -196,7 +211,10 @@ func (this *AddMediaAction) RunPost(params struct {
 		media.AgentId = params.QyWeixinAgentId
 		media.AppSecret = params.QyWeixinAppSecret
 		media.TextFormat = params.QyWeixinTextFormat
-		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		err := teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case notices.NoticeMediaTypeQyWeixinRobot:
 		params.Must.
 			Field("qyWeixinRobotWebhookURL", params.QyWeixinRobotWebhookURL).
@@ -206,7 +224,10 @@ func (this *AddMediaAction) RunPost(params struct {
 		media := notices.NewNoticeQyWeixinRobotMedia()
 		media.WebhookURL = params.QyWeixinRobotWebhookURL
 		media.TextFormat = params.QyWeixinRobotTextFormat
-		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		err := teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case notices.NoticeMediaTypeAliyunSms:
 		params.Must.
 			Field("aliyunSmsSign", params.AliyunSmsSign).
@@ -233,7 +254,20 @@ func (this *AddMediaAction) RunPost(params struct {
 			}
 		}
 
-		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		err := teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		if err != nil {
+			logs.Error(err)
+		}
+	case notices.NoticeMediaTypeTelegram:
+		params.Must.
+			Field("telegramToken", params.TelegramToken).
+			Require("请输入机器人Token")
+		media := notices.NewNoticeTelegramMedia()
+		media.Token = params.TelegramToken
+		err := teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	case notices.NoticeMediaTypeTeaSms:
 		params.Must.
 			Field("teaSmsAccessId", params.TeaSmsAccessId).
@@ -243,7 +277,10 @@ func (this *AddMediaAction) RunPost(params struct {
 		media := notices.NewNoticeTeaSmsMedia()
 		media.AccessId = params.TeaSmsAccessId
 		media.AccessSecret = params.TeaSmsAccessSecret
-		teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		err := teautils.ObjectToMapJSON(media, &mediaConfig.Options)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	// 时间
