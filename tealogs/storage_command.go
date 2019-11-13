@@ -69,7 +69,7 @@ func (this *CommandStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 			logs.Error(err)
 		}
 	}
-	w.Close()
+	_ = w.Close()
 	err = cmd.Wait()
 	if err != nil {
 		logs.Error(err)

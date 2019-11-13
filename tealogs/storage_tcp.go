@@ -59,12 +59,12 @@ func (this *TCPStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 		}
 		_, err = conn.Write(data)
 		if err != nil {
-			this.Close()
+			_ = this.Close()
 			break
 		}
 		_, err = conn.Write([]byte("\n"))
 		if err != nil {
-			this.Close()
+			_ = this.Close()
 			break
 		}
 	}

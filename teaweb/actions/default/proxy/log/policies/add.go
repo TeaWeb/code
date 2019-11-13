@@ -23,6 +23,9 @@ func (this *AddAction) RunGet(params struct{}) {
 	this.Data["condOperators"] = shared.AllRequestOperators()
 	this.Data["condVariables"] = proxyutils.DefaultRequestVariables()
 
+	// syslog
+	this.Data["syslogPriorities"] = tealogs.SyslogStoragePriorities
+
 	this.Show()
 }
 
@@ -53,6 +56,14 @@ func (this *AddAction) RunPost(params struct {
 	// tcp
 	TcpNetwork string
 	TcpAddr    string
+
+	// syslog
+	SyslogProtocol   string
+	SyslogServerAddr string
+	SyslogServerPort int
+	SyslogSocket     string
+	SyslogTag        string
+	SyslogPriority   int
 
 	// command
 	CommandCommand string
@@ -133,6 +144,28 @@ func (this *AddAction) RunPost(params struct {
 		storage.Network = params.TcpNetwork
 		storage.Addr = params.TcpAddr
 		instance = storage
+	case tealogs.StorageTypeSyslog:
+		switch params.SyslogProtocol {
+		case tealogs.SyslogStorageProtocolTCP, tealogs.SyslogStorageProtocolUDP:
+			params.Must.
+				Field("syslogServerAddr", params.SyslogServerAddr).
+				Require("请输入网络地址")
+		case tealogs.SyslogStorageProtocolSocket:
+			params.Must.
+				Field("syslogSocket", params.SyslogSocket).
+				Require("请输入Socket路径")
+		}
+
+		storage := new(tealogs.SyslogStorage)
+		storage.Format = params.StorageFormat
+		storage.Template = params.StorageTemplate
+		storage.Protocol = params.SyslogProtocol
+		storage.ServerAddr = params.SyslogServerAddr
+		storage.ServerPort = params.SyslogServerPort
+		storage.Socket = params.SyslogSocket
+		storage.Tag = params.SyslogTag
+		storage.Priority = params.SyslogPriority
+		instance = storage
 	case tealogs.StorageTypeCommand:
 		params.Must.
 			Field("commandCommand", params.CommandCommand).
@@ -148,7 +181,7 @@ func (this *AddAction) RunPost(params struct {
 	}
 
 	if instance == nil {
-		this.Fail("请选择存储类型")
+		this.Fail("找不到选择的存储类型")
 	}
 
 	policy := teaconfigs.NewAccessLogStoragePolicy()
@@ -179,7 +212,7 @@ func (this *AddAction) RunPost(params struct {
 	policyList.AddId(policy.Id)
 	err = policyList.Save()
 	if err != nil {
-		policy.Delete()
+		_ = policy.Delete()
 		this.Fail("保存失败：" + err.Error())
 	}
 

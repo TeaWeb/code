@@ -8,5 +8,6 @@ const (
 	StorageTypeES      StorageType = "es"
 	StorageTypeMySQL   StorageType = "mysql"
 	StorageTypeTCP     StorageType = "tcp"
+	StorageTypeSyslog  StorageType = "syslog"
 	StorageTypeCommand StorageType = "command"
 )

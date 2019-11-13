@@ -28,6 +28,11 @@ func AllStorages() []maps.Map {
 			"description": "将日志通过TCP套接字输出",
 		},
 		{
+			"name":        "Syslog",
+			"type":        StorageTypeSyslog,
+			"description": "将日志通过syslog输出，仅支持Linux",
+		},
+		{
 			"name":        "命令行输入流",
 			"type":        StorageTypeCommand,
 			"description": "启动一个命令通过读取stdin接收日志信息",

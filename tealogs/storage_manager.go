@@ -58,7 +58,7 @@ func FindPolicyStorage(policyId string) StorageInterface {
 	if storage != nil {
 		err := storage.Start()
 		if err != nil {
-			logs.Println("access log storage '"+policyId+"/"+FindPolicyName(policyId)+"' start failed:", err.Error())
+			logs.Println("access log storage '"+policyId+"/"+policy.Name+"' start failed:", err.Error())
 			storage = nil
 		}
 	}
@@ -108,6 +108,8 @@ func DecodePolicyStorage(policy *teaconfigs.AccessLogStoragePolicy) StorageInter
 		instance = new(MySQLStorage)
 	case StorageTypeTCP:
 		instance = new(TCPStorage)
+	case StorageTypeSyslog:
+		instance = new(SyslogStorage)
 	case StorageTypeCommand:
 		instance = new(CommandStorage)
 	}

@@ -37,5 +37,8 @@ func (this *PolicyAction) RunGet(params struct {
 
 	this.Data["configItems"] = FindAllUsingPolicy(policy.Id)
 
+	// syslog
+	this.Data["syslogPriorities"] = tealogs.SyslogStoragePriorities
+
 	this.Show()
 }
