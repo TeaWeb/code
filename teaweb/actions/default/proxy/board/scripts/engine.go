@@ -83,6 +83,7 @@ func (this *Engine) SetContext(context *Context) {
 					"isDown":   backend.IsDown,
 					"isBackup": backend.IsBackup,
 					"address":  backend.Address,
+					"code":     backend.Code,
 				}
 			}),
 			"locations": lists.Map(context.Server.Locations, func(k int, v interface{}) interface{} {
@@ -116,6 +117,26 @@ func (this *Engine) SetContext(context *Context) {
 					"root":    location.Root,
 					"index":   location.Index,
 					"headers": location.Headers,
+					"backends": lists.Map(location.Backends, func(k int, v interface{}) interface{} {
+						backend := v.(*teaconfigs.BackendConfig)
+
+						if runningServer != nil {
+							runningBackend := runningServer.FindBackend(backend.Id)
+							if runningBackend != nil {
+								backend.IsDown = runningBackend.IsDown
+							}
+						}
+
+						return map[string]interface{}{
+							"isOn":     backend.On,
+							"weight":   backend.Weight,
+							"id":       backend.Id,
+							"isDown":   backend.IsDown,
+							"isBackup": backend.IsBackup,
+							"address":  backend.Address,
+							"code":     backend.Code,
+						}
+					}),
 				}
 				if location.Websocket != nil && location.Websocket.On {
 					locationOptions["websocket"] = maps.Map{
