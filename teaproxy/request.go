@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -129,6 +130,8 @@ type Request struct {
 	gzip  *teaconfigs.GzipConfig
 	debug bool
 
+	locationContext *teaconfigs.LocationConfig // 当前变量的上下文 *Location ...
+
 	hasForwardHeader bool
 }
 
@@ -218,6 +221,8 @@ func (this *Request) reset(rawRequest *http.Request) {
 	this.errors = nil
 
 	this.accessLog = nil
+
+	this.locationContext = nil
 
 	this.gzip = nil
 	this.debug = false
@@ -331,6 +336,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 			if !location.On {
 				continue
 			}
+			this.locationContext = location
 			if locationMatches, ok := location.Match(rawPath, this.Format); ok {
 				this.addVarMapping(locationMatches)
 
@@ -363,6 +369,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 				}
 				if location.RedirectToHttps && this.rawScheme == "http" {
 					this.redirectToHttps = true
+					this.locationContext = nil
 					return nil
 				}
 
@@ -428,6 +435,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 								this.rewriteIsExternal = true
 								this.rewriteRedirectMode = rule.RedirectMode()
 								this.rewriteProxyHost = rule.ProxyHost
+								this.locationContext = nil
 								return nil
 							}
 
@@ -436,12 +444,14 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 								this.rewriteReplace = replace
 								this.rewriteIsExternal = false
 								this.rewriteRedirectMode = teaconfigs.RewriteFlagRedirect
+								this.locationContext = nil
 								return nil
 							}
 
 							newURI, err := url.ParseRequestURI(replace)
 							if err != nil {
 								this.uri = replace
+								this.locationContext = nil
 								return nil
 							}
 							if len(newURI.RawQuery) > 0 {
@@ -458,18 +468,23 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 
 							switch rule.TargetType() {
 							case teaconfigs.RewriteTargetURL:
+								this.locationContext = nil
 								return this.configure(server, redirects, rule.IsBreak)
 							case teaconfigs.RewriteTargetProxy:
 								proxyId := rule.TargetProxy()
 								server := SharedManager.FindServer(proxyId)
 								if server == nil {
+									this.locationContext = nil
 									return errors.New("server with '" + proxyId + "' not found")
 								}
 								if !server.On {
+									this.locationContext = nil
 									return errors.New("server with '" + proxyId + "' not available now")
 								}
+								this.locationContext = nil
 								return this.configure(server, redirects, rule.IsBreak)
 							}
+							this.locationContext = nil
 							return nil
 						}
 					}
@@ -497,11 +512,14 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 				if len(location.Proxy) > 0 {
 					server := SharedManager.FindServer(location.Proxy)
 					if server == nil {
+						this.locationContext = nil
 						return errors.New("server with '" + location.Proxy + "' not found")
 					}
 					if !server.On {
+						this.locationContext = nil
 						return errors.New("server with '" + location.Proxy + "' not available now")
 					}
+					this.locationContext = nil
 					return this.configure(server, redirects, breakRewrite)
 				}
 
@@ -509,6 +527,7 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 				if len(location.Backends) > 0 {
 					backend := location.NextBackend(this.backendCall)
 					if backend == nil {
+						this.locationContext = nil
 						return errors.New("no backends available")
 					}
 					if len(this.backendCall.ResponseCallbacks) > 0 {
@@ -536,9 +555,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 				if location.Websocket != nil && location.Websocket.On {
 					this.backend = location.Websocket.NextBackend(this.backendCall)
 					this.websocket = location.Websocket
+					this.locationContext = nil
 					return nil
 				}
 			}
+			this.locationContext = nil
 		}
 
 		// 如果经过location找到了相关配置，就终止
@@ -1137,7 +1158,7 @@ func (this *Request) Format(source string) string {
 			}
 			return addr
 		case "remotePort":
-			return fmt.Sprintf("%d", this.requestRemotePort())
+			return strconv.Itoa(this.requestRemotePort())
 		case "remoteUser":
 			return this.requestRemoteUser()
 		case "requestURI", "requestUri":
@@ -1151,7 +1172,20 @@ func (this *Request) Format(source string) string {
 		case "requestMethod":
 			return this.requestMethod()
 		case "requestFilename":
-			return this.requestFilename()
+			filename := this.requestFilename()
+			if len(filename) > 0 {
+				return filename
+			}
+
+			if this.locationContext != nil && len(this.locationContext.Root) > 0 {
+				return filepath.Clean(this.locationContext.Root + this.requestPath())
+			}
+
+			if len(this.root) > 0 {
+				return filepath.Clean(this.root + this.requestPath())
+			}
+
+			return ""
 		case "scheme":
 			return this.rawScheme
 		case "serverProtocol", "proto":
@@ -1161,7 +1195,7 @@ func (this *Request) Format(source string) string {
 		case "bodyBytesSent":
 			return fmt.Sprintf("%d", this.responseWriter.SentBodyBytes())
 		case "status":
-			return fmt.Sprintf("%d", this.responseWriter.StatusCode())
+			return strconv.Itoa(this.responseWriter.StatusCode())
 		case "statusMessage":
 			return http.StatusText(this.responseWriter.StatusCode())
 		case "timeISO8601":
@@ -1191,7 +1225,12 @@ func (this *Request) Format(source string) string {
 		case "serverName":
 			return this.serverName
 		case "serverPort":
-			return fmt.Sprintf("%d", this.requestServerPort())
+			return strconv.Itoa(this.requestServerPort())
+		case "documentRoot":
+			if this.locationContext != nil && len(this.locationContext.Root) > 0 {
+				return this.locationContext.Root
+			}
+			return this.root
 		}
 
 		dotIndex := strings.Index(varName, ".")

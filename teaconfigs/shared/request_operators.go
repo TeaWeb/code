@@ -46,6 +46,10 @@ const (
 	RequestCondOperatorIPMod10  RequestCondOperator = "ip mod 10"
 	RequestCondOperatorIPMod100 RequestCondOperator = "ip mod 100"
 	RequestCondOperatorIPMod    RequestCondOperator = "ip mod"
+
+	// 文件相关
+	RequestCondOperatorFileExist    RequestCondOperator = "file exist"
+	RequestCondOperatorFileNotExist RequestCondOperator = "file not exist"
 )
 
 // 所有的运算符
@@ -205,6 +209,18 @@ func AllRequestOperators() []maps.Map {
 			"name":        "IP取模",
 			"op":          RequestCondOperatorIPMod,
 			"description": "对IP参数值取模，对比值格式为：除数,余数，比如10,1",
+		},
+
+		{
+			"name":        "文件存在",
+			"op":          RequestCondOperatorFileExist,
+			"description": "判断参数值解析后的文件是否存在",
+		},
+
+		{
+			"name":        "文件不存在",
+			"op":          RequestCondOperatorFileNotExist,
+			"description": "判断参数值解析后的文件是否不存在",
 		},
 	}
 }

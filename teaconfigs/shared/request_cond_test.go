@@ -3,6 +3,7 @@ package shared
 import (
 	"bytes"
 	"fmt"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
 	"net"
 	"regexp"
@@ -682,6 +683,83 @@ func TestRequestCond_File(t *testing.T) {
 		}
 		a.IsNil(cond.Validate())
 		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "a.png",
+			Operator: RequestCondOperatorFileExist,
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    Tea.Root + "/README.md",
+			Operator: RequestCondOperatorFileExist,
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    Tea.Root + "/README.md?v=1",
+			Operator: RequestCondOperatorFileExist,
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    Tea.Root,
+			Operator: RequestCondOperatorFileExist,
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    Tea.Root,
+			Operator: RequestCondOperatorFileExist,
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    "a.png",
+			Operator: RequestCondOperatorFileNotExist,
+		}
+		a.IsNil(cond.Validate())
+		a.IsTrue(cond.Match(func(source string) string {
+			return source
+		}))
+	}
+
+	{
+		cond := RequestCond{
+			Param:    Tea.Root + "/README.md",
+			Operator: RequestCondOperatorFileNotExist,
+		}
+		a.IsNil(cond.Validate())
+		a.IsFalse(cond.Match(func(source string) string {
 			return source
 		}))
 	}

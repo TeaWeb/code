@@ -5,10 +5,12 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"net"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -328,6 +330,32 @@ func (this *RequestCond) Match(formatter func(source string) string) bool {
 		return this.ipToInt64(net.ParseIP(paramValue))%10 == types.Int64(this.Value)
 	case RequestCondOperatorIPMod100:
 		return this.ipToInt64(net.ParseIP(paramValue))%100 == types.Int64(this.Value)
+	case RequestCondOperatorFileExist:
+		index := strings.Index(paramValue, "?")
+		if index > -1 {
+			paramValue = paramValue[:index]
+		}
+		if len(paramValue) == 0 {
+			return false
+		}
+		if !filepath.IsAbs(paramValue) {
+			paramValue = Tea.Root + Tea.DS + paramValue
+		}
+		stat, err := os.Stat(paramValue)
+		return err == nil && !stat.IsDir()
+	case RequestCondOperatorFileNotExist:
+		index := strings.Index(paramValue, "?")
+		if index > -1 {
+			paramValue = paramValue[:index]
+		}
+		if len(paramValue) == 0 {
+			return true
+		}
+		if !filepath.IsAbs(paramValue) {
+			paramValue = Tea.Root + Tea.DS + paramValue
+		}
+		stat, err := os.Stat(paramValue)
+		return err != nil || stat.IsDir()
 	}
 
 	return false
