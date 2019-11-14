@@ -101,3 +101,15 @@ func (this *Buffer) Read() (data []byte, err error) {
 func (this *Buffer) filename(index int) string {
 	return this.prefix + "." + strconv.Itoa(index) + ".log"
 }
+
+// 关闭
+func (this *Buffer) Close() error {
+	var resultErr error
+	for _, file := range this.files {
+		err := file.Close()
+		if err != nil {
+			resultErr = err
+		}
+	}
+	return resultErr
+}

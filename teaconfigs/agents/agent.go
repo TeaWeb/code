@@ -635,7 +635,9 @@ func (this *AgentConfig) FirstGroup() *Group {
 
 // 判断是否匹配关键词
 func (this *AgentConfig) MatchKeyword(keyword string) (matched bool, name string, tags []string) {
-	if teautils.MatchKeyword(this.Name, keyword) || teautils.MatchKeyword(this.Host, keyword) {
+	if teautils.MatchKeyword(this.Name, keyword) ||
+		teautils.MatchKeyword(this.Host, keyword) ||
+		this.Id == keyword {
 		matched = true
 		name = this.Name
 		if len(this.Host) > 0 {
