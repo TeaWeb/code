@@ -4,6 +4,7 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/agents"
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -38,13 +39,16 @@ func (this *ExecItemSourceAction) Run(params struct {
 
 	// 同步
 	if app.IsSharedWithGroup {
-		agentutils.SyncAppEvent(agent.Id, agent.GroupIds, app, &agentutils.AgentEvent{
+		err := agentutils.SyncAppEvent(agent.Id, agent.GroupIds, app, &agentutils.AgentEvent{
 			Name: "RUN_ITEM",
 			Data: maps.Map{
 				"appId":  app.Id,
 				"itemId": params.ItemId,
 			},
 		})
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	this.Success()

@@ -67,8 +67,8 @@ func (this *ItemDetailAction) Run(params struct {
 	// 是否在线
 	this.Data["isWaiting"] = false
 	if agent.On && app.On && item.On {
-		state, isWaiting := agentutils.CheckAgentIsWaiting(params.AgentId)
-		if state != nil && isWaiting {
+		state := agentutils.FindAgentState(params.AgentId)
+		if state.IsActive {
 			if stringutil.VersionCompare(state.Version, "0.1") > 0 {
 				this.Data["isWaiting"] = true
 			}

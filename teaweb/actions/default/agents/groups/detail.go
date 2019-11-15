@@ -32,13 +32,13 @@ func (this *DetailAction) Run(params struct {
 		allAgents := agentList.FindAllAgents()
 		for _, a := range allAgents {
 			if a.BelongsToGroup(params.GroupId) {
-				_, isWaiting := agentutils.CheckAgentIsWaiting(a.Id)
+				state := agentutils.FindAgentState(a.Id)
 				groupAgents = append(groupAgents, maps.Map{
 					"on":        a.On,
 					"id":        a.Id,
 					"name":      a.Name,
 					"host":      a.Host,
-					"isWaiting": isWaiting,
+					"isWaiting": state.IsActive,
 				})
 			}
 		}

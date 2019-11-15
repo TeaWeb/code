@@ -20,8 +20,8 @@ func (this *IndexAction) Run(params struct {
 		this.Fail("找不到Agent")
 	}
 
-	state, isWaiting := agentutils.CheckAgentIsWaiting(agent.Id)
-	if isWaiting {
+	state := agentutils.FindAgentState(agent.Id)
+	if state.IsActive {
 		this.Data["agentVersion"] = state.Version
 		this.Data["agentSpeed"] = state.Speed
 		this.Data["agentIP"] = state.IP

@@ -39,8 +39,8 @@ func checkConnecting() {
 			runtimeAgent := FindAgentRuntime(agent)
 
 			// 监控连通性
-			_, isWaiting := CheckAgentIsWaiting(agent.Id)
-			if !isWaiting {
+			state := FindAgentState(agent.Id)
+			if !state.IsActive {
 				runtimeAgent.CountDisconnections++
 
 				if runtimeAgent.CountDisconnections > 0 && runtimeAgent.CountDisconnections%maxDisconnections == 0 { // 失去连接 N 次则提醒

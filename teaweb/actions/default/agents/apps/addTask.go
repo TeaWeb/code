@@ -7,6 +7,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/actions/default/agents/agentutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
 	"reflect"
@@ -143,19 +144,19 @@ func (this *AddTaskAction) RunPost(params struct {
 
 				switch timeTypeString {
 				case "second":
-					schedule.AddSecondRanges(ranges ...)
+					schedule.AddSecondRanges(ranges...)
 				case "minute":
-					schedule.AddMinuteRanges(ranges ...)
+					schedule.AddMinuteRanges(ranges...)
 				case "hour":
-					schedule.AddHourRanges(ranges ...)
+					schedule.AddHourRanges(ranges...)
 				case "day":
-					schedule.AddDayRanges(ranges ...)
+					schedule.AddDayRanges(ranges...)
 				case "month":
-					schedule.AddMonthRanges(ranges ...)
+					schedule.AddMonthRanges(ranges...)
 				case "year":
-					schedule.AddYearRanges(ranges ...)
+					schedule.AddYearRanges(ranges...)
 				case "weekDay":
-					schedule.AddWeekDayRanges(ranges ...)
+					schedule.AddWeekDayRanges(ranges...)
 				}
 			}
 
@@ -180,10 +181,13 @@ func (this *AddTaskAction) RunPost(params struct {
 	}))
 
 	if app.IsSharedWithGroup {
-		agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("ADD_TASK", maps.Map{
+		err := agentutils.SyncApp(agent.Id, agent.GroupIds, app, agentutils.NewAgentEvent("ADD_TASK", maps.Map{
 			"appId":  app.Id,
 			"taskId": task.Id,
 		}), nil)
+		if err != nil {
+			logs.Error(err)
+		}
 	}
 
 	this.Success()

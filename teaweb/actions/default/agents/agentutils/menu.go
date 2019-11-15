@@ -47,9 +47,9 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 		}
 		defaultGroup := agents.SharedGroupList().FindGroup("default")
 
-		state, isWaiting := CheckAgentIsWaiting("local")
+		state := FindAgentState("local")
 		menu := menuGroup.FindMenu("default", defaultGroup.Name+topSubName)
-		if isWaiting {
+		if state.IsActive {
 			subName := "已连接"
 			if state != nil && len(state.OsName) > 0 {
 				subName = state.OsName
@@ -67,7 +67,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 		counterMapping := map[string]int{} // groupId => count
 		maxCount := 50
 		for _, agent := range allAgents {
-			state, isWaiting := CheckAgentIsWaiting(agent.Id)
+			state := FindAgentState(agent.Id)
 
 			var menu *utils.Menu = nil
 			if len(agent.GroupIds) > 0 {
@@ -111,7 +111,7 @@ func AddTabbar(actionWrapper actions.ActionWrapper) {
 				}
 			}
 
-			if isWaiting {
+			if state.IsActive {
 				subName := "已连接"
 				if state != nil && len(state.OsName) > 0 {
 					subName = state.OsName
