@@ -9,6 +9,7 @@ import (
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 	"regexp"
+	"strings"
 )
 
 type UpdateAction actions.Action
@@ -168,7 +169,7 @@ func (this *UpdateAction) RunPost(params struct {
 	if params.TargetType == "url" {
 		rewriteRule.Replace = params.Replace
 	} else {
-		rewriteRule.Replace = "proxy://" + params.ProxyId + "/" + params.Replace
+		rewriteRule.Replace = "proxy://" + params.ProxyId + "/" + strings.TrimLeft(params.Replace, "/")
 	}
 	rewriteRule.Flags = []string{}
 	rewriteRule.FlagOptions = maps.Map{}
