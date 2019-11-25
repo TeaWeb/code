@@ -284,7 +284,7 @@ func (this *Listener) startHTTPServer() error {
 	var err error
 
 	// 如果没启动，则启动
-	httpHandler := http.NewServeMux()
+	httpHandler := new(HTTPServeMux)
 	httpHandler.HandleFunc("/", func(writer http.ResponseWriter, req *http.Request) {
 		// QPS计算
 		atomic.AddInt32(&qps, 1)
