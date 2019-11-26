@@ -732,12 +732,19 @@ func (this *Request) call(writer *ResponseWriter) error {
 	}
 
 	// gzip压缩
+	hasGzip := false
 	if this.gzip != nil && this.gzip.Level > 0 && this.acceptGzipEncoding() {
+		hasGzip = true
 		writer.Gzip(this.gzip)
-		defer writer.Close()
 	}
 
 	err := this.callBegin(writer)
+
+	// 在结束之前关闭gzip以便能够获取完整的body
+	if hasGzip {
+		writer.Close()
+	}
+
 	this.callEnd(writer)
 	return err
 }
