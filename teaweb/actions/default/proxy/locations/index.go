@@ -3,6 +3,7 @@ package locations
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 )
 
@@ -22,7 +23,10 @@ func (this *IndexAction) Run(params struct {
 
 	locations := []maps.Map{}
 	for _, location := range server.Locations {
-		location.Validate()
+		err := location.Validate()
+		if err != nil {
+			logs.Error(err)
+		}
 		locations = append(locations, maps.Map{
 			"on":                location.On,
 			"id":                location.Id,
@@ -30,6 +34,7 @@ func (this *IndexAction) Run(params struct {
 			"type":              location.PatternType(),
 			"pattern":           location.PatternString(),
 			"patternTypeName":   teaconfigs.FindLocationPatternTypeName(location.PatternType()),
+			"isBreak":           location.IsBreak,
 			"isCaseInsensitive": location.IsCaseInsensitive(),
 			"isReverse":         location.IsReverse(),
 			"rewrite":           location.Rewrite,

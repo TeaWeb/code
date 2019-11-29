@@ -70,6 +70,8 @@ type LocationConfig struct {
 	// - cond ${requestPath} regexp .*\.png
 	Cond []*shared.RequestCond `yaml:"cond" json:"cond"`
 
+	IsBreak bool `yaml:"isBreak" json:"isBreak"` // 终止向下解析
+
 	Pages           []*PageConfig   `yaml:"pages" json:"pages"`                   // 特殊页
 	Shutdown        *ShutdownConfig `yaml:"shutdown" json:"shutdown"`             // 关闭页
 	ShutdownPageOn1 bool            `yaml:"shutdownPageOn" json:"shutdownPageOn"` // deprecated: v0.1.8, 是否开启临时关闭页面

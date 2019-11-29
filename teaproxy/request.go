@@ -558,6 +558,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 					this.locationContext = nil
 					return nil
 				}
+
+				// break
+				if location.IsBreak {
+					break
+				}
 			}
 			this.locationContext = nil
 		}

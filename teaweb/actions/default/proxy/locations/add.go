@@ -66,10 +66,13 @@ func (this *AddAction) Run(params struct {
 
 // 保存提交
 func (this *AddAction) RunPost(params struct {
-	ServerId             string
-	Name                 string
-	Pattern              string
-	PatternType          int
+	ServerId    string
+	Name        string
+	Pattern     string
+	PatternType int
+
+	IsBreak bool
+
 	Root                 string
 	Charset              string
 	Index                []string
@@ -129,6 +132,7 @@ func (this *AddAction) RunPost(params struct {
 
 	location.SetPattern(params.Pattern, params.PatternType, params.IsCaseInsensitive, params.IsReverse)
 	location.On = params.On
+	location.IsBreak = params.IsBreak
 	location.CacheOn = true
 	location.Name = params.Name
 	location.Root = params.Root

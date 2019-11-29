@@ -60,6 +60,7 @@ func (this *UpdateAction) Run(params struct {
 		"pattern":           location.PatternString(),
 		"type":              location.PatternType(),
 		"name":              location.Name,
+		"isBreak":           location.IsBreak,
 		"isReverse":         location.IsReverse(),
 		"isCaseInsensitive": location.IsCaseInsensitive(),
 		"root":              location.Root,
@@ -104,10 +105,13 @@ func (this *UpdateAction) Run(params struct {
 
 // 保存修改
 func (this *UpdateAction) RunPost(params struct {
-	ServerId             string
-	LocationId           string
-	Pattern              string
-	PatternType          int
+	ServerId    string
+	LocationId  string
+	Pattern     string
+	PatternType int
+
+	IsBreak bool
+
 	Name                 string
 	Root                 string
 	URLPrefix            string `alias:"urlPrefix"`
@@ -170,6 +174,7 @@ func (this *UpdateAction) RunPost(params struct {
 
 	location.SetPattern(params.Pattern, params.PatternType, params.IsCaseInsensitive, params.IsReverse)
 	location.On = params.On
+	location.IsBreak = params.IsBreak
 	location.Name = params.Name
 	location.Root = params.Root
 	location.URLPrefix = params.URLPrefix
