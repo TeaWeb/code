@@ -104,7 +104,7 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 			}
 
 			// 支持修改Host
-			if header.Name == "Host" {
+			if header.Name == "Host" && len(header.Value) > 0 {
 				this.raw.Host = header.Value
 			}
 		}

@@ -389,6 +389,18 @@ func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Re
 
 	// 域名
 	reqHost := rawRequest.Host
+
+	// 防止空Host
+	if len(reqHost) == 0 {
+		ctx := rawRequest.Context()
+		if ctx != nil {
+			addr := ctx.Value(http.LocalAddrContextKey)
+			if addr != nil {
+				reqHost = addr.(net.Addr).String()
+			}
+		}
+	}
+
 	domain, _, err := net.SplitHostPort(reqHost)
 	if err != nil {
 		domain = reqHost
