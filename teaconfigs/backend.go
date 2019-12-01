@@ -223,6 +223,9 @@ func (this *BackendConfig) DecreaseConn() int32 {
 	if this.nextBackend != nil {
 		return this.nextBackend.DecreaseConn()
 	}
+	if this.CurrentConns == 0 {
+		return 0
+	}
 	return atomic.AddInt32(&this.CurrentConns, -1)
 }
 
@@ -447,7 +450,7 @@ func (this *BackendConfig) CloneState(oldBackend *BackendConfig) {
 	this.IsDown = oldBackend.IsDown
 	this.DownTime = oldBackend.DownTime
 	this.CurrentFails = oldBackend.CurrentFails
-	this.CurrentConns = oldBackend.CurrentConns
+	atomic.StoreInt32(&this.CurrentConns, oldBackend.CurrentConns)
 }
 
 // 获取唯一ID
