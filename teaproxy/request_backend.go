@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -61,11 +60,10 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 
 	// new uri
 	if this.backend.HasRequestURI() {
-		uri := filepath.Clean(this.Format(this.backend.RequestPath()))
-
+		uri := this.Format(this.backend.RequestPath())
 		u, err := url.ParseRequestURI(uri)
 		if err == nil {
-			this.raw.URL.Path = u.Path
+			this.raw.URL.Path = CleanPath(u.Path)
 			this.raw.URL.RawQuery = u.RawQuery
 
 			args := this.Format(this.backend.RequestArgs())

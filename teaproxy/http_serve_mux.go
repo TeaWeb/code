@@ -2,7 +2,6 @@ package teaproxy
 
 import (
 	"net/http"
-	"path/filepath"
 )
 
 // 自定义ServeMux
@@ -12,7 +11,7 @@ type HTTPServeMux struct {
 
 func (this *HTTPServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 解决因为URL中包含多个/而自动跳转的问题
-	r.URL.Path = filepath.Clean(r.URL.Path)
+	r.URL.Path = CleanPath(r.URL.Path)
 
 	this.ServeMux.ServeHTTP(w, r)
 }
