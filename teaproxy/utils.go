@@ -1,6 +1,6 @@
 package teaproxy
 
-// 清理Path中的多于信息
+// 清理Path中的多余的字符
 func CleanPath(path string) string {
 	l := len(path)
 	if l == 0 {

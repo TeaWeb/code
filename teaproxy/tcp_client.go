@@ -193,6 +193,9 @@ func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
 		return
 	}
 
+	// 成功连接则重置错误数
+	this.backend.CurrentFails = 0
+
 	// 写入
 	go func() {
 		for data := range this.stream {
