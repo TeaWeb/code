@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/certs/certutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
@@ -193,6 +194,7 @@ func (this *UpdateAction) RunPost(params struct {
 		this.Fail("找不到要修改的后端服务器")
 	}
 	backend.Touch()
+	backend.TeaVersion = teaconst.TeaVersion
 
 	backend.Address = teautils.FormatAddress(params.Address)
 	backend.Scheme = params.Scheme
