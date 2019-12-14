@@ -58,6 +58,8 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 
 	// 信号
 	teautils.ListenSignal(func(sig os.Signal) {
+		logs.Println("[signal]" + sig.String())
+
 		if sig == syscall.SIGHUP { // 重置
 			configs.SharedAdminConfig().Reset()
 		} else if sig == syscall.Signal(0x1e /**syscall.SIGUSR1**/) { // 刷新代理状态
