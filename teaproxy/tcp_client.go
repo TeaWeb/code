@@ -115,6 +115,8 @@ func (this *TCPClient) WriteSpeed() int64 {
 
 // 连接后端服务器
 func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
+	defer teautils.Recover()
+
 	if !this.lActive {
 		return
 	}
@@ -198,6 +200,8 @@ func (this *TCPClient) connect(server *teaconfigs.ServerConfig) {
 
 	// 写入
 	go func() {
+		defer teautils.Recover()
+
 		for data := range this.stream {
 			if data == nil {
 				break
@@ -256,7 +260,9 @@ func (this *TCPClient) read(server *teaconfigs.ServerConfig) {
 	for {
 		n, err := this.lConn.Read(buf)
 		if n > 0 {
-			this.stream <- append([]byte{}, buf[:n]...)
+			if !this.streamIsClosed {
+				this.stream <- append([]byte{}, buf[:n]...)
+			}
 
 			atomic.AddInt64(&this.writeSpeed, int64(n))
 		}

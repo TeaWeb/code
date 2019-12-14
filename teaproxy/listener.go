@@ -652,6 +652,8 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 
 // 连接TCP后端
 func (this *Listener) connectTCPBackend(clientConn net.Conn) {
+	defer teautils.Recover()
+
 	client := NewTCPClient(func() *teaconfigs.ServerConfig {
 		if len(this.currentServers) == 0 {
 			return nil
