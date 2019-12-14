@@ -26,9 +26,12 @@ func (this *LogWriter) Init() {
 	// 先删除原来的
 	logFile := files.NewFile(Tea.LogFile(teaconst.TeaProcessName + ".log"))
 	if logFile.Exists() {
-		err := logFile.Delete()
-		if err != nil {
-			log.Println("[error]" + err.Error())
+		fileSize, _ := logFile.Size()
+		if fileSize > 128*1024*1024 { // 如果超过128M则删除，通常来说这个尺寸足够了
+			err := logFile.Delete()
+			if err != nil {
+				log.Println("[error]" + err.Error())
+			}
 		}
 	}
 
