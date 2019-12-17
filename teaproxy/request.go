@@ -505,6 +505,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 						this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, fastcgi.UppercaseIgnoreHeaders()...)
 					}
 
+					// break
+					if location.IsBreak {
+						break
+					}
+
 					continue
 				}
 
@@ -546,6 +551,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 
 					if backend.HasIgnoreHeaders() {
 						this.uppercaseIgnoreHeaders = append(this.uppercaseIgnoreHeaders, backend.UppercaseIgnoreHeaders()...)
+					}
+
+					// break
+					if location.IsBreak {
+						break
 					}
 
 					continue
