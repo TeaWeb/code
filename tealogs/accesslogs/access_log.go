@@ -10,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"github.com/mailru/easyjson"
 	"github.com/pquerna/ffjson/ffjson"
 	"path/filepath"
@@ -474,6 +475,9 @@ func (this *AccessLog) DBColumns() maps.Map {
 }
 
 func (this *AccessLog) jsonEncode(v interface{}) []byte {
+	if types.IsNil(v) {
+		return nil
+	}
 	data, _ := ffjson.Marshal(v)
 	return data
 }
