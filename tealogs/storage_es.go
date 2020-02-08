@@ -100,6 +100,7 @@ func (this *ESStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 	if err != nil {
 		return err
 	}
+	req.Header.Set("Content-Type", "application/json")
 	client := teautils.SharedHttpClient(10 * time.Second)
 	defer func() {
 		_ = req.Body.Close()
