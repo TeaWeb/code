@@ -2,6 +2,7 @@ package teaproxy
 
 import (
 	"bytes"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
@@ -9,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/iwind/TeaGo/logs"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -73,9 +75,42 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 		if this.backend.Scheme == "https" {
 			scheme = "wss"
 		}
-		wsURL := url.URL{Scheme: scheme, Host: this.backend.Address, Path: this.raw.RequestURI}
+		host := this.raw.Host
+		if this.backend.HasHost() {
+			host = this.Format(this.backend.Host)
+		}
+		wsURL := url.URL{
+			Scheme: scheme,
+			Host:   host,
+			Path:   this.raw.RequestURI,
+		}
+
+		// TLS通讯
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+		}
+		if this.backend.Cert != nil {
+			obj := this.backend.Cert.CertObject()
+			if obj != nil {
+				tlsConfig.InsecureSkipVerify = false
+				tlsConfig.Certificates = []tls.Certificate{*obj}
+				if len(this.backend.Cert.ServerName) > 0 {
+					tlsConfig.ServerName = this.backend.Cert.ServerName
+				}
+			}
+		}
+
+		// 超时时间
+		connectionTimeout := this.backend.FailTimeoutDuration()
+		if connectionTimeout <= 0 {
+			connectionTimeout = 15 * time.Second
+		}
+
 		dialer := websocket.Dialer{
-			Proxy:            http.ProxyFromEnvironment,
+			NetDial: func(network, addr string) (conn net.Conn, err error) {
+				return net.DialTimeout(network, this.backend.Address, connectionTimeout)
+			},
+			TLSClientConfig:  tlsConfig,
 			HandshakeTimeout: this.backend.FailTimeoutDuration(),
 		}
 		header := http.Header{}
