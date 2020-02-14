@@ -125,6 +125,8 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 			}
 		}
 
+		this.setProxyHeaders(header)
+
 		// 自定义请求Header
 		for _, h := range this.requestHeaders {
 			if !h.On {
