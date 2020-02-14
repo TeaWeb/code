@@ -79,10 +79,14 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 		if this.backend.HasHost() {
 			host = this.Format(this.backend.Host)
 		}
+
 		wsURL := url.URL{
-			Scheme: scheme,
-			Host:   host,
-			Path:   this.raw.RequestURI,
+			Scheme:   scheme,
+			Host:     host,
+			User:     this.raw.URL.User,
+			Opaque:   this.raw.URL.Opaque,
+			Path:     this.raw.URL.Path,
+			RawQuery: this.raw.URL.RawQuery,
 		}
 
 		// TLS通讯
