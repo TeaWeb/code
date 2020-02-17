@@ -1,8 +1,10 @@
 package tealogs
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
@@ -21,6 +23,8 @@ type ESStorage struct {
 	Endpoint    string `yaml:"endpoint" json:"endpoint"`
 	Index       string `yaml:"index" json:"index"`
 	MappingType string `yaml:"mappingType" json:"mappingType"`
+	Username    string `yaml:"username" json:"username"`
+	Password    string `yaml:"password" json:"password"`
 }
 
 // 开启
@@ -101,6 +105,10 @@ func (this *ESStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", teaconst.TeaProductName+"/"+teaconst.TeaVersion)
+	if len(this.Username) > 0 || len(this.Password) > 0 {
+		req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(this.Username+":"+this.Password)))
+	}
 	client := teautils.SharedHttpClient(10 * time.Second)
 	defer func() {
 		_ = req.Body.Close()

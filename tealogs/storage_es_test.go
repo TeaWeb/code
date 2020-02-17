@@ -18,6 +18,8 @@ func TestESStorage_Write(t *testing.T) {
 		Endpoint:    "http://127.0.0.1:9200",
 		Index:       "logs",
 		MappingType: "accessLogs",
+		Username:    "hello",
+		Password:    "world",
 	}
 	err := storage.Start()
 	if err != nil {
@@ -32,6 +34,7 @@ func TestESStorage_Write(t *testing.T) {
 				RequestMethod: "POST",
 				RequestPath:   "/1",
 				TimeLocal:     time.Now().Format("2/Jan/2006:15:04:05 -0700"),
+				TimeISO8601:   "2018-07-23T22:23:35+08:00",
 				Header: map[string][]string{
 					"Content-Type": {"text/html"},
 				},
@@ -40,6 +43,7 @@ func TestESStorage_Write(t *testing.T) {
 				RequestMethod: "GET",
 				RequestPath:   "/2",
 				TimeLocal:     time.Now().Format("2/Jan/2006:15:04:05 -0700"),
+				TimeISO8601:   "2018-07-23T22:23:35+08:00",
 				Header: map[string][]string{
 					"Content-Type": {"text/css"},
 				},

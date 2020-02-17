@@ -1,6 +1,7 @@
 package teatesting
 
 import (
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/logs"
 	"net/http"
 	"time"
@@ -100,8 +101,17 @@ func RequireRedis() bool {
 
 // 需要ES支持
 func RequireElasticSearch() bool {
-	// TODO
-	return false
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:9200", nil)
+	if err != nil {
+		logs.Error(err)
+		return false
+	}
+	_, err = teautils.SharedHttpClient(1 * time.Second).Do(req)
+	if err != nil {
+		return false
+	}
+
+	return true
 }
 
 // 检查Fastcgi

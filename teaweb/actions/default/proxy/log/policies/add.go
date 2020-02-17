@@ -43,6 +43,8 @@ func (this *AddAction) RunPost(params struct {
 	EsEndpoint    string
 	EsIndex       string
 	EsMappingType string
+	EsUsername    string
+	EsPassword    string
 
 	// mysql
 	MysqlHost     string
@@ -107,6 +109,8 @@ func (this *AddAction) RunPost(params struct {
 		storage.Endpoint = params.EsEndpoint
 		storage.Index = params.EsIndex
 		storage.MappingType = params.EsMappingType
+		storage.Username = params.EsUsername
+		storage.Password = params.EsPassword
 		instance = storage
 	case tealogs.StorageTypeMySQL:
 		params.Must.
