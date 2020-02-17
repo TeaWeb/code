@@ -35,6 +35,9 @@ type MongoConfig struct {
 	RequestURI              string             `yaml:"requestURI" json:"requestURI"` // @TODO 未来版本需要实现
 	DBName                  string             `yaml:"dbName" json:"dbName"`
 
+	PoolSize int `yaml:"poolSize" json:"poolSize"` // 连接池大小
+	Timeout  int `yaml:"timeout" json:"timeout"`   // 超时时间（秒）
+
 	// 日志访问配置
 	AccessLog *MongoAccessLogConfig `yaml:"accessLog" json:"accessLog"`
 }

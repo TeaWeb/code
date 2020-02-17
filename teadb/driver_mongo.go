@@ -672,8 +672,16 @@ func (this *MongoDriver) connect() (*mongo.Client, error) {
 	this.dbName = config.DBName
 
 	opts := options.Client().ApplyURI(config.URI)
-	opts.SetMaxPoolSize(10).
-		SetConnectTimeout(5 * time.Second)
+	if config.PoolSize > 0 {
+		opts.SetMaxPoolSize(uint64(config.PoolSize))
+	} else {
+		opts.SetMaxPoolSize(32)
+	}
+	if config.Timeout > 0 {
+		opts.SetConnectTimeout(time.Duration(5) * time.Second)
+	} else {
+		opts.SetConnectTimeout(5 * time.Second)
+	}
 	sharedConfig, err := db.LoadMongoConfig()
 	if err != nil {
 		return nil, err

@@ -31,6 +31,8 @@ func (this *UpdateAction) Run(params struct {
 		"authMechanism":           config.AuthMechanism,
 		"authMechanismProperties": config.AuthMechanismPropertiesString(),
 		"requestURI":              config.RequestURI,
+		"poolSize":                config.PoolSize,
+		"timeout":                 config.Timeout,
 	}
 
 	this.Show()
@@ -46,6 +48,8 @@ func (this *UpdateAction) RunPost(params struct {
 	AuthEnabled             bool
 	AuthMechanism           string
 	AuthMechanismProperties string
+	PoolSize                int
+	Timeout                 int
 
 	Must *actions.Must
 }) {
@@ -58,7 +62,11 @@ func (this *UpdateAction) RunPost(params struct {
 		Require("请输入主机地址").
 		Field("port", params.Port).
 		Require("请输入端口").
-		Gt(0, "请输入正确的端口")
+		Gt(0, "请输入正确的端口").
+		Field("poolSize", params.PoolSize).
+		Gte(0, "连接池不能小于0").
+		Field("timeout", params.Timeout).
+		Gte(0, "超时时间不能小于0")
 
 	config, err := db.LoadMongoConfig()
 	if err != nil {
@@ -78,6 +86,8 @@ func (this *UpdateAction) RunPost(params struct {
 	} else {
 		config.Password = ""
 	}
+	config.PoolSize = params.PoolSize
+	config.Timeout = params.Timeout
 	err = config.Save()
 
 	if err != nil {
