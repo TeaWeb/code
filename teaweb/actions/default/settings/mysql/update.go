@@ -32,6 +32,7 @@ func (this *UpdateAction) RunPost(params struct {
 	Username string
 	Password string
 	DBName   string `alias:"dbName"`
+	PoolSize int
 	Must     *actions.Must
 }) {
 	// 是否已改变
@@ -46,6 +47,7 @@ func (this *UpdateAction) RunPost(params struct {
 	config.Username = params.Username
 	config.Password = params.Password
 	config.DBName = params.DBName
+	config.PoolSize = params.PoolSize
 	config.DSN = config.ComposeDSN()
 	err = config.Save()
 	if err != nil {

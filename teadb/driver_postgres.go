@@ -70,8 +70,14 @@ func (this *PostgresDriver) initDB() error {
 	if err != nil {
 		return err
 	}
-	dbInstance.SetMaxIdleConns(10)
-	dbInstance.SetMaxOpenConns(32)
+	if config.PoolSize > 0 {
+		half := config.PoolSize / 2
+		dbInstance.SetMaxIdleConns(half)
+		dbInstance.SetMaxOpenConns(config.PoolSize)
+	} else {
+		dbInstance.SetMaxIdleConns(32)
+		dbInstance.SetMaxOpenConns(64)
+	}
 	dbInstance.SetConnMaxLifetime(0)
 	this.db = dbInstance
 	return nil

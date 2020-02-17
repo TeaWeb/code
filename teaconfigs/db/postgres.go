@@ -20,6 +20,8 @@ type PostgresConfig struct {
 	Password string `yaml:"password" json:"password"`
 	DBName   string `yaml:"dbName" json:"dbName"`
 
+	PoolSize int `yaml:"poolSize" json:"poolSize"`
+
 	// 日志访问配置
 	AccessLog *PostgresAccessLogConfig `yaml:"accessLog" json:"accessLog"`
 }
