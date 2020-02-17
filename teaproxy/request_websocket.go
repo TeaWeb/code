@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -118,11 +119,11 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 			HandshakeTimeout: this.backend.FailTimeoutDuration(),
 		}
 		header := http.Header{}
-		{
-			origin, ok := this.raw.Header["Origin"]
-			if ok {
-				header["Origin"] = origin
+		for k, v := range this.raw.Header {
+			if strings.HasPrefix(k, "Sec-") || k == "Upgrade" || k == "Connection" {
+				continue
 			}
+			header[k] = v
 		}
 
 		this.setProxyHeaders(header)
