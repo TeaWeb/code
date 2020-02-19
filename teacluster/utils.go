@@ -23,7 +23,12 @@ func RangeFiles(f func(file *files.File, relativePath string)) {
 			strings.HasPrefix(file.Name(), ".") {
 			return
 		}
-		if lists.ContainsString([]string{"node.conf", "server.conf", "agent.local.conf"}, file.Name()) {
+		if lists.ContainsString([]string{
+			"node.conf",
+			"server.conf",
+			"agent.local.conf",
+			"board.local.conf",
+		}, file.Name()) {
 			return
 		}
 		absPath, _ := file.AbsPath()
