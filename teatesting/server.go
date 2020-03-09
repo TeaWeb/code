@@ -3,6 +3,7 @@ package teatesting
 import (
 	"compress/gzip"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/iwind/TeaGo"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
@@ -177,6 +178,37 @@ func StartTestServer() {
 </html>
 `))
 		}).
+		Get("/websocket", func(req *http.Request, resp http.ResponseWriter) {
+			logs.Println("[test]websocket receive request")
+
+			upgrader := websocket.Upgrader{
+				CheckOrigin: func(r *http.Request) bool {
+					return true
+				},
+			}
+			c, err := upgrader.Upgrade(resp, req, nil)
+			if err != nil {
+				logs.Println("[test]websocket upgrade:", err)
+				return
+			}
+			defer func() {
+				_ = c.Close()
+			}()
+			for {
+				mt, message, err := c.ReadMessage()
+				if err != nil {
+					logs.Println("[test]websocket read:", err)
+					break
+				}
+				logs.Printf("[test]websocket recv: %s", message)
+				err = c.WriteMessage(mt, message)
+				if err != nil {
+					logs.Println("[test]websocket write:", err)
+					break
+				}
+			}
+			logs.Println("[test]websocket closed")
+		}).
 		StartOn("127.0.0.1:9991")
 }
 
@@ -215,4 +247,10 @@ func compressResource(writer http.ResponseWriter, path string, mimeType string) 
 	if err != nil {
 		logs.Error(err)
 	}
+}
+
+// websocket response
+type WebsocketResponse struct {
+	resp     http.ResponseWriter
+	hijacker http.Hijacker
 }
