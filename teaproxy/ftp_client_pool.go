@@ -25,8 +25,11 @@ func NewFTPClientPool() *FTPClientPool {
 }
 
 // 通过Backend配置FTP客户端
-func (this *FTPClientPool) client(backend *teaconfigs.BackendConfig) *FTPClient {
+func (this *FTPClientPool) client(backend *teaconfigs.BackendConfig, location *teaconfigs.LocationConfig) *FTPClient {
 	key := backend.UniqueKey()
+	if location != nil {
+		key = location.Id + "_" + key
+	}
 
 	this.locker.Lock()
 	defer this.locker.Unlock()

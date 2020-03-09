@@ -5,9 +5,11 @@ import (
 	"crypto/tls"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/iwind/TeaGo/logs"
 	"net"
 	"net/http"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -30,8 +32,11 @@ func NewHTTPClientPool() *HTTPClientPool {
 }
 
 // 根据地址获取客户端
-func (this *HTTPClientPool) client(backend *teaconfigs.BackendConfig) *http.Client {
+func (this *HTTPClientPool) client(backend *teaconfigs.BackendConfig, location *teaconfigs.LocationConfig) *http.Client {
 	key := backend.UniqueKey()
+	if location != nil {
+		key = location.Id + "_" + key
+	}
 
 	this.locker.RLock()
 	client, found := this.clientsMap[key]
@@ -69,6 +74,8 @@ func (this *HTTPClientPool) client(backend *teaconfigs.BackendConfig) *http.Clie
 	if idleConns <= 0 {
 		idleConns = numberCPU
 	}
+
+	logs.Println("[proxy]setup backend '" + key + "', max connections:" + strconv.Itoa(maxConnections) + ", max idles:" + strconv.Itoa(idleConns))
 
 	// TLS通讯
 	tlsConfig := &tls.Config{
@@ -129,6 +136,7 @@ func (this *HTTPClientPool) closeOldClient(key string) {
 		if backendId == backendId2 && key != key2 {
 			teautils.CloseHTTPClient(client)
 			delete(this.clientsMap, key2)
+			logs.Println("[proxy]close backend '" + key2)
 			break
 		}
 	}
