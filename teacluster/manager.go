@@ -79,6 +79,10 @@ func (this *Manager) Start() error {
 		this.error = err.Error()
 		return err
 	}
+	defer func() {
+		// close connection
+		_ = conn.Close()
+	}()
 
 	this.isActive = true
 
