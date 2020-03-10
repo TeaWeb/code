@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -140,10 +141,16 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 			}
 		}
 
-		server, _, err := dialer.Dial(wsURL.String(), header)
+		server, resp, err := dialer.Dial(wsURL.String(), header)
 		if err != nil {
-			logs.Error(err)
-			this.addError(err)
+			errString := ""
+			if resp != nil && resp.Body != nil {
+				data, _ := ioutil.ReadAll(resp.Body)
+				errString = strconv.Itoa(resp.StatusCode) + " " + string(bytes.TrimSpace(data))
+			}
+			err1 := errors.New(err.Error() + ": " + errString)
+			logs.Error(err1)
+			this.addError(err1)
 			currentFails := this.backend.IncreaseFails()
 			if this.backend.MaxFails > 0 && currentFails >= this.backend.MaxFails {
 				this.backend.IsDown = true
@@ -159,6 +166,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 
 				this.websocket.SetupScheduling(false)
 			}
+
 			return err
 		}
 		defer func() {
