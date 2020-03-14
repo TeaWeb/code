@@ -146,7 +146,7 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 			errString := ""
 			if resp != nil && resp.Body != nil {
 				data, _ := ioutil.ReadAll(resp.Body)
-				errString = strconv.Itoa(resp.StatusCode) + " " + string(bytes.TrimSpace(data))
+				errString = strconv.Itoa(resp.StatusCode) + ": " + string(bytes.TrimSpace(data))
 			}
 			err1 := errors.New(err.Error() + ": " + errString)
 			logs.Error(err1)
@@ -195,6 +195,13 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 						this.addError(err)
 					}
 					clientIsClosed = true
+					_ = client.Close()
+
+					// 关闭Server
+					if !serverIsClosed {
+						serverIsClosed = true
+						_ = server.Close()
+					}
 					break
 				}
 				_ = server.WriteMessage(messageType, message)
@@ -212,7 +219,10 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 				}
 				serverIsClosed = true
 				_ = server.Close()
+
+				// 关闭客户端
 				if !clientIsClosed {
+					clientIsClosed = true
 					_ = client.Close()
 				}
 				break

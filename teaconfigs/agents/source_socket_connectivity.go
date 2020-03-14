@@ -63,7 +63,7 @@ func (this *SocketConnectivitySource) Execute(params map[string]string) (value i
 		return value, err
 	}
 
-	conn.Close()
+	_ = conn.Close()
 
 	value = maps.Map{
 		"cost":    time.Since(before).Seconds(),
