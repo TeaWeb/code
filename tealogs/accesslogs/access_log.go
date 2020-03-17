@@ -476,7 +476,7 @@ func (this *AccessLog) DBColumns() maps.Map {
 
 func (this *AccessLog) jsonEncode(v interface{}) []byte {
 	if types.IsNil(v) {
-		return nil
+		return []byte("null")
 	}
 	data, _ := ffjson.Marshal(v)
 	return data
