@@ -70,6 +70,10 @@ type LocationConfig struct {
 	// - cond ${requestPath} regexp .*\.png
 	Cond []*shared.RequestCond `yaml:"cond" json:"cond"`
 
+	// 禁止访问的条件
+	DenyCond []*shared.RequestCond `yaml:"denyCond" json:"denyCond"`
+	DenyAll  bool                  `yaml:"denyAll" json:"denyAll"`
+
 	IsBreak bool `yaml:"isBreak" json:"isBreak"` // 终止向下解析
 
 	Pages           []*PageConfig   `yaml:"pages" json:"pages"`                   // 特殊页
@@ -275,6 +279,13 @@ func (this *LocationConfig) Validate() error {
 		}
 	}
 
+	for _, cond := range this.DenyCond {
+		err := cond.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	// request groups
 	for _, group := range this.requestGroups {
 		group.Backends = []*BackendConfig{}
@@ -399,7 +410,7 @@ func (this *LocationConfig) IsCaseInsensitive() bool {
 }
 
 // 判断是否匹配路径
-func (this *LocationConfig) Match(path string, formatter func(source string) string) (map[string]string, bool) {
+func (this *LocationConfig) Match(path string, formatter func(source string) string) (vars map[string]string, isMatched bool) {
 	// 判断条件
 	if len(this.Cond) > 0 {
 		for _, cond := range this.Cond {
@@ -468,6 +479,22 @@ func (this *LocationConfig) Match(path string, formatter func(source string) str
 	}
 
 	return nil, false
+}
+
+// 判断是否屏蔽
+func (this *LocationConfig) IsDenied(formatter func(source string) string) bool {
+	if this.DenyAll {
+		return true
+	}
+
+	if len(this.DenyCond) > 0 {
+		for _, cond := range this.DenyCond {
+			if cond.Match(formatter) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // 组合参数为一个字符串

@@ -71,6 +71,8 @@ func (this *UpdateAction) Run(params struct {
 		"enableStat":        !location.DisableStat,
 		"redirectToHttps":   location.RedirectToHttps,
 		"conds":             location.Cond,
+		"denyConds":         location.DenyCond,
+		"denyAll":           location.DenyAll,
 
 		// 菜单用
 		"rewrite":     location.Rewrite,
@@ -121,6 +123,7 @@ func (this *UpdateAction) RunPost(params struct {
 	MaxBodyUnit          string
 	AccessLogIsInherited bool
 	EnableStat           bool
+	DenyAll              bool
 
 	GzipLevel          int8
 	GzipMinLength      float64
@@ -171,6 +174,14 @@ func (this *UpdateAction) RunPost(params struct {
 	}
 
 	location.Cond = conds
+
+	// 禁止条件
+	denyConds, breakCond, err := proxyutils.ParseRequestConds(this.Request, "deny")
+	if err != nil {
+		this.Fail("禁止访问条件\"" + breakCond.Param + " " + breakCond.Operator + " " + breakCond.Value + "\"校验失败：" + err.Error())
+	}
+	location.DenyCond = denyConds
+	location.DenyAll = params.DenyAll
 
 	location.SetPattern(params.Pattern, params.PatternType, params.IsCaseInsensitive, params.IsReverse)
 	location.On = params.On

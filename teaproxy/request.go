@@ -133,6 +133,7 @@ type Request struct {
 	locationContext *teaconfigs.LocationConfig // 当前变量的上下文 *Location ...
 
 	hasForwardHeader bool
+	isDenied         bool
 }
 
 // 获取新的请求
@@ -223,6 +224,7 @@ func (this *Request) reset(rawRequest *http.Request) {
 	this.accessLog = nil
 
 	this.locationContext = nil
+	this.isDenied = false
 
 	this.gzip = nil
 	this.debug = false
@@ -338,6 +340,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 			}
 			this.locationContext = location
 			if locationMatches, ok := location.Match(rawPath, this.Format); ok {
+				if location.IsDenied(this.Format) {
+					this.isDenied = true
+					return nil
+				}
+
 				this.addVarMapping(locationMatches)
 
 				if len(location.Root) > 0 {
@@ -815,6 +822,15 @@ func (this *Request) callBegin(writer *ResponseWriter) error {
 		}
 	}
 
+	// 禁止访问页面
+	if this.isDenied {
+		if !this.callPage(writer, http.StatusForbidden) {
+			writer.WriteHeader(http.StatusForbidden)
+			_, _ = writer.Write([]byte("Request Forbidden"))
+		}
+		return nil
+	}
+
 	// 临时关闭页面
 	if this.shutdown != nil {
 		return this.callShutdown(writer)
@@ -847,6 +863,7 @@ func (this *Request) callBegin(writer *ResponseWriter) error {
 	if len(this.root) > 0 {
 		return this.callRoot(writer)
 	}
+
 	return errors.New("unable to handle the request")
 }
 

@@ -40,6 +40,8 @@ func (this *DetailAction) Run(params struct {
 		"gzip":            location.Gzip,
 		"redirectToHttps": location.RedirectToHttps,
 		"conds":           location.Cond,
+		"denyConds":       location.DenyCond,
+		"denyAll":         location.DenyAll,
 
 		"fastcgi":     location.Fastcgi,
 		"headers":     location.Headers,
