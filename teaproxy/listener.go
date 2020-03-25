@@ -482,8 +482,11 @@ func (this *Listener) findNamedServer(name string) (serverConfig *teaconfigs.Ser
 	// 只记录N个记录，防止内存耗尽
 	maxNamedServers := 10240
 
+	// 是否严格匹配域名
+	matchDomainStrictly := teaconfigs.SharedProxySetting().MatchDomainStrictly
+
 	// 如果只有一个server，则默认为这个
-	if countServers == 1 {
+	if countServers == 1 && !matchDomainStrictly {
 		server := this.currentServers[0]
 		matchedName, matched := server.MatchName(name)
 		if matched {
@@ -541,6 +544,10 @@ func (this *Listener) findNamedServer(name string) (serverConfig *teaconfigs.Ser
 	}
 
 	// 如果没有找到，则匹配到第一个
+	if matchDomainStrictly {
+		return nil, name
+	}
+
 	server := this.currentServers[0]
 	firstName := server.FirstName()
 	if len(firstName) > 0 {

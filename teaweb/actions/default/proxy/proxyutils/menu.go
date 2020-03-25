@@ -23,7 +23,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 	var hasServer = false
 	var isTCP = false
 
-	isIndex := !action.HasPrefix("/proxy/add", "/cache", "/proxy/waf", "/proxy/log/policies", "/proxy/certs")
+	isIndex := !action.HasPrefix("/proxy/add", "/cache", "/proxy/waf", "/proxy/log/policies", "/proxy/certs", "/proxy/settings")
 
 	serverId := action.ParamString("serverId")
 	serverList, err := teaconfigs.SharedServerList()
@@ -112,6 +112,7 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 		menu.Add("WAF策略", "", "/proxy/waf", action.HasPrefix("/proxy/waf"))
 		menu.Add("日志策略", "", "/proxy/log/policies", action.HasPrefix("/proxy/log/policies"))
 		menu.Add("SSL证书管理", "", "/proxy/certs", action.HasPrefix("/proxy/certs"))
+		menu.Add("通用设置", "", "/proxy/settings", action.HasPrefix("/proxy/settings"))
 	}
 	utils.SetSubMenu(action, menuGroup)
 
