@@ -131,7 +131,7 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 	if server.IsHTTP() { // HTTP
 		// HTTP
 		if server.Http {
-			for _, address := range server.Listen {
+			for _, address := range server.ParseListenAddresses() {
 				// 是否有端口
 				if shared.RegexpDigitNumber.MatchString(address) {
 					address = ":" + address

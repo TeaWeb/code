@@ -15,8 +15,11 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
 	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -496,6 +499,29 @@ func (this *ServerConfig) AddName(name ...string) {
 // 添加监听地址
 func (this *ServerConfig) AddListen(address string) {
 	this.Listen = append(this.Listen, address)
+}
+
+// 分解所有监听地址
+func (this *ServerConfig) ParseListenAddresses() []string {
+	result := []string{}
+	var reg = regexp.MustCompile(`:\s*\[\s*(\d+)\s*[,:-]\s*(\d+)\s*]$`)
+	for _, addr := range this.Listen {
+		match := reg.FindStringSubmatch(addr)
+		if len(match) == 0 {
+			result = append(result, addr)
+		} else {
+			min := types.Int(match[1])
+			max := types.Int(match[2])
+			if min > max {
+				min, max = max, min
+			}
+			for i := min; i <= max; i++ {
+				newAddr := reg.ReplaceAllString(addr, ":"+strconv.Itoa(i))
+				result = append(result, newAddr)
+			}
+		}
+	}
+	return result
 }
 
 // 获取某个位置上的配置

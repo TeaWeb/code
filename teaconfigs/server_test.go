@@ -68,3 +68,45 @@ func TestServerConfig_Encode(t *testing.T) {
 
 	t.Log(string(data))
 }
+
+func TestServerConfig_ParseListenAddresses(t *testing.T) {
+	a := assert.NewAssertion(t)
+
+	{
+		server := NewServerConfig()
+		server.AddListen("127.0.0.1:1234")
+		result := server.ParseListenAddresses()
+		t.Log(result)
+		a.IsTrue(len(result) == 1)
+	}
+
+	{
+		server := NewServerConfig()
+		server.AddListen("127.0.0.1:[100-200]")
+		result := server.ParseListenAddresses()
+		t.Log(result)
+		a.IsTrue(len(result) == 101)
+	}
+
+	{
+		server := NewServerConfig()
+		server.AddListen("127.0.0.1: [ 80 - 88 ]")
+		result := server.ParseListenAddresses()
+		t.Log(result)
+		a.IsTrue(len(result) == 9)
+	}
+	{
+		server := NewServerConfig()
+		server.AddListen("127.0.0.1:[80,88]")
+		result := server.ParseListenAddresses()
+		t.Log(result)
+		a.IsTrue(len(result) == 9)
+	}
+	{
+		server := NewServerConfig()
+		server.AddListen("127.0.0.1:[80:88]")
+		result := server.ParseListenAddresses()
+		t.Log(result)
+		a.IsTrue(len(result) == 9)
+	}
+}
