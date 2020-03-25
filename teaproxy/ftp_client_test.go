@@ -21,7 +21,7 @@ func TestFTPClient_Do(t *testing.T) {
 			Dir:      "",
 		},
 	}
-	client := SharedFTPClientPool.client(backend)
+	client := SharedFTPClientPool.client(nil, backend, nil)
 
 	for _, file := range []string{"/index.html", "index.a", "/dir1/dir2/hello.txt"} {
 		func() {
@@ -62,7 +62,7 @@ func TestFTPClient_Do_ChangeDir(t *testing.T) {
 			Dir:      "/dir1/dir2",
 		},
 	}
-	client := SharedFTPClientPool.client(backend)
+	client := SharedFTPClientPool.client(nil, backend, nil)
 
 	for _, file := range []string{"hello.txt", "hello1.txt", "hello2.txt"} {
 		func() {

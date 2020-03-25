@@ -222,6 +222,7 @@ func TestRequest_Format(t *testing.T) {
 	req.method = "GET"
 	req.filePath = "hello.go"
 	req.scheme = "http"
+	req.host = "www.example.com"
 
 	a.IsTrue(req.requestRemoteAddr() == "127.0.0.1")
 	t.Log(req.requestRemotePort())
@@ -251,6 +252,41 @@ func TestRequest_Format(t *testing.T) {
 	a.IsTrue(req.requestRemoteAddr() == "192.168.1.103")
 
 	t.Log(req.Format("hello ${teaVersion} remoteAddr:${remoteAddr} name:${arg.name} header:${header.Content-Type} test:${test}"))
+
+	{
+		req.host = "a.b.c.example.com"
+		t.Log("===")
+		t.Log(req.Format("host:${host} first:${host.first}, last:${host.last},  0:${host.0},  1:${host.1},  2:${host.2},  3:${host.3},  4:${host.4}"))
+		t.Log(req.Format("-1:${host.-1} -2:${host.-2} -3:${host.-3} -4:${host.-4}"))
+	}
+
+	{
+		req.host = "a.b.example.com"
+		t.Log("===")
+		t.Log(req.Format("host:${host} first:${host.first}, last:${host.last},  0:${host.0},  1:${host.1},  2:${host.2},  3:${host.3},  4:${host.4}"))
+		t.Log(req.Format("-1:${host.-1} -2:${host.-2} -3:${host.-3} -4:${host.-4}"))
+	}
+
+	{
+		req.host = "a.example.com"
+		t.Log("===")
+		t.Log(req.Format("host:${host} first:${host.first}, last:${host.last},  0:${host.0},  1:${host.1},  2:${host.2},  3:${host.3},  4:${host.4}"))
+		t.Log(req.Format("-1:${host.-1} -2:${host.-2} -3:${host.-3} -4:${host.-4}"))
+	}
+
+	{
+		req.host = "a.example.com"
+		t.Log("===")
+		t.Log(req.Format("host:${host} first:${host.first}, last:${host.last},  0:${host.0},  1:${host.1},  2:${host.2},  3:${host.3},  4:${host.4}"))
+		t.Log(req.Format("-1:${host.-1} -2:${host.-2} -3:${host.-3} -4:${host.-4}"))
+	}
+
+	{
+		req.host = "example.com"
+		t.Log("===")
+		t.Log(req.Format("host:${host} first:${host.first}, last:${host.last},  0:${host.0},  1:${host.1},  2:${host.2},  3:${host.3},  4:${host.4}"))
+		t.Log(req.Format("-1:${host.-1} -2:${host.-2} -3:${host.-3} -4:${host.-4}"))
+	}
 }
 
 func TestRequest_FormatPerformance(t *testing.T) {

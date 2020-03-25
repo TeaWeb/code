@@ -1309,6 +1309,73 @@ func (this *Request) Format(source string) string {
 			}
 		}
 
+		// host
+		if prefix == "host" {
+			pieces := strings.Split(this.host, ".")
+			switch suffix {
+			case "first":
+				if len(pieces) > 0 {
+					return pieces[0]
+				}
+				return ""
+			case "last":
+				if len(pieces) > 0 {
+					return pieces[len(pieces)-1]
+				}
+				return ""
+			case "0":
+				if len(pieces) > 0 {
+					return pieces[0]
+				}
+				return ""
+			case "1":
+				if len(pieces) > 1 {
+					return pieces[1]
+				}
+				return ""
+			case "2":
+				if len(pieces) > 2 {
+					return pieces[2]
+				}
+				return ""
+			case "3":
+				if len(pieces) > 3 {
+					return pieces[3]
+				}
+				return ""
+			case "4":
+				if len(pieces) > 4 {
+					return pieces[4]
+				}
+				return ""
+			case "-1":
+				if len(pieces) > 0 {
+					return pieces[len(pieces)-1]
+				}
+				return ""
+			case "-2":
+				if len(pieces) > 1 {
+					return pieces[len(pieces)-2]
+				}
+				return ""
+			case "-3":
+				if len(pieces) > 2 {
+					return pieces[len(pieces)-3]
+				}
+				return ""
+			case "-4":
+				if len(pieces) > 3 {
+					return pieces[len(pieces)-4]
+				}
+				return ""
+			case "-5":
+				if len(pieces) > 4 {
+					return pieces[len(pieces)-5]
+				}
+				return ""
+			}
+		}
+
 		return "${" + varName + "}"
 	})
 }
