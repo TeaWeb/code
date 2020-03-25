@@ -23,6 +23,9 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string, 
 	// 添加当前Header
 	req.Header = this.raw.Header
 
+	// 代理头部
+	this.setProxyHeaders(req.Header)
+
 	// 自定义请求Header
 	if len(this.requestHeaders) > 0 {
 		for _, header := range this.requestHeaders {
@@ -36,9 +39,6 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string, 
 			}
 		}
 	}
-
-	// 代理头部
-	this.setProxyHeaders(req.Header)
 
 	var client = teautils.SharedHttpClient(60 * time.Second)
 	resp, err := client.Do(req)

@@ -61,7 +61,7 @@ type HeaderList struct {
 	// 忽略的响应Headers
 	IgnoreHeaders []string `yaml:"ignoreHeaders" json:"ignoreHeaders"`
 
-	// 请求Headers
+	// 自定义请求Headers
 	RequestHeaders []*HeaderConfig `yaml:"requestHeaders" json:"requestHeaders"`
 
 	hasResponseHeaders bool
