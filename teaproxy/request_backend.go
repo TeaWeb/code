@@ -113,10 +113,10 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 	var resp *http.Response = nil
 	var err error = nil
 	if this.backend.IsFTP() {
-		client := SharedFTPClientPool.client(this.backend, this.location)
+		client := SharedFTPClientPool.client(this, this.backend, this.location)
 		resp, err = client.Do(this.raw)
 	} else {
-		client := SharedHTTPClientPool.client(this.backend, this.location)
+		client := SharedHTTPClientPool.client(this, this.backend, this.location)
 		resp, err = client.Do(this.raw)
 	}
 	if err != nil {

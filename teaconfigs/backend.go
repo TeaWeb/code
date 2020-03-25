@@ -83,6 +83,8 @@ type BackendConfig struct {
 	hasHost bool
 
 	uniqueKey string
+
+	hasAddrVariables bool // 地址中是否含有变量
 }
 
 // 获取新对象
@@ -167,6 +169,9 @@ func (this *BackendConfig) Validate() error {
 
 	// host
 	this.hasHost = len(this.Host) > 0
+
+	// variables
+	this.hasAddrVariables = shared.RegexpNamedVariable.MatchString(this.Address)
 
 	return nil
 }
@@ -476,4 +481,9 @@ func (this *BackendConfig) IsTCP() bool {
 // 是否为FTP
 func (this *BackendConfig) IsFTP() bool {
 	return this.Scheme == "ftp"
+}
+
+// 地址中是否含有变量
+func (this *BackendConfig) HasAddrVariables() bool {
+	return this.hasAddrVariables
 }

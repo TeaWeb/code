@@ -32,10 +32,16 @@ func NewHTTPClientPool() *HTTPClientPool {
 }
 
 // 根据地址获取客户端
-func (this *HTTPClientPool) client(backend *teaconfigs.BackendConfig, location *teaconfigs.LocationConfig) *http.Client {
+func (this *HTTPClientPool) client(req *Request, backend *teaconfigs.BackendConfig, location *teaconfigs.LocationConfig) *http.Client {
 	key := backend.UniqueKey()
 	if location != nil {
 		key = location.Id + "_" + key
+	}
+
+	backendAddr := backend.Address
+	if backend.HasAddrVariables() {
+		backendAddr = req.Format(backend.Address)
+		key += "@" + backendAddr
 	}
 
 	this.locker.RLock()
@@ -49,7 +55,6 @@ func (this *HTTPClientPool) client(backend *teaconfigs.BackendConfig, location *
 
 	maxConnections := int(backend.MaxConns)
 	connectionTimeout := backend.FailTimeoutDuration()
-	address := backend.Address
 	readTimeout := backend.ReadTimeoutDuration()
 	idleTimeout := backend.IdleTimeoutDuration()
 	idleConns := int(backend.IdleConns)
@@ -98,7 +103,7 @@ func (this *HTTPClientPool) client(backend *teaconfigs.BackendConfig, location *
 			return (&net.Dialer{
 				Timeout:   connectionTimeout,
 				KeepAlive: 2 * time.Minute,
-			}).DialContext(ctx, network, address)
+			}).DialContext(ctx, network, backendAddr)
 		},
 		MaxIdleConns:          0,
 		MaxIdleConnsPerHost:   idleConns,
@@ -121,7 +126,9 @@ func (this *HTTPClientPool) client(backend *teaconfigs.BackendConfig, location *
 	this.clientsMap[key] = client
 
 	// 关闭老的
-	this.closeOldClient(key)
+	if !backend.HasAddrVariables() {
+		this.closeOldClient(key)
+	}
 
 	this.locker.Unlock()
 

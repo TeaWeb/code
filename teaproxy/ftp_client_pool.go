@@ -25,10 +25,16 @@ func NewFTPClientPool() *FTPClientPool {
 }
 
 // 通过Backend配置FTP客户端
-func (this *FTPClientPool) client(backend *teaconfigs.BackendConfig, location *teaconfigs.LocationConfig) *FTPClient {
+func (this *FTPClientPool) client(req *Request, backend *teaconfigs.BackendConfig, location *teaconfigs.LocationConfig) *FTPClient {
 	key := backend.UniqueKey()
 	if location != nil {
 		key = location.Id + "_" + key
+	}
+
+	backendAddr := backend.Address
+	if backend.HasAddrVariables() {
+		backendAddr = req.Format(backend.Address)
+		key += "@" + backendAddr
 	}
 
 	this.locker.Lock()
@@ -39,7 +45,9 @@ func (this *FTPClientPool) client(backend *teaconfigs.BackendConfig, location *t
 	}
 
 	// 关闭以前的连接
-	this.closeOldClients(key)
+	if !backend.HasAddrVariables() {
+		this.closeOldClients(key)
+	}
 
 	if backend.FTP == nil {
 		backend.FTP = &teaconfigs.FTPBackendConfig{}
@@ -53,7 +61,7 @@ func (this *FTPClientPool) client(backend *teaconfigs.BackendConfig, location *t
 	}
 	client = &FTPClient{
 		pool: &FTPConnectionPool{
-			addr:           backend.Address,
+			addr:           backendAddr,
 			username:       backend.FTP.Username,
 			password:       backend.FTP.Password,
 			dir:            backend.FTP.Dir,

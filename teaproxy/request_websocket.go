@@ -112,9 +112,13 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 			connectionTimeout = 15 * time.Second
 		}
 
+		backendAddr := this.backend.Address
+		if this.backend.HasAddrVariables() {
+			backendAddr = this.Format(backendAddr)
+		}
 		dialer := websocket.Dialer{
 			NetDial: func(network, addr string) (conn net.Conn, err error) {
-				return net.DialTimeout(network, this.backend.Address, connectionTimeout)
+				return net.DialTimeout(network, backendAddr, connectionTimeout)
 			},
 			TLSClientConfig:  tlsConfig,
 			HandshakeTimeout: this.backend.FailTimeoutDuration(),
