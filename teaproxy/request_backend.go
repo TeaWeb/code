@@ -96,9 +96,9 @@ func (this *Request) callBackend(writer *ResponseWriter) error {
 				continue
 			}
 			if header.HasVariables() {
-				this.raw.Header.Set(header.Name, this.Format(header.Value))
+				this.raw.Header[header.Name] = []string{this.Format(header.Value)}
 			} else {
-				this.raw.Header.Set(header.Name, header.Value)
+				this.raw.Header[header.Name] = []string{header.Value}
 			}
 
 			// 支持修改Host

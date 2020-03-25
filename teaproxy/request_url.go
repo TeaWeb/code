@@ -30,9 +30,9 @@ func (this *Request) callURL(writer *ResponseWriter, method string, url string, 
 				continue
 			}
 			if header.HasVariables() {
-				req.Header.Set(header.Name, this.Format(header.Value))
+				req.Header[header.Name] = []string{this.Format(header.Value)}
 			} else {
-				req.Header.Set(header.Name, header.Value)
+				req.Header[header.Name] = []string{header.Value}
 			}
 		}
 	}
