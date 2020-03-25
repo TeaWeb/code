@@ -72,6 +72,29 @@ func WritePid(path string) error {
 	return nil
 }
 
+// 写入Ppid
+func WritePpid(path string) error {
+	fp, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY|os.O_RDONLY, 0666)
+	if err != nil {
+		return err
+	}
+
+	if runtime.GOOS != "windows" {
+		err = LockFile(fp)
+		if err != nil {
+			return err
+		}
+	}
+	pidFileList = append(pidFileList, fp) // hold the file pointers
+
+	_, err = fp.WriteString(fmt.Sprintf("%d", os.Getppid()))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // 删除Pid
 func DeletePid(path string) error {
 	_, err := os.Stat(path)

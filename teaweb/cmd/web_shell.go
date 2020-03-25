@@ -50,7 +50,7 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 	}
 
 	// 当前PID文件句柄
-	err := this.writePid()
+	err := this.writePpid()
 	if err != nil {
 		logs.Println("[error]write pid file failed: '" + err.Error() + "'")
 		return
@@ -133,8 +133,10 @@ func (this *WebShell) execArgs(writer io.Writer) bool {
 			this.write(writer, teaconst.TeaProductName+" is already running, pid:", proc.Pid)
 			return true
 		}
+
 		return false
 	}
+
 	args := os.Args[1:]
 	arg0 := ""
 	if len(args) > 0 {
@@ -142,26 +144,42 @@ func (this *WebShell) execArgs(writer io.Writer) bool {
 	}
 	if this.hasArg(arg0, "?", "help", "-help", "h", "-h") { // 帮助
 		return this.ExecHelp(writer)
-	} else if this.hasArg(arg0, "-v", "version", "-version") { // 版本号
+	}
+	if this.hasArg(arg0, "-v", "version", "-version") { // 版本号
 		return this.ExecVersion(writer)
-	} else if this.hasArg(arg0, "start") { // 启动
+	}
+	if this.hasArg(arg0, "start") { // 启动
 		return this.ExecStart(writer)
-	} else if this.hasArg(arg0, "stop") { // 停止
+	}
+	if this.hasArg(arg0, "stop") { // 停止
 		return this.ExecStop(os.Stdout)
-	} else if this.hasArg(arg0, "reload") { // 重新加载代理配置
+	}
+	if this.hasArg(arg0, "reload") { // 重新加载代理配置
 		return this.ExecReload(writer)
-	} else if this.hasArg(arg0, "restart") { // 重启
+	}
+	if this.hasArg(arg0, "restart") { // 重启
 		return this.ExecRestart(writer)
-	} else if this.hasArg(arg0, "reset") { // 重置
+	}
+	if this.hasArg(arg0, "reset") { // 重置
 		return this.ExecReset(writer)
-	} else if this.hasArg(arg0, "status") { // 状态
+	}
+	if this.hasArg(arg0, "status") { // 状态
 		return this.ExecStatus(writer)
-	} else if this.hasArg(arg0, "sync") { // 同步
+	}
+	if this.hasArg(arg0, "sync") { // 同步
 		return this.ExecSync(writer)
-	} else if this.hasArg(arg0, "service") && runtime.GOOS == "windows" { // Windows服务
+	}
+	if this.hasArg(arg0, "service") && runtime.GOOS == "windows" { // Windows服务
 		return this.ExecService(writer)
-	} else if this.hasArg(arg0, "pprof") {
+	}
+	if this.hasArg(arg0, "pprof") {
 		return this.ExecPprof(writer)
+	}
+	if this.hasArg(arg0, "master") {
+		return this.ExecMaster(writer)
+	}
+	if this.hasArg(arg0, "worker") {
+		return this.ExecWorker(writer)
 	}
 
 	if len(args) > 0 {
@@ -207,7 +225,7 @@ func (this *WebShell) ExecStart(writer io.Writer) bool {
 		return true
 	}
 
-	cmd := exec.Command(os.Args[0])
+	cmd := exec.Command(os.Args[0], "master")
 	err := cmd.Start()
 	if err != nil {
 		this.write(writer, teaconst.TeaProductName+"  start failed:", err.Error())
@@ -226,13 +244,14 @@ func (this *WebShell) ExecStop(writer io.Writer) bool {
 		return true
 	}
 
+	// 停止子进程
 	err := proc.Kill()
 	if err != nil {
 		this.write(writer, teaconst.TeaProductName+" stop error:", err.Error())
 		return true
 	}
 
-	// 在Windows上经常不能即使释放资源
+	// 在Windows上经常不能及时释放资源
 	_ = teautils.DeletePid(Tea.Root + "/bin/pid")
 	this.write(writer, teaconst.TeaProductName+" stopped ok, pid:", proc.Pid)
 
@@ -340,9 +359,46 @@ func (this *WebShell) ExecPprof(writer io.Writer) bool {
 	return false
 }
 
+// 守护进程
+func (this *WebShell) ExecMaster(writer io.Writer) bool {
+	// 生成子进程，当前进程变成守护进程
+	for {
+		cmd := exec.Command(os.Args[0], "worker")
+		err := cmd.Start()
+		if err != nil {
+			this.write(writer, teaconst.TeaProductName+"  start failed:", err.Error())
+			break
+		}
+		_ = cmd.Wait()
+	}
+	return true
+}
+
+// 在后台执行
+func (this *WebShell) ExecWorker(writer io.Writer) bool {
+	ppid := os.Getppid()
+
+	go func() {
+		for {
+			// 检查父进程是否已消失
+			if os.Getppid() != ppid {
+				os.Exit(0)
+				return
+			}
+			parentProcess, _ := os.FindProcess(ppid)
+			if parentProcess == nil {
+				os.Exit(0)
+				return
+			}
+			time.Sleep(5 * time.Second)
+		}
+	}()
+	return false
+}
+
 // 写入PID
-func (this *WebShell) writePid() error {
-	return teautils.WritePid(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid")
+func (this *WebShell) writePpid() error {
+	return teautils.WritePpid(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid")
 }
 
 // 检查PID
