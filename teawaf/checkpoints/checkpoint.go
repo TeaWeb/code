@@ -15,7 +15,7 @@ func (this *Checkpoint) ParamOptions() *ParamOptions {
 	return nil
 }
 
-func (this *Checkpoint) Options() []*Option {
+func (this *Checkpoint) Options() []OptionInterface {
 	return nil
 }
 

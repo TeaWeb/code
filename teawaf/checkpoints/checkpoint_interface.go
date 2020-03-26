@@ -22,7 +22,7 @@ type CheckpointInterface interface {
 	ParamOptions() *ParamOptions
 
 	// options
-	Options() []*Option
+	Options() []OptionInterface
 
 	// start
 	Start()

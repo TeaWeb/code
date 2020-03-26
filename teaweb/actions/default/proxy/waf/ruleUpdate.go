@@ -104,18 +104,42 @@ func (this *RuleUpdateAction) RunGet(params struct {
 				"hasParams":    def.HasParams,
 				"paramOptions": def.Instance.ParamOptions(),
 				"options": lists.Map(def.Instance.Options(), func(k int, v interface{}) interface{} {
-					option := v.(*checkpoints.Option)
-					return maps.Map{
-						"name":        option.Name,
-						"maxLength":   option.MaxLength,
-						"code":        option.Code,
-						"rightLabel":  option.RightLabel,
-						"value":       option.Value,
-						"isRequired":  option.IsRequired,
-						"size":        option.Size,
-						"comment":     option.Comment,
-						"placeholder": option.Placeholder,
+					{
+						option, ok := v.(*checkpoints.FieldOption)
+						if ok {
+							return maps.Map{
+								"type":        option.Type(),
+								"name":        option.Name,
+								"maxLength":   option.MaxLength,
+								"code":        option.Code,
+								"rightLabel":  option.RightLabel,
+								"value":       option.Value,
+								"isRequired":  option.IsRequired,
+								"size":        option.Size,
+								"comment":     option.Comment,
+								"placeholder": option.Placeholder,
+							}
+						}
 					}
+
+					{
+						option, ok := v.(*checkpoints.OptionsOption)
+						if ok {
+							return maps.Map{
+								"type":       option.Type(),
+								"name":       option.Name,
+								"code":       option.Code,
+								"rightLabel": option.RightLabel,
+								"value":      option.Value,
+								"isRequired": option.IsRequired,
+								"size":       option.Size,
+								"comment":    option.Comment,
+								"options":    option.Options,
+							}
+						}
+					}
+
+					return maps.Map{}
 				}),
 			})
 		}
