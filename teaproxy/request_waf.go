@@ -11,7 +11,7 @@ func (this *Request) callWAFRequest(writer *ResponseWriter) (blocked bool) {
 	if this.waf == nil {
 		return
 	}
-	goNext, ruleSet, err := this.waf.MatchRequest(this.raw, writer)
+	goNext, group, ruleSet, err := this.waf.MatchRequest(this.raw, writer)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -19,9 +19,11 @@ func (this *Request) callWAFRequest(writer *ResponseWriter) (blocked bool) {
 
 	if ruleSet != nil {
 		if ruleSet.Action != actions.ActionAllow {
-			this.SetAttr("waf.action", ruleSet.Action)
-			this.SetAttr("waf.ruleset", ruleSet.Name)
-			this.SetAttr("waf.id", this.waf.Id)
+			this.SetAttr("waf_action", ruleSet.Action)
+			this.SetAttr("waf_group", group.Id)
+			this.SetAttr("waf_ruleset", ruleSet.Id)
+			this.SetAttr("waf_ruleset_name", ruleSet.Name)
+			this.SetAttr("waf_id", this.waf.Id)
 		}
 	}
 
@@ -34,7 +36,7 @@ func (this *Request) callWAFResponse(resp *http.Response, writer *ResponseWriter
 		return
 	}
 
-	goNext, ruleSet, err := this.waf.MatchResponse(this.raw, resp, writer)
+	goNext, group, ruleSet, err := this.waf.MatchResponse(this.raw, resp, writer)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -42,9 +44,11 @@ func (this *Request) callWAFResponse(resp *http.Response, writer *ResponseWriter
 
 	if ruleSet != nil {
 		if ruleSet.Action != actions.ActionAllow {
-			this.SetAttr("waf.action", ruleSet.Action)
-			this.SetAttr("waf.ruleset", ruleSet.Name)
-			this.SetAttr("waf.id", this.waf.Id)
+			this.SetAttr("waf_action", ruleSet.Action)
+			this.SetAttr("waf_group", group.Id)
+			this.SetAttr("waf_ruleset", ruleSet.Id)
+			this.SetAttr("waf_ruleset_name", ruleSet.Name)
+			this.SetAttr("waf_id", this.waf.Id)
 		}
 	}
 

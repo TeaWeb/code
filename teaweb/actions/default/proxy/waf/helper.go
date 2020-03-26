@@ -28,6 +28,8 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 			action.Data["selectedSubMenu"] = "export"
 		} else if action.HasPrefix("/proxy/waf/import") {
 			action.Data["selectedSubMenu"] = "import"
+		} else if action.HasPrefix("/proxy/waf/history") || action.HasPrefix("/proxy/waf/day") {
+			action.Data["selectedSubMenu"] = "history"
 		}
 
 		action.Data["inbound"] = false

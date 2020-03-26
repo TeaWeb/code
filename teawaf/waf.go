@@ -252,9 +252,9 @@ func (this *WAF) MoveOutboundRuleGroup(fromIndex int, toIndex int) {
 	this.Outbound = result
 }
 
-func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) (goNext bool, set *rules.RuleSet, err error) {
+func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) (goNext bool, group *rules.RuleGroup, set *rules.RuleSet, err error) {
 	if !this.hasInboundRules {
-		return true, nil, nil
+		return true, nil, nil, nil
 	}
 	req := requests.NewRequest(rawReq)
 	for _, group := range this.Inbound {
@@ -263,32 +263,32 @@ func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) 
 		}
 		b, set, err := group.MatchRequest(req)
 		if err != nil {
-			return true, nil, err
+			return true, nil, nil, err
 		}
 		if b {
 			if this.onActionCallback == nil {
 				if set.Action == actions.ActionBlock && this.ActionBlock != nil {
-					return this.ActionBlock.Perform(rawReq, writer), set, nil
+					return this.ActionBlock.Perform(rawReq, writer), group, set, nil
 				} else {
 					actionObject := actions.FindActionInstance(set.Action)
 					if actionObject == nil {
-						return true, set, errors.New("no action called '" + set.Action + "'")
+						return true, group, set, errors.New("no action called '" + set.Action + "'")
 					}
 					goNext := actionObject.Perform(rawReq, writer)
-					return goNext, set, nil
+					return goNext, group, set, nil
 				}
 			} else {
 				goNext = this.onActionCallback(set.Action)
 			}
-			return goNext, set, nil
+			return goNext, group, set, nil
 		}
 	}
-	return true, nil, nil
+	return true, nil, nil, nil
 }
 
-func (this *WAF) MatchResponse(rawReq *http.Request, rawResp *http.Response, writer http.ResponseWriter) (goNext bool, set *rules.RuleSet, err error) {
+func (this *WAF) MatchResponse(rawReq *http.Request, rawResp *http.Response, writer http.ResponseWriter) (goNext bool, group *rules.RuleGroup, set *rules.RuleSet, err error) {
 	if !this.hasOutboundRules {
-		return true, nil, nil
+		return true, nil, nil, nil
 	}
 	req := requests.NewRequest(rawReq)
 	resp := requests.NewResponse(rawResp)
@@ -298,27 +298,27 @@ func (this *WAF) MatchResponse(rawReq *http.Request, rawResp *http.Response, wri
 		}
 		b, set, err := group.MatchResponse(req, resp)
 		if err != nil {
-			return true, nil, err
+			return true, nil, nil, err
 		}
 		if b {
 			if this.onActionCallback == nil {
 				if set.Action == actions.ActionBlock && this.ActionBlock != nil {
-					return this.ActionBlock.Perform(rawReq, writer), set, nil
+					return this.ActionBlock.Perform(rawReq, writer), group, set, nil
 				} else {
 					actionObject := actions.FindActionInstance(set.Action)
 					if actionObject == nil {
-						return true, set, errors.New("no action called '" + set.Action + "'")
+						return true, group, set, errors.New("no action called '" + set.Action + "'")
 					}
 					goNext := actionObject.Perform(rawReq, writer)
-					return goNext, set, nil
+					return goNext, group, set, nil
 				}
 			} else {
 				goNext = this.onActionCallback(set.Action)
 			}
-			return goNext, set, nil
+			return goNext, group, set, nil
 		}
 	}
-	return true, nil, nil
+	return true, nil, nil, nil
 }
 
 // save to file path

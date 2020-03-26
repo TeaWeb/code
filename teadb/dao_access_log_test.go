@@ -195,6 +195,24 @@ func TestAccessLogDAO_HasAccessLog(t *testing.T) {
 	}
 }
 
+func TestAccessLogDAO_HasAccessLogWithWAF(t *testing.T) {
+	{
+		b, err := AccessLogDAO().HasAccessLogWithWAF(timeutil.Format("Ymd"), "pq6HzRfIjcGsUqNe")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(b)
+	}
+
+	{
+		b, err := AccessLogDAO().HasAccessLogWithWAF(timeutil.Format("Ymd"), "pq6HzRfIjcGsU123")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(b)
+	}
+}
+
 func TestAccessLogDAO_ListLatestAccessLogs(t *testing.T) {
 	dao := AccessLogDAO()
 	{

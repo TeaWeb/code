@@ -39,6 +39,15 @@ type AccessLogDAOInterface interface {
 	// 判断某个代理服务是否有日志
 	HasAccessLog(day string, serverId string) (bool, error)
 
+	// 列出WAF日志
+	ListAccessLogsWithWAF(day string, wafId string, fromId string, onlyErrors bool, searchIP string, offset int, size int) ([]*accesslogs.AccessLog, error)
+
+	// 检查WAF是否有下一条日志
+	HasNextAccessLogWithWAF(day string, wafId string, fromId string, onlyErrors bool, searchIP string) (bool, error)
+
+	// 判断某日是否有WAF日志
+	HasAccessLogWithWAF(day string, wafId string) (bool, error)
+
 	// 列出最近的某些日志
 	ListLatestAccessLogs(day string, serverId string, fromId string, onlyErrors bool, size int) ([]*accesslogs.AccessLog, error)
 

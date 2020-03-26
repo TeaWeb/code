@@ -1399,6 +1399,8 @@ func (this *Request) Format(source string) string {
 
 // 设置属性
 func (this *Request) SetAttr(key string, value string) {
+	// 需要处理key中的点（.）符号，因为很多数据库不支持在key中含有点
+	key = strings.Replace(key, ".", "_", -1)
 	this.attrs[key] = value
 }
 

@@ -175,6 +175,80 @@ func (this *SQLAccessLogDAO) HasAccessLog(day string, serverId string) (bool, er
 	return one != nil, err
 }
 
+// 列出WAF日志
+func (this *SQLAccessLogDAO) ListAccessLogsWithWAF(day string, wafId string, fromId string, onlyErrors bool, searchIP string, offset int, size int) ([]*accesslogs.AccessLog, error) {
+	query := NewQuery(this.TableName(day))
+	query.Attr(this.driver.(SQLDriverInterface).JSONExtract("attrs", "waf_id"), wafId)
+	if len(fromId) > 0 {
+		query.Lt("_id", fromId)
+	}
+	if onlyErrors {
+		query.Or([]*OperandList{
+			NewOperandList().Add("hasErrors", NewOperand(OperandEq, 1)),
+			NewOperandList().Add("status", NewOperand(OperandGte, 400)),
+		})
+	}
+	if len(searchIP) > 0 {
+		query.Attr("remoteAddr", searchIP)
+	}
+	query.Offset(offset)
+	query.Limit(size)
+	query.Desc("_id")
+	ones, err := query.FindOnes(new(accesslogs.AccessLog))
+	if err != nil {
+		if this.tableNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	result := []*accesslogs.AccessLog{}
+	for _, one := range ones {
+		result = append(result, one.(*accesslogs.AccessLog))
+	}
+	return result, nil
+}
+
+// 检查是否有下一条日志
+func (this *SQLAccessLogDAO) HasNextAccessLogWithWAF(day string, wafId string, fromId string, onlyErrors bool, searchIP string) (bool, error) {
+	query := NewQuery(this.TableName(day))
+	query.Attr(this.driver.(SQLDriverInterface).JSONExtract("attrs", "waf_id"), wafId).
+		Result("_id")
+	if len(fromId) > 0 {
+		query.Lt("_id", fromId)
+	}
+	if onlyErrors {
+		query.Or([]*OperandList{
+			NewOperandList().Add("hasErrors", NewOperand(OperandEq, 1)),
+			NewOperandList().Add("status", NewOperand(OperandGte, 400)),
+		})
+	}
+	if len(searchIP) > 0 {
+		query.Attr("remoteAddr", searchIP)
+	}
+
+	one, err := query.FindOne(new(accesslogs.AccessLog))
+	if err != nil {
+		if this.tableNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return one != nil, nil
+}
+
+// 判断某个WAF是否有日志
+func (this *SQLAccessLogDAO) HasAccessLogWithWAF(day string, wafId string) (bool, error) {
+	query := NewQuery(this.TableName(day))
+	one, err := query.Attr(this.driver.(SQLDriverInterface).JSONExtract("attrs", "waf_id"), wafId).
+		Result("_id").
+		FindOne(new(accesslogs.AccessLog))
+	if err != nil && this.tableNotFound(err) {
+		return false, nil
+	}
+	return one != nil, err
+}
+
 // 列出最近的某些日志
 func (this *SQLAccessLogDAO) ListLatestAccessLogs(day string, serverId string, fromId string, onlyErrors bool, size int) ([]*accesslogs.AccessLog, error) {
 	query := NewQuery(this.TableName(day))

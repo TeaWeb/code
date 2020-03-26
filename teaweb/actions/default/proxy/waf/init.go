@@ -35,6 +35,8 @@ func init() {
 			Post("/group/rule/delete", new(RuleDeleteAction)).
 			Post("/group/rule/move", new(RuleMoveAction)).
 			GetPost("/group/rule/update", new(RuleUpdateAction)).
+			Get("/history", new(HistoryAction)).
+			Get("/day", new(DayAction)).
 			EndAll()
 	})
 }

@@ -178,6 +178,76 @@ func (this *MongoAccessLogDAO) HasAccessLog(day string, serverId string) (bool, 
 	return one != nil, err
 }
 
+func (this *MongoAccessLogDAO) ListAccessLogsWithWAF(day string, wafId string, fromId string, onlyErrors bool, searchIP string, offset int, size int) ([]*accesslogs.AccessLog, error) {
+	query := NewQuery(this.TableName(day))
+	query.Attr("attrs.waf_id", wafId)
+	if len(fromId) > 0 {
+		fromIdObject, err := shared.ObjectIdFromHex(fromId)
+		if err != nil {
+			return nil, err
+		}
+		query.Lt("_id", fromIdObject)
+	}
+	if onlyErrors {
+		query.Or([]*OperandList{
+			NewOperandList().Add("hasErrors", NewOperand(OperandEq, true)),
+			NewOperandList().Add("status", NewOperand(OperandGte, 400)),
+		})
+	}
+	if len(searchIP) > 0 {
+		query.Attr("remoteAddr", searchIP)
+	}
+	query.Offset(offset)
+	query.Limit(size)
+	query.Desc("_id")
+	ones, err := query.FindOnes(new(accesslogs.AccessLog))
+	if err != nil {
+		return nil, err
+	}
+
+	result := []*accesslogs.AccessLog{}
+	for _, one := range ones {
+		result = append(result, one.(*accesslogs.AccessLog))
+	}
+	return result, nil
+}
+
+func (this *MongoAccessLogDAO) HasNextAccessLogWithWAF(day string, wafId string, fromId string, onlyErrors bool, searchIP string) (bool, error) {
+	query := NewQuery(this.TableName(day))
+	query.Attr("attrs.waf_id", wafId).
+		Result("_id")
+	if len(fromId) > 0 {
+		fromIdObject, err := shared.ObjectIdFromHex(fromId)
+		if err != nil {
+			return false, err
+		}
+		query.Lt("_id", fromIdObject)
+	}
+	if onlyErrors {
+		query.Or([]*OperandList{
+			NewOperandList().Add("hasErrors", NewOperand(OperandEq, true)),
+			NewOperandList().Add("status", NewOperand(OperandGte, 400)),
+		})
+	}
+	if len(searchIP) > 0 {
+		query.Attr("remoteAddr", searchIP)
+	}
+
+	one, err := query.FindOne(new(accesslogs.AccessLog))
+	if err != nil {
+		return false, err
+	}
+	return one != nil, nil
+}
+
+func (this *MongoAccessLogDAO) HasAccessLogWithWAF(day string, wafId string) (bool, error) {
+	query := NewQuery(this.TableName(day))
+	one, err := query.Attr("attrs.waf_id", wafId).
+		Result("_id").
+		FindOne(new(accesslogs.AccessLog))
+	return one != nil, err
+}
+
 func (this *MongoAccessLogDAO) ListLatestAccessLogs(day string, serverId string, fromId string, onlyErrors bool, size int) ([]*accesslogs.AccessLog, error) {
 	query := NewQuery(this.TableName(day))
 
