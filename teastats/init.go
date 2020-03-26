@@ -39,6 +39,7 @@ func init() {
 		new(RegionAllPeriodFilter),
 		new(ProvinceAllPeriodFilter),
 		new(CityAllPeriodFilter),
+		new(WAFBlockAllPeriodFilter),
 	)
 
 	// 注册AccessLogHook
