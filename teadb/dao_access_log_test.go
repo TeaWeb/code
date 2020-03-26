@@ -213,6 +213,14 @@ func TestAccessLogDAO_HasAccessLogWithWAF(t *testing.T) {
 	}
 }
 
+func TestAccessLogDAO_GroupWAFRuleGroups(t *testing.T) {
+	ruleSets, err := AccessLogDAO().GroupWAFRuleGroups(timeutil.Format("Ymd"), "pq6HzRfIjcGsUqNe")
+	if err != nil {
+		t.Fatal(err)
+	}
+	logs.PrintAsJSON(ruleSets, t)
+}
+
 func TestAccessLogDAO_ListLatestAccessLogs(t *testing.T) {
 	dao := AccessLogDAO()
 	{

@@ -364,6 +364,8 @@ func (this *MongoDriver) Group(query *Query, field string, result map[string]Exp
 			group[name] = map[string]interface{}{
 				"$first": this.convertArrayElement(e),
 			}
+		case maps.Map:
+			group[name] = e
 		}
 	}
 

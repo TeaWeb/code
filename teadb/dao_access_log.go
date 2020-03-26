@@ -2,6 +2,7 @@ package teadb
 
 import (
 	"github.com/TeaWeb/code/tealogs/accesslogs"
+	"github.com/iwind/TeaGo/maps"
 )
 
 // 访问日志DAO
@@ -47,6 +48,9 @@ type AccessLogDAOInterface interface {
 
 	// 判断某日是否有WAF日志
 	HasAccessLogWithWAF(day string, wafId string) (bool, error)
+
+	// 统计当前WAF拦截的规则分组
+	GroupWAFRuleGroups(day string, wafId string) ([]maps.Map, error)
 
 	// 列出最近的某些日志
 	ListLatestAccessLogs(day string, serverId string, fromId string, onlyErrors bool, size int) ([]*accesslogs.AccessLog, error)

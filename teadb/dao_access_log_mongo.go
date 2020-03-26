@@ -2,10 +2,12 @@ package teadb
 
 import (
 	"context"
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	timeutil "github.com/iwind/TeaGo/utils/time"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -246,6 +248,42 @@ func (this *MongoAccessLogDAO) HasAccessLogWithWAF(day string, wafId string) (bo
 		Result("_id").
 		FindOne(new(accesslogs.AccessLog))
 	return one != nil, err
+}
+
+func (this *MongoAccessLogDAO) GroupWAFRuleGroups(day string, wafId string) ([]maps.Map, error) {
+	waf := teaconfigs.SharedWAFList().FindWAF(wafId)
+	if waf == nil {
+		return []maps.Map{}, nil
+	}
+
+	query := NewQuery(this.TableName(day))
+	ones, err := query.
+		Attr("attrs.waf_id", wafId).
+		Group("attrs.waf_group", map[string]Expr{
+			"groupId": "attrs.waf_group",
+			"count": maps.Map{
+				"$sum": 1,
+			},
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	result := []maps.Map{}
+	for _, one := range ones {
+		groupId := one.GetString("groupId")
+		group := waf.FindRuleGroup(groupId)
+		if group == nil {
+			continue
+		}
+
+		result = append(result, maps.Map{
+			"name":  group.Name,
+			"count": one.GetInt("count"),
+		})
+	}
+
+	return result, err
 }
 
 func (this *MongoAccessLogDAO) ListLatestAccessLogs(day string, serverId string, fromId string, onlyErrors bool, size int) ([]*accesslogs.AccessLog, error) {

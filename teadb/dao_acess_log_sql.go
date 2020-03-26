@@ -1,13 +1,16 @@
 package teadb
 
 import (
+	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teadb/shared"
 	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/maps"
 	timeutil "github.com/iwind/TeaGo/utils/time"
 	"github.com/lib/pq"
+	"strings"
 )
 
 type SQLAccessLogDAO struct {
@@ -247,6 +250,41 @@ func (this *SQLAccessLogDAO) HasAccessLogWithWAF(day string, wafId string) (bool
 		return false, nil
 	}
 	return one != nil, err
+}
+
+func (this *SQLAccessLogDAO) GroupWAFRuleGroups(day string, wafId string) ([]maps.Map, error) {
+	waf := teaconfigs.SharedWAFList().FindWAF(wafId)
+	if waf == nil {
+		return []maps.Map{}, nil
+	}
+
+	driver := this.driver.(SQLDriverInterface)
+	query := NewQuery(this.TableName(day))
+	ones, err := query.
+		Attr(driver.JSONExtract("attrs", "waf_id"), wafId).
+		Group(driver.JSONExtract("attrs", "waf_group"), map[string]Expr{
+			"groupId": "attrs.waf_group",
+			"count":   "COUNT(_id)",
+		})
+	if err != nil {
+		return []maps.Map{}, err
+	}
+
+	result := []maps.Map{}
+	for _, one := range ones {
+		groupId := strings.Trim(one.GetString("groupId"), "\"")
+		group := waf.FindRuleGroup(groupId)
+		if group == nil {
+			continue
+		}
+
+		result = append(result, maps.Map{
+			"name":  group.Name,
+			"count": one.GetInt("count"),
+		})
+	}
+
+	return result, err
 }
 
 // 列出最近的某些日志

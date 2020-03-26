@@ -136,6 +136,15 @@ func (this *DayAction) Run(params struct {
 				}
 			}
 		}
+
+		// 统计
+		stat, err := teadb.AccessLogDAO().GroupWAFRuleGroups(realDay, waf.Id)
+		if err != nil {
+			logs.Error(err)
+			this.Data["stat"] = []maps.Map{}
+		} else {
+			this.Data["stat"] = stat
+		}
 	}
 
 	this.Show()
