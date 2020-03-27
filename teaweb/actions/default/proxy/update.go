@@ -24,6 +24,7 @@ func (this *UpdateAction) Run(params struct {
 	this.Data["server"] = server
 	this.Data["selectedTab"] = "basic"
 	this.Data["isTCP"] = server.IsTCP()
+	this.Data["isForwardHTTP"] = server.ForwardHTTP
 
 	if server.Gzip == nil {
 		server.Gzip = &teaconfigs.GzipConfig{

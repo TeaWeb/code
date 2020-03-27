@@ -331,6 +331,11 @@ func (this *Request) configure(server *teaconfigs.ServerConfig, redirects int, b
 		}
 	}
 
+	// 如果是正向代理，则直接返回
+	if server.ForwardHTTP != nil {
+		return nil
+	}
+
 	if !breakRewrite {
 		// location的相关配置
 		var locationConfigured = false

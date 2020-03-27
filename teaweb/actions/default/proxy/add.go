@@ -88,6 +88,8 @@ func (this *AddAction) RunPost(params struct {
 				server.AddBackend(backendObject)
 			}
 		}
+	} else if params.ServerType == "forwardProxy" { // 正向HTTP代理
+		server.ForwardHTTP = teaconfigs.NewForwardHTTPConfig()
 	} else if params.ServerType == "tcp" { // TCP代理服务
 		// DEMO版防止通过代理获取服务器数据库数据
 		if teaconst.DemoEnabled {

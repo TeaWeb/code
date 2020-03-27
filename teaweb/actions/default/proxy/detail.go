@@ -25,6 +25,7 @@ func (this *DetailAction) Run(params struct {
 	this.Data["selectedTab"] = "basic"
 	this.Data["server"] = server
 	this.Data["isTCP"] = server.IsTCP()
+	this.Data["isForwardHTTP"] = server.IsForwardHTTP()
 
 	this.Data["errs"] = teaproxy.SharedManager.FindServerErrors(params.ServerId)
 	this.Data["accessLogs"] = proxyutils.FormatAccessLog(server.AccessLog)

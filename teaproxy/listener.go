@@ -450,6 +450,19 @@ func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Re
 		return
 	}
 
+	// 正向代理
+	if server.ForwardHTTP != nil {
+		err = req.Forward(req.responseWriter)
+		if err != nil {
+			logs.Error(errors.New(reqHost + rawRequest.URL.String() + ": " + err.Error()))
+		}
+
+		// 返还request
+		requestPool.Put(req)
+
+		return
+	}
+
 	// 处理请求
 	err = req.call(req.responseWriter)
 	if err != nil {

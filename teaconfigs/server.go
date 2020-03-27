@@ -68,6 +68,9 @@ type ServerConfig struct {
 	// TCP，如果有此配置的说明为TCP代理
 	TCP *TCPConfig `yaml:"tcp" json:"tcp"`
 
+	// ForwardHTTP，如果有此配置的说明为正向HTTP代理
+	ForwardHTTP *ForwardHTTPConfig `yaml:"forwardHTTP" json:"forwardHTTP"`
+
 	// 参考：http://nginx.org/en/docs/http/ngx_http_access_module.html
 	Allow []string `yaml:"allow" json:"allow"` //TODO
 	Deny  []string `yaml:"deny" json:"deny"`   //TODO
@@ -1056,6 +1059,11 @@ func (this *ServerConfig) IsTCP() bool {
 // 判断是否为HTTP
 func (this *ServerConfig) IsHTTP() bool {
 	return this.TCP == nil
+}
+
+// 是否为正向代理
+func (this *ServerConfig) IsForwardHTTP() bool {
+	return this.ForwardHTTP != nil
 }
 
 // 克隆运行时状态

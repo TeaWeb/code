@@ -52,6 +52,8 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 
 			if server.IsTCP() {
 				item.SupName = "tcp"
+			} else if server.ForwardHTTP != nil {
+				item.SupName = "forward"
 			}
 
 			// port
