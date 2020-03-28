@@ -124,7 +124,14 @@ func (this *UpdateAction) RunPost(params struct {
 			server.TCP.WriteBufferSize = params.TcpWriteBufferSize
 		}
 	} else if server.ForwardHTTP != nil { // ForwardHTTP
+		server.Http = params.HttpOn
+
 		server.ForwardHTTP.EnableMITM = params.ForwardHTTPEnableMITM
+
+		// 访问日志
+		server.AccessLog = proxyutils.ParseAccessLogForm(this.Request)
+
+		server.DisableStat = !params.EnableStat
 	} else { // HTTP
 		server.Http = params.HttpOn
 		server.Root = params.Root
