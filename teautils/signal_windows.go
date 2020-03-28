@@ -11,6 +11,7 @@ import (
 	"github.com/iwind/TeaGo/types"
 	"net"
 	"os"
+	"strconv"
 	"syscall"
 )
 
@@ -20,7 +21,7 @@ const signalPipePath = `\\.\pipe\` + teaconst.TeaProcessName + `.signal.pipe`
 
 // 监听Signal
 func ListenSignal(f func(sig os.Signal), sig ...os.Signal) {
-	pipe, err := winio.ListenPipe(signalPipePath, nil)
+	pipe, err := winio.ListenPipe(signalPipePath+"."+strconv.Itoa(os.Getpid()), nil)
 	if err != nil {
 		logs.Error(err)
 		return
@@ -69,7 +70,7 @@ func ListenSignal(f func(sig os.Signal), sig ...os.Signal) {
 
 // 通知Signal
 func NotifySignal(proc *os.Process, sig os.Signal) error {
-	conn, err := winio.DialPipe(signalPipePath, nil)
+	conn, err := winio.DialPipe(signalPipePath+"."+strconv.Itoa(proc.Pid), nil)
 	if err != nil {
 		return errors.New("can not connect to signal pipe: " + err.Error())
 	}

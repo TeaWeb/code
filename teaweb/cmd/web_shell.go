@@ -14,6 +14,7 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"io"
+	logger "log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -26,6 +27,7 @@ import (
 )
 
 var sharedShell *WebShell = nil
+var workerProcess *os.Process
 
 // 命令行相关封装
 type WebShell struct {
@@ -46,13 +48,6 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 	// 执行参数
 	if this.execArgs(os.Stdout) {
 		this.ShouldStop = true
-		return
-	}
-
-	// 当前PID文件句柄
-	err := this.writePpid()
-	if err != nil {
-		logs.Println("[error]write pid file failed: '" + err.Error() + "'")
 		return
 	}
 
@@ -93,11 +88,6 @@ func (this *WebShell) Start(server *TeaGo.Server) {
 				}
 			}
 
-			// 删除PID
-			err = teautils.DeletePid(Tea.Root + "/bin/pid")
-			if err != nil {
-				logs.Error(err)
-			}
 			os.Exit(0)
 		}
 	}, syscall.SIGINT, syscall.SIGHUP, syscall.Signal(0x1e /**syscall.SIGUSR1**/), syscall.Signal(0x1f /**syscall.SIGUSR2**/), syscall.SIGTERM)
@@ -176,7 +166,7 @@ func (this *WebShell) execArgs(writer io.Writer) bool {
 		return this.ExecPprof(writer)
 	}
 	if this.hasArg(arg0, "master") {
-		return this.ExecMaster(writer)
+		return this.ExecMasterProcess(writer)
 	}
 	if this.hasArg(arg0, "worker") {
 		return this.ExecWorker(writer)
@@ -244,12 +234,12 @@ func (this *WebShell) ExecStop(writer io.Writer) bool {
 		return true
 	}
 
-	// 停止子进程
-	err := proc.Kill()
-	if err != nil {
-		this.write(writer, teaconst.TeaProductName+" stop error:", err.Error())
-		return true
-	}
+	// 通知关闭
+	_ = teautils.NotifySignal(proc, syscall.SIGINT)
+	time.Sleep(1 * time.Second)
+
+	// 停止进程
+	_ = proc.Kill()
 
 	// 在Windows上经常不能及时释放资源
 	_ = teautils.DeletePid(Tea.Root + "/bin/pid")
@@ -278,17 +268,17 @@ func (this *WebShell) ExecReload(writer io.Writer) bool {
 func (this *WebShell) ExecRestart(writer io.Writer) bool {
 	proc := this.checkPid()
 	if proc != nil {
-		err := proc.Kill()
-		if err != nil {
-			this.write(writer, teaconst.TeaProductName+" stop error:", err.Error())
-			return true
-		}
+		// 通知关闭
+		_ = teautils.NotifySignal(proc, syscall.SIGINT)
+		time.Sleep(1 * time.Second)
+
+		_ = proc.Kill()
 
 		// 等待进程结束
-		time.Sleep(1 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 
-	cmd := exec.Command(os.Args[0])
+	cmd := exec.Command(os.Args[0], "master")
 	err := cmd.Start()
 	if err != nil {
 		this.write(writer, teaconst.TeaProductName+" restart failed:", err.Error())
@@ -359,8 +349,49 @@ func (this *WebShell) ExecPprof(writer io.Writer) bool {
 	return false
 }
 
-// 守护进程
-func (this *WebShell) ExecMaster(writer io.Writer) bool {
+// 启动守护进程
+func (this *WebShell) ExecMasterProcess(writer io.Writer) bool {
+	// 当前PID文件句柄
+	err := this.writePid()
+	if err != nil {
+		logs.Println("[error]write pid file failed: '" + err.Error() + "'")
+		return true
+	}
+
+	logWriter, _ := os.OpenFile(Tea.Root+"/logs/master.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if logWriter != nil {
+		logger.SetOutput(logWriter)
+	}
+
+	teautils.ListenSignal(func(sig os.Signal) {
+		logger.Println("[signal]" + sig.String())
+
+		if sig == syscall.SIGHUP { // 重置
+			if workerProcess != nil {
+				_ = teautils.NotifySignal(workerProcess, sig)
+			}
+		} else if sig == syscall.Signal(0x1e /**syscall.SIGUSR1**/) { // 刷新代理状态
+			if workerProcess != nil {
+				_ = teautils.NotifySignal(workerProcess, sig)
+			}
+		} else if sig == syscall.Signal(0x1f /**syscall.SIGUSR2**/) { // 同步
+			if workerProcess != nil {
+				_ = teautils.NotifySignal(workerProcess, sig)
+			}
+		} else {
+			if workerProcess != nil {
+				_ = workerProcess.Kill()
+			}
+
+			// 删除PID
+			err := teautils.DeletePid(Tea.Root + "/bin/pid")
+			if err != nil {
+				logs.Error(err)
+			}
+			os.Exit(0)
+		}
+	}, syscall.SIGINT, syscall.SIGHUP, syscall.Signal(0x1e /**syscall.SIGUSR1**/), syscall.Signal(0x1f /**syscall.SIGUSR2**/), syscall.SIGTERM)
+
 	// 生成子进程，当前进程变成守护进程
 	for {
 		cmd := exec.Command(os.Args[0], "worker")
@@ -369,6 +400,7 @@ func (this *WebShell) ExecMaster(writer io.Writer) bool {
 			this.write(writer, teaconst.TeaProductName+"  start failed:", err.Error())
 			break
 		}
+		workerProcess = cmd.Process
 		_ = cmd.Wait()
 	}
 	return true
@@ -397,8 +429,8 @@ func (this *WebShell) ExecWorker(writer io.Writer) bool {
 }
 
 // 写入PID
-func (this *WebShell) writePpid() error {
-	return teautils.WritePpid(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid")
+func (this *WebShell) writePid() error {
+	return teautils.WritePid(Tea.Root + Tea.DS + "bin" + Tea.DS + "pid")
 }
 
 // 检查PID
