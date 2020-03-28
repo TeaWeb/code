@@ -17,6 +17,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 	"time"
 )
 
@@ -246,6 +247,7 @@ func (this *ForwardProxy) forwardMitm() error {
 			closer()
 			break
 		}
+		this.setProxyHeaders(rawReq)
 
 		var req *Request = nil
 		logResponse := false
@@ -344,4 +346,44 @@ func (this *ForwardProxy) forwardMitm() error {
 	}
 
 	return nil
+}
+
+// 设置代理相关头部信息
+// 参考：https://tools.ietf.org/html/rfc7239
+func (this *ForwardProxy) setProxyHeaders(rawRequest *http.Request) {
+	remoteAddr := this.req.raw.RemoteAddr
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err == nil {
+		remoteAddr = host
+	}
+
+	// x-real-ip
+	{
+		_, ok1 := rawRequest.Header["X-Real-IP"]
+		_, ok2 := rawRequest.Header["X-Real-Ip"]
+		if !ok1 && !ok2 {
+			rawRequest.Header["X-Real-IP"] = []string{remoteAddr}
+		}
+	}
+
+	// X-Forwarded-For
+	{
+		forwardedFor, ok := rawRequest.Header["X-Forwarded-For"]
+		if ok {
+			rawRequest.Header["X-Forwarded-For"] = []string{strings.Join(forwardedFor, ", ") + ", " + remoteAddr}
+		} else {
+			rawRequest.Header["X-Forwarded-For"] = []string{remoteAddr}
+		}
+	}
+
+	// others
+	rawRequest.Header.Set("X-Forwarded-By", this.req.serverAddr)
+
+	if _, ok := rawRequest.Header["X-Forwarded-Host"]; !ok {
+		rawRequest.Header.Set("X-Forwarded-Host", this.req.host)
+	}
+
+	if _, ok := rawRequest.Header["X-Forwarded-Proto"]; !ok {
+		rawRequest.Header.Set("X-Forwarded-Proto", this.req.rawScheme)
+	}
 }
