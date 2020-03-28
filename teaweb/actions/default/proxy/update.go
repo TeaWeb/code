@@ -97,6 +97,9 @@ func (this *UpdateAction) RunPost(params struct {
 	TcpReadBufferSize  int
 	TcpWriteBufferSize int
 
+	// ForwardHTTP
+	ForwardHTTPEnableMITM bool
+
 	Must *actions.Must
 }) {
 	server := teaconfigs.NewServerConfigFromId(params.ServerId)
@@ -120,6 +123,8 @@ func (this *UpdateAction) RunPost(params struct {
 		if params.TcpWriteBufferSize >= 0 {
 			server.TCP.WriteBufferSize = params.TcpWriteBufferSize
 		}
+	} else if server.ForwardHTTP != nil { // ForwardHTTP
+		server.ForwardHTTP.EnableMITM = params.ForwardHTTPEnableMITM
 	} else { // HTTP
 		server.Http = params.HttpOn
 		server.Root = params.Root
