@@ -1,4 +1,4 @@
-package rules
+package teawaf
 
 import (
 	"github.com/TeaWeb/code/teawaf/requests"

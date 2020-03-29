@@ -4,8 +4,6 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teawaf"
-	actions2 "github.com/TeaWeb/code/teawaf/actions"
-	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/iwind/TeaGo/Tea"
@@ -30,7 +28,7 @@ func (this *UpdateAction) RunGet(params struct {
 	}
 
 	if waf.ActionBlock == nil {
-		waf.ActionBlock = &actions2.BlockAction{
+		waf.ActionBlock = &teawaf.BlockAction{
 			StatusCode: http.StatusForbidden,
 		}
 	}
@@ -46,7 +44,7 @@ func (this *UpdateAction) RunGet(params struct {
 	}
 
 	this.Data["groups"] = lists.Map(teawaf.Template().Inbound, func(k int, v interface{}) interface{} {
-		g := v.(*rules.RuleGroup)
+		g := v.(*teawaf.RuleGroup)
 		group := waf.FindRuleGroupWithCode(g.Code)
 
 		return maps.Map{
@@ -93,7 +91,7 @@ func (this *UpdateAction) RunPost(params struct {
 
 	waf.Name = params.Name
 	waf.On = params.On
-	waf.ActionBlock = &actions2.BlockAction{
+	waf.ActionBlock = &teawaf.BlockAction{
 		StatusCode: statusCode,
 		Body:       params.BlockBody,
 		URL:        params.BlockURL,

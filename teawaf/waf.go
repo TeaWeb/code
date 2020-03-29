@@ -5,10 +5,8 @@ import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
-	"github.com/TeaWeb/code/teawaf/actions"
 	"github.com/TeaWeb/code/teawaf/checkpoints"
 	"github.com/TeaWeb/code/teawaf/requests"
-	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
@@ -22,16 +20,16 @@ type WAF struct {
 	Id             string                `yaml:"id" json:"id"`
 	On             bool                  `yaml:"on" json:"on"`
 	Name           string                `yaml:"name" json:"name"`
-	Inbound        []*rules.RuleGroup    `yaml:"inbound" json:"inbound"`
-	Outbound       []*rules.RuleGroup    `yaml:"outbound" json:"outbound"`
+	Inbound        []*RuleGroup          `yaml:"inbound" json:"inbound"`
+	Outbound       []*RuleGroup          `yaml:"outbound" json:"outbound"`
 	CreatedVersion string                `yaml:"createdVersion" json:"createdVersion"`
 	Cond           []*shared.RequestCond `yaml:"cond" json:"cond"`
 
-	ActionBlock *actions.BlockAction `yaml:"actionBlock" json:"actionBlock"` // action block config
+	ActionBlock *BlockAction `yaml:"actionBlock" json:"actionBlock"` // action block config
 
 	hasInboundRules  bool
 	hasOutboundRules bool
-	onActionCallback func(action actions.ActionString) (goNext bool)
+	onActionCallback func(action ActionString) (goNext bool)
 
 	checkpointsMap map[string]checkpoints.CheckpointInterface // prefix => checkpoint
 }
@@ -124,7 +122,7 @@ func (this *WAF) Init() error {
 	return nil
 }
 
-func (this *WAF) AddRuleGroup(ruleGroup *rules.RuleGroup) {
+func (this *WAF) AddRuleGroup(ruleGroup *RuleGroup) {
 	if ruleGroup.IsInbound {
 		this.Inbound = append(this.Inbound, ruleGroup)
 	} else {
@@ -138,7 +136,7 @@ func (this *WAF) RemoveRuleGroup(ruleGroupId string) {
 	}
 
 	{
-		result := []*rules.RuleGroup{}
+		result := []*RuleGroup{}
 		for _, group := range this.Inbound {
 			if group.Id == ruleGroupId {
 				continue
@@ -149,7 +147,7 @@ func (this *WAF) RemoveRuleGroup(ruleGroupId string) {
 	}
 
 	{
-		result := []*rules.RuleGroup{}
+		result := []*RuleGroup{}
 		for _, group := range this.Outbound {
 			if group.Id == ruleGroupId {
 				continue
@@ -160,7 +158,7 @@ func (this *WAF) RemoveRuleGroup(ruleGroupId string) {
 	}
 }
 
-func (this *WAF) FindRuleGroup(ruleGroupId string) *rules.RuleGroup {
+func (this *WAF) FindRuleGroup(ruleGroupId string) *RuleGroup {
 	if len(ruleGroupId) == 0 {
 		return nil
 	}
@@ -177,7 +175,7 @@ func (this *WAF) FindRuleGroup(ruleGroupId string) *rules.RuleGroup {
 	return nil
 }
 
-func (this *WAF) FindRuleGroupWithCode(ruleGroupCode string) *rules.RuleGroup {
+func (this *WAF) FindRuleGroupWithCode(ruleGroupCode string) *RuleGroup {
 	if len(ruleGroupCode) == 0 {
 		return nil
 	}
@@ -206,7 +204,7 @@ func (this *WAF) MoveInboundRuleGroup(fromIndex int, toIndex int) {
 	}
 
 	group := this.Inbound[fromIndex]
-	result := []*rules.RuleGroup{}
+	result := []*RuleGroup{}
 	for i := 0; i < len(this.Inbound); i++ {
 		if i == fromIndex {
 			continue
@@ -235,7 +233,7 @@ func (this *WAF) MoveOutboundRuleGroup(fromIndex int, toIndex int) {
 	}
 
 	group := this.Outbound[fromIndex]
-	result := []*rules.RuleGroup{}
+	result := []*RuleGroup{}
 	for i := 0; i < len(this.Outbound); i++ {
 		if i == fromIndex {
 			continue
@@ -252,7 +250,7 @@ func (this *WAF) MoveOutboundRuleGroup(fromIndex int, toIndex int) {
 	this.Outbound = result
 }
 
-func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) (goNext bool, group *rules.RuleGroup, set *rules.RuleSet, err error) {
+func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) (goNext bool, group *RuleGroup, set *RuleSet, err error) {
 	if !this.hasInboundRules {
 		return true, nil, nil, nil
 	}
@@ -267,14 +265,14 @@ func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) 
 		}
 		if b {
 			if this.onActionCallback == nil {
-				if set.Action == actions.ActionBlock && this.ActionBlock != nil {
-					return this.ActionBlock.Perform(rawReq, writer), group, set, nil
+				if set.Action == ActionBlock && this.ActionBlock != nil {
+					return this.ActionBlock.Perform(this, req, writer), group, set, nil
 				} else {
-					actionObject := actions.FindActionInstance(set.Action)
+					actionObject := FindActionInstance(set.Action, set.ActionOptions)
 					if actionObject == nil {
 						return true, group, set, errors.New("no action called '" + set.Action + "'")
 					}
-					goNext := actionObject.Perform(rawReq, writer)
+					goNext := actionObject.Perform(this, req, writer)
 					return goNext, group, set, nil
 				}
 			} else {
@@ -286,7 +284,7 @@ func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) 
 	return true, nil, nil, nil
 }
 
-func (this *WAF) MatchResponse(rawReq *http.Request, rawResp *http.Response, writer http.ResponseWriter) (goNext bool, group *rules.RuleGroup, set *rules.RuleSet, err error) {
+func (this *WAF) MatchResponse(rawReq *http.Request, rawResp *http.Response, writer http.ResponseWriter) (goNext bool, group *RuleGroup, set *RuleSet, err error) {
 	if !this.hasOutboundRules {
 		return true, nil, nil, nil
 	}
@@ -302,14 +300,14 @@ func (this *WAF) MatchResponse(rawReq *http.Request, rawResp *http.Response, wri
 		}
 		if b {
 			if this.onActionCallback == nil {
-				if set.Action == actions.ActionBlock && this.ActionBlock != nil {
-					return this.ActionBlock.Perform(rawReq, writer), group, set, nil
+				if set.Action == ActionBlock && this.ActionBlock != nil {
+					return this.ActionBlock.Perform(this, req, writer), group, set, nil
 				} else {
-					actionObject := actions.FindActionInstance(set.Action)
+					actionObject := FindActionInstance(set.Action, set.ActionOptions)
 					if actionObject == nil {
 						return true, group, set, errors.New("no action called '" + set.Action + "'")
 					}
-					goNext := actionObject.Perform(rawReq, writer)
+					goNext := actionObject.Perform(this, req, writer)
 					return goNext, group, set, nil
 				}
 			} else {
@@ -380,7 +378,7 @@ func (this *WAF) CountOutboundRuleSets() int {
 	return count
 }
 
-func (this *WAF) OnAction(onActionCallback func(action actions.ActionString) (goNext bool)) {
+func (this *WAF) OnAction(onActionCallback func(action ActionString) (goNext bool)) {
 	this.onActionCallback = onActionCallback
 }
 
@@ -417,7 +415,7 @@ func (this *WAF) MergeTemplate() (changedItems []string) {
 	this.CreatedVersion = teaconst.TeaVersion
 
 	template := Template()
-	groups := []*rules.RuleGroup{}
+	groups := []*RuleGroup{}
 	groups = append(groups, template.Inbound...)
 	groups = append(groups, template.Outbound...)
 	for _, group := range groups {

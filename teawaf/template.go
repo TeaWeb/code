@@ -1,10 +1,5 @@
 package teawaf
 
-import (
-	"github.com/TeaWeb/code/teawaf/actions"
-	"github.com/TeaWeb/code/teawaf/rules"
-)
-
 // 感谢以下规则来源：
 // - Janusec: https://www.janusec.com/
 func Template() *WAF {
@@ -14,7 +9,7 @@ func Template() *WAF {
 
 	// black list
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = false
 		group.IsInbound = true
 		group.Name = "白名单"
@@ -23,15 +18,15 @@ func Template() *WAF {
 
 		{
 
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "IP白名单"
 			set.Code = "9001"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionAllow
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorOr
+			set.Action = ActionAllow
+			set.AddRule(&Rule{
 				Param:             "${remoteAddr}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `127\.0\.0\.1|0\.0\.0\.0`,
 				IsCaseInsensitive: false,
 			})
@@ -43,7 +38,7 @@ func Template() *WAF {
 
 	// black list
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = false
 		group.IsInbound = true
 		group.Name = "黑名单"
@@ -52,15 +47,15 @@ func Template() *WAF {
 
 		{
 
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "IP黑名单"
 			set.Code = "10001"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
+			set.AddRule(&Rule{
 				Param:             "${remoteAddr}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `1\.1\.1\.1|2\.2\.2\.2`,
 				IsCaseInsensitive: false,
 			})
@@ -72,7 +67,7 @@ func Template() *WAF {
 
 	// xss
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = true
 		group.IsInbound = true
 		group.Name = "XSS"
@@ -80,15 +75,15 @@ func Template() *WAF {
 		group.Description = "防跨站脚本攻击（Cross Site Scripting）"
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "Javascript事件"
 			set.Code = "1001"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
+			set.AddRule(&Rule{
 				Param:             "${requestURI}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `(onmouseover|onmousemove|onmousedown|onmouseup|onerror|onload|onclick|ondblclick|onkeydown|onkeyup|onkeypress)\s*=`, // TODO more keywords here
 				IsCaseInsensitive: true,
 			})
@@ -96,15 +91,15 @@ func Template() *WAF {
 		}
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "Javascript函数"
 			set.Code = "1002"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
+			set.AddRule(&Rule{
 				Param:             "${requestURI}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `(alert|eval|prompt|confirm)\s*\(`, // TODO more keywords here
 				IsCaseInsensitive: true,
 			})
@@ -112,15 +107,15 @@ func Template() *WAF {
 		}
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "HTML标签"
 			set.Code = "1003"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
+			set.AddRule(&Rule{
 				Param:             "${requestURI}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `<(script|iframe|link)`, // TODO more keywords here
 				IsCaseInsensitive: true,
 			})
@@ -132,7 +127,7 @@ func Template() *WAF {
 
 	// upload
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = true
 		group.IsInbound = true
 		group.Name = "文件上传"
@@ -140,15 +135,15 @@ func Template() *WAF {
 		group.Description = "防止上传可执行脚本文件到服务器"
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "上传文件扩展名"
 			set.Code = "2001"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
+			set.AddRule(&Rule{
 				Param:             "${requestUpload.ext}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `\.(php|jsp|aspx|asp|exe|asa|rb|py)\b`, // TODO more keywords here
 				IsCaseInsensitive: true,
 			})
@@ -160,7 +155,7 @@ func Template() *WAF {
 
 	// web shell
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = true
 		group.IsInbound = true
 		group.Name = "Web Shell"
@@ -168,15 +163,15 @@ func Template() *WAF {
 		group.Description = "防止远程执行服务器命令"
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "Web Shell"
 			set.Code = "3001"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
+			set.AddRule(&Rule{
 				Param:             "${requestAll}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `\b(eval|system|exec|execute|passthru|shell_exec|phpinfo)\s*\(`, // TODO more keywords here
 				IsCaseInsensitive: true,
 			})
@@ -188,28 +183,28 @@ func Template() *WAF {
 
 	// command injection
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = true
 		group.IsInbound = true
 		group.Name = "命令注入"
 		group.Code = "commandInjection"
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "命令注入"
 			set.Code = "4001"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
+			set.AddRule(&Rule{
 				Param:             "${requestURI}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `\b(pwd|ls|ll|whoami|id|net\s+user)\s*$`, // TODO more keywords here
 				IsCaseInsensitive: false,
 			})
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${requestBody}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `\b(pwd|ls|ll|whoami|id|net\s+user)\s*$`, // TODO more keywords here
 				IsCaseInsensitive: false,
 			})
@@ -221,7 +216,7 @@ func Template() *WAF {
 
 	// path traversal
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = true
 		group.IsInbound = true
 		group.Name = "路径穿越"
@@ -229,15 +224,15 @@ func Template() *WAF {
 		group.Description = "防止读取网站目录之外的其他系统文件"
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "路径穿越"
 			set.Code = "5001"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
+			set.AddRule(&Rule{
 				Param:             "${requestURI}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `((\.+)(/+)){2,}`, // TODO more keywords here
 				IsCaseInsensitive: false,
 			})
@@ -249,7 +244,7 @@ func Template() *WAF {
 
 	// special dirs
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = true
 		group.IsInbound = true
 		group.Name = "特殊目录"
@@ -257,15 +252,15 @@ func Template() *WAF {
 		group.Description = "防止通过Web访问到一些特殊目录"
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "特殊目录"
 			set.Code = "6001"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
+			set.AddRule(&Rule{
 				Param:             "${requestPath}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `/\.(git|svn|htaccess|idea)\b`, // TODO more keywords here
 				IsCaseInsensitive: true,
 			})
@@ -277,7 +272,7 @@ func Template() *WAF {
 
 	// sql injection
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = true
 		group.IsInbound = true
 		group.Name = "SQL注入"
@@ -285,16 +280,16 @@ func Template() *WAF {
 		group.Description = "防止SQL注入漏洞"
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "Union SQL Injection"
 			set.Code = "7001"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
 
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${requestAll}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `union[\s/\*]+select`,
 				IsCaseInsensitive: true,
 			})
@@ -303,16 +298,16 @@ func Template() *WAF {
 		}
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "SQL注释"
 			set.Code = "7002"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
 
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${requestAll}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `/\*(!|\x00)`,
 				IsCaseInsensitive: true,
 			})
@@ -321,34 +316,34 @@ func Template() *WAF {
 		}
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "SQL条件"
 			set.Code = "7003"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
 
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${requestAll}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `\s(and|or|rlike)\s+(if|updatexml)\s*\(`,
 				IsCaseInsensitive: true,
 			})
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${requestAll}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `\s+(and|or|rlike)\s+(select|case)\s+`,
 				IsCaseInsensitive: true,
 			})
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${requestAll}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `\s+(and|or|procedure)\s+[\w\p{L}]+\s*=\s*[\w\p{L}]+(\s|$|--|#)`,
 				IsCaseInsensitive: true,
 			})
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${requestAll}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `\(\s*case\s+when\s+[\w\p{L}]+\s*=\s*[\w\p{L}]+\s+then\s+`,
 				IsCaseInsensitive: true,
 			})
@@ -357,16 +352,16 @@ func Template() *WAF {
 		}
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "SQL函数"
 			set.Code = "7004"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
 
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${requestAll}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `(updatexml|extractvalue|ascii|ord|char|chr|count|concat|rand|floor|substr|length|len|user|database|benchmark|analyse)\s*\(`,
 				IsCaseInsensitive: true,
 			})
@@ -375,16 +370,16 @@ func Template() *WAF {
 		}
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "SQL附加语句"
 			set.Code = "7005"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
 
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${requestAll}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `;\s*(declare|use|drop|create|exec|delete|update|insert)\s`,
 				IsCaseInsensitive: true,
 			})
@@ -397,7 +392,7 @@ func Template() *WAF {
 
 	// bot
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = false
 		group.IsInbound = true
 		group.Name = "网络爬虫"
@@ -405,16 +400,16 @@ func Template() *WAF {
 		group.Description = "禁止一些网络爬虫"
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "常见网络爬虫"
 			set.Code = "20001"
-			set.Connector = rules.RuleConnectorOr
-			set.Action = actions.ActionBlock
+			set.Connector = RuleConnectorOr
+			set.Action = ActionBlock
 
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${userAgent}",
-				Operator:          rules.RuleOperatorMatch,
+				Operator:          RuleOperatorMatch,
 				Value:             `Googlebot|AdsBot|bingbot|BingPreview|facebookexternalhit|Slurp|Sogou|proximic|Baiduspider|yandex|twitterbot|spider|python`,
 				IsCaseInsensitive: true,
 			})
@@ -427,7 +422,7 @@ func Template() *WAF {
 
 	// cc
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = false
 		group.IsInbound = true
 		group.Name = "CC攻击"
@@ -435,43 +430,43 @@ func Template() *WAF {
 		group.Code = "cc"
 
 		{
-			set := rules.NewRuleSet()
+			set := NewRuleSet()
 			set.On = true
 			set.Name = "CC请求数"
 			set.Description = "限制单IP在一定时间内的请求数"
 			set.Code = "8001"
-			set.Connector = rules.RuleConnectorAnd
-			set.Action = actions.ActionBlock
-			set.AddRule(&rules.Rule{
+			set.Connector = RuleConnectorAnd
+			set.Action = ActionBlock
+			set.AddRule(&Rule{
 				Param:    "${cc.requests}",
-				Operator: rules.RuleOperatorGt,
+				Operator: RuleOperatorGt,
 				Value:    "1000",
 				CheckpointOptions: map[string]string{
 					"period": "60",
 				},
 				IsCaseInsensitive: false,
 			})
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${remoteAddr}",
-				Operator:          rules.RuleOperatorNotIPRange,
+				Operator:          RuleOperatorNotIPRange,
 				Value:             `127.0.0.1/8`,
 				IsCaseInsensitive: false,
 			})
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${remoteAddr}",
-				Operator:          rules.RuleOperatorNotIPRange,
+				Operator:          RuleOperatorNotIPRange,
 				Value:             `192.168.0.1/16`,
 				IsCaseInsensitive: false,
 			})
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${remoteAddr}",
-				Operator:          rules.RuleOperatorNotIPRange,
+				Operator:          RuleOperatorNotIPRange,
 				Value:             `10.0.0.1/8`,
 				IsCaseInsensitive: false,
 			})
-			set.AddRule(&rules.Rule{
+			set.AddRule(&Rule{
 				Param:             "${remoteAddr}",
-				Operator:          rules.RuleOperatorNotIPRange,
+				Operator:          RuleOperatorNotIPRange,
 				Value:             `172.16.0.1/12`,
 				IsCaseInsensitive: false,
 			})
@@ -484,7 +479,7 @@ func Template() *WAF {
 
 	// custom
 	{
-		group := rules.NewRuleGroup()
+		group := NewRuleGroup()
 		group.On = true
 		group.IsInbound = true
 		group.Name = "自定义规则分组"

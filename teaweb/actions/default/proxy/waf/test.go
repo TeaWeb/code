@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/TeaWeb/code/teawaf/checkpoints"
-	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -139,7 +139,7 @@ func (this *TestAction) RunPost(params struct {
 	setName := ""
 	action := ""
 
-	groups := []*rules.RuleGroup{}
+	groups := []*teawaf.RuleGroup{}
 	if params.Inbound {
 		groups = waf.Inbound
 	} else {
@@ -165,7 +165,7 @@ Loop:
 			}
 
 			found := false
-			if set.Connector == rules.RuleConnectorAnd {
+			if set.Connector == teawaf.RuleConnectorAnd {
 				found = true
 			}
 			for _, rule := range set.Rules {
@@ -174,11 +174,11 @@ Loop:
 					return types.String(v)
 				})
 				if rule.Test(value) {
-					if set.Connector == rules.RuleConnectorOr {
+					if set.Connector == teawaf.RuleConnectorOr {
 						found = true
 					}
 				} else {
-					if set.Connector == rules.RuleConnectorAnd {
+					if set.Connector == teawaf.RuleConnectorAnd {
 						found = false
 					}
 				}

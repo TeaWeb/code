@@ -2,7 +2,7 @@ package waf
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teawaf/rules"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/go-yaml/yaml"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
@@ -26,8 +26,8 @@ func (this *ExportAction) RunGet(params struct {
 	// 导出
 	if params.Export {
 		waf1 := waf.Copy()
-		waf1.Inbound = []*rules.RuleGroup{}
-		waf1.Outbound = []*rules.RuleGroup{}
+		waf1.Inbound = []*teawaf.RuleGroup{}
+		waf1.Outbound = []*teawaf.RuleGroup{}
 		if len(params.GroupIds) > 0 {
 			groupIds := strings.Split(params.GroupIds, ",")
 			for _, groupId := range groupIds {

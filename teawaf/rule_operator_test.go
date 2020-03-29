@@ -1,4 +1,4 @@
-package rules
+package teawaf
 
 import (
 	"fmt"

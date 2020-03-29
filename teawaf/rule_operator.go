@@ -1,4 +1,4 @@
-package rules
+package teawaf
 
 type RuleOperator = string
 type RuleCaseInsensitive = string

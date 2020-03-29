@@ -4,8 +4,6 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teawaf"
-	actions2 "github.com/TeaWeb/code/teawaf/actions"
-	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/actions"
@@ -23,7 +21,7 @@ type AddAction actions.Action
 // 添加策略
 func (this *AddAction) RunGet(params struct{}) {
 	this.Data["groups"] = lists.Map(teawaf.Template().Inbound, func(k int, v interface{}) interface{} {
-		g := v.(*rules.RuleGroup)
+		g := v.(*teawaf.RuleGroup)
 		return maps.Map{
 			"name":      g.Name,
 			"code":      g.Code,
@@ -63,7 +61,7 @@ func (this *AddAction) RunPost(params struct {
 	waf := teawaf.NewWAF()
 	waf.Name = params.Name
 	waf.On = params.On
-	waf.ActionBlock = &actions2.BlockAction{
+	waf.ActionBlock = &teawaf.BlockAction{
 		StatusCode: statusCode,
 		Body:       params.BlockBody,
 		URL:        params.BlockURL,
@@ -79,7 +77,7 @@ func (this *AddAction) RunPost(params struct {
 	template := teawaf.Template()
 
 	for _, g := range template.Inbound {
-		newGroup := rules.NewRuleGroup()
+		newGroup := teawaf.NewRuleGroup()
 		newGroup.Id = stringutil.Rand(16)
 		newGroup.On = lists.ContainsString(params.GroupCodes, g.Code)
 		newGroup.Code = g.Code

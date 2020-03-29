@@ -1,7 +1,8 @@
-package actions
+package teawaf
 
 import (
 	"github.com/TeaWeb/code/teautils"
+	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
 	"io"
@@ -23,7 +24,7 @@ type BlockAction struct {
 	URL        string `yaml:"url" json:"url"`
 }
 
-func (this *BlockAction) Perform(request *http.Request, writer http.ResponseWriter) (allow bool) {
+func (this *BlockAction) Perform(waf *WAF, request *requests.Request, writer http.ResponseWriter) (allow bool) {
 	if writer != nil {
 		if this.StatusCode > 0 {
 			writer.WriteHeader(this.StatusCode)

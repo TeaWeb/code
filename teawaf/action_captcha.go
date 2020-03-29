@@ -1,9 +1,10 @@
-package actions
+package teawaf
 
 import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/dchest/captcha"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
@@ -21,7 +22,7 @@ const (
 type CaptchaAction struct {
 }
 
-func (this *CaptchaAction) Perform(request *http.Request, writer http.ResponseWriter) (allow bool) {
+func (this *CaptchaAction) Perform(waf *WAF, request *requests.Request, writer http.ResponseWriter) (allow bool) {
 	// TEAWEB_CAPTCHA:
 	cookie, err := request.Cookie("TEAWEB_WAF_CAPTCHA")
 	if err == nil && cookie != nil && len(cookie.Value) > 32 {
@@ -48,7 +49,7 @@ func (this *CaptchaAction) Perform(request *http.Request, writer http.ResponseWr
 					Path:   "/", // all of dirs
 				})
 
-				http.Redirect(writer, request, request.URL.String(), http.StatusTemporaryRedirect)
+				http.Redirect(writer, request.Raw(), request.URL.String(), http.StatusTemporaryRedirect)
 
 				return false
 			}

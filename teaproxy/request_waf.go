@@ -1,7 +1,7 @@
 package teaproxy
 
 import (
-	"github.com/TeaWeb/code/teawaf/actions"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/iwind/TeaGo/logs"
 	"net/http"
 )
@@ -18,7 +18,7 @@ func (this *Request) callWAFRequest(writer *ResponseWriter) (blocked bool) {
 	}
 
 	if ruleSet != nil {
-		if ruleSet.Action != actions.ActionAllow {
+		if ruleSet.Action != teawaf.ActionAllow {
 			this.SetAttr("waf_action", ruleSet.Action)
 			this.SetAttr("waf_group", group.Id)
 			this.SetAttr("waf_ruleset", ruleSet.Id)
@@ -43,7 +43,7 @@ func (this *Request) callWAFResponse(resp *http.Response, writer *ResponseWriter
 	}
 
 	if ruleSet != nil {
-		if ruleSet.Action != actions.ActionAllow {
+		if ruleSet.Action != teawaf.ActionAllow {
 			this.SetAttr("waf_action", ruleSet.Action)
 			this.SetAttr("waf_group", group.Id)
 			this.SetAttr("waf_ruleset", ruleSet.Id)

@@ -3,7 +3,6 @@ package waf
 import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teawaf"
-	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/maps"
@@ -31,7 +30,7 @@ func (this *DetailAction) RunGet(params struct {
 	}
 
 	this.Data["groups"] = lists.Map(teawaf.Template().Inbound, func(k int, v interface{}) interface{} {
-		g := v.(*rules.RuleGroup)
+		g := v.(*teawaf.RuleGroup)
 		group := waf.FindRuleGroupWithCode(g.Code)
 
 		return maps.Map{

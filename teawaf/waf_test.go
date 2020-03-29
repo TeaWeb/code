@@ -1,8 +1,6 @@
 package teawaf
 
 import (
-	"github.com/TeaWeb/code/teawaf/actions"
-	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/iwind/TeaGo/assert"
 	"net/http"
 	"testing"
@@ -11,24 +9,24 @@ import (
 func TestWAF_MatchRequest(t *testing.T) {
 	a := assert.NewAssertion(t)
 
-	set := rules.NewRuleSet()
+	set := NewRuleSet()
 	set.Name = "Name_Age"
-	set.Connector = rules.RuleConnectorAnd
-	set.Rules = []*rules.Rule{
+	set.Connector = RuleConnectorAnd
+	set.Rules = []*Rule{
 		{
 			Param:    "${arg.name}",
-			Operator: rules.RuleOperatorEqString,
+			Operator: RuleOperatorEqString,
 			Value:    "lu",
 		},
 		{
 			Param:    "${arg.age}",
-			Operator: rules.RuleOperatorEq,
+			Operator: RuleOperatorEq,
 			Value:    "20",
 		},
 	}
-	set.Action = actions.ActionBlock
+	set.Action = ActionBlock
 
-	group := rules.NewRuleGroup()
+	group := NewRuleGroup()
 	group.AddRuleSet(set)
 	group.IsInbound = true
 
@@ -39,15 +37,15 @@ func TestWAF_MatchRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	waf.OnAction(func(action actions.ActionString) (goNext bool) {
-		return action != actions.ActionBlock
+	waf.OnAction(func(action ActionString) (goNext bool) {
+		return action != ActionBlock
 	})
 
 	req, err := http.NewRequest(http.MethodGet, "http://teaos.cn/hello?name=lu&age=20", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	goNext, set, err := waf.MatchRequest(req, nil)
+	goNext, _, set, err := waf.MatchRequest(req, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

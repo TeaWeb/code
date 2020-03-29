@@ -3,15 +3,15 @@ package waf
 import (
 	"encoding/json"
 	"github.com/TeaWeb/code/teaconfigs"
-	wafactions "github.com/TeaWeb/code/teawaf/actions"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/TeaWeb/code/teawaf/checkpoints"
-	"github.com/TeaWeb/code/teawaf/rules"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/waf/wafutils"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"strings"
 )
 
 type RuleAddAction actions.Action
@@ -29,6 +29,7 @@ func (this *RuleAddAction) RunGet(params struct {
 		"name":          waf.Name,
 		"countInbound":  waf.CountInboundRuleSets(),
 		"countOutbound": waf.CountOutboundRuleSets(),
+		"inbound":       waf.Inbound,
 	}
 
 	group := waf.FindRuleGroup(params.GroupId)
@@ -43,12 +44,12 @@ func (this *RuleAddAction) RunGet(params struct {
 	this.Data["connectors"] = []maps.Map{
 		{
 			"name":        "和(AND)",
-			"value":       rules.RuleConnectorAnd,
+			"value":       teawaf.RuleConnectorAnd,
 			"description": "所有规则都满足才视为匹配",
 		},
 		{
 			"name":        "或(OR)",
-			"value":       rules.RuleConnectorOr,
+			"value":       teawaf.RuleConnectorOr,
 			"description": "任一规则满足了就视为匹配",
 		},
 	}
@@ -107,8 +108,8 @@ func (this *RuleAddAction) RunGet(params struct {
 
 	this.Data["checkpoints"] = checkpointList
 
-	this.Data["operators"] = lists.Map(rules.AllRuleOperators, func(k int, v interface{}) interface{} {
-		def := v.(*rules.RuleOperatorDefinition)
+	this.Data["operators"] = lists.Map(teawaf.AllRuleOperators, func(k int, v interface{}) interface{} {
+		def := v.(*teawaf.RuleOperatorDefinition)
 		return maps.Map{
 			"name":        def.Name,
 			"code":        def.Code,
@@ -117,8 +118,8 @@ func (this *RuleAddAction) RunGet(params struct {
 		}
 	})
 
-	this.Data["actions"] = lists.Map(wafactions.AllActions, func(k int, v interface{}) interface{} {
-		def := v.(*wafactions.ActionDefinition)
+	this.Data["actions"] = lists.Map(teawaf.AllActions, func(k int, v interface{}) interface{} {
+		def := v.(*teawaf.ActionDefinition)
 		return maps.Map{
 			"name":        def.Name,
 			"description": def.Description,
@@ -154,11 +155,11 @@ func (this *RuleAddAction) RunPost(params struct {
 	Must *actions.Must
 }) {
 
-	set := rules.NewRuleSet()
+	set := teawaf.NewRuleSet()
 	set.Name = params.Name
 	for index, prefix := range params.RulePrefixes {
 		if index < len(params.RuleParams) && index < len(params.RuleOperators) && index < len(params.RuleValues) && index < len(params.RuleCases) && index < len(params.RuleOptions) {
-			rule := rules.NewRule()
+			rule := teawaf.NewRule()
 			rule.Operator = params.RuleOperators[index]
 
 			param := params.RuleParams[index]
@@ -198,7 +199,19 @@ func (this *RuleAddAction) RunPost(params struct {
 	}
 
 	set.Connector = params.Connector
+
+	// action
 	set.Action = params.Action
+	set.ActionOptions = maps.Map{}
+	for k, v := range this.ParamsMap {
+		if len(v) == 0 {
+			continue
+		}
+		index := strings.Index(k, "action_")
+		if index > -1 {
+			set.ActionOptions[k[len("action_"):]] = v[0]
+		}
+	}
 
 	// 测试
 	if params.Test {
@@ -228,18 +241,18 @@ func (this *RuleAddAction) RunPost(params struct {
 						if rule.Test(value) {
 							matchLogs = append(matchLogs, "rule: "+rule.Param+" "+rule.Operator+" "+rule.Value+"\ncompare: "+value+"\nresult:true")
 
-							if set.Connector == rules.RuleConnectorOr {
+							if set.Connector == teawaf.RuleConnectorOr {
 								matchedIndex = index
 								break Loop
 							}
 
-							if set.Connector == rules.RuleConnectorAnd {
+							if set.Connector == teawaf.RuleConnectorAnd {
 								matchedIndex = index
 							}
 						} else {
 							matchLogs = append(matchLogs, "rule: "+rule.Param+" "+rule.Operator+" "+rule.Value+"\ncompare: "+value+"\nresult:false")
 
-							if set.Connector == rules.RuleConnectorAnd {
+							if set.Connector == teawaf.RuleConnectorAnd {
 								matchedIndex = -1
 								break Loop
 							}

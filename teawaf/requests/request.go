@@ -18,6 +18,10 @@ func NewRequest(raw *http.Request) *Request {
 	}
 }
 
+func (this *Request) Raw() *http.Request {
+	return this.Request
+}
+
 func (this *Request) ReadBody(max int64) (data []byte, err error) {
 	data, err = ioutil.ReadAll(io.LimitReader(this.Request.Body, max))
 	return

@@ -2,7 +2,7 @@ package teastats
 
 import (
 	"github.com/TeaWeb/code/tealogs/accesslogs"
-	"github.com/TeaWeb/code/teawaf/actions"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"strings"
@@ -72,7 +72,7 @@ func (this *WAFBlockAllPeriodFilter) Filter(accessLog *accesslogs.AccessLog) {
 	if !ok {
 		return
 	}
-	if wafAction != actions.ActionBlock {
+	if wafAction != teawaf.ActionBlock {
 		return
 	}
 

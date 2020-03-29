@@ -1,4 +1,6 @@
-package actions
+package teawaf
+
+import "reflect"
 
 // action definition
 type ActionDefinition struct {
@@ -6,4 +8,5 @@ type ActionDefinition struct {
 	Code        ActionString
 	Description string
 	Instance    ActionInterface
+	Type        reflect.Type
 }

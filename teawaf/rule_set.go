@@ -1,7 +1,6 @@
-package rules
+package teawaf
 
 import (
-	"github.com/TeaWeb/code/teawaf/actions"
 	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
@@ -23,8 +22,8 @@ type RuleSet struct {
 	Rules       []*Rule       `yaml:"rules" json:"rules"`
 	Connector   RuleConnector `yaml:"connector" json:"connector"` // rules connector
 
-	Action        actions.ActionString `yaml:"action" json:"action"`
-	ActionOptions maps.Map             `yaml:"actionOptions" json:"actionOptions"` // TODO TO BE IMPLEMENTED
+	Action        ActionString `yaml:"action" json:"action"`
+	ActionOptions maps.Map     `yaml:"actionOptions" json:"actionOptions"` // TODO TO BE IMPLEMENTED
 
 	hasRules bool
 }

@@ -2,7 +2,7 @@ package waf
 
 import (
 	"github.com/TeaWeb/code/teaconfigs"
-	"github.com/TeaWeb/code/teawaf/rules"
+	"github.com/TeaWeb/code/teawaf"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/string"
@@ -51,7 +51,7 @@ func (this *GroupAddAction) RunPost(params struct {
 		Field("name", params.Name).
 		Require("请输入分组名称")
 
-	group := rules.NewRuleGroup()
+	group := teawaf.NewRuleGroup()
 	group.Id = stringutil.Rand(16)
 	group.On = params.On
 	group.Name = params.Name
