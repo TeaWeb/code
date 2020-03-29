@@ -10,6 +10,7 @@ import (
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/utils/time"
+	"math"
 	"net/http"
 	"regexp"
 	"time"
@@ -143,6 +144,18 @@ func (this *DayAction) Run(params struct {
 			logs.Error(err)
 			this.Data["stat"] = []maps.Map{}
 		} else {
+			// 计算百分比
+			total := 0
+			for _, m := range stat {
+				total += m.GetInt("count")
+			}
+			if total > 0 {
+				for _, m := range stat {
+					percent := math.Ceil(float64(m.GetInt("count"))*10000/float64(total)) / 100
+					m["name"] = m.GetString("name") + " " + fmt.Sprintf("%.2f", percent) + "%"
+				}
+			}
+
 			this.Data["stat"] = stat
 		}
 	}
