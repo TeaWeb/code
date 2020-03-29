@@ -51,16 +51,6 @@ func (this *IndexAction) RunPost(params struct {
 	Must     *actions.Must
 	Auth     *helpers.UserShouldAuth
 }) {
-	// 记录登录
-	go func() {
-		err := teadb.AuditLogDAO().InsertOne(audits.NewLog(params.Username, audits.ActionLogin, "登录", map[string]string{
-			"ip": this.RequestRemoteIP(),
-		}))
-		if err != nil {
-			logs.Error(err)
-		}
-	}()
-
 	// 检查IP限制
 	if !configs.SharedAdminConfig().AllowIP(this.RequestRemoteIP()) {
 		this.ResponseWriter.WriteHeader(http.StatusForbidden)
@@ -85,14 +75,17 @@ func (this *IndexAction) RunPost(params struct {
 
 	// 检查token
 	if len(params.Token) <= 32 {
+		this.log(params.Username, false)
 		this.Fail("请通过登录页面登录")
 	}
 	timestampString := params.Token[32:]
 	if stringutil.Md5(TokenSalt+timestampString) != params.Token[:32] {
+		this.log(params.Username, false)
 		this.FailField("refresh", "登录页面已过期，请刷新后重试")
 	}
 	timestamp := types.Int64(timestampString)
 	if timestamp < time.Now().Unix()-1800 {
+		this.log(params.Username, false)
 		this.FailField("refresh", "登录页面已过期，请刷新后重试")
 	}
 
@@ -102,12 +95,14 @@ func (this *IndexAction) RunPost(params struct {
 	if user != nil {
 		// 错误次数
 		if user.CountLoginTries() >= 3 {
+			this.log(params.Username, false)
 			this.Fail("登录失败已超过3次，系统被锁定，需要重置服务后才能继续")
 		}
 
 		// 密码错误
 		if !adminConfig.ComparePassword(params.Password, user.Password) {
 			user.IncreaseLoginTries()
+			this.log(params.Username, false)
 			this.Fail("登录失败，请检查用户名密码")
 		}
 
@@ -128,9 +123,28 @@ func (this *IndexAction) RunPost(params struct {
 			}
 		}
 
+		this.log(params.Username, true)
 		this.Next("/", nil, "").Success()
 		return
 	}
 
+	this.log(params.Username, false)
 	this.Fail("登录失败，请检查用户名密码")
+}
+
+func (this *IndexAction) log(username string, success bool) {
+	go func() {
+		var message string
+		if success {
+			message = "登录成功"
+		} else {
+			message = "登录失败"
+		}
+		err := teadb.AuditLogDAO().InsertOne(audits.NewLog(username, audits.ActionLogin, message, map[string]string{
+			"ip": this.RequestRemoteIP(),
+		}))
+		if err != nil {
+			logs.Error(err)
+		}
+	}()
 }
