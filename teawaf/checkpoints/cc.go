@@ -95,6 +95,16 @@ func (this *CCCheckpoint) RequestValue(req *requests.Request, param string, opti
 				}
 				key = "USER@" + userType + "@" + userField + "@" + v
 			}
+		case "header":
+			if len(userField) == 0 {
+				key = this.ip(req)
+			} else {
+				v := req.Header.Get(userField)
+				if userIndexInt > 0 && len(v) > userIndexInt {
+					v = v[userIndexInt:]
+				}
+				key = "USER@" + userType + "@" + userField + "@" + v
+			}
 		default:
 			key = this.ip(req)
 		}
@@ -161,6 +171,10 @@ func (this *CCCheckpoint) Options() []OptionInterface {
 			{
 				"name":  "POST参数",
 				"value": "post",
+			},
+			{
+				"name":  "HTTP Header",
+				"value": "header",
 			},
 		})
 		options = append(options, option)
