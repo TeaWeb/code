@@ -6,8 +6,11 @@ import (
 	"errors"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
+	"github.com/iwind/TeaGo/types"
 	"io/ioutil"
 	"net"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -233,4 +236,27 @@ func (this *SSLConfig) FindCertTask(certTaskId string) *SSLCertTask {
 // CA证书Pool，用于TLS对客户端进行认证
 func (this *SSLConfig) CAPool() *x509.CertPool {
 	return this.clientCAPool
+}
+
+// 分解所有监听地址
+func (this *SSLConfig) ParseListenAddresses() []string {
+	result := []string{}
+	var reg = regexp.MustCompile(`\[\s*(\d+)\s*[,:-]\s*(\d+)\s*]$`)
+	for _, addr := range this.Listen {
+		match := reg.FindStringSubmatch(addr)
+		if len(match) == 0 {
+			result = append(result, addr)
+		} else {
+			min := types.Int(match[1])
+			max := types.Int(match[2])
+			if min > max {
+				min, max = max, min
+			}
+			for i := min; i <= max; i++ {
+				newAddr := reg.ReplaceAllString(addr, ":"+strconv.Itoa(i))
+				result = append(result, newAddr)
+			}
+		}
+	}
+	return result
 }

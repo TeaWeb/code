@@ -63,6 +63,8 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 					index := strings.LastIndex(listen, ":")
 					if index > -1 {
 						ports = append(ports, ":"+listen[index+1:])
+					} else {
+						ports = append(ports, ":"+listen)
 					}
 				}
 			}
@@ -71,6 +73,8 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 					index := strings.LastIndex(listen, ":")
 					if index > -1 {
 						ports = append(ports, ":"+listen[index+1:])
+					} else {
+						ports = append(ports, ":"+listen)
 					}
 				}
 			}

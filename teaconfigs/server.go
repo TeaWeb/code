@@ -507,7 +507,7 @@ func (this *ServerConfig) AddListen(address string) {
 // 分解所有监听地址
 func (this *ServerConfig) ParseListenAddresses() []string {
 	result := []string{}
-	var reg = regexp.MustCompile(`:\s*\[\s*(\d+)\s*[,:-]\s*(\d+)\s*]$`)
+	var reg = regexp.MustCompile(`\[\s*(\d+)\s*[,:-]\s*(\d+)\s*]$`)
 	for _, addr := range this.Listen {
 		match := reg.FindStringSubmatch(addr)
 		if len(match) == 0 {
