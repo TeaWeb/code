@@ -147,6 +147,13 @@ func (this *Request) callWebsocket(writer *ResponseWriter) error {
 
 		server, resp, err := dialer.Dial(wsURL.String(), header)
 		if err != nil {
+			writer.statusCode = http.StatusInternalServerError
+			_ = client.Close()
+
+			if server != nil {
+				_ = server.Close()
+			}
+
 			errString := ""
 			if resp != nil && resp.Body != nil {
 				data, _ := ioutil.ReadAll(resp.Body)
