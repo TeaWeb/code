@@ -8,6 +8,7 @@ import (
 	"github.com/TeaWeb/code/teaweb/configs"
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
+	"github.com/iwind/TeaGo/types"
 	"io"
 	"net/http"
 	"strings"
@@ -176,6 +177,12 @@ func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter)
 		cacheConfig.Status = []int{http.StatusOK}
 	}
 	if !lists.ContainsInt(cacheConfig.Status, writer.StatusCode()) {
+		return true
+	}
+
+	// check length
+	contentLength := types.Int(writer.Header().Get("Content-Length"))
+	if contentLength != len(writer.Body()) {
 		return true
 	}
 
