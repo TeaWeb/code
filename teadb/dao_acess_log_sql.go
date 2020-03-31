@@ -387,8 +387,8 @@ func (this *SQLAccessLogDAO) initTable(table string) {
 			"`remoteAddr` varchar(64) DEFAULT NULL,"+
 			"`remotePort` int(11) unsigned DEFAULT '0',"+
 			"`remoteUser` varchar(128) DEFAULT NULL,"+
-			"`requestURI` varchar(1024) DEFAULT NULL,"+
-			"`requestPath` varchar(1024) DEFAULT NULL,"+
+			"`requestURI` varchar(2048) DEFAULT NULL,"+
+			"`requestPath` varchar(2048) DEFAULT NULL,"+
 			"`requestLength` bigint(20) unsigned DEFAULT '0',"+
 			"`requestTime` decimal(20,6) unsigned DEFAULT '0.000000',"+
 			"`requestMethod` varchar(16) DEFAULT NULL,"+
@@ -405,9 +405,9 @@ func (this *SQLAccessLogDAO) initTable(table string) {
 			"`msec` decimal(20,6) unsigned DEFAULT '0.000000',"+
 			"`timestamp` int(11) unsigned DEFAULT '0',"+
 			"`host` varchar(128) DEFAULT NULL,"+
-			"`referer` varchar(1024) DEFAULT NULL,"+
+			"`referer` varchar(2048) DEFAULT NULL,"+
 			"`userAgent` varchar(1024) DEFAULT NULL,"+
-			"`request` varchar(1024) DEFAULT NULL,"+
+			"`request` varchar(2048) DEFAULT NULL,"+
 			"`contentType` varchar(256) DEFAULT NULL,"+
 			"`cookie` json DEFAULT NULL,"+
 			"`arg` json DEFAULT NULL,"+
@@ -450,8 +450,8 @@ func (this *SQLAccessLogDAO) initTable(table string) {
 			"remoteAddr" varchar(64),
 			"remotePort" int4 default 0,
 			"remoteUser" varchar(128),
-			"requestURI" varchar(1024),
-			"requestPath" varchar(1024),
+			"requestURI" varchar(2048),
+			"requestPath" varchar(2048),
 			"requestLength" int8 default 0,
 			"requestTime" float8 default 0,
 			"requestMethod" varchar(16),
@@ -468,9 +468,9 @@ func (this *SQLAccessLogDAO) initTable(table string) {
 			"msec" float8 default 0,
 			"timestamp" int4 default 0,
 			"host" varchar(128),
-			"referer" varchar(1024),
+			"referer" varchar(2048),
 			"userAgent" varchar(1024),
-			"request" varchar(1024),
+			"request" varchar(2048),
 			"contentType" varchar(256),
 			"cookie" json,
 			"arg" json,
