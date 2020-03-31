@@ -38,10 +38,13 @@ func (this *ImportAction) RunPost(params struct {
 	File *actions.File
 
 	// step2
-	WafId    string
-	GroupIds []string
-	Data     string
-	Step     string
+	WafId         string
+	GroupIds      []string
+	OverwriteType bool
+	OverwriteName bool
+
+	Data string
+	Step string
 
 	Must *actions.Must
 }) {
@@ -104,7 +107,29 @@ func (this *ImportAction) RunPost(params struct {
 			if group == nil {
 				continue
 			}
-			countGroups ++
+
+			// 删除老的分组
+			if params.OverwriteType && len(group.Code) > 0 {
+				oldGroup := currentWAF.FindRuleGroupWithCode(group.Code)
+				if oldGroup != nil {
+					currentWAF.RemoveRuleGroup(oldGroup.Id)
+				}
+			} else if params.OverwriteName && len(group.Name) > 0 {
+				if group.IsInbound {
+					oldGroup := this.findInboundGroupWithName(currentWAF, group.Name)
+					if oldGroup != nil {
+						currentWAF.RemoveRuleGroup(oldGroup.Id)
+					}
+				} else {
+					oldGroup := this.findOutboundGroupWithName(currentWAF, group.Name)
+					if oldGroup != nil {
+						currentWAF.RemoveRuleGroup(oldGroup.Id)
+					}
+				}
+			}
+
+			// 添加新的分组
+			countGroups++
 			countSets += len(group.RuleSets)
 			group.Id = stringutil.Rand(16) // 重新生成ID，避免和现有的ID冲突
 			currentWAF.AddRuleGroup(group)
@@ -125,4 +150,22 @@ func (this *ImportAction) RunPost(params struct {
 
 		this.Success()
 	}
+}
+
+func (this *ImportAction) findInboundGroupWithName(waf *teawaf.WAF, name string) *teawaf.RuleGroup {
+	for _, g := range waf.Inbound {
+		if g.Name == name {
+			return g
+		}
+	}
+	return nil
+}
+
+func (this *ImportAction) findOutboundGroupWithName(waf *teawaf.WAF, name string) *teawaf.RuleGroup {
+	for _, g := range waf.Outbound {
+		if g.Name == name {
+			return g
+		}
+	}
+	return nil
 }
