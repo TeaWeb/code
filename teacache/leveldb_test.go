@@ -64,3 +64,22 @@ func TestLevelDBManager_Clean(t *testing.T) {
 	}
 	_ = m.Close()
 }
+
+func TestLevelDBManager_DeletePrefixes(t *testing.T) {
+	m := NewLevelDBManager()
+	m.SetOptions(map[string]interface{}{
+		"dir": Tea.Root + "/cache",
+	})
+	canWrite := false
+	if canWrite {
+		err := m.Write("abc000", []byte("Hello"))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	count, err := m.DeletePrefixes([]string{"abc"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(count, "keys deleted")
+}

@@ -1,21 +1,27 @@
 package teacache
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"github.com/TeaWeb/code/teautils"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/timers"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/TeaGo/utils/string"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
+
+var bytePool = teautils.NewBytePool(40960, 2048)
 
 // 文件缓存管理器
 type FileManager struct {
@@ -55,13 +61,13 @@ func NewFileManager() *FileManager {
 						logs.Error(err)
 						continue
 					}
-					data := reader.Read(12)
-					if len(data) != 12 {
-						reader.Close()
+					data := reader.Read(10)
+					if len(data) != 10 {
+						_ = reader.Close()
 						continue
 					}
 					timestamp := types.Int64(string(data))
-					reader.Close()
+					_ = reader.Close()
 					if timestamp < time.Now().Unix()-100 { // 超时100秒以上的
 						err := file.Delete()
 						if err != nil {
@@ -86,10 +92,14 @@ func (this *FileManager) SetOptions(options map[string]interface{}) {
 	dir, found := options["dir"]
 	if found {
 		this.dir = types.String(dir)
+		if !filepath.IsAbs(this.dir) {
+			this.dir = Tea.Root + Tea.DS + this.dir
+		}
 	}
 }
 
 // 写入
+// 内容格式 timestamp | key length (20 bytes) | key | data (n bytes) |
 func (this *FileManager) Write(key string, data []byte) error {
 	if len(this.dir) == 0 {
 		return errors.New("cache dir should not be empty")
@@ -112,7 +122,18 @@ func (this *FileManager) Write(key string, data []byte) error {
 		}
 	}
 
-	newFile := files.NewFile(newDir.Path() + Tea.DS + md5 + ".cache")
+	path := newDir.Path() + Tea.DS + md5 + ".cache"
+	fp, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_SYNC, 0666)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = fp.Close()
+
+		if err != nil {
+			_ = os.Remove(path)
+		}
+	}()
 
 	// 头部加入有效期
 	var life = int64(this.Life.Seconds())
@@ -121,8 +142,37 @@ func (this *FileManager) Write(key string, data []byte) error {
 	} else if life >= 365*86400 { // 最大值限制
 		life = 365 * 86400
 	}
-	data = append([]byte(fmt.Sprintf("%012d", time.Now().Unix()+life)), data ...)
-	err := newFile.Write(data)
+	_, err = fp.WriteString(fmt.Sprintf("%d", time.Now().Unix()+life))
+	if err != nil {
+		return err
+	}
+
+	_, err = fp.WriteString("|")
+	if err != nil {
+		return err
+	}
+
+	_, err = fp.WriteString(strconv.Itoa(len(key)))
+	if err != nil {
+		return err
+	}
+
+	_, err = fp.WriteString("|")
+	if err != nil {
+		return err
+	}
+
+	_, err = fp.WriteString(key)
+	if err != nil {
+		return err
+	}
+
+	_, err = fp.WriteString("|")
+	if err != nil {
+		return err
+	}
+
+	_, err = fp.Write(data)
 
 	return err
 }
@@ -130,23 +180,78 @@ func (this *FileManager) Write(key string, data []byte) error {
 // 读取
 func (this *FileManager) Read(key string) (data []byte, err error) {
 	md5 := stringutil.Md5(key)
-	file := files.NewFile(this.dir + Tea.DS + md5[:2] + Tea.DS + md5[2:4] + Tea.DS + md5 + ".cache")
+	fp, err := os.Open(this.dir + Tea.DS + md5[:2] + Tea.DS + md5[2:4] + Tea.DS + md5 + ".cache")
+	if err != nil {
+		return nil, ErrNotFound
+	}
+	defer func() {
+		_ = fp.Close()
+	}()
 
 	this.writeLocker.RLock()
 	defer this.writeLocker.RUnlock()
 
-	if !file.Exists() {
+	r := bufio.NewReader(fp)
+	key, ok := this.readHead(r)
+	if !ok {
 		return nil, ErrNotFound
 	}
-	data, err = file.ReadAll()
-	if err != nil || len(data) < 12 { // 12是时间戳长度
-		return nil, err
+
+	buf := bytePool.Get()
+	defer bytePool.Put(buf)
+	for {
+		n, err := r.Read(buf)
+		if n > 0 {
+			data = append(data, buf[:n]...)
+		}
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, ErrNotFound
+		}
 	}
-	timestamp := types.Int64(string(data[:12]))
-	if timestamp < time.Now().Unix() {
-		return nil, ErrNotFound
+	return data, nil
+}
+
+func (this *FileManager) readHead(r *bufio.Reader) (key string, ok bool) {
+	timestampBytes, err := r.ReadBytes('|')
+	if err != nil {
+		return
 	}
-	return data[12:], nil
+	if len(timestampBytes) > 12 {
+		return
+	}
+	if types.Int64(string(timestampBytes[:len(timestampBytes)-1])) < time.Now().Unix() {
+		return
+	}
+
+	keyLengthBytes, err := r.ReadBytes('|')
+	if err != nil {
+		return
+	}
+
+	keyLength := types.Int(string(keyLengthBytes[:len(keyLengthBytes)-1]))
+	if keyLength > 0 {
+		keyBytes := []byte{}
+		for i := 0; i < keyLength; i++ {
+			b, err := r.ReadByte()
+			if err != nil {
+				return
+			}
+			keyBytes = append(keyBytes, b)
+		}
+
+		key = string(keyBytes)
+	}
+	_, err = r.ReadByte()
+	if err != nil {
+		return
+	}
+
+	ok = true
+
+	return
 }
 
 // 删除
@@ -176,6 +281,52 @@ func (this *FileManager) Delete(key string) error {
 	return newFile.Delete()
 }
 
+// 删除key前缀
+func (this *FileManager) DeletePrefixes(prefixes []string) (int, error) {
+	if len(prefixes) == 0 {
+		return 0, nil
+	}
+	// 检查目录是否存在
+	info, err := os.Stat(this.dir)
+	if err != nil || !info.IsDir() {
+		return 0, nil
+	}
+
+	count := 0
+	err = filepath.Walk(this.dir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(info.Name(), ".cache") {
+			return nil
+		}
+
+		fp, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			_ = fp.Close()
+		}()
+
+		key, ok := this.readHead(bufio.NewReader(fp))
+		if !ok {
+			return nil
+		}
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(key, prefix) || strings.HasPrefix("http://"+key, prefix) || strings.HasPrefix("https://"+key, prefix) {
+				_ = fp.Close()
+				count++
+				return os.Remove(path)
+			}
+		}
+
+		return nil
+	})
+
+	return count, err
+}
+
 // 统计
 func (this *FileManager) Stat() (size int64, countKeys int, err error) {
 	// 检查目录是否存在
@@ -184,7 +335,7 @@ func (this *FileManager) Stat() (size int64, countKeys int, err error) {
 		return
 	}
 
-	filepath.Walk(this.dir, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(this.dir, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
@@ -196,6 +347,10 @@ func (this *FileManager) Stat() (size int64, countKeys int, err error) {
 
 		return nil
 	})
+
+	if err != nil {
+		logs.Error(err)
+	}
 
 	return
 }

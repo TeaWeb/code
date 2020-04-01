@@ -24,6 +24,9 @@ type ManagerInterface interface {
 	// 删除
 	Delete(key string) error
 
+	// 删除key前缀
+	DeletePrefixes(prefixes []string) (int, error)
+
 	// 设置选项
 	SetOptions(options map[string]interface{})
 

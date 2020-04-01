@@ -3,15 +3,19 @@ package cache
 import (
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs/shared"
-	"github.com/iwind/TeaGo/actions"
+	"github.com/TeaWeb/code/teaweb/actions/default/actionutils"
 )
 
-type TestPolicyAction actions.Action
+type TestPolicyAction struct {
+	actionutils.ParentAction
+}
 
 // 测试缓存策略
 func (this *TestPolicyAction) Run(params struct {
 	Filename string
 }) {
+	this.SecondMenu("test")
+
 	policy := shared.NewCachePolicyFromFile(params.Filename)
 	if policy == nil {
 		this.Fail("找不到Policy")

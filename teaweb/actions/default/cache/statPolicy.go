@@ -4,16 +4,20 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs/shared"
-	"github.com/iwind/TeaGo/actions"
+	"github.com/TeaWeb/code/teaweb/actions/default/actionutils"
 	"github.com/iwind/TeaGo/maps"
 )
 
-type StatPolicyAction actions.Action
+type StatPolicyAction struct {
+	actionutils.ParentAction
+}
 
 // 统计
 func (this *StatPolicyAction) Run(params struct {
 	Filename string
 }) {
+	this.SecondMenu("stat")
+
 	policy := shared.NewCachePolicyFromFile(params.Filename)
 	if policy == nil {
 		this.Fail("找不到Policy")

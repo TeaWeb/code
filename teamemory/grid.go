@@ -61,6 +61,11 @@ func NewGrid(countCells int, opt ...interface{}) *Grid {
 	return grid
 }
 
+// get all cells in the grid
+func (this *Grid) Cells() []*Cell {
+	return this.cells
+}
+
 func (this *Grid) WriteItem(item *Item) {
 	if this.countCells <= 0 {
 		return

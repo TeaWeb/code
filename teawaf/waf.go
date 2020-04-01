@@ -27,6 +27,8 @@ type WAF struct {
 
 	ActionBlock *BlockAction `yaml:"actionBlock" json:"actionBlock"` // action block config
 
+	IPTables []*IPTable `yaml:"ipTables" json:"ipTables"` // IP table list
+
 	hasInboundRules  bool
 	hasOutboundRules bool
 	onActionCallback func(action ActionString) (goNext bool)

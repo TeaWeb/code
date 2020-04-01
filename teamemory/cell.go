@@ -123,7 +123,7 @@ func (this *Cell) Trim() {
 
 	inactiveSize := int(math.Ceil(float64(l) / 10)) // trim 10% items
 	this.list.Range(func(item *Item) (goNext bool) {
-		inactiveSize --
+		inactiveSize--
 		delete(this.mapping, item.HashKey())
 		this.list.Remove(item)
 		this.totalBytes -= item.Size()
@@ -138,6 +138,15 @@ func (this *Cell) Delete(hashKey uint64) {
 		delete(this.mapping, hashKey)
 		this.list.Remove(item)
 		this.totalBytes -= item.Size()
+	}
+	this.locker.Unlock()
+}
+
+// range all items in the cell
+func (this *Cell) Range(f func(item *Item)) {
+	this.locker.Lock()
+	for _, item := range this.mapping {
+		f(item)
 	}
 	this.locker.Unlock()
 }

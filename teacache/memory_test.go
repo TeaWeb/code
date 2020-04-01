@@ -1,6 +1,7 @@
 package teacache
 
 import (
+	"fmt"
 	"github.com/iwind/TeaGo/assert"
 	"testing"
 	"time"
@@ -32,4 +33,27 @@ func TestCacheMemoryConfig(t *testing.T) {
 	a.Equals(string(data), "Hello, World")
 
 	t.Log(string(data))
+}
+
+func TestMemoryManager_DeletePrefixes(t *testing.T) {
+	m := NewMemoryManager()
+	m.Capacity = 1024 * 128
+	m.Life = 30 * time.Second
+	m.SetOptions(nil)
+
+	for i := 0; i < 100; i++ {
+		err := m.Write("abc"+fmt.Sprintf("%03d", i), []byte("1"))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	_ = m.Write("bcd", []byte("1"))
+
+	t.Log(m.Stat())
+	count, err := m.DeletePrefixes([]string{"http://abc"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("deleted", count, "keys")
+	t.Log(m.Stat())
 }

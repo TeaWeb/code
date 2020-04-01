@@ -4,16 +4,20 @@ import (
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
-	"github.com/iwind/TeaGo/actions"
+	"github.com/TeaWeb/code/teaweb/actions/default/actionutils"
 	"github.com/iwind/TeaGo/maps"
 )
 
-type PolicyAction actions.Action
+type PolicyAction struct {
+	actionutils.ParentAction
+}
 
 // 缓存策略详情
 func (this *PolicyAction) Run(params struct {
 	Filename string
 }) {
+	this.SecondMenu("policy")
+
 	policy := shared.NewCachePolicyFromFile(params.Filename)
 	if policy == nil {
 		this.Fail("找不到Policy")

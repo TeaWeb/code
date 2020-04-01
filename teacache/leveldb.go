@@ -12,6 +12,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -107,6 +108,37 @@ func (this *LevelDBManager) Delete(key string) error {
 		return errors.New("leveldb nil pointer found")
 	}
 	return this.db.Delete(append([]byte("KEY"), []byte(key)...), nil)
+}
+
+// 删除key前缀
+func (this *LevelDBManager) DeletePrefixes(prefixes []string) (int, error) {
+	if len(prefixes) == 0 {
+		return 0, nil
+	}
+	if this.db == nil {
+		return 0, nil
+	}
+
+	it := this.db.NewIterator(util.BytesPrefix([]byte("KEY")), nil)
+	defer it.Release()
+
+	count := 0
+	for it.Next() {
+		keyBytes := it.Key()
+		key := string(keyBytes[3:]) // skip "KEY"
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(key, prefix) || strings.HasPrefix("http://"+key, prefix) || strings.HasPrefix("https://"+key, prefix) {
+				err := this.db.Delete(keyBytes, nil)
+				if err != nil {
+					return count, err
+				}
+				count++
+				break
+			}
+		}
+	}
+
+	return count, nil
 }
 
 func (this *LevelDBManager) CleanExpired() error {

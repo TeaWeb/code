@@ -5,6 +5,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"strings"
 	"time"
 )
 
@@ -94,55 +95,118 @@ func (this *RedisManager) Delete(key string) error {
 	return cmd.Err()
 }
 
+// 删除key前缀
+func (this *RedisManager) DeletePrefixes(prefixes []string) (int, error) {
+	if len(prefixes) == 0 {
+		return 0, nil
+	}
+
+	cursor := uint64(0)
+	var err error
+	loopCount := 0
+	count := 0
+	keyPrefix := "TEA_CACHE_" + this.Id()
+	keyPrefixLength := len(keyPrefix)
+	for {
+		loopCount++
+
+		var keys []string
+		keys, cursor, err = this.client.Scan(cursor, keyPrefix+"*", 10000).Result()
+		if err != nil {
+			return count, err
+		}
+		if len(keys) > 0 {
+			for _, key := range keys {
+				realKey := key[keyPrefixLength:]
+				for _, prefix := range prefixes {
+					if strings.HasPrefix(realKey, prefix) || strings.HasPrefix("http://"+realKey, prefix) || strings.HasPrefix("https://"+realKey, prefix) {
+						err1 := this.client.Del(key).Err()
+						if err1 != nil {
+							err = err1
+							break
+						}
+						count++
+						break
+					}
+				}
+			}
+		}
+
+		// 防止单个操作时间过长
+		if loopCount > 10000 {
+			break
+		}
+
+		if cursor == 0 {
+			break
+		}
+	}
+
+	return count, nil
+}
+
 // 统计
 func (this *RedisManager) Stat() (size int64, countKeys int, err error) {
-	scan := this.client.Scan(0, "TEA_CACHE_"+this.Id()+"*", 100000)
-	if scan == nil {
-		return
-	}
-	if scan.Err() != nil {
-		err = scan.Err()
-		return
-	}
-	it := scan.Iterator()
-	if it.Err() != nil {
-		err = it.Err()
-		return
-	}
-	for it.Next() {
-		key := it.Val()
-		b, err := this.client.Get(key).Bytes()
+	cursor := uint64(0)
+	loopCount := 0
+	for {
+		loopCount++
+
+		var keys []string
+		keys, cursor, err = this.client.Scan(cursor, "TEA_CACHE_"+this.Id()+"*", 10000).Result()
 		if err != nil {
-			continue
+			return
 		}
-		countKeys++
-		size += int64(len(b) + len(key))
+		if len(keys) > 0 {
+			countKeys += len(keys)
+			for _, key := range keys {
+				val, _ := this.client.Get(key).Bytes()
+				size += int64(len(val))
+			}
+		}
+
+		// 防止单个操作时间过长
+		if loopCount > 10000 {
+			break
+		}
+
+		if cursor == 0 {
+			break
+		}
 	}
 	return
 }
 
 // 清理
 func (this *RedisManager) Clean() error {
-	scan := this.client.Scan(0, "TEA_CACHE_"+this.Id()+"*", 100000)
-	if scan == nil {
-		return nil
-	}
-	if scan.Err() != nil {
-		return scan.Err()
-	}
-	it := scan.Iterator()
-	if it.Err() != nil {
-		return it.Err()
-	}
-	keys := []string{}
-	for it.Next() {
-		key := it.Val()
-		keys = append(keys, key)
-	}
+	cursor := uint64(0)
+	var err error
+	loopCount := 0
+	for {
+		loopCount++
 
-	if len(keys) > 0 {
-		for _, key := range keys {
-			this.client.Del(key)
+		var keys []string
+		keys, cursor, err = this.client.Scan(cursor, "TEA_CACHE_"+this.Id()+"*", 10000).Result()
+		if err != nil {
+			return err
+		}
+		if len(keys) > 0 {
+			for _, key := range keys {
+				err1 := this.client.Del(key).Err()
+				if err1 != nil {
+					err = err1
+					break
+				}
+			}
+		}
+
+		// 防止单个操作时间过长
+		if loopCount > 10000 {
+			break
+		}
+
+		if cursor == 0 {
+			break
 		}
 	}
 

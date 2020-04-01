@@ -1,9 +1,11 @@
 package teacache
 
 import (
+	"fmt"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/assert"
 	"github.com/iwind/TeaGo/logs"
+	"runtime"
 	"sync"
 	"testing"
 )
@@ -12,6 +14,8 @@ func TestFileManager(t *testing.T) {
 	a := assert.NewAssertion(t)
 
 	m := NewFileManager()
+	m.dir = Tea.Root + "/cache"
+
 	err := m.Write("123456", []byte("abc"))
 	t.Log(err)
 	a.IsNotNil(err)
@@ -72,4 +76,46 @@ func TestFileManager_Clean(t *testing.T) {
 	m := NewFileManager()
 	m.dir = Tea.Root + "/./cache"
 	t.Log(m.Clean())
+}
+
+func TestFileManager_DeletePrefixes(t *testing.T) {
+	m := NewFileManager()
+	m.dir = Tea.Root + "/cache/"
+
+	canWrite := false
+	if canWrite {
+		for i := 0; i < 3; i++ {
+			err := m.Write("abc"+fmt.Sprintf("%03d", i), []byte("I AM DATA"))
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		_ = m.Write("bcd000", []byte("I AM BCD"))
+
+		data, err := m.Read("abc000")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("read:["+string(data)+"]", len(data), "bytes")
+	}
+
+	count, err := m.DeletePrefixes([]string{"abc"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("OK", count, "keys")
+}
+
+func BenchmarkFileManager_Read(b *testing.B) {
+	runtime.GOMAXPROCS(1)
+
+	m := NewFileManager()
+	m.dir = Tea.Root + "/cache/"
+
+	for i := 0; i < b.N; i++ {
+		data, _ := m.Read("abc000")
+		if len(data) == 0 {
+			b.Fatal("invalid data:", string(data))
+		}
+	}
 }

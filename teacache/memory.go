@@ -3,6 +3,7 @@ package teacache
 import (
 	"errors"
 	"github.com/TeaWeb/code/teamemory"
+	"strings"
 	"time"
 )
 
@@ -34,7 +35,7 @@ func (this *MemoryManager) SetOptions(options map[string]interface{}) {
 		opts = append(opts, teamemory.NewLimitSizeOpt(capacityBytes))
 		countCells = int(capacityBytes / 1024 / 1024 / 128)
 	}
-	this.grid = teamemory.NewGrid(countCells, opts ...)
+	this.grid = teamemory.NewGrid(countCells, opts...)
 }
 
 func (this *MemoryManager) Write(key string, data []byte) error {
@@ -61,6 +62,39 @@ func (this *MemoryManager) Read(key string) (data []byte, err error) {
 func (this *MemoryManager) Delete(key string) error {
 	this.grid.Delete([]byte(key))
 	return nil
+}
+
+// 删除key前缀
+func (this *MemoryManager) DeletePrefixes(prefixes []string) (int, error) {
+	if len(prefixes) == 0 {
+		return 0, nil
+	}
+
+	grid := this.grid
+	if grid == nil {
+		return 0, nil
+	}
+
+	count := 0
+	keys := [][]byte{}
+	for _, cell := range grid.Cells() {
+		cell.Range(func(item *teamemory.Item) {
+			key := string(item.Key)
+			for _, prefix := range prefixes {
+				if strings.HasPrefix(key, prefix) || strings.HasPrefix("http://"+key, prefix) || strings.HasPrefix("https://"+key, prefix) {
+					keys = append(keys, item.Key)
+					count++
+					break
+				}
+			}
+		})
+	}
+
+	for _, key := range keys {
+		grid.Delete(key)
+	}
+
+	return count, nil
 }
 
 // 统计

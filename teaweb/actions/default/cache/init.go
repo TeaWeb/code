@@ -19,6 +19,7 @@ func init() {
 			GetPost("/statPolicy", new(StatPolicyAction)).
 			Get("/policy", new(PolicyAction)).
 			GetPost("/cleanPolicy", new(CleanPolicyAction)).
+			GetPost("/refreshPolicy", new(RefreshPolicyAction)).
 			EndAll()
 	})
 }

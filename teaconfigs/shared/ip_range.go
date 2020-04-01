@@ -51,7 +51,7 @@ func ParseIPRange(s string) (*IPRangeConfig, error) {
 
 	ipRange := &IPRangeConfig{}
 
-	if s == "all" || s == "ALL" || s == "0.0.0.0" {
+	if s == "*" || s == "all" || s == "ALL" || s == "0.0.0.0" {
 		ipRange.Type = IPRangeTypeAll
 		return ipRange, nil
 	}

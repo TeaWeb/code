@@ -2,6 +2,7 @@ package teatesting
 
 import (
 	"github.com/TeaWeb/code/teautils"
+	"github.com/go-redis/redis"
 	"github.com/iwind/TeaGo/logs"
 	"net/http"
 	"time"
@@ -95,8 +96,13 @@ func RequireDNS() bool {
 
 // 需要Redis支持
 func RequireRedis() bool {
-	// TODO
-	return false
+	client := redis.NewClient(&redis.Options{
+		Network:     "tcp",
+		Addr:        "127.0.0.1:6379",
+		DialTimeout: 5 * time.Second,
+	})
+	cmd := client.Ping()
+	return cmd.Err() == nil
 }
 
 // 需要ES支持

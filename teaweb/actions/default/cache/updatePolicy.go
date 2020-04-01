@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/TeaWeb/code/teacache"
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaweb/actions/default/actionutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/cache/cacheutils"
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
 	"github.com/iwind/TeaGo/actions"
@@ -12,12 +13,16 @@ import (
 	"github.com/iwind/TeaGo/types"
 )
 
-type UpdatePolicyAction actions.Action
+type UpdatePolicyAction struct {
+	actionutils.ParentAction
+}
 
 // 修改缓存策略
 func (this *UpdatePolicyAction) Run(params struct {
 	Filename string
 }) {
+	this.SecondMenu("policy")
+
 	policy := shared.NewCachePolicyFromFile(params.Filename)
 	if policy == nil {
 		this.Fail("找不到要修改的缓存策略")
