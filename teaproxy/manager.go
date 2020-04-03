@@ -147,7 +147,10 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 
 		// HTTPS
 		if server.SSL != nil && server.SSL.On {
-			server.SSL.Validate()
+			err := server.SSL.Validate()
+			if err != nil {
+				logs.Error(err)
+			}
 			for _, address := range server.SSL.ParseListenAddresses() {
 				// 是否有端口
 				if shared.RegexpDigitNumber.MatchString(address) {
@@ -181,7 +184,10 @@ func (this *Manager) ApplyServer(server *teaconfigs.ServerConfig) {
 
 		// TCP+TLS
 		if server.SSL != nil && server.SSL.On {
-			server.SSL.Validate()
+			err := server.SSL.Validate()
+			if err != nil {
+				logs.Error(err)
+			}
 			for _, address := range server.SSL.ParseListenAddresses() {
 				// 是否有端口
 				if shared.RegexpDigitNumber.MatchString(address) {
@@ -261,7 +267,10 @@ func (this *Manager) RemoveServer(serverId string) {
 
 	for _, listener := range this.listeners {
 		if listener.HasServer(serverId) {
-			listener.Reload()
+			err := listener.Reload()
+			if err != nil {
+				logs.Error(err)
+			}
 		}
 	}
 }

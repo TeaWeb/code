@@ -369,7 +369,22 @@ func (this *Listener) startTCPServer() error {
 				break
 			}
 
-			go this.connectTCPBackend(clientConn)
+			var serverName = ""
+			tlsConn, ok := clientConn.(*tls.Conn)
+			if ok {
+				go func() {
+					err = tlsConn.Handshake()
+					if err != nil {
+						logs.Error(err)
+						return
+					}
+
+					serverName = tlsConn.ConnectionState().ServerName
+					this.connectTCPBackend(clientConn, serverName)
+				}()
+			} else {
+				go this.connectTCPBackend(clientConn, serverName)
+			}
 		}
 	}
 
@@ -671,14 +686,26 @@ func (this *Listener) buildTLSConfig() *tls.Config {
 }
 
 // 连接TCP后端
-func (this *Listener) connectTCPBackend(clientConn net.Conn) {
+func (this *Listener) connectTCPBackend(clientConn net.Conn, serverName string) {
 	defer teautils.Recover()
 
 	client := NewTCPClient(func() *teaconfigs.ServerConfig {
+		this.serversLocker.RLock()
+
 		if len(this.currentServers) == 0 {
+			this.serversLocker.RUnlock()
 			return nil
 		}
-		return this.currentServers[0]
+
+		if len(serverName) == 0 {
+			defer this.serversLocker.RUnlock()
+			return this.currentServers[0]
+		}
+
+		this.serversLocker.RUnlock()
+
+		server, _ := this.findNamedServer(serverName)
+		return server
 	}, clientConn)
 	this.connectingTCPLocker.Lock()
 	this.connectingTCPMap[clientConn] = client
