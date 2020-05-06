@@ -601,6 +601,10 @@ func (this *Listener) matchSSL(domain string) (*teaconfigs.SSLConfig, *tls.Certi
 	// 如果域名为空，则取第一个
 	// 通常域名为空是因为是直接通过IP访问的
 	if len(domain) == 0 {
+		if teaconfigs.SharedProxySetting().MatchDomainStrictly {
+			return nil, nil, errors.New("[proxy]no tls server name matched")
+		}
+
 		if len(this.currentServers) > 0 && this.currentServers[0].SSL != nil {
 			return this.currentServers[0].SSL, this.currentServers[0].SSL.FirstCert(), nil
 		}
