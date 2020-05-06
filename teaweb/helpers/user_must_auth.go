@@ -20,7 +20,7 @@ func (this *UserMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	// 检查IP
 	if !configs.SharedAdminConfig().AllowIP(action.RequestRemoteIP()) {
 		action.ResponseWriter.WriteHeader(http.StatusForbidden)
-		action.WriteString("TeaWeb Access Forbidden")
+		action.WriteString(teaconst.TeaProductName + " Access Forbidden")
 		return false
 	}
 

@@ -25,7 +25,7 @@ func (this *IndexAction) RunGet() {
 	// 检查IP限制
 	if !configs.SharedAdminConfig().AllowIP(this.RequestRemoteIP()) {
 		this.ResponseWriter.WriteHeader(http.StatusForbidden)
-		this.WriteString("TeaWeb Access Forbidden")
+		this.WriteString(teaconst.TeaProductName + " Access Forbidden")
 		return
 	}
 
@@ -54,7 +54,7 @@ func (this *IndexAction) RunPost(params struct {
 	// 检查IP限制
 	if !configs.SharedAdminConfig().AllowIP(this.RequestRemoteIP()) {
 		this.ResponseWriter.WriteHeader(http.StatusForbidden)
-		this.WriteString("TeaWeb Access Forbidden")
+		this.WriteString(teaconst.TeaProductName + " Access Forbidden")
 		return
 	}
 

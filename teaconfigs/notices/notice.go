@@ -53,7 +53,7 @@ func NewNotice() *Notice {
 
 // 设置时间
 func (this *Notice) SetTime(t time.Time) {
-	this.Timestamp = time.Now().Unix()
+	this.Timestamp = t.Unix()
 }
 
 // 计算Hash
