@@ -80,7 +80,8 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 	SkipSetCookie             bool
 	EnableRequestCachePragma  bool
 
-	FileDir string
+	FileDir        string
+	FileAutoCreate bool
 
 	RedisNetwork  string
 	RedisHost     string
@@ -129,7 +130,8 @@ func (this *UpdatePolicyAction) RunPost(params struct {
 			Field("fileDir", params.FileDir).
 			Require("请输入缓存存放目录")
 		policy.Options = map[string]interface{}{
-			"dir": params.FileDir,
+			"dir":        params.FileDir,
+			"autoCreate": params.FileAutoCreate,
 		}
 	case "redis":
 		params.Must.

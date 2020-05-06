@@ -32,6 +32,7 @@ type FileManager struct {
 
 	looper      *timers.Looper
 	dir         string
+	autoCreate  bool // 是否自动创建
 	writeLocker sync.RWMutex
 }
 
@@ -89,12 +90,17 @@ func (this *FileManager) SetOptions(options map[string]interface{}) {
 		this.Life = 1800 * time.Second
 	}
 
-	dir, found := options["dir"]
-	if found {
+	dir, ok := options["dir"]
+	if ok {
 		this.dir = types.String(dir)
 		if !filepath.IsAbs(this.dir) {
 			this.dir = Tea.Root + Tea.DS + this.dir
 		}
+	}
+
+	autoCreate, ok := options["autoCreate"]
+	if ok {
+		this.autoCreate = types.Bool(autoCreate)
 	}
 }
 
@@ -110,7 +116,15 @@ func (this *FileManager) Write(key string, data []byte) error {
 
 	dirFile := files.NewFile(this.dir)
 	if !dirFile.IsDir() {
-		return errors.New("cache dir should be a valid dir")
+		// 自动创建
+		if this.autoCreate {
+			err := dirFile.MkdirAll()
+			if err != nil {
+				return errors.New("can not create cache dir: " + err.Error())
+			}
+		} else {
+			return errors.New("cache dir should be a valid dir")
+		}
 	}
 
 	md5 := stringutil.Md5(key)
