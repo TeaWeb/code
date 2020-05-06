@@ -890,7 +890,9 @@ func (this *MongoDriver) startInstalledMongo() {
 		stat, err := mem.VirtualMemory()
 		if err == nil && stat.Total > 0 {
 			count := stat.Total / 1024 / 1024 / 1024
-			if count >= 3 {
+			if count >= 6 {
+				args = append(args, "--wiredTigerCacheSizeGB=2")
+			} else if count >= 3 {
 				args = append(args, "--wiredTigerCacheSizeGB=1")
 			}
 		}

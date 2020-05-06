@@ -278,8 +278,10 @@ func (this *InstallAction) start(mongodbDir string) {
 	// 控制内存不能超过1G
 	stat, err := mem.VirtualMemory()
 	if err == nil && stat.Total > 0 {
-		count := stat.Total / 1024 / 1024 / 1024
-		if count >= 3 {
+		size := stat.Total / 1024 / 1024 / 1024
+		if size >= 6 {
+			args = append(args, "--wiredTigerCacheSizeGB=2")
+		} else if size > 3 {
 			args = append(args, "--wiredTigerCacheSizeGB=1")
 		}
 	}
