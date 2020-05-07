@@ -59,7 +59,7 @@ func (this *TeaWebSource) Execute(params map[string]string) (value interface{}, 
 		}
 		return value, err
 	}
-	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
+	req.Header.Set("User-Agent", teaconst.TeaProductCode+"/"+teaconst.TeaVersion)
 
 	timeout := this.Timeout
 	if timeout <= 0 {

@@ -76,7 +76,7 @@ func (this *URLConnectivitySource) Execute(params map[string]string) (value inte
 		for _, param := range this.Params {
 			_, ok := query[param.Name]
 			if ok {
-				query[param.Name ] = append(query[param.Name], param.Value)
+				query[param.Name] = append(query[param.Name], param.Value)
 			} else {
 				query[param.Name] = []string{param.Value}
 			}
@@ -116,7 +116,7 @@ func (this *URLConnectivitySource) Execute(params map[string]string) (value inte
 
 	_, ok := this.lookupHeader("User-Agent")
 	if !ok {
-		req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
+		req.Header.Set("User-Agent", teaconst.TeaProductCode+"/"+teaconst.TeaVersion)
 	}
 
 	if this.Method == "POST" {

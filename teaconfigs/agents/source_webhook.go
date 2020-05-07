@@ -86,7 +86,7 @@ func (this *WebHookSource) Execute(params map[string]string) (value interface{},
 		for _, param := range this.Params {
 			_, ok := query[param.Name]
 			if ok {
-				query[param.Name ] = append(query[param.Name], param.Value)
+				query[param.Name] = append(query[param.Name], param.Value)
 			} else {
 				query[param.Name] = []string{param.Value}
 			}
@@ -119,7 +119,7 @@ func (this *WebHookSource) Execute(params map[string]string) (value interface{},
 
 	_, ok := this.lookupHeader("User-Agent")
 	if !ok {
-		req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
+		req.Header.Set("User-Agent", teaconst.TeaProductCode+"/"+teaconst.TeaVersion)
 	}
 
 	if this.Method == "POST" {

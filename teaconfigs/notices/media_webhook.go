@@ -88,7 +88,7 @@ func (this *NoticeWebhookMedia) Send(user string, subject string, body string) (
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
+	req.Header.Set("User-Agent", teaconst.TeaProductCode+"/"+teaconst.TeaVersion)
 
 	if len(this.Headers) > 0 {
 		for _, h := range this.Headers {

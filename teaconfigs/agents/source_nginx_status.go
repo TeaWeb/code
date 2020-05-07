@@ -68,7 +68,7 @@ func (this *NginxStatusSource) Execute(params map[string]string) (value interfac
 			"cost": time.Since(before).Seconds(),
 		}, err
 	}
-	req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
+	req.Header.Set("User-Agent", teaconst.TeaProductCode+"/"+teaconst.TeaVersion)
 
 	client := teautils.SharedHttpClient(timeout)
 	resp, err := client.Do(req)

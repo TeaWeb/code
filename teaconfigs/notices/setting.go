@@ -2,6 +2,7 @@ package notices
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/files"
 	"github.com/iwind/TeaGo/logs"
@@ -163,9 +164,9 @@ func (this *NoticeSetting) NotifyReceivers(level NoticeLevel, receivers []*Notic
 			}
 			subjectContent := subject
 			if len(subjectContent) == 0 {
-				subjectContent = "[TeaWeb][" + FindNoticeLevelName(level) + "]有新的通知"
-			} else if !strings.HasPrefix(subject, "[TeaWeb]") {
-				subjectContent = "[TeaWeb][" + FindNoticeLevelName(level) + "]" + subject
+				subjectContent = "[" + teaconst.TeaProductName + "][" + FindNoticeLevelName(level) + "]有新的通知"
+			} else if !strings.HasPrefix(subject, "["+teaconst.TeaProductName+"]") {
+				subjectContent = "[" + teaconst.TeaProductName + "][" + FindNoticeLevelName(level) + "]" + subject
 			}
 			_, err := raw.Send(user, subjectContent, body)
 			if err != nil {

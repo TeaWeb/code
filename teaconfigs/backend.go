@@ -297,7 +297,7 @@ func (this *BackendConfig) CheckHealth() bool {
 			logs.Error(err)
 			return false
 		}
-		req.Header.Set("User-Agent", "TeaWeb/"+teaconst.TeaVersion)
+		req.Header.Set("User-Agent", teaconst.TeaProductCode+"/"+teaconst.TeaVersion)
 		client := teautils.SharedHttpClient(timeout)
 		resp, err := client.Do(req)
 		if err != nil {

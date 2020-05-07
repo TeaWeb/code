@@ -54,7 +54,7 @@ func (this *FastcgiConfig) Validate() error {
 		this.paramsMap["SCRIPT_FILENAME"] = ""
 	}
 	if !this.paramsMap.Has("SERVER_SOFTWARE") {
-		this.paramsMap["SERVER_SOFTWARE"] = "teaweb/" + teaconst.TeaVersion
+		this.paramsMap["SERVER_SOFTWARE"] = teaconst.TeaProductCode + "/" + teaconst.TeaVersion
 	}
 	if !this.paramsMap.Has("REDIRECT_STATUS") {
 		this.paramsMap["REDIRECT_STATUS"] = "200"
