@@ -1,6 +1,7 @@
 package teawaf
 
 import (
+	"github.com/TeaWeb/code/teaconst"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/TeaWeb/code/teawaf/requests"
 	"github.com/iwind/TeaGo/Tea"
@@ -73,7 +74,7 @@ func (this *BlockAction) Perform(waf *WAF, request *requests.Request, writer htt
 		if len(this.Body) > 0 {
 			_, _ = writer.Write([]byte(this.Body))
 		} else {
-			_, _ = writer.Write([]byte("The request is blocked by TeaWAF"))
+			_, _ = writer.Write([]byte("The request is blocked by " + teaconst.TeaProductName))
 		}
 	}
 	return false

@@ -3,6 +3,7 @@ package notices
 import (
 	"crypto/tls"
 	"errors"
+	"github.com/TeaWeb/code/teaconst"
 	"net"
 	"net/mail"
 	"net/smtp"
@@ -38,7 +39,7 @@ func (this *NoticeEmailMedia) Send(user string, subject string, body string) (re
 	}
 
 	contentType := "Content-Type: text/html; charset=UTF-8"
-	msg := []byte("To: " + user + "\r\nFrom: \"TeaWeb\" <" + this.From + ">\r\nSubject: " + subject + "\r\n" + contentType + "\r\n\r\n" + body)
+	msg := []byte("To: " + user + "\r\nFrom: \"" + teaconst.TeaProductName + "\" <" + this.From + ">\r\nSubject: " + subject + "\r\n" + contentType + "\r\n\r\n" + body)
 
 	return nil, this.SendMail(this.From, []string{user}, msg)
 }
