@@ -182,7 +182,7 @@ func ProcessAfterRequest(req *teaproxy.Request, writer *teaproxy.ResponseWriter)
 
 	// check length
 	contentLength := types.Int(writer.Header().Get("Content-Length"))
-	if contentLength != len(writer.Body()) {
+	if contentLength != len(writer.Body()) && writer.Header().Get("Content-Encoding") != "gzip" {
 		return true
 	}
 
