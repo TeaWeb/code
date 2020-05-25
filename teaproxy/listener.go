@@ -405,6 +405,14 @@ func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Re
 	// 域名
 	reqHost := rawRequest.Host
 
+	// TLS域名
+	if rawRequest.TLS != nil {
+		serverName := rawRequest.TLS.ServerName
+		if len(serverName) > 0 {
+			reqHost = serverName
+		}
+	}
+
 	// 防止空Host
 	if len(reqHost) == 0 {
 		ctx := rawRequest.Context()
@@ -422,6 +430,18 @@ func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Re
 	}
 	server, serverName := this.findNamedServer(domain)
 	if server == nil {
+		// 严格匹配域名模式下，我们拒绝用户访问
+		if teaconfigs.SharedProxySetting().MatchDomainStrictly {
+			hijacker, ok := writer.(http.Hijacker)
+			if ok {
+				conn, _, _ := hijacker.Hijack()
+				if conn != nil {
+					_ = conn.Close()
+					return
+				}
+			}
+		}
+
 		http.Error(writer, "404 page not found: '"+rawRequest.URL.String()+"'", http.StatusNotFound)
 		return
 	}
