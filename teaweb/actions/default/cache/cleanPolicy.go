@@ -2,8 +2,10 @@ package cache
 
 import (
 	"github.com/TeaWeb/code/teacache"
+	"github.com/TeaWeb/code/teacluster"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaweb/actions/default/actionutils"
+	"github.com/iwind/TeaGo/maps"
 )
 
 type CleanPolicyAction struct {
@@ -51,6 +53,17 @@ func (this *CleanPolicyAction) RunPost(params struct {
 	if err != nil {
 		this.Data["result"] = err.Error()
 		this.Fail()
+	}
+
+	// 同步到集群
+	action := new(teacluster.RunAction)
+	action.Cmd = "cache.clean"
+	action.Data = maps.Map{
+		"filename": params.Filename,
+	}
+	err = teacluster.SharedManager.Write(action)
+	if err != nil {
+		this.Fail("同步到集群失败：" + err.Error())
 	}
 
 	this.Data["result"] = "清理完成"

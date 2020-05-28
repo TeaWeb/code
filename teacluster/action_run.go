@@ -23,6 +23,8 @@ func (this *RunAction) Execute() error {
 	switch this.Cmd {
 	case "cache.refresh":
 		this.runCacheRefresh()
+	case "cache.clean":
+		this.runCacheClean()
 	}
 	return nil
 }
@@ -43,6 +45,9 @@ func (this *RunAction) runCacheRefresh() {
 	manager := teacache.FindCachePolicyManager(filename)
 	if manager == nil {
 		manager = teacache.NewManagerFromConfig(policy)
+		defer func() {
+			_ = manager.Close()
+		}()
 	}
 	prefixes := this.Data.GetSlice("prefixes")
 	prefixStrings := []string{}
@@ -51,7 +56,30 @@ func (this *RunAction) runCacheRefresh() {
 	}
 	_, err := manager.DeletePrefixes(prefixStrings)
 	if err != nil {
-		logs.Println("[cluster][cache.refresh]delete prefixes")
+		logs.Println("[cluster][cache.refresh]delete prefixes: " + err.Error())
+		return
+	}
+}
+
+// clean cache
+func (this *RunAction) runCacheClean() {
+	filename := this.Data.GetString("filename")
+	policy := shared.NewCachePolicyFromFile(filename)
+	if policy == nil {
+		logs.Println("[cluster][cache.clean]can not find policy with '" + filename + "'")
+		return
+	}
+
+	manager := teacache.FindCachePolicyManager(filename)
+	if manager == nil {
+		manager = teacache.NewManagerFromConfig(policy)
+		defer func() {
+			_ = manager.Close()
+		}()
+	}
+	err := manager.Clean()
+	if err != nil {
+		logs.Println("[cluster][cache.clean]clean: " + err.Error())
 		return
 	}
 }

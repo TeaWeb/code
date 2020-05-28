@@ -75,7 +75,7 @@ func (this *RefreshPolicyAction) RunPost(params struct {
 
 	this.Data["count"] = count
 
-	// 清除节点
+	// 同步到集群
 	action := new(teacluster.RunAction)
 	action.Cmd = "cache.refresh"
 	action.Data = maps.Map{
@@ -84,7 +84,7 @@ func (this *RefreshPolicyAction) RunPost(params struct {
 	}
 	err = teacluster.SharedManager.Write(action)
 	if err != nil {
-		this.Fail("刷新集群失败：" + err.Error())
+		this.Fail("同步到集群失败：" + err.Error())
 	}
 
 	this.Success()
