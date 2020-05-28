@@ -10,7 +10,7 @@ import (
 )
 
 // 添加服务器菜单
-func AddServerMenu(actionWrapper actions.ActionWrapper) {
+func AddServerMenu(actionWrapper actions.ActionWrapper, isIndex bool) {
 	action := actionWrapper.Object()
 
 	// 选中代理
@@ -22,8 +22,6 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 	// 服务
 	var hasServer = false
 	var isTCP = false
-
-	isIndex := !action.HasPrefix("/proxy/add", "/cache", "/proxy/waf", "/proxy/log/policies", "/proxy/certs", "/proxy/settings")
 
 	serverId := action.ParamString("serverId")
 	serverList, err := teaconfigs.SharedServerList()
@@ -113,7 +111,8 @@ func AddServerMenu(actionWrapper actions.ActionWrapper) {
 		menu.AlwaysActive = true
 		menuGroup.AlwaysMenu = menu
 		menu.Add("代理服务", "", "/proxy", isIndex)
-		menu.Add("+添加新代理", "", "/proxy/add", action.Spec.ClassName == "proxy.AddAction", )
+		menu.Add("+添加新代理", "", "/proxy/add", action.Spec.ClassName == "proxy.AddAction")
+		menu.Add("分组管理", "", "/proxy/servergroups", action.HasPrefix("/proxy/servergroups"))
 		menu.Add("缓存策略", "", "/cache", action.HasPrefix("/cache"))
 		menu.Add("WAF策略", "", "/proxy/waf", action.HasPrefix("/proxy/waf"))
 		menu.Add("日志策略", "", "/proxy/log/policies", action.HasPrefix("/proxy/log/policies"))

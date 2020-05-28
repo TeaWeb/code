@@ -32,7 +32,7 @@ func (this *IndexAction) Run(params struct {
 
 	this.Data["errs"] = teaproxy.SharedManager.FindServerErrors(params.ServerId)
 
-	proxyutils.AddServerMenu(this)
+	proxyutils.AddServerMenu(this, true)
 
 	this.Show()
 }

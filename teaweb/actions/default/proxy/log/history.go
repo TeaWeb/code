@@ -26,7 +26,7 @@ func (this *HistoryAction) Run(params struct {
 		"id": server.Id,
 	}
 
-	proxyutils.AddServerMenu(this)
+	proxyutils.AddServerMenu(this, true)
 
 	// 检查MongoDB连接
 	this.Data["mongoError"] = ""

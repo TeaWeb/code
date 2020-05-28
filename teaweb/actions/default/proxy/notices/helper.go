@@ -15,5 +15,5 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 		return
 	}
 
-	proxyutils.AddServerMenu(action)
+	proxyutils.AddServerMenu(action, false)
 }

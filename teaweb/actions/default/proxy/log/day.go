@@ -46,7 +46,7 @@ func (this *DayAction) Run(params struct {
 	}
 	this.Data["searchIP"] = params.SearchIP
 
-	proxyutils.AddServerMenu(this)
+	proxyutils.AddServerMenu(this, true)
 
 	// 检查数据库连接
 	this.Data["mongoError"] = ""

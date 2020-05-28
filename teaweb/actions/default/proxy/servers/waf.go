@@ -18,7 +18,7 @@ func (this *WafAction) RunGet(params struct {
 		this.Fail("找不到Server")
 	}
 
-	proxyutils.AddServerMenu(this)
+	proxyutils.AddServerMenu(this, true)
 
 	wafList := []maps.Map{}
 	for _, waf := range teaconfigs.SharedWAFList().FindAllConfigs() {

@@ -18,7 +18,7 @@ func (this *UpdateAction) RunGet(params struct {
 		this.Fail("找不到Server")
 	}
 
-	proxyutils.AddServerMenu(this)
+	proxyutils.AddServerMenu(this, true)
 
 	this.Data["selectedTab"] = "tunnel"
 	this.Data["server"] = proxyutils.WrapServerData(server)

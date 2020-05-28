@@ -12,7 +12,7 @@ type Helper struct {
 // 相关Helper
 func (this *Helper) BeforeAction(action *actions.ActionObject) {
 	if action.Request.Method == http.MethodGet {
-		proxyutils.AddServerMenu(action)
+		proxyutils.AddServerMenu(action, false)
 
 		action.Data["selectedMenu"] = "list"
 	}

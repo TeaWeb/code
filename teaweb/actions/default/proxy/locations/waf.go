@@ -22,7 +22,7 @@ func (this *WafAction) RunGet(params struct {
 
 	_, location := locationutils.SetCommonInfo(this, params.ServerId, params.LocationId, "waf")
 
-	proxyutils.AddServerMenu(this)
+	proxyutils.AddServerMenu(this, true)
 
 	wafList := []maps.Map{}
 	for _, waf := range teaconfigs.SharedWAFList().FindAllConfigs() {

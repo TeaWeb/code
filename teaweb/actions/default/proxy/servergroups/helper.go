@@ -1,4 +1,4 @@
-package settings
+package servergroups
 
 import (
 	"github.com/TeaWeb/code/teaweb/actions/default/proxy/proxyutils"
@@ -9,9 +9,9 @@ import (
 type Helper struct {
 }
 
+// 相关Helper
 func (this *Helper) BeforeAction(action *actions.ActionObject) {
-	if action.Request.Method != http.MethodGet {
-		return
+	if action.Request.Method == http.MethodGet {
+		proxyutils.AddServerMenu(action, false)
 	}
-	proxyutils.AddServerMenu(action, false)
 }

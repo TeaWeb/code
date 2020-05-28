@@ -13,5 +13,5 @@ func (this *Helper) BeforeAction(action *actions.ActionObject) {
 	if action.Request.Method != http.MethodGet {
 		return
 	}
-	proxyutils.AddServerMenu(action)
+	proxyutils.AddServerMenu(action, false)
 }
