@@ -27,6 +27,19 @@ type BlockAction struct {
 
 func (this *BlockAction) Perform(waf *WAF, request *requests.Request, writer http.ResponseWriter) (allow bool) {
 	if writer != nil {
+		// if status code eq 444, we close the connection
+		if this.StatusCode == 444 {
+			hijack, ok := writer.(http.Hijacker)
+			if ok {
+				conn, _, _ := hijack.Hijack()
+				if conn != nil {
+					_ = conn.Close()
+					return
+				}
+			}
+		}
+
+		// output response
 		if this.StatusCode > 0 {
 			writer.WriteHeader(this.StatusCode)
 		} else {

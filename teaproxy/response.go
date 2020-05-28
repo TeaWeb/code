@@ -1,10 +1,12 @@
 package teaproxy
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/iwind/TeaGo/logs"
+	"net"
 	"net/http"
 )
 
@@ -224,4 +226,13 @@ func (this *ResponseWriter) Close() {
 		_ = this.gzipWriter.Close()
 		this.gzipWriter = nil
 	}
+}
+
+// Hijack
+func (this *ResponseWriter) Hijack() (conn net.Conn, buf *bufio.ReadWriter, err error) {
+	hijack, ok := this.writer.(http.Hijacker)
+	if ok {
+		return hijack.Hijack()
+	}
+	return
 }
