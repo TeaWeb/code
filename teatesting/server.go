@@ -120,7 +120,7 @@ func StartTestServer() {
 
 		}).
 		Get("/cookie", func(req *http.Request, resp http.ResponseWriter) {
-			resp.Header().Add("Set-Cookie", "Asset_UserId=1; expires=Sun, 05-May-2019 14:42:21 GMT; path=/", )
+			resp.Header().Add("Set-Cookie", "Asset_UserId=1; expires=Sun, 05-May-2019 14:42:21 GMT; path=/")
 			_, _ = resp.Write([]byte("set cookie"))
 		}).
 		GetPost("/json", func(req *http.Request, resp http.ResponseWriter) {
@@ -145,6 +145,14 @@ func StartTestServer() {
 				resp.Header().Set("Content-Type", "image/png")
 				_, _ = resp.Write(data)
 			}
+		}).
+		Post("/post", func(req *http.Request, resp http.ResponseWriter) {
+			data, err := httputil.DumpRequest(req, true)
+			if err != nil {
+				_, _ = resp.Write([]byte(err.Error()))
+				return
+			}
+			_, _ = resp.Write(data)
 		}).
 		Put("/put", func(req *http.Request, resp http.ResponseWriter) {
 			data, err := httputil.DumpRequest(req, true)
@@ -174,6 +182,12 @@ func StartTestServer() {
 </head>
 <body>
 <strong>THIS IS HTML BODY</strong>
+
+<form action="/post" method="post">
+	<input type="text" name="name"/>
+	<button type="submit">Submit</button>
+</form>
+
 </body>
 </html>
 `))

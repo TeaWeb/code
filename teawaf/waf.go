@@ -256,7 +256,16 @@ func (this *WAF) MatchRequest(rawReq *http.Request, writer http.ResponseWriter) 
 	if !this.hasInboundRules {
 		return true, nil, nil, nil
 	}
+
 	req := requests.NewRequest(rawReq)
+
+	// validate captcha
+	if rawReq.URL.Path == "/WAFCAPTCHA" {
+		captchaValidator.Run(req, writer)
+		return
+	}
+
+	// match rules
 	for _, group := range this.Inbound {
 		if !group.On {
 			continue
