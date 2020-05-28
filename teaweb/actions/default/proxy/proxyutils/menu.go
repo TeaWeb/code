@@ -20,87 +20,54 @@ func AddServerMenu(actionWrapper actions.ActionWrapper, isIndex bool) {
 	menuGroup := utils.NewMenuGroup()
 
 	// 服务
-	var hasServer = false
 	var isTCP = false
 
 	serverId := action.ParamString("serverId")
 	serverList, err := teaconfigs.SharedServerList()
 	if err != nil {
 		logs.Error(err)
+		return
 	}
+	var hasServer = len(serverList.Files) > 0
 
 	if isIndex {
-		menu := menuGroup.FindMenu("", "")
-		for _, server := range serverList.FindAllServers() {
-			urlPrefix := "/proxy/board"
-			if server.IsTCP() { // TCP
-				urlPrefix = "/proxy/detail"
-			} else { // HTTP
-				if action.HasPrefix("/proxy/stat") {
-					urlPrefix = "/proxy/stat"
-				} else if action.HasPrefix("/proxy/log") {
-					urlPrefix = "/proxy/log"
-				} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
-					urlPrefix = "/proxy/detail"
-				}
-			}
-
-			item := menu.Add(server.Description, "", urlPrefix+"?serverId="+server.Id, serverId == server.Id)
-			item.IsSortable = true
-
-			if server.IsTCP() {
-				item.SupName = "tcp"
-			} else if server.ForwardHTTP != nil {
-				item.SupName = "forward"
-			}
-
-			// port
-			ports := []string{}
-			if server.Http {
-				for _, listen := range server.Listen {
-					index := strings.LastIndex(listen, ":")
-					if index > -1 {
-						ports = append(ports, ":"+listen[index+1:])
-					} else {
-						ports = append(ports, ":"+listen)
-					}
-				}
-			}
-			if server.SSL != nil && server.SSL.On {
-				for _, listen := range server.SSL.Listen {
-					index := strings.LastIndex(listen, ":")
-					if index > -1 {
-						ports = append(ports, ":"+listen[index+1:])
-					} else {
-						ports = append(ports, ":"+listen)
-					}
-				}
-			}
-			if len(ports) > 0 {
-				if len(ports) > 2 {
-					item.SubName = ports[0] + ", " + ports[1] + "等 "
-				} else {
-					item.SubName = strings.Join(ports, ", ") + " "
-				}
-			}
-
-			// on | off
-			if (server.IsHTTP() && !server.Http && (server.SSL == nil || !server.SSL.On)) || (server.IsTCP() && (server.TCP == nil || !server.TCP.TCPOn)) {
-				item.SubName = "未启用"
-				item.SubColor = "red"
-			}
-
+		allServers := serverList.FindAllServers()
+		for _, server := range allServers {
 			if server.Id == serverId {
 				isTCP = server.IsTCP()
 			}
-
-			hasServer = true
 		}
-		if hasServer {
-			if action.Request.URL.Path == "/proxy/board" {
-				menu.Name = "代理服务"
-			} else {
-				menu.Name = "代理服务"
+
+		// 分组列表
+		groupList := teaconfigs.SharedServerGroupList()
+
+		// 已分组
+		for _, group := range groupList.Groups {
+			if len(group.ServerIds) == 0 {
+				continue
+			}
+
+			menu := menuGroup.FindMenu("group_"+group.Id, group.Name)
+
+			for _, server := range allServers {
+				if !group.Contains(server.Id) {
+					continue
+				}
+				AddServerToMenu(server, action, menu, serverId)
+			}
+		}
+
+		// 是否有未分组
+		unGroupServers := []*teaconfigs.ServerConfig{}
+		for _, server := range allServers {
+			if !groupList.ContainsServer(server.Id) {
+				unGroupServers = append(unGroupServers, server)
+			}
+		}
+		if len(unGroupServers) > 0 {
+			menu := menuGroup.FindMenu("", "[未分组]")
+			for _, server := range unGroupServers {
+				AddServerToMenu(server, action, menu, serverId)
 			}
 		}
 	}
@@ -200,6 +167,67 @@ func AddServerMenu(actionWrapper actions.ActionWrapper, isIndex bool) {
 				action.Data["teaTabbar"] = tabbar
 			}
 		}
+	}
+}
+
+// 将Server添加到菜单上
+func AddServerToMenu(server *teaconfigs.ServerConfig, action *actions.ActionObject, menu *utils.Menu, serverId string) {
+	urlPrefix := "/proxy/board"
+	if server.IsTCP() { // TCP
+		urlPrefix = "/proxy/detail"
+	} else { // HTTP
+		if action.HasPrefix("/proxy/stat") {
+			urlPrefix = "/proxy/stat"
+		} else if action.HasPrefix("/proxy/log") {
+			urlPrefix = "/proxy/log"
+		} else if action.HasPrefix("/proxy") && !action.HasPrefix("/proxy/board", "/proxy/add") {
+			urlPrefix = "/proxy/detail"
+		}
+	}
+
+	item := menu.Add(server.Description, "", urlPrefix+"?serverId="+server.Id, serverId == server.Id)
+	item.IsSortable = true
+
+	if server.IsTCP() {
+		item.SupName = "tcp"
+	} else if server.ForwardHTTP != nil {
+		item.SupName = "forward"
+	}
+
+	// port
+	ports := []string{}
+	if server.Http {
+		for _, listen := range server.Listen {
+			index := strings.LastIndex(listen, ":")
+			if index > -1 {
+				ports = append(ports, ":"+listen[index+1:])
+			} else {
+				ports = append(ports, ":"+listen)
+			}
+		}
+	}
+	if server.SSL != nil && server.SSL.On {
+		for _, listen := range server.SSL.Listen {
+			index := strings.LastIndex(listen, ":")
+			if index > -1 {
+				ports = append(ports, ":"+listen[index+1:])
+			} else {
+				ports = append(ports, ":"+listen)
+			}
+		}
+	}
+	if len(ports) > 0 {
+		if len(ports) > 2 {
+			item.SubName = ports[0] + ", " + ports[1] + "等 "
+		} else {
+			item.SubName = strings.Join(ports, ", ") + " "
+		}
+	}
+
+	// on | off
+	if (server.IsHTTP() && !server.Http && (server.SSL == nil || !server.SSL.On)) || (server.IsTCP() && (server.TCP == nil || !server.TCP.TCPOn)) {
+		item.SubName = "未启用"
+		item.SubColor = "red"
 	}
 }
 

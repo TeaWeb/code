@@ -39,3 +39,7 @@ func (this *ServerGroup) Remove(serverId string) {
 	}
 	this.ServerIds = result
 }
+
+func (this *ServerGroup) Contains(serverId string) bool {
+	return lists.ContainsString(this.ServerIds, serverId)
+}
