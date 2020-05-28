@@ -11,5 +11,5 @@ func (this *FailAction) Name() string {
 }
 
 func (this *FailAction) TypeId() int8 {
-	return 2
+	return ActionCodeFail
 }

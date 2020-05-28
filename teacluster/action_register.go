@@ -40,5 +40,5 @@ func (this *RegisterAction) OnFail(fail *FailAction) error {
 }
 
 func (this *RegisterAction) TypeId() int8 {
-	return 3
+	return ActionCodeRegister
 }

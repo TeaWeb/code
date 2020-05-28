@@ -66,5 +66,5 @@ func (this *SyncAction) Execute() error {
 }
 
 func (this *SyncAction) TypeId() int8 {
-	return 8
+	return ActionCodeSync
 }

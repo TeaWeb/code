@@ -26,6 +26,7 @@ func init() {
 		new(SumAction),
 		new(SyncAction),
 		new(PingAction),
+		new(RunAction),
 	)
 
 	TeaGo.BeforeStart(func(server *TeaGo.Server) {

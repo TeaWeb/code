@@ -63,5 +63,5 @@ func (this *SumAction) OnFail(fail *FailAction) error {
 }
 
 func (this *SumAction) TypeId() int8 {
-	return 9
+	return ActionCodeSum
 }

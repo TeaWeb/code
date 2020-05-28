@@ -14,5 +14,5 @@ func (this *SuccessAction) Name() string {
 }
 
 func (this *SuccessAction) TypeId() int8 {
-	return 1
+	return ActionCodeSuccess
 }

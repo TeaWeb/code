@@ -12,5 +12,5 @@ func (this *PingAction) Name() string {
 }
 
 func (this *PingAction) TypeId() int8 {
-	return 7
+	return ActionCodePing
 }

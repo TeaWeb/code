@@ -2,9 +2,11 @@ package cache
 
 import (
 	"github.com/TeaWeb/code/teacache"
+	"github.com/TeaWeb/code/teacluster"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teaweb/actions/default/actionutils"
 	"github.com/iwind/TeaGo/actions"
+	"github.com/iwind/TeaGo/maps"
 	"strings"
 )
 
@@ -72,6 +74,18 @@ func (this *RefreshPolicyAction) RunPost(params struct {
 	}
 
 	this.Data["count"] = count
+
+	// 清除节点
+	action := new(teacluster.RunAction)
+	action.Cmd = "cache.refresh"
+	action.Data = maps.Map{
+		"filename": params.Filename,
+		"prefixes": prefixes,
+	}
+	err = teacluster.SharedManager.Write(action)
+	if err != nil {
+		this.Fail("刷新集群失败：" + err.Error())
+	}
 
 	this.Success()
 }

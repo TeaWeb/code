@@ -44,5 +44,5 @@ func (this *PushAction) OnFail(fail *FailAction) error {
 }
 
 func (this *PushAction) TypeId() int8 {
-	return 5
+	return ActionCodePush
 }

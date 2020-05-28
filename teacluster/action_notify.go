@@ -10,7 +10,7 @@ func (this *NotifyAction) Name() string {
 }
 
 func (this *NotifyAction) TypeId() int8 {
-	return 4
+	return ActionCodeNotify
 }
 
 func (this *NotifyAction) Execute() error {

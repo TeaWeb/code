@@ -15,6 +15,7 @@ var sharedProxySetting *ProxySetting = nil
 // 代理全局设置
 type ProxySetting struct {
 	MatchDomainStrictly bool `yaml:"matchDomainStrictly" json:"matchDomainStrictly"` // 是否严格匹配域名
+
 }
 
 // 取得共享的代理设置

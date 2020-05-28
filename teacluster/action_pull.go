@@ -20,5 +20,5 @@ func (this *PullAction) Execute() error {
 }
 
 func (this *PullAction) TypeId() int8 {
-	return 6
+	return ActionCodePull
 }
