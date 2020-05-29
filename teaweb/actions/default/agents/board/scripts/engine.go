@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-var engineCache = teamemory.NewGrid(1)
+var engineCache = teamemory.NewGrid(1, teamemory.NewLimitCountOpt(1000))
 var dayReg = regexp.MustCompile(`^(\d+)-(\d+)-(\d+)$`)
 
 // 脚本引擎

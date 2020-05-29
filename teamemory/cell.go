@@ -7,7 +7,8 @@ import (
 )
 
 type Cell struct {
-	LimitSize int64
+	LimitSize  int64
+	LimitCount int
 
 	mapping    map[uint64]*Item // key => item
 	list       *List            // { item1, item2, ... }
@@ -35,6 +36,12 @@ func (this *Cell) Write(hashKey uint64, item *Item) {
 		if this.LimitSize > 0 {
 			this.totalBytes -= oldItem.Size()
 		}
+	}
+
+	// limit count
+	if this.LimitCount > 0 && len(this.mapping) >= this.LimitCount {
+		this.locker.Unlock()
+		return
 	}
 
 	// trim memory

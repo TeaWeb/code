@@ -28,7 +28,7 @@ func (this *CCCheckpoint) Start() {
 	if this.grid != nil {
 		this.grid.Destroy()
 	}
-	this.grid = teamemory.NewGrid(32)
+	this.grid = teamemory.NewGrid(32, teamemory.NewLimitCountOpt(1000_0000))
 }
 
 func (this *CCCheckpoint) RequestValue(req *requests.Request, param string, options map[string]string) (value interface{}, sysErr error, userErr error) {

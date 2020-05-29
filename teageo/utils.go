@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var ip2cityGrid = teamemory.NewGrid(32)
+var ip2cityGrid = teamemory.NewGrid(32, teamemory.NewLimitCountOpt(100_0000))
 
 // 加载Geo-City数据库
 func SetupDB() {

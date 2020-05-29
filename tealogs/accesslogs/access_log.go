@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-var userAgentGrid = teamemory.NewGrid(32)
+var userAgentGrid = teamemory.NewGrid(32, teamemory.NewLimitCountOpt(100_0000))
 var charsetReg = regexp.MustCompile("(?i)charset\\s*=\\s*([\\w-]+)")
 var headerReg = regexp.MustCompile("([A-Z])")
 

@@ -24,7 +24,8 @@ type Grid struct {
 
 	gzipLevel int
 
-	limitSize int64
+	limitSize  int64
+	limitCount int
 }
 
 func NewGrid(countCells int, opt ...interface{}) *Grid {
@@ -38,6 +39,8 @@ func NewGrid(countCells int, opt ...interface{}) *Grid {
 			grid.gzipLevel = x.Level
 		case *LimitSizeOpt:
 			grid.limitSize = x.Size
+		case *LimitCountOpt:
+			grid.limitCount = x.Count
 		case *RecycleIntervalOpt:
 			grid.recycleInterval = x.Interval
 		}
@@ -52,6 +55,8 @@ func NewGrid(countCells int, opt ...interface{}) *Grid {
 	for i := 0; i < countCells; i++ {
 		cell := NewCell()
 		cell.LimitSize = int64(math.Floor(float64(grid.limitSize) / float64(countCells)))
+		cell.LimitCount = int(math.Floor(float64(grid.limitCount)) / float64(countCells))
+
 		cells = append(cells, cell)
 	}
 	grid.cells = cells

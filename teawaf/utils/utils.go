@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-var grid = teamemory.NewGrid(32)
+var grid = teamemory.NewGrid(32, teamemory.NewLimitCountOpt(1000_0000))
 
 // 正则表达式匹配字符串，并缓存结果
 func MatchStringCache(regex *regexp.Regexp, s string) bool {
@@ -21,9 +21,9 @@ func MatchStringCache(regex *regexp.Regexp, s string) bool {
 	}
 	b := regex.MatchString(s)
 	if b {
-		grid.WriteInt64(key, 1, 3600)
+		grid.WriteInt64(key, 1, 1800)
 	} else {
-		grid.WriteInt64(key, 0, 3600)
+		grid.WriteInt64(key, 0, 1800)
 	}
 	return b
 }
@@ -38,9 +38,9 @@ func MatchBytesCache(regex *regexp.Regexp, byteSlice []byte) bool {
 	}
 	b := regex.Match(byteSlice)
 	if b {
-		grid.WriteInt64(key, 1, 3600)
+		grid.WriteInt64(key, 1, 1800)
 	} else {
-		grid.WriteInt64(key, 0, 3600)
+		grid.WriteInt64(key, 0, 1800)
 	}
 	return b
 }

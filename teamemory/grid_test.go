@@ -27,7 +27,7 @@ func TestMemoryGrid_Write(t *testing.T) {
 	grid.Delete([]byte("abc"))
 	t.Log(grid.Read([]byte("abc")))
 
-	for i := 0; i < 100; i ++ {
+	for i := 0; i < 100; i++ {
 		grid.WriteInt64([]byte(fmt.Sprintf("%d", i)), 123, 1)
 	}
 
@@ -45,6 +45,14 @@ func TestMemoryGrid_Write(t *testing.T) {
 	grid.Destroy()
 }
 
+func TestMemoryGrid_Write_LimitCount(t *testing.T) {
+	grid := NewGrid(2, NewLimitCountOpt(10))
+	for i := 0; i < 100; i++ {
+		grid.WriteInt64([]byte(strconv.Itoa(i)), int64(i), 30)
+	}
+	t.Log(grid.Stat().CountItems, "items")
+}
+
 func TestMemoryGrid_Compress(t *testing.T) {
 	grid := NewGrid(5, NewCompressOpt(1))
 	grid.WriteString([]byte("hello"), strings.Repeat("abcd", 10240), 30)
@@ -54,7 +62,7 @@ func TestMemoryGrid_Compress(t *testing.T) {
 
 func BenchmarkMemoryGrid_Performance(b *testing.B) {
 	grid := NewGrid(1024)
-	for i := 0; i < b.N; i ++ {
+	for i := 0; i < b.N; i++ {
 		grid.WriteInt64([]byte("key:"+strconv.Itoa(i)), int64(i), 3600)
 	}
 }
@@ -68,7 +76,7 @@ func TestMemoryGrid_Performance(t *testing.T) {
 
 	s := []byte(strings.Repeat("abcd", 10*1024))
 
-	for i := 0; i < 100000; i ++ {
+	for i := 0; i < 100000; i++ {
 		grid.WriteBytes([]byte(fmt.Sprintf("key:%d_%d", i, 1)), s, 3600)
 		item := grid.Read([]byte(fmt.Sprintf("key:%d_%d", i, 1)))
 		if item != nil {
@@ -97,10 +105,10 @@ func TestMemoryGrid_Performance_Concurrent(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(runtime.NumCPU())
 
-	for c := 0; c < runtime.NumCPU(); c ++ {
+	for c := 0; c < runtime.NumCPU(); c++ {
 		go func(c int) {
 			defer wg.Done()
-			for i := 0; i < 50000; i ++ {
+			for i := 0; i < 50000; i++ {
 				grid.WriteBytes([]byte(fmt.Sprintf("key:%d_%d", i, c)), s, 3600)
 				item := grid.Read([]byte(fmt.Sprintf("key:%d_%d", i, c)))
 				if item != nil {
@@ -128,7 +136,7 @@ func TestMemoryGrid_CompressPerformance(t *testing.T) {
 	now := time.Now()
 	data := []byte(strings.Repeat("abcd", 1024))
 
-	for i := 0; i < 100000; i ++ {
+	for i := 0; i < 100000; i++ {
 		grid.WriteBytes([]byte(fmt.Sprintf("key:%d", i)), data, 3600)
 		item := grid.Read([]byte(fmt.Sprintf("key:%d", i+100)))
 		if item != nil {

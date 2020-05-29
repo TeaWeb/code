@@ -9,7 +9,7 @@ import (
 	"unsafe"
 )
 
-type ItemType = int
+type ItemType = int8
 
 const (
 	ItemInt64     = 1
@@ -33,6 +33,8 @@ type Item struct {
 	// linked list
 	Prev *Item
 	Next *Item
+
+	size int64
 }
 
 func NewItem(key []byte, dataType ItemType) *Item {
@@ -79,5 +81,8 @@ func (this *Item) String() string {
 }
 
 func (this *Item) Size() int64 {
-	return int64(int(unsafe.Sizeof(*this)) + len(this.Key) + len(this.ValueBytes))
+	if this.size == 0 {
+		this.size = int64(int(unsafe.Sizeof(*this)) + len(this.Key) + len(this.ValueBytes))
+	}
+	return this.size
 }
