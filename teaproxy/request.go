@@ -54,6 +54,9 @@ var bytePool1k = teautils.NewBytePool(20480, 1024)
 var bytePool32k = teautils.NewBytePool(20480, 32*1024)
 var bytePool128k = teautils.NewBytePool(20480, 128*1024)
 
+// 环境变量
+var HOSTNAME, _ = os.Hostname()
+
 // 请求定义
 // HTTP HEADER RFC: https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
 type Request struct {
@@ -1270,6 +1273,8 @@ func (this *Request) Format(source string) string {
 			return this.serverName
 		case "serverPort":
 			return strconv.Itoa(this.requestServerPort())
+		case "hostname":
+			return HOSTNAME
 		case "documentRoot":
 			if this.locationContext != nil && len(this.locationContext.Root) > 0 {
 				return this.locationContext.Root
@@ -1305,6 +1310,13 @@ func (this *Request) Format(source string) string {
 				switch suffix {
 				case "address":
 					return this.backend.Address
+				case "host":
+					index := strings.Index(this.backend.Address, ":")
+					if index > -1 {
+						return this.backend.Address[:index]
+					} else {
+						return ""
+					}
 				case "id":
 					return this.backend.Id
 				case "scheme":
@@ -1432,9 +1444,16 @@ func (this *Request) log() {
 		cookies[cookie.Name] = cookie.Value
 	}
 
+	addr := this.raw.RemoteAddr
+	host, _, err := net.SplitHostPort(addr)
+	if err == nil {
+		addr = host
+	}
+
 	accessLog := &accesslogs.AccessLog{
 		TeaVersion:      teaconst.TeaVersion,
 		RemoteAddr:      this.requestRemoteAddr(),
+		RawRemoteAddr:   addr,
 		RemotePort:      this.requestRemotePort(),
 		RemoteUser:      this.requestRemoteUser(),
 		RequestURI:      this.requestURI(),
@@ -1469,6 +1488,7 @@ func (this *Request) log() {
 		HasErrors:       len(this.errors) > 0,
 		Extend:          &accesslogs.AccessLogExtend{},
 		Attrs:           this.attrs,
+		Hostname:        HOSTNAME,
 	}
 
 	// 日志和统计
@@ -1501,6 +1521,8 @@ func (this *Request) log() {
 	if this.backend != nil {
 		accessLog.BackendAddress = this.backend.Address
 		accessLog.BackendId = this.backend.Id
+		accessLog.BackendScheme = this.backend.Scheme
+		accessLog.BackendCode = this.backend.Code
 	}
 
 	if this.fastcgi != nil {

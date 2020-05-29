@@ -331,6 +331,21 @@ func TestAccessLog_JSON(t *testing.T) {
 	t.Log(string(data))
 }
 
+func TestAccessLog_Backend(t *testing.T) {
+	accessLog := NewAccessLog()
+	accessLog.BackendId = "1234"
+	accessLog.BackendAddress = "127.0.0.1:8001"
+	accessLog.BackendCode = "web001"
+	accessLog.BackendScheme = "http"
+	accessLog.Hostname = "Web001"
+	t.Log(accessLog.Format("${backend.address} ${backend.host} ${backend.id} ${backend.code} ${backend.scheme} ${hostname}"))
+	data, err := easyjson.Marshal(accessLog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(data))
+}
+
 func TestAccessLog_JSON_compare(t *testing.T) {
 	accessLog := &AccessLog{
 		RequestPath:     "/hello",

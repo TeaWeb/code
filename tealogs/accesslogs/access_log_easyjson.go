@@ -736,6 +736,8 @@ func easyjsonF44c504dDecodeGithubComTeaWebCodeTealogsAccesslogs8(in *jlexer.Lexe
 			out.TeaVersion = string(in.String())
 		case "remoteAddr":
 			out.RemoteAddr = string(in.String())
+		case "rawRemoteAddr":
+			out.RawRemoteAddr = string(in.String())
 		case "remotePort":
 			out.RemotePort = int(in.Int())
 		case "remoteUser":
@@ -939,8 +941,14 @@ func easyjsonF44c504dDecodeGithubComTeaWebCodeTealogsAccesslogs8(in *jlexer.Lexe
 			out.ServerPort = int(in.Int())
 		case "serverProtocol":
 			out.ServerProtocol = string(in.String())
+		case "hostname":
+			out.Hostname = string(in.String())
 		case "backendAddress":
 			out.BackendAddress = string(in.String())
+		case "backendCode":
+			out.BackendCode = string(in.String())
+		case "backendScheme":
+			out.BackendScheme = string(in.String())
 		case "fastcgiAddress":
 			out.FastcgiAddress = string(in.String())
 		case "requestData":
@@ -1097,6 +1105,11 @@ func easyjsonF44c504dEncodeGithubComTeaWebCodeTealogsAccesslogs8(out *jwriter.Wr
 		const prefix string = ",\"remoteAddr\":"
 		out.RawString(prefix)
 		out.String(string(in.RemoteAddr))
+	}
+	{
+		const prefix string = ",\"rawRemoteAddr\":"
+		out.RawString(prefix)
+		out.String(string(in.RawRemoteAddr))
 	}
 	{
 		const prefix string = ",\"remotePort\":"
@@ -1366,9 +1379,24 @@ func easyjsonF44c504dEncodeGithubComTeaWebCodeTealogsAccesslogs8(out *jwriter.Wr
 		out.String(string(in.ServerProtocol))
 	}
 	{
+		const prefix string = ",\"hostname\":"
+		out.RawString(prefix)
+		out.String(string(in.Hostname))
+	}
+	{
 		const prefix string = ",\"backendAddress\":"
 		out.RawString(prefix)
 		out.String(string(in.BackendAddress))
+	}
+	{
+		const prefix string = ",\"backendCode\":"
+		out.RawString(prefix)
+		out.String(string(in.BackendCode))
+	}
+	{
+		const prefix string = ",\"backendScheme\":"
+		out.RawString(prefix)
+		out.String(string(in.BackendScheme))
 	}
 	{
 		const prefix string = ",\"fastcgiAddress\":"

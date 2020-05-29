@@ -34,7 +34,8 @@ type AccessLog struct {
 	RewriteId  string `var:"rewriteId" bson:"rewriteId" json:"rewriteId"`    // 重写规则ID
 
 	TeaVersion      string  `var:"teaVersion" bson:"teaVersion" json:"teaVersion"`                // TeaWeb版本
-	RemoteAddr      string  `var:"remoteAddr" bson:"remoteAddr" json:"remoteAddr"`                // 终端地址，通常是：ip:port
+	RemoteAddr      string  `var:"remoteAddr" bson:"remoteAddr" json:"remoteAddr"`                // 终端地址
+	RawRemoteAddr   string  `var:"rawRemoteAddr" bson:"rawRemoteAddr" json:"rawRemoteAddr"`       // 直接连接服务器的终端地址
 	RemotePort      int     `var:"remotePort" bson:"remotePort" json:"remotePort"`                // 终端端口
 	RemoteUser      string  `var:"remoteUser" bson:"remoteUser" json:"remoteUser"`                // 终端用户，基于BasicAuth认证
 	RequestURI      string  `var:"requestURI" bson:"requestURI" json:"requestURI"`                // 请求URI
@@ -71,9 +72,12 @@ type AccessLog struct {
 	ServerName     string              `var:"serverName" bson:"serverName" json:"serverName"`             // 接收请求的服务器名
 	ServerPort     int                 `var:"serverPort" bson:"serverPort" json:"serverPort"`             // 服务器端口
 	ServerProtocol string              `var:"serverProtocol" bson:"serverProtocol" json:"serverProtocol"` // 服务器协议，类似于HTTP/1.0”
+	Hostname       string              `var:"hostname" bson:"hostname" json:"hostname"`
 
 	// 代理相关
 	BackendAddress string `var:"backendAddress" bson:"backendAddress" json:"backendAddress"` // 代理的后端的地址
+	BackendCode    string `var:"backendCode" bson:"backendCode" json:"backendCode"`          // 后端代号
+	BackendScheme  string `var:"backendScheme" bson:"backendScheme" json:"backendScheme"`    // 后端协议
 	FastcgiAddress string `var:"fastcgiAddress" bson:"fastcgiAddress" json:"fastcgiAddress"` // Fastcgi后端地址
 
 	// 调试用
@@ -266,6 +270,28 @@ func (this *AccessLog) Format(format string) string {
 				logs.Error(err)
 			} else {
 				return string(jsonValue)
+			}
+		}
+
+		// backend
+		if strings.HasPrefix(varName, "backend.") {
+			subVarName := varName[8:]
+			switch subVarName {
+			case "id":
+				return this.BackendId
+			case "address":
+				return this.BackendAddress
+			case "host":
+				index := strings.Index(this.BackendAddress, ":")
+				if index > -1 {
+					return this.BackendAddress[:index]
+				} else {
+					return ""
+				}
+			case "scheme":
+				return this.BackendScheme
+			case "code":
+				return this.BackendCode
 			}
 		}
 
