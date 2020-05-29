@@ -21,7 +21,7 @@ func TestMatchBytesCache(t *testing.T) {
 }
 
 func BenchmarkMatchStringCache(b *testing.B) {
-	data := strings.Repeat("HELLO", 1024*4)
+	data := strings.Repeat("HELLO", 512)
 	regex := regexp.MustCompile(`(?iU)\b(eval|system|exec|execute|passthru|shell_exec|phpinfo)\b`)
 
 	for i := 0; i < b.N; i++ {
@@ -30,7 +30,7 @@ func BenchmarkMatchStringCache(b *testing.B) {
 }
 
 func BenchmarkMatchStringCache_WithoutCache(b *testing.B) {
-	data := strings.Repeat("HELLO", 1024*4)
+	data := strings.Repeat("HELLO", 512)
 	regex := regexp.MustCompile(`(?iU)\b(eval|system|exec|execute|passthru|shell_exec|phpinfo)\b`)
 
 	for i := 0; i < b.N; i++ {
