@@ -280,6 +280,13 @@ func TestAccessLog_Format(t *testing.T) {
 	t.Log(accessLog.Format(format))
 }
 
+func TestAccessLog_FormatFloat(t *testing.T) {
+	accessLog := &AccessLog{
+		RequestTime: 7.964e-5,
+	}
+	t.Log(accessLog.Format("${requestTime}"))
+}
+
 func TestAccessLog_ParseGEO(t *testing.T) {
 	teageo.SetupDB()
 

@@ -183,10 +183,14 @@ func (this *AccessLog) Format(format string) string {
 		if found {
 			field := refValue.FieldByName(fieldName)
 			if field.IsValid() {
-				if field.Kind() == reflect.String {
+				kind := field.Kind()
+				switch kind {
+				case reflect.String:
 					return field.String()
-				} else {
-					return fmt.Sprintf("%#v", field.Interface())
+				case reflect.Float32, reflect.Float64:
+					return fmt.Sprintf("%f", field.Interface())
+				default:
+					return types.String(field.Interface())
 				}
 			}
 
