@@ -160,6 +160,11 @@ func (this *Cell) Range(f func(item *Item)) {
 
 func (this *Cell) Recycle() {
 	this.locker.Lock()
+	if len(this.mapping) == 0 {
+		this.locker.Unlock()
+		return
+	}
+
 	timestamp := time.Now().Unix()
 	for key, item := range this.mapping {
 		if item.ExpireAt < timestamp {
@@ -168,6 +173,7 @@ func (this *Cell) Recycle() {
 			this.totalBytes -= item.Size()
 		}
 	}
+
 	this.locker.Unlock()
 }
 

@@ -179,3 +179,26 @@ func TestMemoryGrid_Destroy(t *testing.T) {
 		t.Fatal("looper != nil")
 	}
 }
+
+func TestMemoryGrid_Recycle(t *testing.T) {
+	cell := NewCell()
+	timestamp := time.Now().Unix()
+	for i := 0; i < 300_0000; i++ {
+		cell.Write(uint64(i), &Item{
+			ExpireAt: timestamp - 30,
+		})
+	}
+	before := time.Now()
+	cell.Recycle()
+	t.Log(time.Since(before).Seconds()*1000, "ms")
+	t.Log(len(cell.mapping))
+
+	runtime.GC()
+	printMem(t)
+}
+
+func printMem(t *testing.T) {
+	mem := &runtime.MemStats{}
+	runtime.ReadMemStats(mem)
+	t.Log(mem.Alloc/1024/1024, "M")
+}

@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"github.com/TeaWeb/code/teatesting"
+	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -18,6 +21,25 @@ func TestMatchBytesCache(t *testing.T) {
 	t.Log(MatchBytesCache(regex, []byte("123")))
 	t.Log(MatchBytesCache(regex, []byte("123")))
 	t.Log(MatchBytesCache(regex, []byte("123")))
+}
+
+func TestMatchRemoteCache(t *testing.T) {
+	if teatesting.IsGlobal() {
+		return
+	}
+	client := http.Client{}
+	for i := 0; i < 200_0000; i++ {
+		req, err := http.NewRequest(http.MethodGet, "http://192.168.2.30:8882/?arg="+strconv.Itoa(i), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("User-Agent", "GoTest/"+strconv.Itoa(i))
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = resp.Body.Close()
+	}
 }
 
 func BenchmarkMatchStringCache(b *testing.B) {
