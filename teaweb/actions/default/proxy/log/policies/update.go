@@ -56,7 +56,8 @@ func (this *UpdateAction) RunPost(params struct {
 	StorageType     string
 
 	// file
-	FilePath string
+	FilePath       string
+	FileAutoCreate bool
 
 	// es
 	EsEndpoint    string
@@ -117,6 +118,7 @@ func (this *UpdateAction) RunPost(params struct {
 		storage.Format = params.StorageFormat
 		storage.Template = params.StorageTemplate
 		storage.Path = params.FilePath
+		storage.AutoCreate = params.FileAutoCreate
 		instance = storage
 	case tealogs.StorageTypeES:
 		params.Must.

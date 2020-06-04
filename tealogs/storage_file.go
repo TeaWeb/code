@@ -5,6 +5,7 @@ import (
 	"github.com/TeaWeb/code/tealogs/accesslogs"
 	"github.com/iwind/TeaGo/logs"
 	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -12,7 +13,8 @@ import (
 type FileStorage struct {
 	Storage `yaml:", inline"`
 
-	Path string `yaml:"path" json:"path"` // 文件路径，支持变量：${year|month|week|day|hour|minute|second}
+	Path       string `yaml:"path" json:"path"`             // 文件路径，支持变量：${year|month|week|day|hour|minute|second}
+	AutoCreate bool   `yaml:"autoCreate" json:"autoCreate"` // 是否自动创建目录
 
 	writeLocker sync.Mutex
 
@@ -52,10 +54,10 @@ func (this *FileStorage) Write(accessLogs []*accesslogs.AccessLog) error {
 		}
 		_, err = fp.Write(data)
 		if err != nil {
-			this.Close()
+			_ = this.Close()
 			break
 		}
-		fp.WriteString("\n")
+		_, _ = fp.WriteString("\n")
 	}
 	return nil
 }
@@ -87,7 +89,20 @@ func (this *FileStorage) fp() *os.File {
 
 	// 关闭其他的文件
 	for _, f := range this.files {
-		f.Close()
+		_ = f.Close()
+	}
+
+	// 是否创建文件目录
+	if this.AutoCreate {
+		dir := filepath.Dir(path)
+		_, err := os.Stat(dir)
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(dir, 0777)
+			if err != nil {
+				logs.Error(err)
+				return nil
+			}
+		}
 	}
 
 	// 打开新文件
