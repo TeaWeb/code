@@ -523,6 +523,7 @@ func (this *Rule) unescape(v string) string {
 	v = strings.Replace(v, `!`, `(!|%21)`, -1)
 	v = strings.Replace(v, `/`, `(/|%2F)`, -1)
 	v = strings.Replace(v, `;`, `(;|%3B)`, -1)
+	v = strings.Replace(v, `\+`, `(\+|%20)`, -1)
 	return v
 }
 
