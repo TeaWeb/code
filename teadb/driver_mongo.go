@@ -389,6 +389,9 @@ func (this *MongoDriver) Group(query *Query, field string, result map[string]Exp
 			"$match": filter,
 		},
 		map[string]interface{}{
+			"$limit": 100000, // 限制进入下一个pipeline的记录数量，以避免查询超时
+		},
+		map[string]interface{}{
 			"$group": group,
 		},
 	}
