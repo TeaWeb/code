@@ -362,28 +362,35 @@ func (this *MongoAccessLogDAO) initTable(table string) {
 	if isInitializedTable(table) {
 		return
 	}
-	for _, fields := range [][]*shared.IndexField{
-		{
-			shared.NewIndexField("serverId", true),
-		},
-		{
-			shared.NewIndexField("status", true),
-			shared.NewIndexField("serverId", true),
-		},
-		{
-			shared.NewIndexField("remoteAddr", true),
-			shared.NewIndexField("serverId", true),
-		},
-		{
-			shared.NewIndexField("hasErrors", true),
-			shared.NewIndexField("serverId", true),
-		},
-	} {
-		err := this.createIndex(table, fields)
-		if err != nil {
-			logs.Error(err)
+
+	// 异步执行，防止阻塞进程
+	go func() {
+		for _, fields := range [][]*shared.IndexField{
+			{
+				shared.NewIndexField("serverId", true),
+			},
+			{
+				shared.NewIndexField("status", true),
+				shared.NewIndexField("serverId", true),
+			},
+			{
+				shared.NewIndexField("remoteAddr", true),
+				shared.NewIndexField("serverId", true),
+			},
+			{
+				shared.NewIndexField("hasErrors", true),
+				shared.NewIndexField("serverId", true),
+			},
+			{
+				shared.NewIndexField("attrs.waf_id", true),
+			},
+		} {
+			err := this.createIndex(table, fields)
+			if err != nil {
+				logs.Error(err)
+			}
 		}
-	}
+	}()
 }
 
 func (this *MongoAccessLogDAO) createIndex(table string, fields []*shared.IndexField) error {
