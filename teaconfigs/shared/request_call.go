@@ -25,7 +25,7 @@ func (this *RequestCall) Reset() {
 	this.Formatter = nil
 	this.Request = nil
 	this.ResponseCallbacks = nil
-	this.Options = nil
+	this.Options = maps.Map{}
 }
 
 // 添加响应回调

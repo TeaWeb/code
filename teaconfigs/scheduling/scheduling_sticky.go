@@ -2,7 +2,6 @@ package scheduling
 
 import (
 	"github.com/TeaWeb/code/teaconfigs/shared"
-	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
 	"math/rand"
 	"net/http"
@@ -71,7 +70,6 @@ func (this *StickyScheduling) Next(call *shared.RequestCall) CandidateInterface 
 						Path:    "/",
 						Expires: time.Now().AddDate(0, 1, 0),
 					})
-					logs.Println("set cookie", param, codes)
 				})
 			} else {
 				call.AddResponseCall(func(resp http.ResponseWriter) {
