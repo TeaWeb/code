@@ -223,6 +223,9 @@ func StartTestServer() {
 			}
 			logs.Println("[test]websocket closed")
 		}).
+		Options("/options", func(req *http.Request, resp http.ResponseWriter) {
+			resp.Header().Set("AllowMethods", "GET, POST")
+		}).
 		StartOn("127.0.0.1:9991")
 }
 
