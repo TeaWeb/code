@@ -1,7 +1,7 @@
 package teaconst
 
 const (
-	TeaVersion = "0.1.11"
+	TeaVersion = "0.1.12"
 
 	TeaProcessName = "teaweb" // 进程名
 	TeaProductName = "TeaWeb" // 产品名
