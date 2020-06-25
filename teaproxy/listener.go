@@ -11,6 +11,7 @@ import (
 	"golang.org/x/net/http2"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -409,7 +410,13 @@ func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Re
 	if rawRequest.TLS != nil {
 		serverName := rawRequest.TLS.ServerName
 		if len(serverName) > 0 {
-			reqHost = serverName
+			// 端口
+			index := strings.LastIndex(reqHost, ":")
+			if index >= 0 {
+				reqHost = serverName + reqHost[index:]
+			} else {
+				reqHost = serverName
+			}
 		}
 	}
 
