@@ -407,15 +407,17 @@ func (this *Listener) handleHTTP(writer http.ResponseWriter, rawRequest *http.Re
 	reqHost := rawRequest.Host
 
 	// TLS域名
-	if rawRequest.TLS != nil {
-		serverName := rawRequest.TLS.ServerName
-		if len(serverName) > 0 {
-			// 端口
-			index := strings.LastIndex(reqHost, ":")
-			if index >= 0 {
-				reqHost = serverName + reqHost[index:]
-			} else {
-				reqHost = serverName
+	if this.isIP(reqHost) {
+		if rawRequest.TLS != nil {
+			serverName := rawRequest.TLS.ServerName
+			if len(serverName) > 0 {
+				// 端口
+				index := strings.LastIndex(reqHost, ":")
+				if index >= 0 {
+					reqHost = serverName + reqHost[index:]
+				} else {
+					reqHost = serverName
+				}
 			}
 		}
 	}
@@ -747,4 +749,19 @@ func (this *Listener) connectTCPBackend(clientConn net.Conn, serverName string) 
 	this.connectingTCPLocker.Lock()
 	delete(this.connectingTCPMap, clientConn)
 	this.connectingTCPLocker.Unlock()
+}
+
+func (this *Listener) isIP(host string) bool {
+	// IPv6
+	if strings.Index(host, "[") > -1 {
+		return true
+	}
+
+	for _, b := range host {
+		if b >= 'a' && b <= 'z' {
+			return false
+		}
+	}
+
+	return true
 }

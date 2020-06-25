@@ -5,8 +5,11 @@ import (
 	"github.com/TeaWeb/code/teaconfigs"
 	"github.com/TeaWeb/code/teaconfigs/shared"
 	"github.com/TeaWeb/code/teatesting"
+	"github.com/iwind/TeaGo/assert"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
@@ -330,4 +333,40 @@ func printListener(listener *Listener, t *testing.T) {
 			"description": s.Description,
 		}, t)
 	}
+}
+
+func TestDetectIPOrDomain(t *testing.T) {
+	a := assert.NewAssertion(t)
+	a.IsTrue(testIsIP("192.168.1.101"))
+	a.IsTrue(testIsIP("192.168.1.102:1000"))
+	a.IsTrue(testIsIP("[1:2:3:4]:1000"))
+	a.IsTrue(!testIsIP("192.168.1.com"))
+	a.IsTrue(!testIsIP("192.168.1.com:12345"))
+	a.IsTrue(!testIsIP("local345:12345"))
+}
+
+func BenchmarkIPOrDomain(b *testing.B) {
+	runtime.GOMAXPROCS(1)
+
+	for i := 0; i < b.N; i++ {
+		_ = testIsIP("192.168.1.101")
+		_ = testIsIP("192.168.1.101:1000")
+		_ = testIsIP("www.example.com")
+		_ = testIsIP("www.example.com:12345")
+	}
+}
+
+func testIsIP(host string) bool {
+	// IPv6
+	if strings.Index(host, "[") > -1 {
+		return true
+	}
+
+	for _, b := range host {
+		if b >= 'a' && b <= 'z' {
+			return false
+		}
+	}
+
+	return true
 }
