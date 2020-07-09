@@ -5,6 +5,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
+	"golang.org/x/net/context"
 	"strings"
 	"time"
 )
@@ -73,12 +74,12 @@ func (this *RedisManager) SetOptions(options map[string]interface{}) {
 }
 
 func (this *RedisManager) Write(key string, data []byte) error {
-	cmd := this.client.Set("TEA_CACHE_"+this.id+key, string(data), this.Life)
+	cmd := this.client.Set(context.Background(), "TEA_CACHE_"+this.id+key, string(data), this.Life)
 	return cmd.Err()
 }
 
 func (this *RedisManager) Read(key string) (data []byte, err error) {
-	cmd := this.client.Get("TEA_CACHE_" + this.id + key)
+	cmd := this.client.Get(context.Background(), "TEA_CACHE_"+this.id+key)
 	if cmd.Err() != nil {
 		if cmd.Err() == redis.Nil {
 			return nil, ErrNotFound
@@ -91,7 +92,7 @@ func (this *RedisManager) Read(key string) (data []byte, err error) {
 
 // 删除
 func (this *RedisManager) Delete(key string) error {
-	cmd := this.client.Del("TEA_CACHE_" + this.id + key)
+	cmd := this.client.Del(context.Background(), "TEA_CACHE_"+this.id+key)
 	return cmd.Err()
 }
 
@@ -111,7 +112,7 @@ func (this *RedisManager) DeletePrefixes(prefixes []string) (int, error) {
 		loopCount++
 
 		var keys []string
-		keys, cursor, err = this.client.Scan(cursor, keyPrefix+"*", 10000).Result()
+		keys, cursor, err = this.client.Scan(context.Background(), cursor, keyPrefix+"*", 10000).Result()
 		if err != nil {
 			return count, err
 		}
@@ -120,7 +121,7 @@ func (this *RedisManager) DeletePrefixes(prefixes []string) (int, error) {
 				realKey := key[keyPrefixLength:]
 				for _, prefix := range prefixes {
 					if strings.HasPrefix(realKey, prefix) || strings.HasPrefix("http://"+realKey, prefix) || strings.HasPrefix("https://"+realKey, prefix) {
-						err1 := this.client.Del(key).Err()
+						err1 := this.client.Del(context.Background(), key).Err()
 						if err1 != nil {
 							err = err1
 							break
@@ -153,14 +154,14 @@ func (this *RedisManager) Stat() (size int64, countKeys int, err error) {
 		loopCount++
 
 		var keys []string
-		keys, cursor, err = this.client.Scan(cursor, "TEA_CACHE_"+this.Id()+"*", 10000).Result()
+		keys, cursor, err = this.client.Scan(context.Background(), cursor, "TEA_CACHE_"+this.Id()+"*", 10000).Result()
 		if err != nil {
 			return
 		}
 		if len(keys) > 0 {
 			countKeys += len(keys)
 			for _, key := range keys {
-				val, _ := this.client.Get(key).Bytes()
+				val, _ := this.client.Get(context.Background(), key).Bytes()
 				size += int64(len(val))
 			}
 		}
@@ -186,13 +187,13 @@ func (this *RedisManager) Clean() error {
 		loopCount++
 
 		var keys []string
-		keys, cursor, err = this.client.Scan(cursor, "TEA_CACHE_"+this.Id()+"*", 10000).Result()
+		keys, cursor, err = this.client.Scan(context.Background(), cursor, "TEA_CACHE_"+this.Id()+"*", 10000).Result()
 		if err != nil {
 			return err
 		}
 		if len(keys) > 0 {
 			for _, key := range keys {
-				err1 := this.client.Del(key).Err()
+				err1 := this.client.Del(context.Background(), key).Err()
 				if err1 != nil {
 					err = err1
 					break
