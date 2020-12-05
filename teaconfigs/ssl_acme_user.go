@@ -2,7 +2,7 @@ package teaconfigs
 
 import (
 	"crypto"
-	"github.com/go-acme/lego/registration"
+	"github.com/luckygo666/lego/v3/registration"
 )
 
 // ACME用户账号定义

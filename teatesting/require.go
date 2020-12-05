@@ -1,7 +1,6 @@
 package teatesting
 
 import (
-	"context"
 	"github.com/TeaWeb/code/teautils"
 	"github.com/go-redis/redis"
 	"github.com/iwind/TeaGo/logs"
@@ -102,7 +101,7 @@ func RequireRedis() bool {
 		Addr:        "127.0.0.1:6379",
 		DialTimeout: 5 * time.Second,
 	})
-	cmd := client.Ping(context.Background())
+	cmd := client.Ping()
 	return cmd.Err() == nil
 }
 
